@@ -29,6 +29,10 @@ its native calculators, OCCT libraries, runtime dependencies and offline license
 it does not require Node, Homebrew, a checkout or a coding agent to draw geometry.
 An external coding agent remains an optional separate installation.
 
+The root postinstall explicitly installs Electron's runtime: Electron 44's npm
+package no longer does that automatically. License generation uses the downloaded
+runtime's notices, so it must be present before release preparation.
+
 The hidden package test uses a temporary user profile, unrelated working directory
 and restricted PATH. It exercises sketch/solid geometry, Undo, save/reopen, the PTY
 and shipped CLI, and offline notices. It does not establish clean-device
@@ -139,6 +143,8 @@ it. `ccache` handles changed compiler inputs; CMake configures freshly on each
 runner. No keys, keychains, signed packages or notarization tickets are cached.
 Caches are accelerators; cold builds remain supported. The runtime source release
 is durable distribution material, not an Actions cache.
+Native source, SDK, compiler and Electron caches are saved immediately after the
+native build, so a later packaging or signing failure does not discard them.
 
 CI downloads Eigen from the repository's `native-sources-eigen-5.0.1` source-only
 release because GitLab rejected the hosted runner's download with HTTP 406.
