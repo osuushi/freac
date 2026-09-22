@@ -140,5 +140,10 @@ runner. No keys, keychains, signed packages or notarization tickets are cached.
 Caches are accelerators; cold builds remain supported. The runtime source release
 is durable distribution material, not an Actions cache.
 
+CI downloads Eigen from the repository's `native-sources-eigen-5.0.1` source-only
+release because GitLab rejected the hosted runner's download with HTTP 406.
+This is the unchanged upstream archive; native setup verifies its pinned SHA-256
+before extraction. Keep this source release available for cold builds.
+
 Measure cold, warm, and small-native-change runs from Actions timing and
 `ccache --show-stats`. Local build checks do not establish CI cache-hit timings.
