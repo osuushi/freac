@@ -27,8 +27,11 @@ founder feedback update these contracts before further tools depend on them.
   coordinate plane through three large, flat translucent sections centered on
   the world origin. They intersect along the coordinate axes and never shift to
   avoid geometry. Camera raycasts drive pointer hover and activation; accessible
-  plane names retain keyboard and screen-reader entry. Visible model and sketch
-  geometry wins pointer picking where it overlaps a plane section.
+  plane names retain keyboard and screen-reader entry. Model and sketch geometry wins pointer picking only at or in front of a plane
+  section. Compare the actual cursor intersection depth, including faces inside
+  hollow or concave bodies; geometry behind a plane does not cover it. Saved
+  plane interiors participate in this ordering, with saved planes winning ties
+  against world planes. Hover and click use the same depth test.
 - Entering a sketch animates the camera into its aligned plane view while preserving
   spatial context. The transition interpolates orientation and the view target; a
   region double-click also centers and fits that region. Orbiting out reveals the

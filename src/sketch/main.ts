@@ -27,9 +27,10 @@ import { bodyView } from "../model/body-view.js";
 import { visibilityControls } from "../model/visibility-controls.js";
 import "./style.css";
 import "./modeling.css";
+import { pickSavedPlane } from "../model/saved-plane-picking.js";
 import { ModelControls } from "./model-controls.js";
 import { modelHighlight } from "./model-highlight.js";
-import { pickModel } from "./model-selection.js";
+import { pickModels } from "./model-selection.js";
 import "./edit-overlay.css";
 import "./constraints.css";
 import "./fillet.css";
@@ -74,7 +75,16 @@ const readouts = document.createElement("div");
 readouts.className = "selection-readouts";
 app.append(readouts);
 const disposeCalculation = calculationControls(editor, app);
-const disposeLabels = worldLabels(world, overlay, (point) => !!pickModel(editor, point)),
+const disposeLabels = worldLabels(
+    world,
+    overlay,
+    (point, depth) =>
+      pickModels(editor, point, depth).length > 0 || !!pickSavedPlane(editor, point, depth),
+    () => {
+      editor.modeling.hover = null;
+      editor.refresh();
+    },
+  ),
   disposeDrawing = drawSketches(editor),
   disposeFills = drawRegionFills(editor);
 const modelControls = new ModelControls(editor, overlay);

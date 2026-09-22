@@ -87,9 +87,11 @@ export async function planeCutRoute(page, name) {
   console.log(name, "direct plane cuts passed");
 }
 async function faceSubset(page, original, name) {
+  await page.keyboard.press("Escape");
   await orient(page, [1, -1, 1]);
-  await worldClick(page, [0, -10, 10]);
-  await worldClick(page, [10, 0, 10], true);
+  // Pick exposed portions of these faces, above the saved plane and away from world planes.
+  await worldClick(page, [3, -10, 12]);
+  await worldClick(page, [10, -3, 12], true);
   assert.equal((await inspect(page)).modelingSelection.length, 2);
   await chooseTool(page, "imprint", "imprint");
   await page.keyboard.press("Escape");

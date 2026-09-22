@@ -8,6 +8,7 @@ import { type ConstructionPlane, withConstructionPlane } from "./construction-pl
 import { ConstructionPlaneView } from "./construction-plane-view.js";
 import { PlanePlacement } from "./plane-placement.js";
 import { PlaneReferencePicker } from "./plane-reference-picker.js";
+import { savedPlaneInteraction } from "./saved-plane-picking.js";
 
 export class ConstructionPlaneControls {
   readonly picker: PlaneReferencePicker;
@@ -71,6 +72,13 @@ export class ConstructionPlaneControls {
         this.valid = true;
         this.preview(frame);
       },
+    );
+    savedPlaneInteraction(
+      editor,
+      this.abort.signal,
+      (plane) => this.select(plane),
+      (id) => this.view.hover(id),
+      (plane) => this.sketch(plane),
     );
     this.bindEvents();
     editor.world.changed.add(this.update);

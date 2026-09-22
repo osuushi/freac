@@ -5,13 +5,14 @@ import type { World } from "./world.js";
 export function worldLabels(
   world: World,
   overlay: HTMLElement,
-  occupied: (point: Point) => boolean = () => false,
+  occupied: (point: Point, depth: number) => boolean = () => false,
+  onHover: () => void = () => {},
 ) {
   const origin = document.createElement("div");
   origin.className = "origin";
   origin.textContent = "⊕ 0, 0, 0";
   overlay.append(origin);
-  const disposeTargets = installPlaneTargets(world, overlay, occupied),
+  const disposeTargets = installPlaneTargets(world, overlay, occupied, onHover),
     axes = (["X", "Y", "Z"] as const).map((axis, i) => {
       const label = document.createElement("span");
       label.className = `axis axis-${axis}`;

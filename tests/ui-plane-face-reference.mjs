@@ -21,7 +21,7 @@ export async function planeFaceReferenceRoute(page, name) {
   await box(page, [-10, -10], [10, 10], 20);
   await box(page, [24, -4], [32, 4], 10);
   await orient(page, [1, -1, 1]);
-  await worldClick(page, [0, -10, 10]);
+  await worldClick(page, [3, -10, 10]);
   const before = (await inspect(page)).document;
   await chooseTool(page, "imprint", "imprint");
   await page.waitForFunction(() =>
@@ -36,7 +36,7 @@ export async function planeFaceReferenceRoute(page, name) {
   await page.keyboard.press("Enter");
   assert.equal((await inspect(page)).document.bodies[0].faces.length, 7);
   await chooseTool(page, "undo", "undo");
-  await worldClick(page, [0, -10, 10]);
+  await worldClick(page, [3, -10, 10]);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await chooseTool(page, "split body", "split");
   await page.waitForFunction(() =>

@@ -17,7 +17,8 @@
   stroke: #1676d2;
   stroke-width: 2;
 }
-.construction-plane-view polygon:hover {
+.construction-plane-view polygon:hover,
+.construction-plane-view polygon.hovered {
   stroke: #1676d2;
   stroke-width: 3;
 }

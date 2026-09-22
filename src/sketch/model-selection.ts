@@ -126,7 +126,11 @@ export class ModelSelection {
           : [target];
   }
 }
-export function pickModels(editor: SketchEditor, screen: Point): ModelingTarget[] {
+export function pickModels(
+  editor: SketchEditor,
+  screen: Point,
+  maxDepth = Infinity,
+): ModelingTarget[] {
   const hits: { target: ModelingTarget; depth: number; edge: boolean }[] = [];
   for (const sketch of editor.display.sketches) {
     if (!editor.visibility.visible(sketch.id)) continue;
@@ -156,8 +160,10 @@ export function pickModels(editor: SketchEditor, screen: Point): ModelingTarget[
     });
   hits.sort((a, b) => a.depth - b.depth || Number(b.edge) - Number(a.edge));
   const edge = pickBodyEdge(editor, screen);
-  const targets = hits.map((hit) => hit.target);
-  if (edge) targets.unshift({ kind: "edge", body: edge.body, edge: edge.edge, point: edge.point });
+  // Keep coincident geometry ahead of translucent planes despite the face sort bias.
+  const targets = hits.filter((hit) => hit.depth <= maxDepth + 1e-4).map((hit) => hit.target);
+  if (edge && edge.depth <= maxDepth + 1e-4)
+    targets.unshift({ kind: "edge", body: edge.body, edge: edge.edge, point: edge.point });
   const selectedSketches = new Set(
     editor.modeling.targets.filter((target) => target.kind === "sketch").map((t) => t.sketch),
   );

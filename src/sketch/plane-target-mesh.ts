@@ -21,7 +21,6 @@ export type PlaneTarget = {
   frame: PlaneFrame;
   group: THREE.Group;
   mesh: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>;
-  hitMesh: THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>;
   button: HTMLButtonElement;
 };
 
@@ -40,13 +39,9 @@ export function createPlaneTargets(world: World, overlay: HTMLElement): PlaneTar
         depthWrite: false,
       }),
       mesh = new THREE.Mesh(geometry, material),
-      hitMesh = new THREE.Mesh(
-        new THREE.BoxGeometry(planeTargetHalfSize * 2, planeTargetHalfSize * 2, 0.3),
-        new THREE.MeshBasicMaterial({ visible: false }),
-      ),
       group = new THREE.Group();
     mesh.renderOrder = 8;
-    group.add(mesh, hitMesh);
+    group.add(mesh);
     group.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(u, v, normal));
     world.scene.add(group);
     const button = document.createElement("button");
@@ -58,7 +53,7 @@ export function createPlaneTargets(world: World, overlay: HTMLElement): PlaneTar
     button.setAttribute("aria-label", `Sketch on ${id}`);
     button.title = `Sketch on ${id}`;
     overlay.append(button);
-    return { id, frame, group, mesh, hitMesh, button };
+    return { id, frame, group, mesh, button };
   });
 }
 
@@ -76,8 +71,6 @@ export function disposePlaneTarget(world: World, target: PlaneTarget): void {
   world.scene.remove(target.group);
   target.mesh.geometry.dispose();
   target.mesh.material.dispose();
-  target.hitMesh.geometry.dispose();
-  target.hitMesh.material.dispose();
 }
 
 export function planeTargetBaseColor(id: PlaneId): string {

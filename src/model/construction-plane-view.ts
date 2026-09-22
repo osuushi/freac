@@ -11,6 +11,7 @@ export class ConstructionPlaneView {
   private labels = document.createElement("div");
   private key = "";
   selected: string | null = null;
+  private hovered: string | null = null;
   choosing = false;
   accepts: ((frame: PlaneFrame) => boolean) | undefined;
   constructor(
@@ -62,12 +63,18 @@ export class ConstructionPlaneView {
     }
     this.selection();
   }
+  hover(id: string | null): void {
+    this.hovered = id;
+    this.selection();
+  }
   private selection(): void {
     for (const root of [this.svg, this.rows, this.labels])
       for (const item of root.querySelectorAll("[data-plane]")) {
         const selected = item.getAttribute("data-plane") === this.selected;
-        if (item.tagName === "polygon") item.classList.toggle("selected", selected);
-        else item.setAttribute("aria-pressed", String(selected));
+        if (item.tagName === "polygon") {
+          item.classList.toggle("selected", selected);
+          item.classList.toggle("hovered", item.getAttribute("data-plane") === this.hovered);
+        } else item.setAttribute("aria-pressed", String(selected));
       }
   }
   private add(plane: ConstructionPlane, name: string): void {

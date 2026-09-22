@@ -18,10 +18,11 @@ const buttonAnchor: Record<PlaneId, Point> = {
 export function installPlaneTargets(
   world: World,
   overlay: HTMLElement,
-  occupied: (point: Point) => boolean,
+  occupied: (point: Point, depth: number) => boolean,
+  onHover: () => void,
 ): () => void {
   const targets = createPlaneTargets(world, overlay),
-    interaction = new PlaneTargetInteraction(world, targets, occupied);
+    interaction = new PlaneTargetInteraction(world, targets, occupied, onHover);
   world.changed.add(interaction.update);
   interaction.update();
   return () => {
@@ -41,7 +42,8 @@ class PlaneTargetInteraction {
   constructor(
     private world: World,
     private targets: PlaneTarget[],
-    private occupied: (point: Point) => boolean,
+    private occupied: (point: Point, depth: number) => boolean,
+    private onHover: () => void,
   ) {
     world.canvas.addEventListener("pointermove", this.pointerMove, {
       signal: this.abort.signal,
@@ -116,7 +118,15 @@ class PlaneTargetInteraction {
     for (const target of this.targets) {
       const screen = this.world.project(worldPoint(target.frame, buttonAnchor[target.id]));
       target.button.style.pointerEvents =
-        this.available(target) && !this.occupied(screen) ? "auto" : "none";
+        this.available(target) &&
+        !this.occupied(
+          screen,
+          new THREE.Vector3(...worldPoint(target.frame, buttonAnchor[target.id])).distanceTo(
+            this.world.camera.position,
+          ),
+        )
+          ? "auto"
+          : "none";
     }
     if (this.lastPointer) this.setHovered(this.hitAt(this.lastPointer));
   };
@@ -133,11 +143,11 @@ class PlaneTargetInteraction {
       this.world.camera,
     );
     const hit = this.raycaster.intersectObjects(
-      available.map((target) => target.hitMesh),
+      available.map((target) => target.mesh),
       false,
-    )[0]?.object;
-    if (!hit || this.occupied(point)) return null;
-    return available.find((target) => target.hitMesh === hit) ?? null;
+    )[0];
+    if (!hit || this.occupied(point, hit.point.distanceTo(this.world.camera.position))) return null;
+    return available.find((target) => target.mesh === hit.object) ?? null;
   }
 
   private available(target: PlaneTarget): boolean {
@@ -149,6 +159,7 @@ class PlaneTargetInteraction {
     if (this.hovered === target) return;
     for (const candidate of this.targets) paint(candidate, candidate === target);
     this.hovered = target;
+    if (target) this.onHover();
     this.world.renderer.render(this.world.scene, this.world.camera);
   }
 
@@ -183,7 +194,6 @@ function layoutTargets(world: World, targets: PlaneTarget[], rect: DOMRect): voi
       screen = world.project(worldPoint(target.frame, buttonAnchor[target.id]));
     target.button.style.left = `${screen.x - rect.left}px`;
     target.button.style.top = `${screen.y - rect.top}px`;
-    target.button.style.pointerEvents = "none";
     target.button.dataset.projectedPolygon = JSON.stringify(corners);
   }
 }
