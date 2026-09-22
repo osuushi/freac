@@ -17,6 +17,7 @@
     "format": "biome check --write package.json tsconfig.json tsconfig.host.json tsconfig.test.json vite.config.ts forge.config.js packaging biome.json scripts tests src",
     "test": "tsc -p tsconfig.test.json && node --test .cache/sketch-tests/tests/*.test.js",
     "test:ui": "node tests/ui.mjs",
+    "test:selection-history": "node tests/selection-history-ui.mjs",
     "test:reconnection": "node tests/boundary-reconnection-ui.mjs",
     "test:edge-move": "node tests/edge-move-ui.mjs",
     "test:face-move": "node tests/face-move-ui.mjs",

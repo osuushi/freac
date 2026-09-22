@@ -46,6 +46,7 @@ export class DocumentOwner {
   get view(): ModelView {
     return {
       data: this.store.data,
+      historySelection: this.store.selection,
       planeCutAvailable: this.planeCutAvailable,
       ...this.solids.offsetEdit.view,
       edgeSize: this.solids.edgeSize,
@@ -113,6 +114,10 @@ export class DocumentOwner {
       this.store.record(describeOperation(request), "failed", error);
       return { view: this.view, error };
     }
+    if (request.kind === "selection") {
+      this.store.selections(request.changes);
+      return { view: this.view };
+    }
     this.kernel.begin();
     const promise = this.execute(request);
     this.active = { kind: request.kind, promise };
@@ -151,6 +156,7 @@ export class DocumentOwner {
     this.pendingOperation = null;
   }
   private async execute(request: ModelRequest): Promise<ModelReply> {
+    const before = this.store.data;
     let operation =
       request.kind === "accept"
         ? (this.pendingOperation ?? describeOperation(request))
@@ -165,7 +171,7 @@ export class DocumentOwner {
           this.kernel,
         );
       else await this.dispatch(request, operation);
-      return { view: this.view };
+      return { view: this.view, documentChanged: before !== this.store.data };
     } catch (error) {
       const message = this.kernel.wasSuperseded
         ? "Preview superseded"

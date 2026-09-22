@@ -121,10 +121,11 @@ async function runDocumentCommand(
   editor.message = command === "open" ? "Opening document…" : "Working with document…";
   editor.refresh();
   try {
+    await editor.store.settled();
     const result = await host.command(command);
     if (result.error) throw new Error(result.error);
     if (result.replaced) {
-      await editor.store.request({ kind: "read" });
+      await editor.store.documentReplaced();
       editor.bodiesVisible = true;
       editor.visibility.hidden.clear();
       editor.selectTargets([]);

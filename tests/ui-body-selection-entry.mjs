@@ -39,6 +39,7 @@ export async function bodySelectionEntryRoute(page, name) {
   assert.deepEqual((await inspect(page)).document, state.document);
   await chooseTool(page, "return to modeling", "modeling");
   await chooseTool(page, "hide bodies", "hide-bodies");
+  await page.getByRole("button", { name: "Show Sketch 1", exact: true }).click();
   await page.mouse.dblclick(top.x, top.y);
   assert.equal((await inspect(page)).activeSketch, original.sketches[0].id);
   console.log(`${name}: body double-click, face Enter/drawing/history and sketch entry passed`);

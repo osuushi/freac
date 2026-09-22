@@ -13,6 +13,7 @@ import type { Quantity } from "./drag-state.js";
 import { actionIntent, type EditAction } from "./edit-intent.js";
 import { editNotice } from "./edit-notice.js";
 import { performHistory } from "./editor-history.js";
+import { replaceSelection } from "./editor-selection.js";
 import { installWorkspaceSync } from "./editor-workspace.js";
 import { ModelClient } from "./model-client.js";
 import { ModelSelection, modelingSketch } from "./model-selection.js";
@@ -21,6 +22,7 @@ import type { Point } from "./planes.js";
 import { type PointMenu, selectedPointHits } from "./point-selection.js";
 import type { RectangleHandle } from "./rectangle-edit.js";
 import { SelectedTargets, type SelectionTarget, targetKey } from "./selected-targets.js";
+import { SelectionHistory } from "./selection-history.js";
 import type { World } from "./world.js";
 
 export type Tool = "select" | "rectangle" | "line" | "circle" | "bezier" | "trim";
@@ -32,6 +34,7 @@ export class SketchEditor {
     },
     (operation, direction) => this.visibility.restoreHistory(this.store.data, operation, direction),
   );
+  readonly selectionHistory = new SelectionHistory(this);
   readonly visibility = new EntityVisibility();
   bodiesVisible = true;
   readonly modeling = new ModelSelection();
@@ -52,20 +55,7 @@ export class SketchEditor {
     this.selectTargets([{ kind: "group", group: id }]);
   }
   selectTargets(targets: readonly SelectionTarget[]): void {
-    const previousOwners = [...this.selectionOwners].sort().join();
-    this.selected.replace(targets);
-    if ([...this.selectionOwners].sort().join() !== previousOwners) {
-      this.pivot = null;
-      this.selectionAngle = 0;
-      this.activeHandle = undefined;
-    }
-    this.moveMode = false;
-    this.pointHover = null;
-    this.constraintHover = null;
-    this.pointMenu = null;
-    this.bowSide = null;
-    this.transformAxis = null;
-    this.transformDistance = 0;
+    replaceSelection(this, targets);
   }
   get selectionOwners(): Set<string> {
     return new Set([...this.selectedCurves, ...selectedPointHits(this).flatMap(hitIds)]);
@@ -111,6 +101,8 @@ export class SketchEditor {
   editDuringDrag: (quantity: Quantity, value: number) => void = () => {};
   constructor(readonly world: World) {
     installWorkspaceSync(this);
+    this.store.selectionHistory = this.selectionHistory;
+    this.world.changed.add(() => this.selectionHistory.observe());
   }
 
   get display(): SketchDocument {

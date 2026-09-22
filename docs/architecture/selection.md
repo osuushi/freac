@@ -107,8 +107,9 @@ The next point drag uses the chosen targets. Whole-curve multiselection keeps it
 existing Shift-add/Command-toggle behavior; a plain point click does not silently
 reduce an existing whole-curve selection. Explicit chooser selection does narrow
 it. Drawing tools continue drawing from visible unselected endpoints. Point choices
-are editor state, never geometry or Undo entries, and clear on tool/history/plane
-changes. Escape dismisses the chooser first while keeping the chosen points.
+are editor state, never geometry. Their ordered targets participate in selection
+Undo; the chooser itself clears on tool/history/plane changes. Escape dismisses
+the chooser first while keeping the chosen points.
 
 Point selection fades blue along incident edges; hovering a diagram fades amber
 along its branches. Center choices highlight associated curves, and concentric

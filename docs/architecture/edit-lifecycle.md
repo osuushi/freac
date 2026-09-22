@@ -82,10 +82,10 @@ single-user serialized semantics rather than introducing collaborative editing.
 
 DocumentStore owns one in-memory ordered history. Each entry records diagnostic
 intent/parameters, time and an outcome: changed, no-op, failed or cancelled.
-A changed entry also owns its before/after document snapshots and its current
-applied/undone state. Undo finds the latest applied change; Redo finds the next
-undone change. Both skip every entry without a geometry change. There is no
-separate error log or second Undo stack.
+A changed document entry also owns its before/after document snapshots and its
+current applied/undone state. Undo finds the latest applied change; Redo finds the next
+undone change. Both skip failed, cancelled and no-op attempts; selection navigation
+is described below. There is no separate error log or second Undo stack.
 
 A failure or no-op after Undo preserves the redo path. A new accepted change
 marks the undone branch superseded and releases its snapshots, but retains its
@@ -111,3 +111,25 @@ or mixed deletion is cancellable; acceptance remains atomic. Cancellation retain
 selection and records a cancelled attempt, while timeout/geometric rejection records
 a failure, without altering geometry or invalidating Redo. Explicit Accept and
 committing sketch edits complete normally rather than being interrupted.
+
+## Selection Undo (founder decision, 2026-09-22)
+
+The same DocumentStore history includes ordered selection snapshots. Completed
+selection changes remain individually undoable at the history tip, including
+blank-click clearing, point choices and modeling targets. Navigation through
+Undo/Redo never evicts these entries. A newly accepted document change supersedes
+all selection entries, both applied and undone; its own before/after selection
+snapshots remain available. Failed, cancelled and no-op edits preserve history.
+A new selection after Undo branches normally, just like a new document change.
+Double-click intermediate selections need no special history grouping.
+
+The renderer buffers completed selection intent, flushing between gestures and
+before each serialized model or history request. Selection writes drain before
+a geometry request starts; they do not block further local selection input. The
+renderer supplies the editing workspace and ordered typed sketch and modeling
+targets; the backend owns their navigation snapshots alongside the
+geometry snapshots. Gesture previews and automatic result-selection updates do
+not create independent selection steps. Undo restores the operation's input
+selection and workspace; Redo restores its result selection. Tool state, camera,
+hover, chooser visibility and other transient controls are not replayed. These
+selection snapshots are in-memory history, not saved document content.

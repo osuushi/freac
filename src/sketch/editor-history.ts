@@ -13,7 +13,6 @@ export async function performHistory(
     }
     await editor.store.settled();
     await editor.store.request({ kind: "undo" });
-    editor.select([]);
     editor.pivot = null;
     editor.overlaps = null;
     editor.activeHandle = undefined;
@@ -25,7 +24,6 @@ export async function performHistory(
   await editor.interactions.cancel();
   await editor.store.settled();
   await editor.store.request({ kind: direction });
-  editor.select([]);
   editor.pivot = null;
   editor.overlaps = null;
   editor.activeHandle = undefined;

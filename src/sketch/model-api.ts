@@ -19,6 +19,7 @@ import type { OperationHistoryEntry } from "./operation-history.js";
 import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
+  | { kind: "selection"; changes: import("./history-selection.js").SelectionChanges }
   | { kind: "rename-entity"; id: string; name: string }
   | { kind: "reorder-entity"; id: string; beforeId: string | null }
   | { kind: "check-plane-cut"; operation: import("../model/plane-cut.js").PlaneCut }
@@ -61,6 +62,7 @@ export type ModelRequest =
   | { kind: "preview" | "edit"; sketch: Sketch; intent?: EditIntent }
   | { kind: "remove" | "clear"; sketchId: string; ids?: string[] };
 export interface ModelView {
+  historySelection?: import("./history-selection.js").HistorySelection;
   planeCutAvailable?: boolean;
   data: SketchDocument;
   offsetDistance?: number;
@@ -77,6 +79,7 @@ export interface ModelView {
   solveMs: number;
 }
 export type ModelReply = {
+  documentChanged?: boolean;
   view: ModelView;
   error?: string;
   history?: OperationHistoryEntry[];
