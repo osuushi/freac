@@ -8,7 +8,7 @@ import { newId, type Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { modelDoubleClick } from "./model-double-click.js";
 import { onModelKeydown } from "./model-keys.js";
-import { modelingSketch, pickModel, pickModels } from "./model-selection.js";
+import { type ModelingTarget, modelingSketch, pickModel, pickModels } from "./model-selection.js";
 import { PlacementControls } from "./placement-controls.js";
 import { worldPoint } from "./planes.js";
 import type { Profile } from "./profiles.js";
@@ -36,7 +36,9 @@ export class ModelControls {
     const options = { signal: this.abort.signal },
       canvas = editor.world.canvas;
     this.bindCanvas(canvas, options);
-    modelDoubleClick(editor, overlay, this.abort.signal, (event) => this.doubleClick(event));
+    modelDoubleClick(editor, overlay, this.abort.signal, (event, before) =>
+      this.doubleClick(event, before),
+    );
     this.installKeys(options);
   }
   private registerTools(): void {
@@ -151,18 +153,22 @@ export class ModelControls {
       options,
     );
   }
-  private doubleClick(event: MouseEvent): void {
-    if (event.shiftKey || event.metaKey || event.ctrlKey) return;
+  private doubleClick(event: MouseEvent, before: ModelingTarget[]): void {
     const editor = this.editor;
     if (editor.world.active || editor.blocked || editor.isDragging || editor.interactions.current)
       return;
     const target = pickModel(editor, { x: event.clientX, y: event.clientY });
     if (target?.kind === "face" || target?.kind === "edge" || target?.kind === "body") {
-      editor.modeling.choose({ kind: "body", body: target.body }, false, false);
+      editor.modeling.targets = before;
+      editor.modeling.choose(
+        { kind: "body", body: target.body },
+        event.shiftKey,
+        event.metaKey || event.ctrlKey,
+      );
       editor.modeling.alternatives = [];
       this.placement.enabled = false;
       editor.refresh();
-    } else if (target) this.enter();
+    } else if (target && !event.shiftKey && !event.metaKey && !event.ctrlKey) this.enter();
   }
   private installKeys(options: { signal: AbortSignal }): void {
     const editor = this.editor;

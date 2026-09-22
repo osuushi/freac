@@ -1,4 +1,5 @@
 import type { SketchEditor } from "./editor.js";
+import type { ModelingTarget } from "./model-selection.js";
 import { pointerDragThreshold } from "./pointer-intent.js";
 
 /** Preserve double taps across tip drift and newly displayed modeling widgets. */
@@ -6,11 +7,12 @@ export function modelDoubleClick(
   editor: SketchEditor,
   overlay: HTMLElement,
   signal: AbortSignal,
-  select: (event: MouseEvent) => void,
+  select: (event: MouseEvent, before: ModelingTarget[]) => void,
 ): void {
   new ModelDoubleClick(editor, overlay, signal, select);
 }
 class ModelDoubleClick {
+  private before: ModelingTarget[] = [];
   private first: MouseEvent | null = null;
   private second: { down: PointerEvent; pick: MouseEvent } | null = null;
   private consumeClick = false;
@@ -19,13 +21,13 @@ class ModelDoubleClick {
     private editor: SketchEditor,
     private overlay: HTMLElement,
     signal: AbortSignal,
-    private select: (event: MouseEvent) => void,
+    private select: (event: MouseEvent, before: ModelingTarget[]) => void,
   ) {
     const options = { signal, capture: true };
     editor.world.canvas.addEventListener(
       "dblclick",
       (event) => {
-        if (performance.now() >= this.penClickUntil) select(event);
+        if (performance.now() >= this.penClickUntil) this.select(event, this.before);
       },
       { signal },
     );
@@ -53,9 +55,13 @@ class ModelDoubleClick {
       const previous = this.first;
       this.first = null;
       consume(event);
-      this.select(previous);
+      this.select(previous, this.before);
       return;
     }
+    // Capture before the canvas click changes faces/edges; a double-click
+    // applies its whole-body intent once against this original selection.
+    if (event.target === this.editor.world.canvas && event.detail === 1)
+      this.before = [...this.editor.modeling.targets];
     this.first = event.target === this.editor.world.canvas && event.detail === 1 ? event : null;
   };
   private down = (event: PointerEvent): void => {
@@ -98,7 +104,7 @@ class ModelDoubleClick {
       Math.hypot(event.clientX - down.clientX, event.clientY - down.clientY) <=
       pointerDragThreshold(down)
     )
-      this.select(pick);
+      this.select(pick, this.before);
   };
   private reset = (): void => {
     this.first = null;

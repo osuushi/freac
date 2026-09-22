@@ -3,6 +3,7 @@ import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { plate } from "./ui-body-fillet.mjs";
+import { bodyMultiselectRoute } from "./ui-body-multiselect.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { modelFrustumSelectionRoute } from "./ui-model-frustum-selection.mjs";
 
@@ -49,6 +50,7 @@ try {
       }
       const errors = [];
       page.on("pageerror", (e) => errors.push(e.message));
+      await bodyMultiselectRoute(page, name);
       await mouseSelection(page, name);
       assert.deepEqual(errors, []);
     } finally {

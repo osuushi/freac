@@ -76,6 +76,9 @@ founder feedback update these contracts before further tools depend on them.
   (also when Shift is held). This applies to sketch/model canvas picks, Entities,
   overlap choices and the point chooser. Modified double-clicks retain these
   selection rules rather than entering a sketch or selecting a connected component.
+  Body face/edge double-clicks promote to whole-body selection: Shift adds and
+  Command/Ctrl toggles against the selection before the first click, preserving
+  unrelated targets and order without retaining intermediate face/edge clicks.
   Command-click toggles; Command-drag still orbits after the pointer drag threshold.
   Shift-box adds and Ctrl-box toggles, preserving unrelated selected points.
   Dragging a selection box from empty space
