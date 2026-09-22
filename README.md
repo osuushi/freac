@@ -130,11 +130,13 @@ Someone intercepting it could access the drawing, computer files, and agent.
 
 ## Report a problem
 
-When running the development app (`npm run dev`), open Tools and choose
-**Capture fixture**, then **Copy fixture path**. Include that path and what you
-expected to happen when reporting the problem. The capture contains the model
-and editing state needed to reproduce it; captures stay local and are never
-uploaded automatically. A screenshot can help explain what you saw.
+In the desktop app, open Tools and choose **Capture fixture**. Drag the resulting
+JSON file into an issue or Codex, or use **Show in folder**. Clicking the file
+downloads a copy (also available in browsers). **Copy fixture path** remains
+available for local debugging. Include what you expected to happen. The capture
+contains the model and editing state needed to reproduce it; captures stay local and are never
+uploaded automatically. Files are stored in the system temporary directory; attach
+or save a copy before the OS clears them. A screenshot can help explain what you saw.
 
 ## Development
 

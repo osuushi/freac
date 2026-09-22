@@ -8,6 +8,11 @@ contextBridge.exposeInMainWorld("freacFixture", (snapshot: unknown) =>
   ipcRenderer.invoke("capture-fixture", snapshot),
 );
 
+contextBridge.exposeInMainWorld("freacFixtureFile", {
+  drag: () => ipcRenderer.send("drag-fixture"),
+  reveal: () => ipcRenderer.send("reveal-fixture"),
+});
+
 contextBridge.exposeInMainWorld("freacIPad", {
   status: () => ipcRenderer.invoke("ipad-status"),
   start: () => ipcRenderer.invoke("ipad-start"),

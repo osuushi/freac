@@ -129,9 +129,9 @@ isolated VM; use Chromium/WebKit, not Firefox by default. Hidden Electron checks
 are needed for its host/preload boundary. Reserve visible apps for product review.
 Own and clean up test browsers, apps, native children, profiles and ports.
 
-For founder-reported model bugs, use the development **Capture fixture** action
-and read the resulting `.cache/fixtures/.../fixture.json` directly. Do not use
-computer use to extract the live model. Ask for a fixture path if one is missing.
+For founder-reported model bugs, use the **Capture fixture** action
+and read the resulting temporary JSON file directly (use the displayed capture path).
+Do not use computer use to extract the live model. Ask for a fixture path if one is missing.
 
 Keep TICKETS.md local and untracked. Commit small reviewed units after relevant
 checks. Preserve user work and the old prototype in Git. Setup must be reproducible

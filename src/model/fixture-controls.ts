@@ -1,38 +1,14 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { saveFixture } from "./fixture-host.js";
+import { fixtureResult } from "./fixture-result.js";
 
 /** Capture accepted and temporary geometry without finishing or cancelling the tool. */
 export function fixtureControls(editor: SketchEditor, toolbar: HTMLElement): () => void {
   let capturing = false;
-  const result = document.createElement("input");
-  result.readOnly = true;
-  result.hidden = true;
-  result.setAttribute("aria-label", "Captured fixture path");
-  result.title = "Copy this path into the conversation";
-  result.style.width = "100%";
-  const copy = document.createElement("button");
-  copy.dataset.fixture = "capture";
-  copy.textContent = "Copy fixture path";
-  copy.hidden = true;
-  copy.onclick = async () => {
-    try {
-      await navigator.clipboard.writeText(result.value);
-    } catch {
-      result.focus();
-      result.select();
-    }
-  };
-  // Keep a click from accepting the active tool or changing its selection.
-  for (const element of [result, copy])
-    element.addEventListener("pointerdown", (event) => {
-      if (event instanceof PointerEvent && event.button === 0) {
-        event.stopPropagation();
-        event.preventDefault();
-      }
-    });
+  const result = fixtureResult(toolbar);
   const capture = async () => {
-    if (editor.blocked) return;
+    if (editor.blocked || capturing) return;
     capturing = true;
     const snapshot = {
       document: editor.store.data,
@@ -66,8 +42,7 @@ export function fixtureControls(editor: SketchEditor, toolbar: HTMLElement): () 
     try {
       const history = await editor.store.history();
       const saved = await saveFixture({ ...snapshot, history });
-      result.value = saved.path;
-      result.hidden = copy.hidden = false;
+      result.show(saved);
     } catch (error) {
       editor.message = `Fixture capture failed: ${error instanceof Error ? error.message : String(error)}`;
     } finally {
@@ -75,10 +50,6 @@ export function fixtureControls(editor: SketchEditor, toolbar: HTMLElement): () 
       editor.refresh();
     }
   };
-  const output = document.createElement("div");
-  output.className = "fixture-result";
-  output.append(result, copy);
-  toolbar.append(output);
   const dispose = toolCatalog(editor).register({
     id: "capture",
     label: "Capture fixture",
@@ -89,6 +60,6 @@ export function fixtureControls(editor: SketchEditor, toolbar: HTMLElement): () 
   });
   return () => {
     dispose();
-    output.remove();
+    result.dispose();
   };
 }

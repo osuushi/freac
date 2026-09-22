@@ -1,11 +1,18 @@
+export interface CapturedFixture {
+  path: string;
+  name: string;
+  contents: string;
+}
+
 declare global {
   interface Window {
-    freacFixture?: (snapshot: unknown) => Promise<{ path: string }>;
+    freacFixtureFile?: { drag(): void; reveal(): void };
+    freacFixture?: (snapshot: unknown) => Promise<CapturedFixture>;
   }
 }
 
 /** Desktop and paired browsers save through the host; local web development uses Vite. */
-export async function saveFixture(snapshot: unknown): Promise<{ path: string }> {
+export async function saveFixture(snapshot: unknown): Promise<CapturedFixture> {
   if (window.freacFixture) return window.freacFixture(snapshot);
   const response = await fetch("/__freac_fixture", {
     method: "POST",

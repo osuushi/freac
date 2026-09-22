@@ -138,8 +138,29 @@
   z-index: 40;
   max-width: calc(100% - 48px);
   display: flex;
+  flex-wrap: wrap;
+  width: 420px;
+  padding: 12px;
+  border: 1px solid #d4dce3;
+  border-radius: 10px;
+  background: #f8f9fb;
+  box-shadow: 0 4px 20px #18283818;
   gap: 8px;
 }
+.fixture-result > a,
+.fixture-result > span,
+.fixture-result > input {
+  width: 100%;
+  min-width: 0;
+}
+.fixture-file {
+  padding: 10px;
+  border: 1px solid #b7c8da;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+  cursor: grab;
+}
+.fixture-result[hidden],
 .fixture-result [hidden] {
   display: none;
 }

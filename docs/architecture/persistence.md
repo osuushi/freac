@@ -122,3 +122,14 @@ it unsaved. Save then embeds the recovered content. Recovery also handles area 1
 workspace folders and selects matching session metadata from Freac's former shared
 Codex home. It never imports personal Codex homes. Geometry autosave/crash recovery
 and automatic recovery selection remain outside this increment.
+
+## Diagnostic fixtures
+
+Capture fixture is available in production and preserves the active tool, preview,
+accepted model and Undo. It writes a self-contained, timestamped JSON fixture under
+the OS temporary directory (freac-fixtures), independent of the working directory.
+Accepted/preview .freac sidecars remain available for local reproduction. The result
+provides native Electron file drag, reveal, download and copy path; browsers download
+the same JSON bytes. Native actions resolve only the last capture for that window,
+never a renderer-supplied path. Captures are local, retained for attachment and subject
+to OS temporary-file cleanup; they are never automatically uploaded.

@@ -63,7 +63,8 @@ The former panel actions are registered under these homes:
 | View | Existing visibility controls, Grid snap, return to Modeling |
 | Document & Edit | New, Open, Save, Export STL/3MF, Undo, Redo, Delete, Clear sketch |
 
-Capture fixture belongs in a development-only section. Essential compact file/history
+Capture fixture remains available in production under Development. Its result offers
+a draggable file, download, reveal and copy-path actions. Essential compact file/history
 access may remain in the header; do not replace the panel with another expanded
 strip. Local constraint controls remain usable; searchable entries invoke the same
 actions. Catalog names must reflect implemented capabilities. Deferred features

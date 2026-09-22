@@ -1,4 +1,5 @@
 import { mkdir } from "node:fs/promises";
+import { resolve } from "node:path";
 import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
@@ -14,7 +15,8 @@ try {
       let page;
       if (name.startsWith("electron")) {
         app = await launchElectron({
-          args: ["."],
+          args: [resolve(".")],
+          cwd: name === "electron-built" ? "/" : process.cwd(),
           env: {
             ...process.env,
             FREAC_TEST_HIDDEN: "1",
@@ -28,7 +30,7 @@ try {
         await page.goto(server.resolvedUrls.local[0]);
       }
       page.setDefaultTimeout(10000);
-      await fixtureRoute(page, name);
+      await fixtureRoute(page, name, app);
       const denied = await page.request.post(
         new URL("/__freac_fixture", server.resolvedUrls.local[0]).href,
         {

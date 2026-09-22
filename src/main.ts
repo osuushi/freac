@@ -2,10 +2,10 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, ipcMain } from "electron";
 import { DocumentOwner } from "./backend/document-owner.js";
-import { captureFixture } from "./backend/fixture-capture.js";
 import { NativeSolver } from "./backend/native-solver.js";
 import { AgentSession } from "./host/agent-session.js";
 import { DocumentSession } from "./host/document-session.js";
+import { installFixtureCapture } from "./host/fixture-capture.js";
 import { IPadSession } from "./host/ipad-session.js";
 import { nativeExecutable } from "./host/native-paths.js";
 import type { ModelRequest } from "./sketch/model-api.js";
@@ -23,12 +23,7 @@ const owner = new DocumentOwner(
 let documents: DocumentSession;
 let agent: AgentSession;
 let ipad: IPadSession;
-ipcMain.handle("capture-fixture", (event, snapshot: unknown) => {
-  if (event.senderFrame !== event.sender.mainFrame || !BrowserWindow.fromWebContents(event.sender))
-    throw new Error("Fixture capture requires the document window");
-  documents.checkDesktop();
-  return captureFixture(snapshot, app.isPackaged ? app.getPath("userData") : process.cwd());
-});
+installFixtureCapture(() => documents.checkDesktop(), icon);
 ipcMain.handle("sketch", (event, request: ModelRequest) => {
   if (event.senderFrame !== event.sender.mainFrame) throw new Error("Main frame only");
   documents.checkDesktop();
