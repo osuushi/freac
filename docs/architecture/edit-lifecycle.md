@@ -97,6 +97,9 @@ Cancellation records the abandoned pending operation without an Undo step.
 A read-only `read-history` request exposes cloned metadata without Undo snapshots;
 `window.freacHistory()` and Capture fixture use this same path. Sketch inputs are
 retained; Open diagnostics summarize IDs rather than copying complete BReps.
+Fixture captures use `.cache/fixtures` under the development working directory,
+or under Electron’s writable user-data directory in packaged desktop/iPad-host
+sessions, independent of the app launch directory.
 The history survives renderer reload with its backend owner. New/Open starts a
 fresh document history; failed Open leaves the existing history intact. Normal
 Save/Open does not serialize or replay these records. This is diagnostic memory

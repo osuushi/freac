@@ -27,7 +27,7 @@ ipcMain.handle("capture-fixture", (event, snapshot: unknown) => {
   if (event.senderFrame !== event.sender.mainFrame || !BrowserWindow.fromWebContents(event.sender))
     throw new Error("Fixture capture requires the document window");
   documents.checkDesktop();
-  return captureFixture(snapshot);
+  return captureFixture(snapshot, app.isPackaged ? app.getPath("userData") : process.cwd());
 });
 ipcMain.handle("sketch", (event, request: ModelRequest) => {
   if (event.senderFrame !== event.sender.mainFrame) throw new Error("Main frame only");

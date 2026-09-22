@@ -1,4 +1,4 @@
-import { type BrowserWindow, ipcMain } from "electron";
+import { app, type BrowserWindow, ipcMain } from "electron";
 import type { InspectionView } from "../agent/inspection-protocol.js";
 import type { AgentRequest } from "../agent/protocol.js";
 import { captureFixture } from "../backend/fixture-capture.js";
@@ -71,7 +71,7 @@ export class IPadSession {
   private request = async (method: string, value: unknown): Promise<unknown> => {
     switch (method) {
       case "capture-fixture":
-        return captureFixture(value);
+        return captureFixture(value, app.isPackaged ? app.getPath("userData") : process.cwd());
       case "model":
         return this.documents.model(value as ModelRequest);
       case "agent":
