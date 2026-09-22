@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
 /* Freac P0 adaptation: replace the narrow FreeCAD logging/unreachable surface.
  * No solver equations or numerical policy are changed. */
 #pragma once

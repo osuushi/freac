@@ -1,0 +1,18 @@
+{
+  "electronVersion": "44.3.0",
+  "electronCommit": "07e460719c75b2ec5ee4893f7d2192ef31c7b8c2",
+  "releaseTag": "runtime-sources-electron-44.3.0",
+  "archives": [
+    {
+      "name": "electron-44.3.0.tar.gz",
+      "url": "https://codeload.github.com/electron/electron/tar.gz/v44.3.0",
+      "sha256": "2b35855d20224be5a02f8588c3de74b3e5d06bba49a4bad382c238790c7198d9"
+    },
+    {
+      "name": "chromium-152.0.7977.78.tar.xz",
+      "url": "https://commondatastorage.googleapis.com/chromium-browser-official/chromium-152.0.7977.78.tar.xz",
+      "sha256": "16bb4164faa455d1e6a43320b3c0e4c895a93138e892a1bbf7e801863dc4bc74",
+      "size": 5916191748
+    }
+  ]
+}

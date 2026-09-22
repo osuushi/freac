@@ -3,6 +3,8 @@ import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { nativeFlags, prepareHeaders } from "./native-inputs.mjs";
+import { sdkCacheKey } from "./release/cache-key.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 const cache = resolve(root, ".cache/kernel");
@@ -11,8 +13,8 @@ const run = (command, args) => {
   if (result.error) throw result.error;
   if (result.status !== 0) process.exit(result.status ?? 1);
 };
-const architecture = process.env.CMAKE_OSX_ARCHITECTURES;
-const flags = architecture ? [`-DCMAKE_OSX_ARCHITECTURES=${architecture}`] : [];
+const flags = nativeFlags();
+const headers = await prepareHeaders();
 let sdk = process.env.OCCT_ROOT;
 if (!sdk) {
   const commit = "a016080bf6738d6aeae020badee4e888ad1540a5";
@@ -33,36 +35,42 @@ if (!sdk) {
   const source = resolve(cache, "source"),
     build = resolve(cache, "build");
   sdk = resolve(cache, "sdk");
+  const cacheKey = await sdkCacheKey();
+  const cacheMarker = resolve(sdk, ".freac-sdk");
+  const cached = existsSync(cacheMarker) && (await readFile(cacheMarker, "utf8")) === cacheKey;
   await mkdir(source, { recursive: true });
   if (!existsSync(resolve(source, "CMakeLists.txt")))
     run("tar", ["-xzf", archive, "-C", source, "--strip-components=1"]);
-  run("cmake", [
-    "-S",
-    source,
-    "-B",
-    build,
-    `-DCMAKE_INSTALL_PREFIX=${sdk}`,
-    "-DCMAKE_BUILD_TYPE=Release",
-    "-DBUILD_LIBRARY_TYPE=Shared",
-    ...flags,
-    ...["FoundationClasses", "ModelingData", "ModelingAlgorithms"].map(
-      (m) => `-DBUILD_MODULE_${m}=ON`,
-    ),
-    ...["Visualization", "ApplicationFramework", "DataExchange", "DETools", "Draw"].map(
-      (m) => `-DBUILD_MODULE_${m}=OFF`,
-    ),
-    "-DUSE_TBB=OFF",
-    "-DBUILD_USE_PCH=OFF",
-  ]);
-  run("cmake", [
-    "--build",
-    build,
-    "--config",
-    "Release",
-    "--parallel",
-    process.env.CMAKE_BUILD_PARALLEL_LEVEL ?? "4",
-  ]);
-  run("cmake", ["--install", build, "--config", "Release"]);
+  if (!cached) {
+    run("cmake", [
+      "-S",
+      source,
+      "-B",
+      build,
+      `-DCMAKE_INSTALL_PREFIX=${sdk}`,
+      "-DCMAKE_BUILD_TYPE=Release",
+      "-DBUILD_LIBRARY_TYPE=Shared",
+      ...flags,
+      ...["FoundationClasses", "ModelingData", "ModelingAlgorithms"].map(
+        (m) => `-DBUILD_MODULE_${m}=ON`,
+      ),
+      ...["Visualization", "ApplicationFramework", "DataExchange", "DETools", "Draw"].map(
+        (m) => `-DBUILD_MODULE_${m}=OFF`,
+      ),
+      "-DUSE_TBB=OFF",
+      "-DBUILD_USE_PCH=OFF",
+    ]);
+    run("cmake", [
+      "--build",
+      build,
+      "--config",
+      "Release",
+      "--parallel",
+      process.env.CMAKE_BUILD_PARALLEL_LEVEL ?? "4",
+    ]);
+    run("cmake", ["--install", build, "--config", "Release"]);
+    await writeFile(cacheMarker, cacheKey);
+  } else console.log(`Using cached OCCT SDK ${cacheKey}`);
 }
 const build = resolve(root, ".build/kernel");
 run("cmake", [
@@ -73,5 +81,6 @@ run("cmake", [
   `-DCMAKE_PREFIX_PATH=${resolve(sdk)}`,
   "-DCMAKE_BUILD_TYPE=Release",
   ...flags,
+  ...headers.filter((flag) => flag.startsWith("-DBOOST")),
 ]);
 run("cmake", ["--build", build, "--config", "Release", "--parallel", "4"]);

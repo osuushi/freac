@@ -7,17 +7,13 @@ import { NativeSolver } from "./backend/native-solver.js";
 import { AgentSession } from "./host/agent-session.js";
 import { DocumentSession } from "./host/document-session.js";
 import { IPadSession } from "./host/ipad-session.js";
+import { nativeExecutable } from "./host/native-paths.js";
 import type { ModelRequest } from "./sketch/model-api.js";
 
 const directory = dirname(fileURLToPath(import.meta.url));
 const owner = new DocumentOwner(
-  new NativeSolver(
-    join(
-      directory,
-      "../solver/bin",
-      process.platform === "win32" ? "freac-solver.exe" : "freac-solver",
-    ),
-  ),
+  new NativeSolver(nativeExecutable("solver")),
+  nativeExecutable("kernel"),
 );
 let documents: DocumentSession;
 let agent: AgentSession;
@@ -36,8 +32,9 @@ ipcMain.handle("sketch", (event, request: ModelRequest) => {
 app.on("will-quit", () => owner.close());
 const hidden = process.env.FREAC_TEST_HIDDEN === "1";
 let opening: Promise<void> | null = null;
+let documentWindow: BrowserWindow | null = null;
 function openWindow(): Promise<void> {
-  const existing = BrowserWindow.getAllWindows()[0];
+  const existing = documentWindow;
   if (existing) {
     if (!hidden) existing.show();
     return Promise.resolve();
@@ -65,6 +62,10 @@ async function createWindow(): Promise<void> {
       backgroundThrottling: !hidden,
     },
   });
+  documentWindow = window;
+  window.on("closed", () => {
+    documentWindow = null;
+  });
   documents.attach(window);
   agent.attach(window);
   ipad.attach(window);
@@ -82,7 +83,7 @@ app
     await documents.restore();
     await openWindow();
     app.on("activate", () => {
-      if (!BrowserWindow.getAllWindows().length) void openWindow();
+      if (!documentWindow) void openWindow();
     });
   })
   .catch((error: unknown) => {

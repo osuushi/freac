@@ -14,6 +14,7 @@ Upstream source headers carry LGPL-2.1-or-later notices, retained in the build
 inputs. Source: https://github.com/FreeCAD/FreeCAD/tree/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Sketcher/App/planegcs
 The additional Boost graph wrapper retains its upstream copyright/license header.
 Eigen and Boost headers are build prerequisites and retain their own licenses.
-Do not distribute binaries without the corresponding license notices and source/
-rebuild materials; this checkout provides the manifest and adaptation, not an
-installer or final application licensing package.
+Freac's wrapper and compatibility shim are LGPL-2.1-or-later, like the rest of
+Freac's original code. Release source archives contain the complete Freac tree,
+original and adapted PlaneGCS files, pinned headers, and rebuild instructions.
+See [release compliance](../../docs/releases.md#source-and-license-distribution).

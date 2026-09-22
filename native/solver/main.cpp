@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: LGPL-2.1-or-later
 #include "GCS.h"
 #include <boost/property_tree/json_parser.hpp>
 #include <array>

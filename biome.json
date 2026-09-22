@@ -5,6 +5,8 @@
       "package.json",
       "tsconfig*.json",
       "vite.config.ts",
+      "forge.config.js",
+      "packaging/*.json",
       "biome.json",
       "scripts/**",
       "tests/**",

@@ -30,9 +30,12 @@ accepted model, so you can adjust the operation and try again.
 
 ## Get started
 
-You’ll need Node.js 24, a C++20 compiler, CMake, and Eigen and Boost headers.
-On macOS, use Xcode Command Line Tools and the Homebrew `cmake`, `eigen`, and
-`boost` packages. See the [build guide](docs/development.md#setup-and-run) for
+Freac's original code is [LGPL-2.1-or-later](COPYING.md). See the
+[macOS release guide](docs/releases.md) for packaging, signing and source distribution.
+
+You’ll need Node.js 24, a C++20 compiler and CMake. Setup downloads verified,
+pinned Eigen and Boost headers. On macOS, use Xcode Command Line Tools and
+Homebrew's `cmake` package. See the [build guide](docs/development.md#setup-and-run) for
 other platforms, architecture settings, and native SDK options.
 
 From a checkout of this repository, activate the Node version in `.nvmrc`

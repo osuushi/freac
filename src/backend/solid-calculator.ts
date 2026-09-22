@@ -54,14 +54,13 @@ export class SolidCalculator extends NativeCalculator<
   KernelResult
 > {
   private superseded = false;
-  constructor() {
-    super(
-      resolve(
-        ".build/kernel/bin",
-        process.platform === "win32" ? "freac-kernel.exe" : "freac-kernel",
-      ),
-      "Solid kernel",
-    );
+  constructor(
+    executable = resolve(
+      ".build/kernel/bin",
+      process.platform === "win32" ? "freac-kernel.exe" : "freac-kernel",
+    ),
+  ) {
+    super(executable, "Solid kernel");
   }
   begin(): void {
     this.superseded = false;

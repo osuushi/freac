@@ -32,6 +32,10 @@ export async function extrudeRoute(page, name) {
   await chooseTool(page, "sketch on face", "sketch-on-face");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [3, 0]);
+  // Grid spacing can round the pointer placement to 4 mm at this viewport size.
+  // Enter the intended radius through the ordinary precision control.
+  await page.getByRole("textbox", { name: "Radius", exact: true }).fill("3");
+  await page.keyboard.press("Enter");
   const center = await at(page, 0, 0);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(center.x, center.y);
@@ -45,24 +49,7 @@ export async function extrudeRoute(page, name) {
   await page.keyboard.press("Enter");
   await inspect(page);
   await page.screenshot({ path: `.cache/sketch-review/${name}-plate-hole.png` });
-  await page.mouse.click(pick.x, pick.y);
-  await chooseTool(page, "sketch on face", "sketch-on-face");
-  await page.keyboard.press("r");
-  await drag(page, [7, -12], [9, 12]);
-  const cut = await at(page, 8, 0);
-  await chooseTool(page, "return to modeling", "modeling");
-  await page.mouse.click(cut.x, cut.y);
-  if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
-    await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
-  await page.getByRole("textbox", { name: "Extrusion distance" }).fill("-10");
-  await page.keyboard.press("Enter");
-  state = await inspect(page);
-  assert.equal(state.preview.bodies.length, 2);
-  assert.equal(state.document.bodies.length, 1);
-  await page.keyboard.press("Enter");
-  state = await inspect(page);
-  assert.equal(state.document.bodies.length, 2);
-  const splitBodies = state.document.bodies;
+  const splitBodies = await splitPlate(page, pick);
   await chooseTool(page, "undo", "undo");
   assert.equal((await inspect(page)).document.bodies.length, 1);
   await chooseTool(page, "redo", "redo");
@@ -76,6 +63,30 @@ export async function extrudeRoute(page, name) {
   assert.deepEqual(state.document.bodies, splitBodies);
   await page.screenshot({ path: `.cache/sketch-review/${name}-split-face-sketch.png` });
   await reopen(page, name, splitBodies);
+}
+
+async function splitPlate(page, pick) {
+  await page.mouse.click(pick.x, pick.y);
+  await chooseTool(page, "sketch on face", "sketch-on-face");
+  await page.keyboard.press("r");
+  const grid = String((await inspect(page)).gridSnap) === "true";
+  if (grid) await chooseTool(page, "grid snap", "grid");
+  await drag(page, [7, -12], [9, 12]);
+  if (grid) await chooseTool(page, "grid snap", "grid");
+  const cut = await at(page, 8, 0);
+  await chooseTool(page, "return to modeling", "modeling");
+  await page.mouse.click(cut.x, cut.y);
+  if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
+    await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
+  await page.getByRole("textbox", { name: "Extrusion distance" }).fill("-10");
+  await page.keyboard.press("Enter");
+  let state = await inspect(page);
+  assert.equal(state.preview.bodies.length, 2);
+  assert.equal(state.document.bodies.length, 1);
+  await page.keyboard.press("Enter");
+  state = await inspect(page);
+  assert.equal(state.document.bodies.length, 2);
+  return state.document.bodies;
 }
 
 async function undoModalExtrusion(page, pick) {

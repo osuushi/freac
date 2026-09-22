@@ -7,13 +7,11 @@ everyday use, see [FreAC — Free Agentic CAD](../README.md).
 
 Install Node.js 24 (24.15.0 or later within 24.x), which includes npm. With nvm,
 run `nvm install` and `nvm use` in this repository; `.nvmrc` pins the tested version.
-The sketch solver also needs a C++20 compiler, CMake, Eigen headers and Boost
-headers. On macOS, install Xcode Command Line Tools and use Homebrew's `cmake`,
-`eigen` and `boost` packages. Linux needs the corresponding compiler/CMake,
-`libeigen3-dev` and `libboost-dev` packages. Windows needs a C++20-capable Visual
-Studio toolchain, CMake and Eigen/Boost headers (for example through vcpkg).
-CMake locates the headers; set `CMAKE_PREFIX_PATH` to your dependency installation
-prefix if they are not in a standard location. No Qt or FreeCAD application build
+The sketch solver also needs a C++20 compiler and CMake. On macOS, install Xcode
+Command Line Tools and Homebrew's `cmake` package. Linux needs compiler/CMake
+packages. Windows needs a C++20-capable Visual Studio toolchain and CMake.
+Setup downloads checksum-pinned Eigen 5.0.1 and Boost 1.90.0 archives into
+`.cache/release-inputs` and uses their headers explicitly. No Qt or FreeCAD build
 is needed. Linux/Windows build execution remains unverified.
 
 Run all commands in this guide from the repository root, after activating `.nvmrc`:
@@ -70,8 +68,8 @@ format cached upstream sources.
 To repeat setup from committed source, create a separate checkout with
 `git worktree add --detach ../freac-clean HEAD`, enter it, activate `.nvmrc`,
 and run the setup and check commands above. Start without copying `node_modules/`,
-`.build/` or `.cache/` from another checkout. The compiler, CMake and Eigen/Boost
-headers remain system prerequisites; native sources are downloaded and verified.
+`.build/` or `.cache/` from another checkout. The compiler and CMake remain system
+prerequisites; native sources and headers are downloaded and verified.
 
 ### Sketch and solid tools
 

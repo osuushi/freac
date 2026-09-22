@@ -1,5 +1,6 @@
 import { Menu } from "electron";
 import type { DocumentCommand } from "../model/document-host.js";
+import { showAbout, showLicenses } from "./about.js";
 
 export function installDocumentMenu(dispatch: (command: DocumentCommand) => void): void {
   const item = (label: string, accelerator: string, command: DocumentCommand) => ({
@@ -9,7 +10,24 @@ export function installDocumentMenu(dispatch: (command: DocumentCommand) => void
   });
   Menu.setApplicationMenu(
     Menu.buildFromTemplate([
-      ...(process.platform === "darwin" ? [{ role: "appMenu" as const }] : []),
+      ...(process.platform === "darwin"
+        ? [
+            {
+              label: "Freac",
+              submenu: [
+                { label: "About Freac", click: () => void showAbout() },
+                { type: "separator" as const },
+                { role: "services" as const },
+                { type: "separator" as const },
+                { role: "hide" as const },
+                { role: "hideOthers" as const },
+                { role: "unhide" as const },
+                { type: "separator" as const },
+                { role: "quit" as const },
+              ],
+            },
+          ]
+        : []),
       {
         label: "File",
         submenu: [
@@ -37,6 +55,13 @@ export function installDocumentMenu(dispatch: (command: DocumentCommand) => void
       },
       { role: "viewMenu" },
       { role: "windowMenu" },
+      {
+        label: "Help",
+        submenu: [
+          { label: "About Freac", click: () => void showAbout() },
+          { label: "Third-party licenses", click: () => void showLicenses() },
+        ],
+      },
     ]),
   );
 }

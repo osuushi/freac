@@ -3,11 +3,12 @@ import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, resolve } from "node:path";
+import { nativeFlags, prepareHeaders } from "./native-inputs.mjs";
 
 const root = resolve(import.meta.dirname, "..");
 const source = resolve(root, ".cache/solver/source");
 const build = resolve(root, ".build/solver");
-const architecture = process.env.CMAKE_OSX_ARCHITECTURES;
+const headers = await prepareHeaders();
 const commit = "78e4038a564e4c8bfebb40119b41d67531232223";
 const manifest = JSON.parse(await readFile(resolve(root, "native/solver/sources.json"), "utf8"));
 await mkdir(source, { recursive: true });
@@ -24,12 +25,14 @@ for (const [path, hash] of Object.entries(manifest)) {
   if (createHash("sha256").update(data).digest("hex") !== hash)
     throw new Error(`Pinned source hash mismatch: ${path}`);
   // Same narrow host adaptation as the isolated P0 proof; solver mathematics unchanged.
-  const adapted = data
-    .toString()
-    .replaceAll("../../SketcherGlobal.h", "SketcherGlobal.h")
-    .replace("#include <Base/Tools.h>", '#include "p0_base_compat.h"')
-    .replace("#include <Base/Console.h>", "")
-    .replace("#include <FCConfig.h>", "");
+  const adapted =
+    "// Freac adaptation (2026-09-22): host includes/export declarations only.\n" +
+    data
+      .toString()
+      .replaceAll("../../SketcherGlobal.h", "SketcherGlobal.h")
+      .replace("#include <Base/Tools.h>", '#include "p0_base_compat.h"')
+      .replace("#include <Base/Console.h>", "")
+      .replace("#include <FCConfig.h>", "");
   const destination = resolve(source, basename(path));
   if (!existsSync(destination) || (await readFile(destination, "utf8")) !== adapted)
     await writeFile(destination, adapted);
@@ -45,7 +48,8 @@ for (const args of [
     build,
     `-DPLANEGCS_SOURCE=${source}`,
     "-DCMAKE_BUILD_TYPE=Release",
-    ...(architecture ? [`-DCMAKE_OSX_ARCHITECTURES=${architecture}`] : []),
+    ...headers,
+    ...nativeFlags(),
   ],
   ["--build", build, "--config", "Release", "--parallel", "2"],
 ]) {

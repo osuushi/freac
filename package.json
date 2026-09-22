@@ -13,8 +13,8 @@
     "build": "npm run build:native && vite build && tsc -p tsconfig.host.json",
     "start": "npm run build && electron .",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.host.json --noEmit && tsc -p tsconfig.test.json --noEmit",
-    "check": "biome check package.json tsconfig.json tsconfig.host.json tsconfig.test.json vite.config.ts biome.json scripts tests src",
-    "format": "biome check --write package.json tsconfig.json tsconfig.host.json tsconfig.test.json vite.config.ts biome.json scripts tests src",
+    "check": "biome check package.json tsconfig.json tsconfig.host.json tsconfig.test.json vite.config.ts forge.config.js packaging biome.json scripts tests src",
+    "format": "biome check --write package.json tsconfig.json tsconfig.host.json tsconfig.test.json vite.config.ts forge.config.js packaging biome.json scripts tests src",
     "test": "tsc -p tsconfig.test.json && node --test .cache/sketch-tests/tests/*.test.js",
     "test:ui": "node tests/ui.mjs",
     "test:reconnection": "node tests/boundary-reconnection-ui.mjs",
@@ -25,7 +25,11 @@
     "build:native": "node scripts/build-native.mjs",
     "setup:kernel": "node scripts/setup-kernel.mjs",
     "test:fixtures": "npm run build && node tests/fixtures.mjs",
-    "postinstall": "node scripts/prepare-pty.mjs"
+    "postinstall": "node scripts/prepare-pty.mjs",
+    "release:prepare": "node scripts/release/prepare.mjs",
+    "package:mac": "npm run build && npm run release:prepare && electron-forge package --platform=darwin --arch=arm64",
+    "make:mac": "npm run build && npm run release:prepare && electron-forge make --platform=darwin --arch=arm64",
+    "test:release": "node --test tests/release-metadata.mjs"
   },
   "dependencies": {
     "ghostty-web": "0.4.0",
@@ -37,6 +41,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.13",
+    "@electron-forge/cli": "7.11.2",
+    "@electron-forge/maker-dmg": "7.11.2",
     "@types/node": "24.13.4",
     "@types/qrcode": "1.5.6",
     "@types/three": "0.186.0",
@@ -44,5 +50,13 @@
     "electron": "44.3.0",
     "playwright": "1.62.1",
     "vite": "8.3.0"
+  },
+  "license": "LGPL-2.1-or-later",
+  "description": "Free Agentic CAD",
+  "config": {
+    "forge": "./forge.config.js"
+  },
+  "overrides": {
+    "@electron/node-gyp": "10.2.0-electron.2"
   }
 }

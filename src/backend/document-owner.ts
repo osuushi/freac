@@ -16,9 +16,9 @@ import { SolidCalculator } from "./solid-calculator.js";
 import { SolidEdits } from "./solid-edits.js";
 
 export class DocumentOwner {
-  private kernel = new SolidCalculator();
-  private measurementKernel = new SolidCalculator();
-  private solids = new SolidEdits(this.kernel);
+  private kernel: SolidCalculator;
+  private measurementKernel: SolidCalculator;
+  private solids: SolidEdits;
   private cleanupAvailable = false;
   private planeCutAvailable = false;
   private store = new DocumentStore();
@@ -29,7 +29,13 @@ export class DocumentOwner {
   private solveCount = 0;
   private solveMs = 0;
   readonly scripts: ScriptEdits;
-  constructor(private solver = new NativeSolver()) {
+  constructor(
+    private solver = new NativeSolver(),
+    kernelExecutable?: string,
+  ) {
+    this.kernel = new SolidCalculator(kernelExecutable);
+    this.measurementKernel = new SolidCalculator(kernelExecutable);
+    this.solids = new SolidEdits(this.kernel);
     this.scripts = new ScriptEdits(() => this.store, this.solids, this.kernel, solver);
   }
   beginScript(name: string): void {
