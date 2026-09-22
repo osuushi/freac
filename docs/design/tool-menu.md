@@ -1,0 +1,130 @@
+# Tool menu redesign
+
+Approved interaction contract, implemented 2026-09-21. Runtime checks and the
+immediate next action belong in the local brief.
+
+## Outcome and agreed direction
+
+Replace the existing tools panel entirely with a compact **Tools · ⌘F** button
+and a searchable menu. The founder explicitly rejected retaining the old panel.
+Command-F opens the menu; an empty query exposes logical submenus for discovery.
+Search supports fuzzy names, synonyms and related operations. Available matches
+always precede unavailable matches; unavailable tools remain visible. Automatically
+highlight the top result. The following interaction is implemented.
+
+Founder follow-up: remove the local Edit sketch / Select face / Move sketch / New
+sketch button row too; its actions move into the contextual search catalog.
+
+Selection-driven handles, local parameter/accept/cancel controls, Entities and the
+agent dock keep their purposes. They are not replacement tool catalogs.
+
+## Interaction
+
+- The Tools button supports mouse, touch and Pencil. Ctrl-F is the Windows/Linux
+  equivalent. Each opening starts with an empty, focused search box.
+- Show named categories with example tool names. Opening one replaces the list
+  with its tools and a breadcrumb/Back control; avoid cascading flyouts. Categories
+  remain browsable even when all their tools are unavailable.
+- Typing searches the entire catalog, including from a category. Clearing returns
+  to that category. Submenu tool lists also put available tools first; category
+  order stays fixed for learnability.
+- Results show canonical name, category, shortcut and short description. Disabled
+  rows show their prerequisite inline, such as “Select a body or faces to shell.”
+- Query changes highlight the first ranked result and scroll it into view. Up/Down
+  moves the highlight; Enter invokes it. Disabled rows remain keyboard-inspectable.
+  If all matches are disabled, highlight the first but prevent execution. No matches
+  produces an explicit empty state. Never truncate away the disabled results.
+- Enter/Right opens a category. Back returns to its parent; Left navigates back
+  only outside text editing. Escape closes the menu immediately. Outside click
+  dismisses and is consumed rather than selecting underlying geometry.
+- Opening, browsing and dismissing preserve ordered selection, pending previews,
+  uncommitted numeric input and Undo. Escape closes only the menu and restores
+  prior focus. Typing/navigation cannot fire CAD shortcuts. Agent focus retains
+  its own key handling rather than opening CAD Tools from the terminal.
+- Execution uses ordinary activation: finish a valid pending edit only when the
+  requested switch requires it; explain incompatible/invalid switches. Recheck
+  availability after asynchronous finishing and prevent repeat activation. Merely
+  opening the menu never finishes an edit.
+- Do not open during captured geometry drags. During calculations allow discovery,
+  with editing commands disabled and their busy reason visible.
+
+## Categories
+
+The former panel actions are registered under these homes:
+
+| Submenu | Representative entries |
+| --- | --- |
+| Sketch | Line, Rectangle, Circle, Curve, Trim, sketch Offset, sketch Fillet |
+| Solid | Extrude, Revolve, Shell, face Offset, Fillet, Chamfer, Union, Subtract, Intersect, Split Body, Imprint, Clean up |
+| Transform | Move, Move sketch, Duplicate, Mirror, Scale |
+| Constrain | Existing geometric constraints, Fuse, Unfuse, applicable locks |
+| Reference | Construction plane, Project |
+| Select | Select, existing selection refinements, Clear selection |
+| View | Existing visibility controls, Grid snap, return to Modeling |
+| Document & Edit | New, Open, Save, Export STL/3MF, Undo, Redo, Delete, Clear sketch |
+
+Capture fixture belongs in a development-only section. Essential compact file/history
+access may remain in the header; do not replace the panel with another expanded
+strip. Local constraint controls remain usable; searchable entries invoke the same
+actions. Catalog names must reflect implemented capabilities. Deferred features
+are not advertised as disabled tools.
+
+## Search contract
+
+Use a reviewed local vocabulary with separate canonical names, aliases and related
+terms; no network/AI dependency. Examples: **thickness**, **hollow** → Shell;
+**bevel** → Chamfer; **round** → Fillet; **translate**, **rotate** → Move;
+**twist** → Extrude. Related hits explain the connection, such as “Extrude · includes
+twist,” without inventing tools. Disambiguate sketch/body variants by context.
+
+Normalize case, accents, whitespace and punctuation. Support word prefixes,
+subsequences and small typing errors. Require meaningful query coverage so a weak
+shared letter does not return the entire catalog. Rank lexicographically:
+
+1. Available before disabled, even when the disabled match is exact.
+2. Within each group: exact canonical name, exact alias, prefix/token match,
+   fuzzy name/alias match, then related-term match; match quality breaks tier ties.
+3. Stable canonical-name/ID tie break, without usage-history reshuffling.
+
+An “Unavailable in this context” divider separates the groups. Alias matches may
+explain “Also called thickness.” Search never changes operation eligibility or
+implies that a kernel calculation will succeed.
+
+## Implementation and ownership
+
+Current entry points include `src/sketch/controls.ts`,
+`src/model/modeling-tools.ts`, `src/model/body-actions.ts` and individual control
+classes assembled in `src/sketch/main.ts`. Controllers supply availability reasons; solid operations reuse `modeling.resolve`.
+
+The shared catalog in `src/tools/` holds: stable UI ID, label/category/search vocabulary,
+description/shortcut, availability with reason, and activation callback. Reuse
+`operation-selection.ts` for modeling applicability and extract existing sketch
+and controller guards as needed. Menu and retained shortcuts consult the same
+guards and invoke the same actions; do not click hidden legacy buttons.
+
+Separate catalog, matching and menu focus/rendering responsibilities. Review files
+above 300 lines/functions above 80. This is transient renderer UI; DocumentOwner,
+geometry commands, edit leases, preview ownership and Undo stay authoritative.
+Availability reads current state/existing results; typing launches no geometry
+calculations. Preserve shared Chromium/WebKit/iPad behavior and check Electron
+routing so Command-F opens Tools rather than host/browser Find.
+
+## Delivery and acceptance
+
+1. **Inventory and first complete route:** map old panel actions to new homes;
+   build catalog/search/menu and invoke actual sketch creation and Shell through
+   it. Verify thickness, a typo, disabled reasons, focus and tool switching.
+2. **Complete replacement:** migrate remaining actions and shortcut dispatch;
+   remove the old panel and obsolete mounting assumptions. Retain only compact
+   entry/access controls. Review desktop and narrow/touch layouts.
+3. **Acceptance:** deterministic ranking tests plus real keyboard/pointer routes
+   in headless Chromium/WebKit and hidden Electron. Cover browsing, global search
+   from submenus, available-first ordering, all-disabled/no-result states, numeric
+   focus restoration, no shortcut leakage, invalid/pending switches, busy state
+   and dismissal without document changes. Create/reselect/edit actual sketch and
+   solid geometry, including Shell via thickness, Undo/Redo and Save/Open. Check
+   file/export and selection actions remain reachable; clean up test processes.
+
+The implementation is complete; the next founder checkpoint is ordinary CAD work
+with the old panel and sketch action row absent. Physical iPad keyboard/Pencil behavior
+requires device review in addition to automated acceptance.

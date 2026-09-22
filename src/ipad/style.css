@@ -1,0 +1,117 @@
+.ipad-toggle {
+  pointer-events: auto;
+}
+.ipad-connection {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: #f8f9fb;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  overflow: auto;
+}
+.ipad-connection[hidden] {
+  display: none;
+}
+.ipad-connection h1 {
+  margin: 0 0 20px;
+  font-size: 28px;
+}
+.wifi-warning {
+  color: #8c3500;
+  background: #ffdf9e;
+  border: 2px solid #c96b00;
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-size: 23px;
+}
+.wifi-detail {
+  max-width: 650px;
+  line-height: 1.5;
+}
+.ipad-connection img {
+  width: 240px;
+  height: 240px;
+}
+.ipad-connection.connected img {
+  opacity: 0.5;
+}
+.ipad-connection [role="status"] {
+  font-weight: 600;
+}
+.ipad-addresses {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 18px;
+}
+.ipad-dialog {
+  border: 1px solid #b8c1ce;
+  border-radius: 16px;
+  width: min(640px, 92vw);
+  max-height: 85dvh;
+  padding: 24px;
+  color: #283444;
+}
+.ipad-dialog::backdrop {
+  background: #202a3b88;
+}
+.ipad-dialog input {
+  padding: 12px;
+  font: inherit;
+  max-width: 100%;
+  width: 80%;
+}
+.ipad-dialog button {
+  margin: 4px;
+  min-height: 42px;
+}
+.ipad-file-list {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  max-height: 40dvh;
+  margin: 12px 0;
+  border: 1px solid #d9dfe7;
+  border-radius: 8px;
+}
+.ipad-file-list button {
+  text-align: left;
+  flex-shrink: 0;
+}
+.ipad-mode .navigation-hint {
+  max-width: 75vw;
+  white-space: normal;
+}
+.ipad-mode #overlay {
+  touch-action: none;
+}
+.ipad-mode .wifi-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  background: #ffdf9e;
+  color: #743100;
+  font-weight: 700;
+  text-align: center;
+  padding: 5px;
+  font-size: 14px;
+}
+.ipad-mode header {
+  top: 40px;
+}
+@media (max-width: 1100px) {
+  .ipad-mode header {
+    gap: 12px;
+    left: 16px;
+  }
+  .ipad-mode header .document-title {
+    max-width: 25vw;
+  }
+}

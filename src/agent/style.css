@@ -1,0 +1,162 @@
+.agent-toggle {
+  pointer-events: auto;
+  z-index: 10;
+}
+.agent-dock {
+  position: fixed;
+  z-index: 30;
+  background: white;
+  border-left: 1px solid #d9dfe7;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.agent-dock[data-side="right"] {
+  right: var(--agent-viewport-right, 0px);
+  top: var(--agent-viewport-top, 0px);
+  bottom: var(--agent-viewport-bottom, 0px);
+  width: var(--agent-size);
+}
+.agent-dock[data-side="bottom"] {
+  right: var(--agent-viewport-right, 0px);
+  left: var(--agent-viewport-left, 0px);
+  bottom: var(--agent-viewport-bottom, 0px);
+  height: var(--agent-size);
+  border-top: 1px solid #d9dfe7;
+}
+.agent-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  min-height: 42px;
+  flex-wrap: wrap;
+  background: #f8f9fb;
+}
+.agent-header button {
+  padding: 4px 7px;
+  font-size: 12px;
+}
+.agent-header strong {
+  font-size: 13px;
+}
+.agent-status {
+  font-size: 11px;
+  color: #697587;
+  margin-right: auto;
+}
+.agent-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.agent-screen {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  contain: size;
+  touch-action: none;
+  overflow: hidden;
+  margin: 4px;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.agent-screen canvas {
+  width: auto;
+  height: auto;
+}
+.agent-screen textarea {
+  /* Prevent Safari's automatic zoom when focusing the hidden terminal input. */
+  font-size: 16px;
+}
+.agent-message {
+  color: #805016;
+  font-size: 12px;
+  padding: 0 10px;
+  overflow-wrap: anywhere;
+}
+.agent-message:empty {
+  display: none;
+}
+.agent-workspace {
+  font-size: 11px;
+  color: #697587;
+  padding: 5px 10px;
+  margin: 0;
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.agent-settings {
+  flex-shrink: 0;
+  padding: 12px;
+  max-height: 65%;
+  overflow-y: auto;
+  border-bottom: 1px solid #d9dfe7;
+}
+.agent-settings[hidden] {
+  display: none;
+}
+.agent-settings label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.agent-settings input,
+.agent-settings textarea,
+.agent-settings select {
+  font: inherit;
+  padding: 6px;
+  border: 1px solid #c7cfda;
+  border-radius: 4px;
+  width: 100%;
+}
+.agent-settings p {
+  font-size: 11px;
+  color: #697587;
+  overflow-wrap: anywhere;
+}
+.agent-splitter {
+  position: absolute;
+  z-index: 2;
+  touch-action: none;
+}
+.agent-dock[data-side="right"] .agent-splitter {
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+}
+.agent-dock[data-side="bottom"] .agent-splitter {
+  top: -4px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  cursor: row-resize;
+}
+.agent-dock.collapsed .agent-body,
+.agent-dock.collapsed .agent-splitter,
+.agent-dock.collapsed .agent-header button:not([data-collapse]) {
+  display: none;
+}
+.agent-dock[data-side="right"].collapsed {
+  width: 42px;
+}
+.agent-dock[data-side="right"].collapsed .agent-header {
+  writing-mode: vertical-rl;
+  flex-wrap: nowrap;
+  height: 100%;
+}
+.agent-dock[data-side="bottom"].collapsed {
+  height: 42px;
+}
+#app.agent-open .entity-viewer {
+  max-height: calc(100% - 150px);
+}

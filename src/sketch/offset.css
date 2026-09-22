@@ -1,0 +1,36 @@
+.offset-control {
+  position: absolute;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transform: translate(-50%, -50%);
+}
+.offset-control[hidden],
+.offset-control [hidden] {
+  display: none;
+}
+.offset-control input {
+  position: absolute;
+  left: 54px;
+  width: 82px;
+  border: 1px solid #b8cfea;
+  border-radius: 6px;
+  background: white;
+  color: #245eac;
+  font: inherit;
+  padding: 6px;
+}
+.offset-control .sketch-offset-handle {
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: grab;
+  touch-action: none;
+}
+.offset-control input[aria-invalid="true"] {
+  color: #b04545;
+}

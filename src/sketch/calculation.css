@@ -1,0 +1,37 @@
+.calculation-progress {
+  position: absolute;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid #b9c9db;
+  border-radius: 10px;
+  background: var(--panel, #fff);
+  color: var(--text, #243b53);
+  box-shadow: 0 3px 15px #243b5320;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.calculation-progress[hidden] {
+  display: none;
+}
+.calculation-progress button {
+  padding: 5px 9px;
+}
+.calculation-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #c9d5e4;
+  border-top-color: #2868aa;
+  border-radius: 50%;
+  animation: calculation-spin 0.8s linear infinite;
+}
+@keyframes calculation-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

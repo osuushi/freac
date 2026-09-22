@@ -1,0 +1,57 @@
+button.commit-cleanup {
+  width: auto;
+  min-width: max-content;
+  padding: 5px 9px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.cleanup-widget {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  transform: translateX(-50%);
+  border: 1px solid #c9d5df;
+  border-radius: 9px;
+  background: #fffffff5;
+  color: #344657;
+  pointer-events: auto;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.cleanup-widget[hidden] {
+  display: none;
+}
+.cleanup-widget button {
+  border: 1px solid #c9d5df;
+  border-radius: 6px;
+  padding: 6px 9px;
+  background: white;
+  color: #344657;
+}
+
+.body-actions .selection-cleanup {
+  width: auto;
+  padding: 5px 9px;
+  white-space: nowrap;
+}
+.commit-cleanup[aria-busy="true"] svg {
+  display: none;
+}
+.commit-cleanup[aria-busy="true"]::before {
+  content: "";
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: auto;
+  border: 2px solid #bdccdc;
+  border-top-color: #31506b;
+  border-radius: 50%;
+  animation: cleanup-check-spin 0.8s linear infinite;
+}
+@keyframes cleanup-check-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

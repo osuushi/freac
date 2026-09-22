@@ -1,0 +1,44 @@
+.boolean-widget {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px;
+  transform: translateX(-50%);
+  background: #fffffff0;
+  border: 1px solid #d4dee7;
+  border-radius: 10px;
+  pointer-events: auto;
+}
+.boolean-widget[hidden],
+.boolean-widget [hidden] {
+  display: none;
+}
+.boolean-widget button {
+  min-width: 32px;
+  height: 32px;
+  padding: 5px;
+  border: 1px solid #c9d5df;
+  border-radius: 6px;
+  background: white;
+  color: #344657;
+  white-space: nowrap;
+}
+.boolean-widget button[aria-pressed="true"] {
+  background: #dcecff;
+  border-color: #528ec9;
+}
+.boolean-widget button[aria-label="Change subtraction target"] {
+  color: #246fb8;
+}
+.boolean-widget svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+}
+.boolean-status {
+  font-size: 12px;
+  white-space: nowrap;
+}

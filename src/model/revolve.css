@@ -1,0 +1,109 @@
+.revolve-controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.revolve-controls > button,
+.revolve-quantity,
+.revolve-options {
+  position: absolute;
+  pointer-events: auto;
+}
+.revolve-controls > button {
+  width: 42px;
+  height: 42px;
+  padding: 8px;
+  transform: translate(-50%, -50%);
+  color: #2165a8;
+}
+.revolve-controls button svg {
+  width: 24px;
+  height: 24px;
+}
+.revolve-controls > .revolve-spatial {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: grab;
+}
+.revolve-controls > .revolve-spatial svg {
+  width: 48px;
+  height: 48px;
+}
+.revolve-quantity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #63758a;
+}
+.revolve-quantity input {
+  width: 100px;
+  background: #fff;
+  border: 1px solid #bfd3e7;
+  border-radius: 10px;
+  color: #245b91;
+  font: inherit;
+  font-size: 18px;
+  padding: 9px;
+}
+.revolve-options {
+  display: flex;
+  gap: 5px;
+  transform: translateX(-30%);
+}
+.revolve-options button {
+  width: 36px;
+  height: 36px;
+  padding: 5px;
+}
+.revolve-options button[aria-pressed="true"] {
+  background: #d9ebfa;
+  border-color: #4486c1;
+}
+.revolve-guides {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.revolve-guides polyline {
+  fill: none;
+  stroke: #4c86bb;
+  stroke-width: 1.5;
+  stroke-dasharray: 5 5;
+  opacity: 0.65;
+}
+.revolve-guides [data-kind="axis"] {
+  stroke-width: 3;
+  opacity: 0.9;
+}
+
+.revolve-controls [hidden],
+.revolve-controls[hidden] {
+  display: none;
+}
+.revolve-options .extrude-targets {
+  position: absolute;
+  top: 42px;
+  white-space: nowrap;
+}
+.revolve-controls > button {
+  touch-action: none;
+}
+
+.revolve-guides [data-kind="section"] {
+  stroke-dasharray: none;
+  opacity: 0.75;
+}
+.revolve-guides [data-kind="direction"] {
+  stroke-dasharray: none;
+  stroke-width: 3;
+  opacity: 1;
+}
+.revolve-quantity input[aria-invalid="true"] {
+  border-color: #bd793a;
+}

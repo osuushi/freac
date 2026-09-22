@@ -1,0 +1,12 @@
+.orientable-handle > svg {
+  width: 64px;
+  height: 64px;
+  display: block;
+  pointer-events: none;
+}
+.orientable-handle:hover > svg {
+  filter: drop-shadow(0 0 2px #549ee8);
+}
+.orientable-handle[data-geometry-invalid="true"] > svg {
+  filter: drop-shadow(0 0 2px #ce3737);
+}

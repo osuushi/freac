@@ -1,0 +1,154 @@
+import assert from "node:assert/strict";
+import { resolve } from "node:path";
+import { openDocument, saveDocument } from "./native-documents.mjs";
+import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { chooseTool } from "./ui-tools.mjs";
+
+export async function extrudeRoute(page, name) {
+  await reset(page);
+  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await page.keyboard.press("r");
+  await drag(page, [-15, -10], [15, 10]);
+  const pick = await at(page, 5, 3);
+  await chooseTool(page, "return to modeling", "modeling");
+  await page.mouse.click(pick.x, pick.y);
+  if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
+    await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
+  await page.getByRole("textbox", { name: "Extrusion distance" }).fill("5");
+  await page.keyboard.press("Enter");
+  let state = await inspect(page);
+  assert.equal(state.document.bodies?.length ?? 0, 0);
+  assert.equal(state.preview.bodies.length, 1);
+  close(state.preview.bodies[0].volume, 3000);
+  await page.keyboard.press("Enter");
+  state = await inspect(page);
+  assert.equal(state.document.bodies.length, 1);
+  // Undo from a live modal operation first accepts its candidate, then undoes
+  // that new history entry, leaving the prior body and no active interaction.
+  await undoModalExtrusion(page, pick);
+  await page.mouse.click(pick.x, pick.y);
+  state = await inspect(page);
+  assert.equal(state.modelingSelection[0].kind, "face");
+  await chooseTool(page, "sketch on face", "sketch-on-face");
+  await page.keyboard.press("c");
+  await drag(page, [0, 0], [3, 0]);
+  const center = await at(page, 0, 0);
+  await chooseTool(page, "return to modeling", "modeling");
+  await page.mouse.click(center.x, center.y);
+  if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
+    await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
+  await page.getByRole("textbox", { name: "Extrusion distance" }).fill("-10");
+  await page.keyboard.press("Enter");
+  state = await inspect(page);
+  assert.ok(state.preview, state.message);
+  close(state.preview.bodies[0].volume, 3000 - 45 * Math.PI);
+  await page.keyboard.press("Enter");
+  await inspect(page);
+  await page.screenshot({ path: `.cache/sketch-review/${name}-plate-hole.png` });
+  await page.mouse.click(pick.x, pick.y);
+  await chooseTool(page, "sketch on face", "sketch-on-face");
+  await page.keyboard.press("r");
+  await drag(page, [7, -12], [9, 12]);
+  const cut = await at(page, 8, 0);
+  await chooseTool(page, "return to modeling", "modeling");
+  await page.mouse.click(cut.x, cut.y);
+  if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
+    await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
+  await page.getByRole("textbox", { name: "Extrusion distance" }).fill("-10");
+  await page.keyboard.press("Enter");
+  state = await inspect(page);
+  assert.equal(state.preview.bodies.length, 2);
+  assert.equal(state.document.bodies.length, 1);
+  await page.keyboard.press("Enter");
+  state = await inspect(page);
+  assert.equal(state.document.bodies.length, 2);
+  const splitBodies = state.document.bodies;
+  await chooseTool(page, "undo", "undo");
+  assert.equal((await inspect(page)).document.bodies.length, 1);
+  await chooseTool(page, "redo", "redo");
+  assert.deepEqual((await inspect(page)).document.bodies, splitBodies);
+  await page.mouse.click(pick.x, pick.y);
+  await chooseTool(page, "sketch on face", "sketch-on-face");
+  await page.keyboard.press("l");
+  await drag(page, [-10, 3], [-5, 3]);
+  state = await inspect(page);
+  assert.equal(state.document.sketches.length, 4);
+  assert.deepEqual(state.document.bodies, splitBodies);
+  await page.screenshot({ path: `.cache/sketch-review/${name}-split-face-sketch.png` });
+  await reopen(page, name, splitBodies);
+}
+
+async function undoModalExtrusion(page, pick) {
+  await page.mouse.click(pick.x, pick.y);
+  await page.keyboard.press("e");
+  if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
+    await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
+  await page.getByRole("textbox", { name: "Extrusion distance" }).fill("3");
+  await page.keyboard.press("Enter");
+  assert.ok((await inspect(page)).preview);
+  await page.keyboard.press("Meta+z");
+  const state = await inspect(page);
+  assert.equal(state.interaction, null);
+  assert.equal(state.preview, null);
+  assert.equal(state.document.bodies.length, 1);
+  close(state.document.bodies[0].volume, 3000);
+}
+
+async function reopen(page, name, splitBodies) {
+  const file = resolve(`.cache/sketch-review/${name}-solid.freac`);
+  await saveDocument(page, file);
+  await reset(page);
+  await openDocument(page, file);
+  await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 2);
+  const state = await inspect(page);
+  assert.equal(state.document.sketches.length, 4);
+  assert.deepEqual(
+    state.document.bodies.map((b) => b.id),
+    splitBodies.map((b) => b.id),
+  );
+  assert.deepEqual(
+    state.document.bodies.map((b) => b.faces.map((f) => f.id)),
+    splitBodies.map((b) => b.faces.map((f) => f.id)),
+  );
+  await page.mouse.move(1000, 650);
+  await page.keyboard.down("Alt");
+  await page.mouse.wheel(80, 50);
+  await page.keyboard.up("Alt");
+  await page.screenshot({ path: `.cache/sketch-review/${name}-reopened-solids.png` });
+}
+
+export async function extrusionGestureRoute(page) {
+  await reset(page);
+  await page.getByRole("button", { name: "Sketch on XZ", exact: true }).click();
+  await page.keyboard.press("c");
+  await drag(page, [0, 0], [5, 0]);
+  const pick = await at(page, 0, 0);
+  await chooseTool(page, "return to modeling", "modeling");
+  await page.mouse.click(pick.x, pick.y);
+  const handle = await page
+    .getByRole("button", { name: "Drag extrusion", exact: true })
+    .boundingBox();
+  assert.ok(handle);
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2 - 60, {
+    steps: 6,
+  });
+  await page.mouse.up();
+  let state = await inspect(page);
+  assert.equal(state.document.bodies?.length ?? 0, 0);
+  assert.equal(state.preview.bodies.length, 1);
+  assert.ok(state.preview.bodies[0].volume > 0);
+  const camera = state.camera;
+  await page.mouse.move(1050, 650);
+  await page.keyboard.down("Alt");
+  await page.mouse.wheel(60, 30);
+  await page.keyboard.up("Alt");
+  state = await inspect(page);
+  assert.notDeepEqual(state.camera, camera);
+  assert.equal(state.interaction.kind, "extrude");
+  await page.keyboard.press("Escape");
+  state = await inspect(page);
+  assert.equal(state.preview, null);
+  assert.equal(state.document.bodies?.length ?? 0, 0);
+}

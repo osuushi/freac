@@ -1,0 +1,32 @@
+.mode-label {
+  font-weight: 650;
+  color: #345678;
+}
+.model-actions {
+  position: absolute;
+  pointer-events: auto;
+  display: flex;
+  gap: 6px;
+  transform: translateX(-50%);
+}
+.model-actions[hidden] {
+  display: none;
+}
+.extrude-targets {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.extrude-targets[hidden] {
+  display: none;
+}
+.model-selection-box {
+  position: absolute;
+  pointer-events: none;
+  border: 1px dashed #528ad8;
+  background: #528ad812;
+}

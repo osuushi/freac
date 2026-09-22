@@ -1,0 +1,75 @@
+.scale-widget {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 30;
+}
+.scale-widget[hidden] {
+  display: none;
+}
+.scale-widget button,
+.scale-card {
+  pointer-events: auto;
+}
+.scale-anchor,
+.scale-handle {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  touch-action: none;
+  padding: 0;
+}
+.scale-anchor {
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid #151515;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff 25%, #e6e6e6 72%, #c8c8c8);
+}
+.scale-anchor[data-snapped="true"],
+.scale-anchor:hover {
+  outline: 2px solid #347cc1;
+}
+.scale-handle {
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: transparent;
+}
+.scale-handle svg {
+  width: 48px;
+  height: 48px;
+}
+.scale-handle:hover {
+  filter: drop-shadow(0 0 2px #347cc1);
+}
+.scale-handle[data-invalid="true"] {
+  filter: drop-shadow(0 0 3px #c42323);
+}
+.scale-card {
+  position: absolute;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #bac4ce;
+  border-radius: 8px;
+  background: #fffffff5;
+  box-shadow: 0 3px 14px #26374726;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.scale-card label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.scale-card input {
+  width: 70px;
+}
+.scale-card button {
+  min-width: 32px;
+  min-height: 28px;
+}
+.scale-card input[aria-invalid="true"] {
+  border-color: #b3261e;
+}

@@ -1,0 +1,145 @@
+.tools-trigger {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 30;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 10px 14px;
+  background: #fff;
+}
+.tools-trigger kbd {
+  font: inherit;
+  color: #788393;
+  font-size: 12px;
+}
+.tool-menu-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  background: #17283e20;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: min(12vh, 100px) 16px 16px;
+}
+.tool-menu-backdrop[hidden] {
+  display: none;
+}
+.tool-menu {
+  --tool-menu-radius: 14px;
+  width: min(560px, 100%);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  color: #26364a;
+  border: 1px solid #d6dee8;
+  border-radius: var(--tool-menu-radius);
+  box-shadow: 0 18px 65px #192c4938;
+  overflow: hidden;
+}
+.tool-menu > input {
+  width: 100%;
+  flex: 0 0 auto;
+  padding: 19px 20px;
+  font: inherit;
+  font-size: 18px;
+  border: 0;
+  border-bottom: 1px solid #e3e8ef;
+  border-radius: calc(var(--tool-menu-radius) - 1px) calc(var(--tool-menu-radius) - 1px) 0 0;
+  outline: none;
+  background: #fff;
+}
+.tool-menu > input:focus-visible {
+  box-shadow: inset 0 0 0 2px #3c7bc7;
+}
+.tool-menu-back {
+  text-align: left;
+  border: 0;
+  border-radius: 0;
+  padding: 10px 16px;
+  box-shadow: none;
+  font-size: 12px;
+}
+.tool-menu-back[hidden] {
+  display: none;
+}
+#tool-results {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+}
+#tool-results > button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  text-align: left;
+  gap: 4px 12px;
+  padding: 11px 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 7px;
+}
+#tool-results strong {
+  font-size: 14px;
+  font-weight: 550;
+}
+#tool-results small {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: #647285;
+  line-height: 1.35;
+}
+#tool-results kbd {
+  font: inherit;
+  font-size: 12px;
+  color: #647285;
+}
+#tool-results > button[aria-selected="true"] {
+  background: #edf4ff;
+  border-color: #bcd4f5;
+}
+#tool-results > button[aria-disabled="true"] {
+  color: #718094;
+  cursor: default;
+}
+.tool-menu-divider {
+  padding: 13px 12px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #718094;
+}
+#tool-results > p {
+  margin: 18px;
+  font-size: 14px;
+  color: #647285;
+}
+
+@media (max-width: 700px) {
+  .tool-menu-backdrop {
+    padding-top: 65px;
+  }
+  .tools-trigger {
+    top: 12px;
+    right: 12px;
+  }
+}
+
+.ipad-mode .tools-trigger {
+  top: 40px;
+}
+.fixture-result {
+  position: absolute;
+  bottom: 48px;
+  left: 24px;
+  z-index: 40;
+  max-width: calc(100% - 48px);
+  display: flex;
+  gap: 8px;
+}
+.fixture-result [hidden] {
+  display: none;
+}

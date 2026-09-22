@@ -1,0 +1,99 @@
+.axial-widget {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: auto;
+}
+.axial-widget[hidden],
+.axial-widget [hidden] {
+  display: none;
+}
+.axial-panel {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  border: 1px solid #bdccdc;
+  border-radius: 9px;
+  background: #fffffff5;
+  box-shadow: 0 2px 5px #233a4d18;
+  white-space: nowrap;
+}
+.axial-actions {
+  display: flex;
+  gap: 2px;
+}
+.axial-panel button {
+  width: 28px;
+  min-width: 0;
+  height: 28px;
+  padding: 4px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #31506b;
+  box-shadow: none;
+}
+.axial-panel button:hover:not(:disabled) {
+  background: #eaf1f8;
+}
+.axial-panel button[aria-pressed="true"] {
+  background: #e2edfc;
+  color: #2263a4;
+  box-shadow: inset 0 0 0 1px #a9c8f1;
+}
+.axial-panel button:disabled {
+  opacity: 0.4;
+}
+.axial-panel svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.axial-distance {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
+  padding: 2px 5px 5px;
+  margin-bottom: 3px;
+  border-bottom: 1px solid #e4eaf0;
+}
+.axial-panel input {
+  width: 5.5ch;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #2263a4;
+  font: inherit;
+  text-align: right;
+}
+.axial-distance input {
+  font-size: 20px;
+}
+.axial-distance span {
+  font-size: 12px;
+  color: #73869a;
+}
+.axial-panel input[aria-invalid="true"] {
+  color: #a83f27;
+  text-decoration: underline wavy;
+}
+.axial-widget .axial-arrow {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: grab;
+  touch-action: none;
+}
+.axial-widget .axial-arrow:hover {
+  background: transparent;
+}

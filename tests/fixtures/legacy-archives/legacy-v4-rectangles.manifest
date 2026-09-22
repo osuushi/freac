@@ -1,0 +1,4 @@
+rectangle-1 workspace-xy-1 constraint-7 4 source-1 source-2 source-3 source-4 8 constraint-1 constraint-2 constraint-3 constraint-4 constraint-5 constraint-6 constraint-7 constraint-8 4 5 5 5 5
+rectangle-2 workspace-xy-1 constraint-15 4 source-5 source-6 source-7 source-8 8 constraint-9 constraint-10 constraint-11 constraint-12 constraint-13 constraint-14 constraint-15 constraint-16 4 6 6 6 6
+operation-1 capture-1 5 360 1800
+operation-2 capture-2 7 72 504

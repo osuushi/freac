@@ -1,0 +1,8 @@
+# Local upstream reference and generated artifacts
+.reference/
+.cache/
+.DS_Store
+
+# Current sketch app build and npm installation
+/node_modules/
+/.build/

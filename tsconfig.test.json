@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": ".cache/sketch-tests",
+    "rootDir": ".",
+    "allowImportingTsExtensions": false,
+    "types": ["node"]
+  },
+  "include": ["tests/*.test.ts"]
+}

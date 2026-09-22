@@ -1,0 +1,48 @@
+{
+  "name": "freac",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "main": ".build/host/main.js",
+  "engines": {
+    "node": ">=24.15.0 <25"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:web": "npm run build:native && vite --host 127.0.0.1",
+    "build": "npm run build:native && vite build && tsc -p tsconfig.host.json",
+    "start": "npm run build && electron .",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.host.json --noEmit && tsc -p tsconfig.test.json --noEmit",
+    "check": "biome check package.json tsconfig.json tsconfig.host.json tsconfig.test.json vite.config.ts biome.json scripts tests src",
+    "format": "biome check --write package.json tsconfig.json tsconfig.host.json tsconfig.test.json vite.config.ts biome.json scripts tests src",
+    "test": "tsc -p tsconfig.test.json && node --test .cache/sketch-tests/tests/*.test.js",
+    "test:ui": "node tests/ui.mjs",
+    "test:reconnection": "node tests/boundary-reconnection-ui.mjs",
+    "test:edge-move": "node tests/edge-move-ui.mjs",
+    "test:face-move": "node tests/face-move-ui.mjs",
+    "test:electron": "node tests/electron.mjs",
+    "setup:native": "node scripts/setup-native.mjs",
+    "build:native": "node scripts/build-native.mjs",
+    "setup:kernel": "node scripts/setup-kernel.mjs",
+    "test:fixtures": "npm run build && node tests/fixtures.mjs",
+    "postinstall": "node scripts/prepare-pty.mjs"
+  },
+  "dependencies": {
+    "ghostty-web": "0.4.0",
+    "node-pty": "1.1.0",
+    "qrcode": "1.5.4",
+    "three": "0.186.0",
+    "typescript": "7.0.2",
+    "ws": "8.21.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.13",
+    "@types/node": "24.13.4",
+    "@types/qrcode": "1.5.6",
+    "@types/three": "0.186.0",
+    "@types/ws": "8.18.1",
+    "electron": "44.3.0",
+    "playwright": "1.62.1",
+    "vite": "8.3.0"
+  }
+}

@@ -1,0 +1,252 @@
+import * as THREE from "three";
+import {
+  alignCameraToPlane,
+  applyCameraPose,
+  type CameraFraming,
+  planeCameraPose,
+} from "./camera-motion.js";
+import { Arcball, levelOrientation } from "./camera-orbit.js";
+import {
+  type PlaneFrame,
+  type PlaneId,
+  type Point,
+  planes,
+  type Vector,
+  worldPoint,
+} from "./planes.js";
+import { createGrids } from "./world-grid.js";
+import { installNavigation } from "./world-navigation.js";
+
+export class World {
+  readonly scene = new THREE.Scene();
+  readonly camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10000);
+  readonly renderer = new THREE.WebGLRenderer({ antialias: true, stencil: true });
+  readonly canvas = this.renderer.domElement;
+  readonly target = new THREE.Vector3();
+  readonly changed = new Set<() => void>();
+  readonly grids = createGrids(this.scene);
+  workspace: { key: string; frame: PlaneFrame; sketchId?: string } | null = null;
+  get active(): string | null {
+    return this.workspace?.key ?? null;
+  }
+  get activeFrame(): PlaneFrame | null {
+    return this.workspace?.frame ?? null;
+  }
+  height = 80;
+  spacing = 1;
+  canNavigate = () => true;
+  canEnterSketch = () => true;
+  planePicker: ((id: PlaneId) => void) | null = null;
+  planePickerAccept: ((frame: PlaneFrame) => boolean) | null = null;
+  planePickerLabel = "Project onto";
+  sketchEntry: ((id: PlaneId) => void) | null = null;
+  private readonly observer: ResizeObserver;
+  private readonly removeNavigation: () => void;
+  private cameraAnimation: number | null = null;
+  private pendingDraw: number | null = null;
+  private readonly sketchClip = new THREE.Plane();
+  readonly orbit = new Arcball();
+  get cameraTransitioning(): boolean {
+    return this.cameraAnimation !== null;
+  }
+  get cameraMoving(): boolean {
+    return this.cameraTransitioning || this.pendingDraw !== null;
+  }
+
+  constructor(
+    readonly host: HTMLElement,
+    readonly overlay: HTMLElement,
+  ) {
+    this.scene.background = new THREE.Color("#f8f9fb");
+    this.camera.position.set(55, -70, 65);
+    this.camera.up.set(0, 0, 1);
+    this.canvas.setAttribute("aria-label", "Modeling viewport");
+    this.canvas.tabIndex = 0;
+    host.append(this.canvas);
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    this.observer = new ResizeObserver(() => this.draw());
+    this.observer.observe(host);
+    this.removeNavigation = installNavigation(this);
+    this.draw();
+  }
+  draw(): void {
+    if (this.pendingDraw !== null) cancelAnimationFrame(this.pendingDraw);
+    this.pendingDraw = null;
+    const width = this.host.clientWidth;
+    const height = Math.max(1, this.host.clientHeight);
+    this.renderer.setSize(width, height, false);
+    const half = this.height / 2;
+    this.camera.left = (-half * width) / height;
+    this.camera.right = (half * width) / height;
+    this.camera.top = half;
+    this.camera.bottom = -half;
+    this.camera.lookAt(this.target);
+    this.camera.updateProjectionMatrix();
+    this.camera.updateMatrixWorld();
+    this.spacing = this.grids.update(
+      this.camera,
+      this.target,
+      this.height,
+      this.activeFrame,
+      height,
+    );
+    for (const listener of this.changed) listener();
+    this.updateSketchClipping();
+    this.renderer.render(this.scene, this.camera);
+  }
+  private updateSketchClipping(): void {
+    const frame = this.activeFrame;
+    if (!frame) {
+      this.renderer.clippingPlanes = [];
+      return;
+    }
+    const normal = new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v)).normalize();
+    const origin = new THREE.Vector3(...frame.origin);
+    if (normal.dot(this.camera.position.clone().sub(origin)) > 0) normal.negate();
+    this.sketchClip.setFromNormalAndCoplanarPoint(normal, origin);
+    // Retain coplanar curves and faces despite floating-point projection noise.
+    this.sketchClip.constant += 1e-4;
+    this.renderer.clippingPlanes = [this.sketchClip];
+  }
+  requestDraw(): void {
+    // Subsequent input events need the latest basis even before the next paint.
+    this.camera.lookAt(this.target);
+    this.camera.updateMatrixWorld();
+    if (this.pendingDraw !== null) return;
+    this.pendingDraw = requestAnimationFrame(() => this.draw());
+  }
+  enter(id: PlaneId): void {
+    this.enterWorkspace({ key: id, frame: planes[id] });
+  }
+  enterWorkspace(
+    workspace: { key: string; frame: PlaneFrame; sketchId?: string },
+    framing: CameraFraming = {},
+  ): void {
+    this.workspace = workspace;
+    this.animateTo(workspace.frame, framing);
+  }
+  syncWorkspaceFrame(frame: PlaneFrame): void {
+    if (!this.workspace || JSON.stringify(this.workspace.frame) === JSON.stringify(frame)) return;
+    this.workspace = { ...this.workspace, frame };
+    this.cancelCameraMotion();
+    alignCameraToPlane(this, frame);
+  }
+  private animateTo(frame: PlaneFrame, framing: CameraFraming): void {
+    this.cancelCameraMotion();
+    this.camera.lookAt(this.target);
+    this.camera.updateMatrixWorld();
+    const start = {
+        target: this.target.clone(),
+        quaternion: this.camera.quaternion.clone(),
+        distance: this.camera.position.distanceTo(this.target),
+        height: this.height,
+      },
+      end = planeCameraPose(this, frame, framing),
+      duration = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 280;
+    if (!duration) {
+      applyCameraPose(this, end);
+      this.draw();
+      return;
+    }
+    const started = performance.now();
+    this.cameraAnimation = requestAnimationFrame((now) =>
+      this.cameraStep(start, end, started, now),
+    );
+    this.draw();
+  }
+  levelHorizon(): void {
+    this.cancelCameraMotion();
+    const quaternion = levelOrientation(this);
+    const start = {
+      target: this.target.clone(),
+      quaternion: this.camera.quaternion.clone(),
+      distance: this.camera.position.distanceTo(this.target),
+      height: this.height,
+    };
+    const end = { ...start, quaternion };
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      applyCameraPose(this, end);
+      this.requestDraw();
+      return;
+    }
+    const started = performance.now();
+    this.cameraAnimation = requestAnimationFrame((now) =>
+      this.cameraStep(start, end, started, now),
+    );
+  }
+  private cameraStep(
+    start: ReturnType<typeof planeCameraPose>,
+    end: ReturnType<typeof planeCameraPose>,
+    started: number,
+    now: number,
+  ): void {
+    const progress = Math.min(1, (now - started) / 280),
+      amount = 1 - (1 - progress) ** 3;
+    applyCameraPose(this, {
+      target: start.target.clone().lerp(end.target, amount),
+      quaternion: start.quaternion.clone().slerp(end.quaternion, amount),
+      distance: THREE.MathUtils.lerp(start.distance, end.distance, amount),
+      height: THREE.MathUtils.lerp(start.height, end.height, amount),
+    });
+    this.cameraAnimation =
+      progress < 1
+        ? requestAnimationFrame((next) => this.cameraStep(start, end, started, next))
+        : null;
+    this.draw();
+  }
+  cancelCameraMotion(): void {
+    if (this.cameraAnimation === null) return;
+    cancelAnimationFrame(this.cameraAnimation);
+    this.cameraAnimation = null;
+  }
+
+  axisName(axis: "x" | "y"): string {
+    const key = this.active;
+    return key && key in planes ? key[axis === "x" ? 0 : 1] : axis.toUpperCase();
+  }
+  exit(): void {
+    this.cancelCameraMotion();
+    this.workspace = null;
+    this.draw();
+  }
+  project(point: Vector): Point {
+    const projected = new THREE.Vector3(...point).project(this.camera);
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      x: rect.left + ((projected.x + 1) * rect.width) / 2,
+      y: rect.top + ((1 - projected.y) * rect.height) / 2,
+    };
+  }
+  projectLocal(frame: PlaneFrame, point: Point): Point {
+    return this.project(worldPoint(frame, point));
+  }
+  pointAt(frame: PlaneFrame, x: number, y: number): Point | null {
+    const rect = this.canvas.getBoundingClientRect();
+    const ray = new THREE.Raycaster();
+    ray.setFromCamera(
+      new THREE.Vector2(
+        ((x - rect.left) / rect.width) * 2 - 1,
+        1 - ((y - rect.top) / rect.height) * 2,
+      ),
+      this.camera,
+    );
+    const u = new THREE.Vector3(...frame.u),
+      v = new THREE.Vector3(...frame.v);
+    const origin = new THREE.Vector3(...frame.origin);
+    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(u.clone().cross(v), origin);
+    const hit = ray.ray.intersectPlane(plane, new THREE.Vector3());
+    if (!hit) return null;
+    hit.sub(origin);
+    return { x: hit.dot(u), y: hit.dot(v) };
+  }
+  dispose(): void {
+    this.cancelCameraMotion();
+    if (this.pendingDraw !== null) cancelAnimationFrame(this.pendingDraw);
+    this.observer.disconnect();
+    this.removeNavigation();
+    this.grids.dispose();
+    this.renderer.dispose();
+    this.canvas.remove();
+    this.changed.clear();
+  }
+}

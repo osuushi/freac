@@ -1,0 +1,61 @@
+import type { SketchEditor } from "../sketch/editor.js";
+import { type PlaneFrame, type PlaneId, planes } from "../sketch/planes.js";
+import { planeReference } from "./mirror-reference.js";
+import { MirrorReferenceView } from "./mirror-reference-view.js";
+import { pickPlaneInterior, planePatchVertices } from "./plane-interior-pick.js";
+
+/** Presentation uses the same hit as clicking; explicit labels retain their own target. */
+export class PlaneCutHover {
+  private abort = new AbortController();
+  private view: MirrorReferenceView;
+  private visible = false;
+  constructor(
+    private editor: SketchEditor,
+    private accepts: () => ((frame: PlaneFrame) => boolean) | undefined,
+  ) {
+    this.view = new MirrorReferenceView(editor, true);
+    const options = { capture: true, signal: this.abort.signal };
+    const document = editor.world.canvas.ownerDocument;
+    document.addEventListener("pointermove", this.move, options);
+    document.addEventListener("pointerdown", this.clear, options);
+    document.addEventListener("pointerleave", this.clear, options);
+    editor.world.changed.add(this.clear);
+  }
+  private move = (event: PointerEvent): void => {
+    const accepts = this.accepts();
+    if (!accepts || this.editor.blocked || event.buttons || event.metaKey || event.ctrlKey) {
+      this.clear();
+      return;
+    }
+    const target = event.target instanceof Element ? event.target : null;
+    // Ordinary model hover would repaint/refresh and clear this tool's reference.
+    if (target === this.editor.world.canvas) event.stopImmediatePropagation();
+    const label = target?.closest<HTMLElement>("[data-plane-target], [data-plane]");
+    const id = label?.getAttribute("data-plane-target");
+    const frame = id
+      ? planes[id as PlaneId]
+      : this.editor.store.data.constructionPlanes?.find(
+          (plane) => plane.id === label?.getAttribute("data-plane"),
+        )?.frame;
+    const hit =
+      frame && accepts(frame) && !(label instanceof HTMLButtonElement && label.disabled)
+        ? { frame, vertices: planePatchVertices(frame) }
+        : target === this.editor.world.canvas
+          ? pickPlaneInterior(this.editor, { x: event.clientX, y: event.clientY }, accepts)
+          : null;
+    this.view.show(hit ? { ...planeReference(hit.frame), vertices: hit.vertices } : null);
+    this.visible = !!hit;
+    this.editor.world.renderer.render(this.editor.world.scene, this.editor.world.camera);
+  };
+  clear = (): void => {
+    if (!this.visible) return;
+    this.visible = false;
+    this.view.show(null);
+    this.editor.world.renderer.render(this.editor.world.scene, this.editor.world.camera);
+  };
+  dispose(): void {
+    this.abort.abort();
+    this.editor.world.changed.delete(this.clear);
+    this.view.dispose();
+  }
+}

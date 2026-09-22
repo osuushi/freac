@@ -1,0 +1,142 @@
+.dimension-lock {
+  padding: 0 2px;
+  font-size: 11px;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.dimension-lock[hidden] {
+  display: none;
+}
+.selection-readouts {
+  position: absolute;
+  left: 20px;
+  bottom: 62px;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 270px;
+  max-width: calc(100% - 40px);
+  max-height: calc(100% - 160px);
+  overflow-y: auto;
+  pointer-events: auto;
+}
+.selection-readouts > * {
+  flex-shrink: 0;
+}
+.constraint-list {
+  display: grid;
+  gap: 4px;
+  padding: 9px;
+  background: #ffffffed;
+  border: 1px solid #d9dfe7;
+  border-radius: 8px;
+  pointer-events: auto;
+}
+.constraint-list > span {
+  font-size: 11px;
+  color: #667588;
+}
+.constraint-list button {
+  text-align: left;
+  font-size: 12px;
+  border: none;
+  box-shadow: none;
+}
+
+.constraint-list[hidden],
+.line-constraints[hidden] {
+  display: none;
+}
+.constraint-list {
+  width: 100%;
+}
+.constraint-list section + section {
+  border-top: 1px solid #d9dfe7;
+  margin-top: 6px;
+  padding-top: 6px;
+}
+.constraint-list h2 {
+  margin: 0 0 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #536477;
+}
+.constraint-empty {
+  font-size: 11px;
+  color: #667588;
+}
+.existing-constraints:not(:empty) + .constraint-empty,
+.available-constraints:has(.line-constraints:not([hidden]) button:not([hidden]))
+  + .constraint-empty {
+  display: none;
+}
+.line-constraints,
+.existing-constraints {
+  display: grid;
+  gap: 4px;
+}
+.constraint-list button[hidden] {
+  display: none;
+}
+.constraint-list button {
+  width: 100%;
+  padding: 5px 7px;
+}
+
+.point-link-actions {
+  display: flex;
+  gap: 4px;
+}
+.point-link-actions[hidden] {
+  display: none;
+}
+
+.constrained-point {
+  fill: white;
+  stroke: #79569f;
+  stroke-width: 1.7;
+}
+
+.point-link-actions button {
+  width: auto;
+  min-width: 52px;
+  height: 30px;
+  padding: 0 8px;
+}
+
+.constraint-list button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.line-constraints button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.point-chooser.compact {
+  padding: 3px;
+}
+.point-chooser.compact .point-link-actions button {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 5px;
+}
+.point-chooser.compact .point-link-actions svg {
+  width: 20px;
+  height: 20px;
+}
+
+.move-control {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  pointer-events: auto;
+}
+.move-control[hidden] {
+  display: none;
+}

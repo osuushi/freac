@@ -1,0 +1,117 @@
+# Revolve
+
+Status: founder-approved, 2026-09-16, including total-height helical sweeps.
+Implemented and verified; overlap/axis-crossing follow-up ready for founder review.
+
+## Captured dense-thread limitation (2026-09-20)
+
+Founder review used a radius-6 cylinder with two cylindrical faces: the selected
+lower face spans z=0..18 and the whole body spans z=0..52. The agent used the body
+extent and attempted a triangular additive helix with radius 5.9 at its base,
+radius 7 at its crest, 1 mm axial section height and 1 mm pitch.
+
+The 52- and 26-turn calls hit the native calculator's 10-second deadline. Exact
+fixture replay of the 4-turn alternative succeeds five times and fails at the
+sixth union (z=20..24). The sixth swept tool and prior-five body each validate;
+an isolated OCCT Fuse reports completion without an algorithm error, but its
+result has an unorientable face and a non-closed wire. Freac's validation rejects
+it correctly. The agent's proposed +0.5 mm profile translation fails at the same
+sixth union; axial bounding-window overlap was not an established cause.
+
+An 18-turn call also exceeds the shipped deadline, but succeeds in about 15.6 s
+with a diagnostic-only 60-second limit. Splitting 18 turns into 4+4+4+4+2 succeeds.
+These probes preserve the attempted profile's half-mm end overhangs; they do not
+establish a finished thread confined to the selected face or standard thread form.
+The diagnosis did not change shipped budgets, validation, or the user's drawing.
+Follow-up must address script calculation budgets and union robustness while
+retaining cancellation and failed-script rollback; tool availability alone is
+not evidence that dense threads are reliable.
+
+## First usable outcome
+
+Draw a closed radial cross-section, leave sketch mode, select it and revolve it
+around an explicit axis to make a turned part. Reuse profiles to subtract an
+annular groove. Make a partial revolution, sketch on its planar end face and
+continue modeling. Results are materialized bodies independent of source sketches.
+
+## Agreed interaction
+
+- Modeling mode only. Select one or several coplanar closed sketch regions or
+  planar body faces. Holes remain holes; neighboring selected regions combine.
+  A local Revolve icon appears alongside the extrusion affordance.
+- Enter Revolve, then explicitly pick an axis: a straight sketch segment (including
+  construction geometry), straight body edge, or a world coordinate axis. Hover
+  highlights the candidate and shows its infinite axis before selection. No
+  automatically chosen axis. The initial scope requires the axis to lie in the
+  profile plane; a noncoplanar candidate explains why it cannot be used.
+- After axis selection, propose a 360-degree preview with New body as the initial
+  result when disjoint, and the existing nonzero-volume-overlap subtraction default
+  when intersecting existing bodies. Reuse U/S/I/N and the existing explicit
+  Boolean-participant controls. Commutative operations need no target direction.
+- Show a local rotation arc and signed angle field near the profile. Drag the end
+  handle to reduce the full sweep; type an angle for precision. Positive/negative
+  angles choose the two directions around the displayed oriented axis. Limit to
+  one revolution in either direction when Height is zero. Nonzero Height permits
+  multiple turns; Height is total signed axial travel, not pitch. For example,
+  720° and 10 mm produces two turns at 5 mm pitch. A local height handle/field
+  adjusts travel along the oriented axis. Zero angle is not a valid revolution.
+  Highlight the starting section and current end section for partial sweeps.
+- A small axis action re-enters axis picking without losing the input selection.
+  Axis direction derives from the picked segment's displayed orientation; changing
+  sign reverses the sweep. World axes use their positive world direction.
+- Keep the candidate temporary after release. Enter in the field applies the
+  angle; Enter outside it, the local checkmark, or a subsequent selection accepts.
+  Escape cancels. Pan/orbit/zoom remain available between edits. Window focus loss
+  does not accept the body. No parameter panel or Finish wizard.
+
+Profiles may touch or cross the axis. Crossing profiles split at the axis; revolve
+or helically sweep each side and union their material. Overlapping turns likewise
+union their swept volume. Self-intersection in an intermediate swept shell is not
+by itself a reason to reject the requested solid. The final result must still be a
+valid, non-self-intersecting BRep; construction failures keep the last valid preview
+clearly identified and prevent acceptance. Boolean results may contain multiple
+solids; a kernel failure must never be mistaken for an intentional empty result.
+
+## Model ownership and scope
+
+Add a concrete revolve request with captured profile membership or planar face
+references, an explicit axis origin/direction, signed angle, total signed height
+and Boolean options.
+Use the existing document owner, temporary candidate, exact OCCT kernel, body
+materialization and immediate topology correspondence. Recompute from original
+accepted inputs for every angle/axis/Boolean change; never revolve the last preview.
+One accepted result is one Undo. Do not store a feature tree, executable generator,
+second document, or a generalized extrude/revolve/loft framework.
+
+The frontend owns profile/axis picking and local angle interaction. The kernel
+owns exact region wires, sweep validity, Booleans and result topology. Reuse profile
+lowering and existing Boolean behavior where their semantics match. Source sketches
+remain independently editable; changing one does not regenerate an accepted body.
+
+Helical sweeps use the same radial section, rotated while translating along the
+axis at constant pitch. Overlapping turns must not silently yield an invalid solid.
+Special thread standards, arbitrary noncoplanar axes, variable pitch, and persistent
+feature-history editing are outside this first increment.
+Do not start Loft or extend the embedded agent while implementing Revolve.
+
+## Acceptance and next review
+
+Use ordinary controls to make a full shaft and hollow ring, a 90-degree sector,
+and a groove subtraction. Make a two-turn helix with total height, both rotation
+and height signs, and verify the end section follows the requested screw motion.
+Cover line/arc profiles, multiple regions, explicit axis picking and replacement, signed numeric/drag angles, Boolean modes, release
+without acceptance, cancel, one-step Undo/Redo and Save/Open. Independently check
+volumes and angular extent. Sketch on a partial result's planar face and extrude.
+Replay the two founder captures, including the axis-touch pentagon at 20°, and
+verify overlapping circular turns and profiles crossing the axis. Include holes
+whose swept cavities are partly filled by another turn. Reject empty or invalid
+section results rather than silently losing material.
+Verify exact full-revolution seams are excluded from ordinary edge display/picking.
+Helical Boolean results can retain valid surface patch edges; cleanup is deferred.
+Run headless Chromium/WebKit and hidden Electron; device/platform claims stay separate.
+
+First running geometry/interaction slice should fit about one hour, complete
+acceptance about two; report a concrete obstacle before expanding that scope.
+The next gate is hands-on review of the turned-part/groove/partial-face/helix loop.
+The implementation has reached that gate; the acceptance route above describes
+the behavior to exercise. Automated checks do not establish founder acceptance.

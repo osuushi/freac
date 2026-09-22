@@ -1,0 +1,124 @@
+# Undo and saving
+
+Read for work in this area, not on every resume. [Architecture index](../architecture.md).
+Later founder decisions override earlier proposals.
+Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.
+
+## Undo and saving
+
+Start with before/after sketch data for each accepted user edit. One drag is one
+Undo step, a multi-selection move is one step, and a numeric confirmation is one
+step. Undo/Redo restores geometry, constraints and group membership together.
+Transient previews, focus and camera movement are not history. Clear invalid
+selection/handles after restoration and keep the current plane usable.
+
+Use straightforward snapshots initially; optimize memory only after measuring a
+real sketch workload. No inverse-operation framework or saved undo log is required.
+Opening a document starts fresh Undo/Redo history. That is an intentional simplification
+from the old archive, not a claim that old saved history has been migrated.
+
+Save a readable, version-tagged JSON sketch document: units, plane frames, typed
+curves, constraints and editing groups. A **file format version** describes its
+schema; it is not a document edit counter. Do not serialize meshes, region IDs,
+solver memory, command logs or native BReps for sketch-only files. Validate finite
+geometry, IDs and references into a temporary document before replacing live work.
+Preserve the existing file on failed saves, using the host's ordinary safe-write
+path. Save/Open and unsaved-work handling are required product interactions, not
+a storage research project. No migration framework for hypothetical old versions.
+
+## Native document lifecycle
+
+Electron keeps one document window. The host owns the current path and saved-content
+baseline; DocumentOwner still owns accepted geometry and Undo. New/Open replace the
+same window only after Save/Cancel/Don’t Save resolves. Native Save writes back to the
+current path; first Save and Save As use a native save panel. A temporary sibling file
+is fully written before replacing the destination; failure retains the old identity
+and dirty state. Open validates/materializes before replacing accepted work.
+
+File menu commands and Cmd/Ctrl-N/O/S, Shift-Cmd/Ctrl-S and Cmd/Ctrl-W share these routes.
+The title and macOS represented-file/edited indicators reflect the current document.
+Dirty state compares accepted archive contents to the saved baseline, including Undo
+back to saved contents; previews and navigation do not dirty the document. File dialogs
+and loading block edits; active gestures/tools must finish or cancel first.
+
+The last successfully opened/saved path is remembered in the Electron user-data
+preferences and reopened at launch. New clears the current-file preference but retains the last successfully used folder.
+Open starts in the current file’s folder; untitled Open/Save use the remembered
+folder, falling back to Documents on first launch. This restores the
+saved file, not unsaved edits, Undo history or camera state. Missing/invalid remembered
+files open an untitled document with an error message. Closing a macOS window leaves
+the app available; New/Open or Dock activation can open its single window again.
+Quit and window close protect unsaved work. Autosave, crash recovery, file associations,
+recent-file menus and multiple windows remain outside this increment.
+
+Web continues to use download/upload with the same archive codec; native filesystem
+and dialog APIs stay behind the preload bridge. Browser unsaved-work/session restoration
+is not implemented by this native-host increment.
+
+## Mesh export
+
+STL and 3MF export all accepted solid bodies, including hidden bodies, at their
+current world positions. Sketches and temporary operation previews are excluded;
+export is disabled during active interactions and with no bodies. No document or
+Undo mutation occurs. Conversion/compression runs in a disposable browser worker,
+shared by web and Electron; download uses the same host route as Save.
+
+Both formats use the accepted kernel-derived face tessellation (current mesher
+settings: 0.05 mm absolute linear deflection, 0.2 rad angular deflection). Export
+welds coordinates within 1e-7 mm across faces, checks finite/nondegenerate triangles
+and closed, consistently oriented edges, and reports failure instead of emitting
+an open mesh. These are mesh integrity checks, not a general printability or
+self-intersection certificate. There is no export-quality setting yet.
+
+Binary STL stores float32 coordinates in millimeters; STL itself has no unit field
+or separate-body semantics. 3MF explicitly declares millimeters, shares vertex
+indexes and keeps one model object/build item per body in an OPC ZIP package per
+the [3MF Core specification](https://github.com/3MFConsortium/spec_core/blob/master/3MF%20Core%20Specification.md).
+Placement is baked into vertices. Exports contain geometry only, without printer,
+material or slicing settings. Exact editable geometry remains in the Freac file.
+
+## Portable agent workspace
+
+Area 2 adds version-2 ZIP files when a document has portable content. `model.json`
+contains the version-tagged accepted model (exact BReps, no display meshes),
+`workspace/` carries project files and `conversations/codex/` carries only
+`sessions/**/*.jsonl` and `archived_sessions/**/*.jsonl`. Empty/model-only documents
+continue using version-1 JSON. Browser upload/download preserves portable bytes even
+without a terminal host; its codec runs in a disposable worker.
+
+The host's AgentWorkspace owns these files independently of geometry Undo. A recursive
+watcher updates dirty state; Save rescans all portable files. It checks inode, size
+and modification/change times before/after reading and rescans the directory listing.
+Changes during capture reject visibly, retaining the previous file and dirty state.
+Writes after capture are detected by a further scan and remain unsaved. Save As keeps
+the live workspace and process. New/Open/Close asks about unsaved changes and agent
+termination, stops before a final saved capture, and rechecks after shutdown when the
+initial document was clean. Cancel preserves the current data; cancel after stopping
+may require Start again. A failed save never discards local workspace bytes.
+
+Open checks ZIP metadata/expanded limits/CRC and model structure, prepares files in
+an isolated directory, then uses the normal model validation/materialization path
+before adopting the prepared workspace. No archived file is executed during Open.
+Archives accept unique regular files, with portable paths, no links or special files,
+no absolute/traversal/Windows device paths and no case-folded or file/directory conflicts.
+Limits are 4096 portable files and 64 MiB expanded model plus portable bytes. Directories
+are implicit in file paths; empty directories and executable mode bits are not preserved.
+The writer uses uncompressed ZIP entries; the reader also supports compressed entries.
+
+Each document gets its own local Codex home beside (outside) its workspace. Base
+Freac configuration and auth are copied there at launch and synchronized locally on
+Stop/restart. Only session JSONL records enter the archive; credentials, preferences,
+SQLite indexes and caches do not. Resume selects the latest activity timestamp among
+main CLI conversations, excludes subagent sessions, and invokes `codex resume UUID
+--cd CURRENT_WORKSPACE`. It does not rewrite historical paths inside messages.
+Unknown records remain intact; unsupported/missing metadata cannot select a resume ID.
+This adapter is verified with Codex 0.155.1, not promised across arbitrary CLI versions.
+Custom harnesses preserve workspace files, not external harness-specific chat stores.
+
+Working directories are retained rather than deleted automatically. Agent Settings
+provides Recover agent files: select a retained document folder and confirm importing
+its files/conversations into the current document, preserving geometry and marking
+it unsaved. Save then embeds the recovered content. Recovery also handles area 1 flat
+workspace folders and selects matching session metadata from Freac's former shared
+Codex home. It never imports personal Codex homes. Geometry autosave/crash recovery
+and automatic recovery selection remain outside this increment.

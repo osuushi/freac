@@ -1,0 +1,89 @@
+.entity-viewer {
+  position: absolute;
+  top: 85px;
+  left: 20px;
+  width: 190px;
+  max-height: calc(100vh - 230px);
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid #e2e7ee;
+  border-radius: 12px;
+  background: #ffffffed;
+}
+.entity-viewer h2 {
+  font-size: 14px;
+  margin: 0 0 16px;
+}
+.entity-viewer h3 {
+  font-size: 11px;
+  color: #697b8b;
+  margin: 12px 0 5px;
+}
+.entity-row {
+  display: flex;
+  gap: 2px;
+  margin: 3px 0;
+}
+.entity-row button {
+  border-color: transparent;
+  box-shadow: none;
+  padding: 7px;
+  font-size: 12px;
+}
+.entity-row button:first-child {
+  flex: 1;
+  text-align: left;
+}
+.entity-row button[aria-pressed="true"] {
+  background: #e6f0ff;
+  color: #2863a4;
+}
+.entity-hidden button:first-child {
+  color: #8c99a8;
+}
+.entity-mergeable button:first-child {
+  color: #a66a1f;
+  background: #fff5e5;
+}
+.entity-row .entity-merge {
+  flex: none;
+  min-width: 28px;
+  padding: 5px 6px;
+  color: #a66a1f;
+  background: #fff5e5;
+  font-size: 15px;
+  line-height: 1;
+}
+.entity-row .entity-merge:hover {
+  background: #f6dfb9;
+}
+.entity-row button:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.entity-label {
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+.entity-name {
+  flex: 1;
+  min-width: 0;
+  width: 0;
+  padding: 7px;
+  font: inherit;
+  font-size: 12px;
+}
+.entity-dragging {
+  opacity: 0.45;
+}
+.entity-dragging .entity-label {
+  cursor: grabbing;
+}
+.entity-drop-before {
+  box-shadow: 0 -2px #2863a4;
+}
+.entity-drop-after {
+  box-shadow: 0 2px #2863a4;
+}

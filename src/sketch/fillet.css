@@ -1,0 +1,56 @@
+.fillet-control,
+.bow-control {
+  position: absolute;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 260px;
+}
+.fillet-control[hidden],
+.fillet-control [hidden],
+.bow-control[hidden],
+.bow-control [hidden] {
+  display: none;
+}
+.fillet-control input,
+.bow-control input {
+  width: 92px;
+  border: 1px solid #b8cfea;
+  border-radius: 8px;
+  background: white;
+  color: #245eac;
+  font: inherit;
+  padding: 8px;
+}
+.fillet-control span,
+.bow-control span {
+  padding: 6px;
+  background: #fff9eb;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.fillet-guide-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.fillet-guide {
+  fill: none;
+  stroke: #337ac4;
+  stroke-width: 1.5;
+}
+.fillet-guide-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 14;
+  pointer-events: stroke;
+  cursor: grab;
+}
+.fillet-guide-layer:has(.fillet-guide-hit:hover) .fillet-guide {
+  stroke-width: 2.5;
+}

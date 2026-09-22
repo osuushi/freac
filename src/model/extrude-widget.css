@@ -1,0 +1,94 @@
+.extrude-controls .extrude-targets {
+  position: absolute;
+  left: var(--extrude-options-left, 55px);
+  top: var(--extrude-targets-top, 100px);
+  white-space: nowrap;
+}
+.extrude-draft {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 2px 3px 5px;
+  font-size: 12px;
+  color: #73869a;
+}
+.extrude-draft select {
+  font: inherit;
+  padding: 2px;
+  border: 1px solid #bdccdc;
+  border-radius: 4px;
+  background: transparent;
+  color: #31506b;
+}
+.extrude-draft input {
+  width: 5.5ch;
+}
+.model-actions button[hidden] {
+  display: none;
+}
+.extrude-axis-sphere {
+  z-index: 1;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1.5px solid #151515;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff 0 48%, #d9d9d9 52% 100%);
+  box-shadow: none;
+  cursor: grab;
+  touch-action: none;
+}
+.extrude-axis-sphere:hover,
+.extrude-axis-sphere[data-snapped="true"] {
+  outline: 2px solid #398bc9;
+}
+.extrude-twist-handle,
+.extrude-twist-handle:hover {
+  z-index: 1;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: grab;
+  touch-action: none;
+}
+.extrude-axis-guide {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+  stroke: #7c96af;
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+.extrude-controls[data-preview-pending="true"] .axial-panel {
+  border-color: #398bc9;
+}
+.extrude-controls[data-preview-pending="true"] .axial-panel::after {
+  content: "Updating preview…";
+  color: #31506b;
+  font-size: 11px;
+  text-align: center;
+}
+.extrude-symmetry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding-bottom: 4px;
+  color: #31506b;
+  font-size: 12px;
+}
+.axial-panel .extrude-symmetry input {
+  width: 13px;
+  margin: 0;
+}

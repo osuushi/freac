@@ -1,0 +1,137 @@
+import assert from "node:assert/strict";
+import { mkdir, readFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { chromium, webkit } from "playwright";
+import { strFromU8, unzipSync } from "three/addons/libs/fflate.module.js";
+import { STLLoader } from "three/addons/loaders/STLLoader.js";
+import { createServer } from "vite";
+import { launchElectron } from "./native-documents.mjs";
+import { bodyArchiveRoute } from "./ui-body-archive.mjs";
+import { exportCapture } from "./ui-export-capture.mjs";
+import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { chooseTool, toolEnabled } from "./ui-tools.mjs";
+
+await mkdir(".cache/sketch-review", { recursive: true });
+const name = process.env.FREAC_TEST_BROWSER ?? "chromium";
+let server, browser, app;
+try {
+  let page;
+  if (name === "electron") {
+    app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+    page = await app.firstWindow();
+    assert.equal(
+      await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),
+      false,
+    );
+  } else {
+    server = await createServer({ server: { port: 0 } });
+    await server.listen();
+    browser = await { chromium, webkit }[name].launch({ headless: true });
+    page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
+    await page.goto(server.resolvedUrls.local[0]);
+  }
+  page.setDefaultTimeout(15000);
+  page.on("pageerror", (error) => {
+    throw error;
+  });
+  await exportCapture(page, name, app);
+  await reset(page);
+  assert.equal(!(await toolEnabled(page, "export 3mf", "export-3mf")), true);
+  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  // Exact odd-millimeter bounds are independent of the current adaptive grid spacing.
+  await chooseTool(page, "grid snap", "grid");
+  await page.keyboard.press("r");
+  await drag(page, [-15, -10], [15, 10]);
+  assert.equal(!(await toolEnabled(page, "export 3mf", "export-3mf")), true);
+  const pick = await at(page, 5, 3);
+  await chooseTool(page, "return to modeling", "modeling");
+  await page.mouse.click(pick.x, pick.y);
+  await page.getByRole("textbox", { name: "Extrusion distance" }).fill("5");
+  await page.keyboard.press("Enter");
+  assert.equal(
+    !(await toolEnabled(page, "export 3mf", "export-3mf")),
+    true,
+    "Temporary geometry is not exported",
+  );
+  await page.keyboard.press("Enter");
+  await inspect(page);
+  assert.equal(await toolEnabled(page, "export 3mf", "export-3mf"), true);
+  const before = await inspect(page);
+  for (const format of ["3mf", "stl"]) {
+    const path = resolve(`.cache/sketch-review/${name}-export.${format}`);
+    const waiting = app
+      ? app.evaluate(
+          ({ BrowserWindow }, path) =>
+            new Promise((resolve, reject) => {
+              BrowserWindow.getAllWindows()[0].webContents.session.once(
+                "will-download",
+                (_, item) => {
+                  item.setSavePath(path);
+                  item.once("done", (_, state) =>
+                    state === "completed" ? resolve(null) : reject(new Error(state)),
+                  );
+                },
+              );
+            }),
+          path,
+        )
+      : page.waitForEvent("download");
+    await chooseTool(page, `export ${format}`, `export-${format}`);
+    const download = await waiting;
+    if (download) {
+      assert.equal(download.suggestedFilename(), `Untitled.${format}`);
+      await download.saveAs(path);
+    }
+    const bytes = await readFile(path);
+    if (format === "stl") {
+      const geometry = new STLLoader().parse(
+        bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+      );
+      geometry.computeBoundingBox();
+      assert.deepEqual(geometry.boundingBox.min.toArray(), [-15, -10, 0]);
+      assert.deepEqual(geometry.boundingBox.max.toArray(), [15, 10, 5]);
+      assert.equal(geometry.attributes.position.count, 36);
+      geometry.dispose();
+    } else {
+      const files = unzipSync(bytes);
+      const model = strFromU8(files["3D/3dmodel.model"]);
+      const parsed = await page.evaluate((xml) => {
+        const doc = new DOMParser().parseFromString(xml, "application/xml");
+        return {
+          errors: doc.getElementsByTagName("parsererror").length,
+          unit: doc.documentElement.getAttribute("unit"),
+          vertices: [...doc.getElementsByTagName("vertex")].map((v) =>
+            ["x", "y", "z"].map((key) => Number(v.getAttribute(key))),
+          ),
+          triangles: doc.getElementsByTagName("triangle").length,
+          items: doc.getElementsByTagName("item").length,
+        };
+      }, model);
+      assert.equal(parsed.errors, 0);
+      assert.equal(parsed.unit, "millimeter");
+      assert.equal(parsed.items, 1);
+      assert.equal(parsed.vertices.length, 8);
+      assert.equal(parsed.triangles, 12);
+      for (const axis of [0, 1, 2]) {
+        close(Math.min(...parsed.vertices.map((v) => v[axis])), [-15, -10, 0][axis]);
+        close(Math.max(...parsed.vertices.map((v) => v[axis])), [15, 10, 5][axis]);
+      }
+    }
+    assert.deepEqual((await inspect(page)).document, before.document);
+  }
+  await chooseTool(page, "undo", "undo");
+  assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
+  assert.equal(!(await toolEnabled(page, "export 3mf", "export-3mf")), true);
+  await chooseTool(page, "redo", "redo");
+  assert.deepEqual((await inspect(page)).document, before.document);
+  await bodyArchiveRoute(page, `${name}-export`, app);
+  assert.equal(await toolEnabled(page, "export 3mf", "export-3mf"), true);
+  await page.screenshot({ path: `.cache/sketch-review/${name}-export.png` });
+  console.log(
+    `${name}: real extrusion, temporary/empty guards, STL/3MF downloads, parsed geometry/units, Undo/Redo and adjacent Save/Open pass`,
+  );
+} finally {
+  await browser?.close();
+  await app?.close();
+  await server?.close();
+}
