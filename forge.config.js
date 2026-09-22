@@ -12,6 +12,7 @@ export default {
   packagerConfig: {
     name: "Freac",
     executableName: "Freac",
+    icon: resolve("packaging/icons/freac"),
     appBundleId: "com.osuushi.freac",
     appCategoryType: "public.app-category.graphics-design",
     appVersion: metadata.shortVersion,

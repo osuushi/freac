@@ -11,6 +11,11 @@ import { nativeExecutable } from "./host/native-paths.js";
 import type { ModelRequest } from "./sketch/model-api.js";
 
 const directory = dirname(fileURLToPath(import.meta.url));
+const icon = join(
+  app.getAppPath(),
+  app.isPackaged ? ".build/renderer" : "assets/public",
+  "freac.png",
+);
 const owner = new DocumentOwner(
   new NativeSolver(nativeExecutable("solver")),
   nativeExecutable("kernel"),
@@ -49,6 +54,7 @@ async function createWindow(): Promise<void> {
   await documents.reopen();
   const window = new BrowserWindow({
     title: "Freac",
+    icon,
     width: 1280,
     height: 850,
     show: !hidden,
@@ -76,6 +82,7 @@ async function createWindow(): Promise<void> {
 app
   .whenReady()
   .then(async () => {
+    if (process.platform === "darwin" && !app.isPackaged) app.dock?.setIcon(icon);
     if (hidden && process.platform === "darwin") app.dock?.hide();
     agent = new AgentSession();
     documents = new DocumentSession(owner, openWindow, agent);
