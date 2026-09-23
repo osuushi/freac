@@ -4,10 +4,13 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import type { Vector } from "../sketch/planes.js";
 import { anchorSnap } from "./anchor-snapping.js";
+import { MovementShadows } from "./movement-shadows.js";
+import { scaleSelection } from "./scale-selection.js";
 import { pointOnTransformPlane, transformPlane } from "./transform-plane.js";
 
 /** The anchor is UI state. Dragging it never edits body geometry or Undo. */
 export class BodyPivotDrag {
+  private shadows: MovementShadows;
   private abort = new AbortController();
   private drag: {
     id: number;
@@ -22,37 +25,31 @@ export class BodyPivotDrag {
   constructor(
     private editor: SketchEditor,
     private button: HTMLButtonElement,
-    get: () => Vector,
+    private getOrigin: () => Vector,
     private set: (point: Vector) => void,
     toggle: () => void,
   ) {
+    this.shadows = new MovementShadows(editor);
     const options = { signal: this.abort.signal };
     button.addEventListener(
-      "pointerdown",
-      (event) => {
-        if (event.button || editor.blocked || editor.interactions.current) return;
-        event.preventDefault();
-        event.stopPropagation();
-        const origin = [...get()] as Vector;
-        const plane = transformPlane(editor, origin);
-        const hit = this.point(event, plane);
-        if (!hit) return;
-        const lease = editor.interactions.acquire("body-move", () => this.finish(true));
-        if (!lease) return;
-        this.drag = {
-          id: event.pointerId,
-          x: event.clientX,
-          y: event.clientY,
-          origin,
-          hit,
-          plane,
-          lease,
-          moved: false,
-        };
-        lease.capture(button, event.pointerId);
+      "pointerenter",
+      () => {
+        const source = scaleSelection(editor),
+          origin = this.getOrigin();
+        if (source && !editor.blocked && !editor.interactions.current)
+          this.shadows.prepare(source, origin, transformPlane(editor, origin));
       },
       options,
     );
+    button.addEventListener(
+      "pointerleave",
+      () => {
+        if (!this.drag) this.shadows.hide();
+      },
+      options,
+    );
+
+    button.addEventListener("pointerdown", this.start, options);
     window.addEventListener("pointermove", this.move, options);
     window.addEventListener(
       "pointerup",
@@ -86,6 +83,30 @@ export class BodyPivotDrag {
     window.addEventListener("blur", () => this.finish(true), options);
     window.addEventListener("pointercancel", () => this.finish(true), options);
   }
+  private start = (event: PointerEvent): void => {
+    if (event.button || this.editor.blocked || this.editor.interactions.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const origin = [...this.getOrigin()] as Vector;
+    const plane = transformPlane(this.editor, origin);
+    const hit = this.point(event, plane);
+    if (!hit) return;
+    const lease = this.editor.interactions.acquire("body-move", () => this.finish(true));
+    if (!lease) return;
+    this.drag = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      origin,
+      hit,
+      plane,
+      lease,
+      moved: false,
+    };
+    const source = scaleSelection(this.editor);
+    if (source) this.shadows.begin(source, origin, plane);
+    lease.capture(this.button, event.pointerId);
+  };
   private point(event: PointerEvent, plane: THREE.Plane): THREE.Vector3 | null {
     return pointOnTransformPlane(this.editor, event.clientX, event.clientY, plane);
   }
@@ -100,14 +121,18 @@ export class BodyPivotDrag {
     this.button.dataset.snapped = String(!!snap);
     if (snap) {
       this.set(snap);
+      this.shadows.move(snap);
       return;
     }
     const hit = this.point(event, drag.plane);
     if (!hit) return;
     const delta = hit.sub(drag.hit);
-    this.set(new THREE.Vector3(...drag.origin).add(delta).toArray() as Vector);
+    const anchor = new THREE.Vector3(...drag.origin).add(delta).toArray() as Vector;
+    this.set(anchor);
+    this.shadows.move(anchor);
   };
   private finish(cancel: boolean): void {
+    this.shadows.hide();
     const drag = this.drag;
     if (!drag) return;
     this.drag = null;
@@ -119,5 +144,6 @@ export class BodyPivotDrag {
   dispose(): void {
     this.finish(true);
     this.abort.abort();
+    this.shadows.dispose();
   }
 }

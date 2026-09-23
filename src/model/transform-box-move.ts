@@ -1,13 +1,12 @@
 import type * as THREE from "three";
 import type { InteractionLease } from "../sketch/active-interaction.js";
-import { withSketch } from "../sketch/document.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
-import type { PlaneFrame, Vector } from "../sketch/planes.js";
-import { transformSelected } from "../sketch/selection-transform.js";
-import { placedBodies } from "./body-placement.js";
+import type { Vector } from "../sketch/planes.js";
+import { MovementShadows } from "./movement-shadows.js";
 import type { ScaleSource } from "./scale.js";
 import { scaleSelection } from "./scale-selection.js";
+import { previewBoxMove, translatedSketchFrames } from "./transform-box-preview.js";
 import { pointOnTransformPlane, transformPlane } from "./transform-plane.js";
 
 type Drag = {
@@ -26,13 +25,46 @@ type Drag = {
 
 /** Command-drag the selected box in the same plane used by its sphere anchor. */
 export class TransformBoxMove {
+  private shadows: MovementShadows;
+  private pointer: { x: number; y: number; command: boolean; canvas: boolean } | null = null;
   private abort = new AbortController();
   private drag: Drag | null = null;
+  private ignoreClick = false;
   constructor(
     private editor: SketchEditor,
     private finishScale: () => Promise<boolean>,
   ) {
+    this.shadows = new MovementShadows(editor);
+    editor.world.changed.add(this.previewHover);
     const options = { signal: this.abort.signal };
+    window.addEventListener(
+      "pointerdown",
+      () => {
+        this.ignoreClick = false;
+      },
+      { ...options, capture: true },
+    );
+    window.addEventListener(
+      "click",
+      (event) => {
+        if (!this.ignoreClick || event.target !== editor.world.canvas) return;
+        this.ignoreClick = false;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      },
+      { ...options, capture: true },
+    );
+    window.addEventListener("pointermove", this.hover, options);
+    window.addEventListener("keyup", this.hoverKey, options);
+    window.addEventListener("keydown", this.hoverKey, options);
+    window.addEventListener(
+      "blur",
+      () => {
+        this.pointer = null;
+        this.shadows.hide();
+      },
+      options,
+    );
     editor.world.canvas.addEventListener("pointerdown", this.start, options);
     window.addEventListener("pointermove", this.move, options);
     window.addEventListener("pointerup", this.release, options);
@@ -49,6 +81,39 @@ export class TransformBoxMove {
       { ...options, capture: true },
     );
   }
+  private hover = (event: PointerEvent): void => {
+    this.pointer = {
+      x: event.clientX,
+      y: event.clientY,
+      command: event.metaKey,
+      canvas: event.target === this.editor.world.canvas,
+    };
+    this.previewHover();
+  };
+  private hoverKey = (event: KeyboardEvent): void => {
+    if (this.pointer) this.pointer.command = event.metaKey;
+    this.previewHover();
+  };
+  private previewHover = (): void => {
+    if (this.drag) return;
+    const e = this.editor,
+      p = this.pointer;
+    if (
+      !p?.command ||
+      !p.canvas ||
+      e.world.active ||
+      e.blocked ||
+      e.interactions.current ||
+      !e.world.transformBoxContains?.(p.x, p.y)
+    ) {
+      this.shadows.hide();
+      return;
+    }
+    const source = scaleSelection(e),
+      anchor = e.transformAnchor?.point;
+    if (source && anchor) this.shadows.prepare(source, anchor, transformPlane(e, anchor));
+    else this.shadows.hide();
+  };
   private start = async (event: PointerEvent): Promise<void> => {
     const editor = this.editor;
     if (
@@ -101,6 +166,7 @@ export class TransformBoxMove {
       running: null,
       delta: [0, 0, 0],
     };
+    this.shadows.begin(source, origin, plane);
     if (!released) lease.capture(editor.world.canvas, event.pointerId);
     if (last.x !== event.clientX || last.y !== event.clientY) {
       this.move(
@@ -123,6 +189,7 @@ export class TransformBoxMove {
     drag.moved ||=
       raw.length() > (this.editor.world.height * 3) / this.editor.world.canvas.clientHeight;
     if (!drag.moved) return;
+    this.ignoreClick = true;
     if (this.editor.gridSnap) {
       const spacing = this.editor.world.spacing;
       for (let i = 0; i < 3; i++) delta[i] = Math.round(delta[i] / spacing) * spacing;
@@ -135,83 +202,23 @@ export class TransformBoxMove {
       const delta = drag.pending;
       drag.pending = null;
       drag.valid = false;
-      const candidate = await this.preview(drag, delta);
+      const candidate = await previewBoxMove(
+        this.editor,
+        drag.source,
+        drag.origin,
+        delta,
+        drag.lease,
+      );
       if (drag.lease.phase === "editing" && !drag.pending) {
         drag.valid = candidate;
-        if (candidate) drag.delta = delta;
+        if (candidate) {
+          drag.delta = delta;
+          this.shadows.move(drag.origin.map((v, i) => v + delta[i]) as Vector);
+        }
       }
       this.editor.refresh();
     }
     drag.running = null;
-  }
-  private async preview(drag: Drag, delta: Vector): Promise<boolean> {
-    const editor = this.editor,
-      document = editor.store.data,
-      source = drag.source;
-    if (source.kind === "curves") {
-      const sketch = document.sketches.find((s) => s.id === source.sketchId);
-      if (!sketch) return false;
-      const moved = transformSelected(editor, sketch, (p) => ({
-        x: p.x + delta.reduce((sum, v, i) => sum + v * sketch.plane.u[i], 0),
-        y: p.y + delta.reduce((sum, v, i) => sum + v * sketch.plane.v[i], 0),
-      }));
-      const valid = await editor.store.request({ kind: "preview", sketch: moved });
-      if (valid) drag.lease.show(editor.store.candidate);
-      return valid;
-    }
-    if (source.kind === "sketches") {
-      let next = document;
-      for (const id of source.ids) {
-        const sketch = document.sketches.find((s) => s.id === id);
-        if (!sketch) return false;
-        next = withSketch(next, {
-          ...sketch,
-          plane: {
-            ...sketch.plane,
-            origin: sketch.plane.origin.map((v, i) => v + delta[i]) as Vector,
-          },
-        });
-      }
-      drag.lease.show(next);
-      return true;
-    }
-    if (!source.faces.length && !source.edges.length) {
-      const bodies = document.bodies ?? [];
-      const selected = bodies.filter((b) => source.ids.includes(b.id));
-      if (!selected.length) return false;
-      const moved = placedBodies(selected, {
-        ids: source.ids,
-        pivot: drag.origin,
-        translation: delta,
-        axis: [0, 0, 1],
-        angle: 0,
-        duplicate: false,
-      });
-      drag.lease.show({
-        ...document,
-        bodies: [...bodies.filter((b) => !source.ids.includes(b.id)), ...moved],
-      });
-      return true;
-    }
-    const request = source.faces.length
-      ? {
-          kind: "move-faces" as const,
-          operation: {
-            faces: source.faces,
-            bodyIds: source.ids,
-            pivot: drag.origin,
-            axis: [0, 0, 1] as Vector,
-            angle: 0,
-            translation: delta,
-          },
-        }
-      : {
-          kind: "move-edges" as const,
-          operation: { edges: source.edges, bodyIds: source.ids, translation: delta },
-        };
-    const valid = await editor.store.request(request);
-    if (valid) drag.lease.show(editor.store.candidate);
-    return valid;
   }
   private release = (event: PointerEvent): void => {
     const drag = this.drag;
@@ -228,22 +235,13 @@ export class TransformBoxMove {
     }
     const source = drag.source,
       delta = drag.delta;
-    const frames: { sketchId: string; frame: PlaneFrame }[] = [];
-    if (source.kind === "sketches") {
-      for (const id of source.ids) {
-        const sketch = this.editor.store.data.sketches.find((s) => s.id === id);
-        if (!sketch) {
-          await this.cancel();
-          return;
-        }
-        frames.push({
-          sketchId: id,
-          frame: {
-            ...sketch.plane,
-            origin: sketch.plane.origin.map((v, i) => v + delta[i]) as Vector,
-          },
-        });
-      }
+    const frames =
+      source.kind === "sketches"
+        ? translatedSketchFrames(this.editor.store.data, source.ids, delta)
+        : [];
+    if (!frames) {
+      await this.cancel();
+      return;
     }
     if (!drag.lease.close()) {
       await this.cancel();
@@ -269,6 +267,8 @@ export class TransformBoxMove {
       });
     } else await this.editor.accept();
     this.drag = null;
+    this.shadows.hide();
+    this.pointer = null;
     drag.lease.release();
     this.editor.refresh();
   }
@@ -276,6 +276,8 @@ export class TransformBoxMove {
     const drag = this.drag;
     if (!drag?.lease.close()) return;
     this.drag = null;
+    this.shadows.hide();
+    this.pointer = null;
     drag.pending = null;
     drag.lease.show(null);
     if (
@@ -290,5 +292,7 @@ export class TransformBoxMove {
   dispose(): void {
     void this.cancel();
     this.abort.abort();
+    this.shadows.dispose();
+    this.editor.world.changed.delete(this.previewHover);
   }
 }

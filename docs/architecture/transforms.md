@@ -216,3 +216,21 @@ unchanged validity, tolerance and topology correspondence checks. Rational rims 
 matching parameterizations when rebuilding ruled walls. Curve-length matching and
 reported volume use accurate integration for rational geometry. Unsupported
 reconnections remain recoverable errors.
+
+### Planar movement shadows (founder trial, 2026-09-23)
+
+In modeling, Command-hover inside a Transform box previews the selected geometry's
+orthogonal outlines on the fixed world XY/XZ/YZ planes. The camera-selected movement
+plane is blue; the other two outlines are muted. Plane labels and thin perpendicular
+anchor-to-projection guides connect the object to these references. During the drag,
+dashed outlines retain the starting footprints while solid outlines follow the current
+preview. Release, cancellation and loss of focus clear the guides. Hovering or dragging
+the anchor shows the same projection context; repositioning the anchor changes its
+guides without pretending that the geometry has moved. Active sketch workspaces retain
+their existing planar feedback.
+
+These are display-only silhouettes from presentation triangles, and projected curves
+for sketch/edge selections, not exact sections or model geometry. Interior triangle
+strokes are masked out, retaining concave boundaries and projected openings. World
+planes remain fixed at the origin; an offscreen projection can consequently be outside
+the viewport. No extra camera view, persistent object or Undo entry is introduced.
