@@ -85,3 +85,12 @@ operate on whole accepted entities, not visually trimmed fragments.
 Sketch mode temporarily uses its own camera-facing clipping and section capture;
 returning to Modeling restores the cross-section view. New/Open resets the view.
 The section is not saved in the document or included in exported geometry.
+
+Coplanar rendering gives existing body faces priority over generated section fills.
+Body faces on the active section support mark stencil bit 4; caps exclude those
+samples and write only the solid-silhouette bit 2. Sketch-fill union retains bit 1.
+This preserves face selection colors without competing coplanar triangulations;
+material stencil state updates when the plane moves, without retessellating bodies.
+Filled surfaces, sketch overlays and plane cues interpolate signed clip distances
+computed at vertices, avoiding cancellation from interpolated camera-space positions
+on thin triangles. The clipping tolerance and actual section plane remain unchanged.

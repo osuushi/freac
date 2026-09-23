@@ -4,6 +4,7 @@ import type { SketchEditor } from "./editor.js";
 import { type ModelingTarget, modelingKey } from "./model-selection.js";
 import { worldPoint } from "./planes.js";
 import { profilesFor } from "./profiles.js";
+import { stableClipping } from "./stable-clipping.js";
 
 export function modelHighlight(editor: SketchEditor): () => void {
   const group = new THREE.Group();
@@ -52,11 +53,12 @@ export function modelHighlight(editor: SketchEditor): () => void {
       depthWrite: false,
       side: THREE.DoubleSide,
     });
+    stableClipping(material);
     const mesh = new THREE.Mesh(geometry, material);
     mesh.renderOrder = 6;
     group.add(mesh);
     if (!hover) {
-      const hiddenMaterial = material.clone();
+      const hiddenMaterial = stableClipping(material.clone());
       hiddenMaterial.depthFunc = THREE.GreaterDepth;
       hiddenMaterial.opacity = 0.09;
       const hidden = new THREE.Mesh(geometry.clone(), hiddenMaterial);

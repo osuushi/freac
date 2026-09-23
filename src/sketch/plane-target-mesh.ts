@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { PlaneBounds } from "./plane-bounds.js";
 import { type PlaneFrame, type PlaneId, planeIds, planes } from "./planes.js";
+import { stableClipping } from "./stable-clipping.js";
 import type { World } from "./world.js";
 
 const colors: Record<PlaneId, string> = { XY: "#8fa8c4", XZ: "#91b5a4", YZ: "#c2a27b" };
@@ -22,6 +23,7 @@ export function planePatch(color: string): PlanePatch {
       stencilFunc: THREE.NotEqualStencilFunc,
     }),
   );
+  stableClipping(mesh.material);
   mesh.renderOrder = 8;
   return mesh;
 }
