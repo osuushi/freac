@@ -55,7 +55,7 @@ export async function overlapTouch(page, name) {
     });
   try {
     await touch("touchStart", [[1, point.x, point.y]]);
-    await page.waitForTimeout(720);
+    await page.waitForTimeout(360);
     const panel = page.getByRole("dialog", { name: "Choose overlapping geometry" });
     await panel.waitFor({ state: "visible" });
     assert.deepEqual((await inspect(page)).camera, before.camera, "Stationary hold does not orbit");
@@ -77,14 +77,14 @@ export async function overlapTouch(page, name) {
     const p = await project(page, [-15, -15, 10]);
     const selection = (await inspect(page)).modelingSelection;
     await touch("touchStart", [[1, p.x, p.y]]);
-    await page.waitForTimeout(720);
+    await page.waitForTimeout(360);
     await panel.waitFor({ state: "visible" });
     await touch("touchCancel", []);
     assert.equal(await panel.isVisible(), false, "Canceled contact does not choose");
     assert.deepEqual((await inspect(page)).modelingSelection, selection);
     await touch("touchStart", [[1, p.x, p.y]]);
     await touch("touchMove", [[1, p.x + 45, p.y + 30]]);
-    await page.waitForTimeout(720);
+    await page.waitForTimeout(360);
     await touch("touchEnd", []);
     assert.equal(await panel.isVisible(), false, "Touch movement cancels hold and orbits");
     assert.notDeepEqual((await inspect(page)).camera.position, before.camera.position);

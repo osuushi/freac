@@ -36,7 +36,7 @@ founder feedback update these contracts before further tools depend on them.
   which lies nearer the camera. Among otherwise available reference patches, depth
   decides and saved planes win ties. No floating plane labels. Keyboard and
   screen-reader plane entry lives in Tools as Sketch on XY/XZ/YZ.
-- Holding a primary pointer still for 600 ms in Modeling opens an explicit overlap
+- Holding a primary pointer still for 300 ms in Modeling opens an explicit overlap
   chooser. Ordinary clicks retain precedence; movement beyond the normal drag
   threshold cancels the hold (6 px for touch). A delayed progress ring signals it.
   Candidates include front-facing body faces, edges with at least one locally
@@ -45,6 +45,8 @@ founder feedback update these contracts before further tools depend on them.
   faces use the triangle normal nearest the hit on the edge. Candidates are sorted
   by camera distance, including occluded front-facing geometry. Hidden entities
   are excluded.
+  A circular meter fills over the hold delay; it indicates elapsed hold time, not
+  processing. The delay is currently fixed; a future preferences window can expose it.
   Each choice shows the actual target geometry in the current camera orientation,
   with subdued body context and shared thumbnail framing. Plane thumbnails include
   visible coplanar sketches in their actual positions; hidden sketches are omitted.

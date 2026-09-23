@@ -64,7 +64,7 @@ served over an unverified connection does not authenticate that JS. No DNS forwa
 certificate installation, home-grown authenticated key exchange or trust claim is
 introduced by this increment.
 
-A stationary 600 ms finger/Pencil hold in Modeling opens the overlap chooser.
+A stationary 300 ms finger/Pencil hold in Modeling opens the overlap chooser.
 Before the chooser opens, touch movement cancels the hold and retains navigation;
 a second contact cancels it for pan/pinch. Once open, drag the held finger/Pencil
 over a thumbnail and release to select. Release outside or pointer cancellation

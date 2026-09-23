@@ -4,6 +4,9 @@ import type { ConstructionPlane } from "./construction-plane.js";
 import { OverlapChooser } from "./overlap-chooser.js";
 import "./overlap.css";
 
+// Shared by the hold timer and its visual countdown; future preferences can supply this value.
+const longPressDelayMs = 300;
+
 /** Observe ordinary presses without delaying clicks or claiming normal drags. */
 export class OverlapInput {
   private abort = new AbortController();
@@ -18,6 +21,11 @@ export class OverlapInput {
   ) {
     this.chooser = new OverlapChooser(editor, selectPlane);
     this.ring.className = "selection-hold";
+    this.ring.style.setProperty("--hold-duration", `${longPressDelayMs}ms`);
+    this.ring.innerHTML = `<svg viewBox="0 0 32 32" aria-hidden="true">
+      <circle class="selection-hold-track" cx="16" cy="16" r="13" />
+      <circle class="selection-hold-progress" cx="16" cy="16" r="13" pathLength="100" />
+    </svg>`;
     this.ring.hidden = true;
     document.body.append(this.ring);
     const options = { capture: true, signal: this.abort.signal };
@@ -119,7 +127,7 @@ export class OverlapInput {
     this.ring.style.left = `${event.clientX}px`;
     this.ring.style.top = `${event.clientY}px`;
     this.ring.hidden = false;
-    this.timer = setTimeout(() => void this.hold(event), 600);
+    this.timer = setTimeout(() => void this.hold(event), longPressDelayMs);
   }
   private async hold(event: PointerEvent): Promise<void> {
     if (this.pending !== event) return;
