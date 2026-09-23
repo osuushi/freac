@@ -31,3 +31,5 @@ if(FREAC_KERNEL_TESTS)
   target_link_libraries(sweep-distance-test PRIVATE TKPrim TKTopAlgo TKGeomAlgo TKGeomBase TKBRep TKG3d TKG2d TKMath TKernel)
   add_test(NAME sweep-distance COMMAND sweep-distance-test)
 endif()
+
+target_sources(freac-kernel PRIVATE sketch-offset.cpp)

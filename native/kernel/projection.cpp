@@ -164,26 +164,35 @@ void sketchSections(std::ostream& out, const Tree& input, const std::vector<Oper
         for (TopExp_Explorer faces(common.Shape(), TopAbs_FACE); faces.More(); faces.Next()) {
             if (!firstRegion) out << ',';
             firstRegion = false;
-            out << "{\"body\":" << quoted(body.id) << ",\"curves\":[";
-            Output output{out, origin, u, v};
-            TopTools_IndexedMapOfShape edges;
-            TopExp::MapShapes(faces.Current(), TopAbs_EDGE, edges);
-            for (int i = 1; i <= edges.Extent(); ++i) {
-                const auto edge = TopoDS::Edge(edges(i));
-                if (BRep_Tool::Degenerated(edge)) continue;
-                double first, last;
-                const auto curve = BRep_Tool::Curve(edge, first, last);
-                if (curve.IsNull()) throw std::runtime_error("Cross section has no spatial boundary");
-                // Shared native vertices, not independently evaluated edge curves,
-                // define connectivity. Project the shared points onto the section plane.
-                const auto forward = TopoDS::Edge(edge.Oriented(TopAbs_FORWARD));
-                const Endpoints joined{
-                    onPlane(BRep_Tool::Pnt(TopExp::FirstVertex(forward)), plane),
-                    onPlane(BRep_Tool::Pnt(TopExp::LastVertex(forward)), plane)};
-                projectCurve(output, new Geom_TrimmedCurve(curve, first, last), plane, &joined);
-            }
-            out << "]}";
+            out << "{\"body\":" << quoted(body.id) << ",\"curves\":";
+            planarSketchCurves(out, faces.Current(), frame);
+            out << '}';
         }
     }
     out << "]}";
+}
+
+void planarSketchCurves(std::ostream& out, const TopoDS_Shape& shape, const Tree& frame) {
+    const auto origin = point(frame.get_child("origin"));
+    const gp_Vec u(point(frame.get_child("u")).XYZ()), v(point(frame.get_child("v")).XYZ());
+    Handle(Geom_Plane) plane = new Geom_Plane(gp_Ax3(origin, gp_Dir(u.Crossed(v)), gp_Dir(u)));
+    out << std::setprecision(17) << '[';
+    Output output{out, origin, u, v};
+    TopTools_IndexedMapOfShape edges;
+    TopExp::MapShapes(shape, TopAbs_EDGE, edges);
+    for (int i = 1; i <= edges.Extent(); ++i) {
+        const auto edge = TopoDS::Edge(edges(i));
+        if (BRep_Tool::Degenerated(edge)) continue;
+        double first, last;
+        const auto curve = BRep_Tool::Curve(edge, first, last);
+        if (curve.IsNull()) throw std::runtime_error("Cross section has no spatial boundary");
+        // Shared native vertices, not independently evaluated edge curves,
+        // define connectivity. Project the shared points onto the section plane.
+        const auto forward = TopoDS::Edge(edge.Oriented(TopAbs_FORWARD));
+        const Endpoints joined{
+            onPlane(BRep_Tool::Pnt(TopExp::FirstVertex(forward)), plane),
+            onPlane(BRep_Tool::Pnt(TopExp::LastVertex(forward)), plane)};
+        projectCurve(output, new Geom_TrimmedCurve(curve, first, last), plane, &joined);
+    }
+    out << ']';
 }

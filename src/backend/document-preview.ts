@@ -5,12 +5,13 @@ import type { NativeSolver } from "./native-solver.js";
 import { cutWithPlane } from "./plane-cut.js";
 import { projectDocument } from "./projection.js";
 import { scaleDocument } from "./scale.js";
+import { offsetSketchDocument } from "./sketch-offset.js";
 import type { SolidCalculator } from "./solid-calculator.js";
 import { solveSketch } from "./solve-sketch.js";
 
 export type PreviewRequest = Extract<
   ModelRequest,
-  { kind: "preview" | "edit" | "mirror" | "project" | "scale" | "plane-cut" }
+  { kind: "preview" | "edit" | "mirror" | "project" | "scale" | "plane-cut" | "offset-sketch" }
 >;
 
 /** Calculates a candidate; acceptance, history and cancellation remain with DocumentOwner. */
@@ -22,6 +23,9 @@ export async function previewDocument(
 ): Promise<{ document: SketchDocument; count: number; ms: number }> {
   let document: SketchDocument;
   switch (request.kind) {
+    case "offset-sketch":
+      document = await offsetSketchDocument(source, request, kernel);
+      break;
     case "scale":
       document = await scaleDocument(source, request.operation, kernel);
       break;

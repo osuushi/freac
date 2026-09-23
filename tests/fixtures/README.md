@@ -64,3 +64,10 @@ leaving the sketch section open. Topology IDs/signatures are retained; meshes,
 source sketches and history are omitted. Tests cover section copying, subsequent
 extrusion, Undo/Redo and the ordinary section pointer route. This is user-created
 Freac geometry.
+
+`offset-cubic-section.json` retains the copied sketch from the founder's
+`2026-09-23T11-39-28-568Z-83c4a37a` capture. Its closed boundary contains eight
+cubic Béziers, nine lines and two arcs; the previous offset tool excluded all
+cubics. Bodies and history are omitted. Tests cover signed closed-loop offsets,
+conversion distance, rejection, pointer/numeric editing, Undo and Save/Open.
+This is user-created Freac geometry.
