@@ -1,10 +1,10 @@
 import type { SketchEditor } from "../sketch/editor.js";
-import { type PlaneFrame, type PlaneId, planes } from "../sketch/planes.js";
+import type { PlaneFrame } from "../sketch/planes.js";
 import { planeReference } from "./mirror-reference.js";
 import { MirrorReferenceView } from "./mirror-reference-view.js";
 import { pickPlaneInterior, planePatchVertices } from "./plane-interior-pick.js";
 
-/** Presentation uses the same hit as clicking; explicit labels retain their own target. */
+/** Presentation uses the same hit as clicking; Entities rows retain their saved target. */
 export class PlaneCutHover {
   private abort = new AbortController();
   private view: MirrorReferenceView;
@@ -30,16 +30,13 @@ export class PlaneCutHover {
     const target = event.target instanceof Element ? event.target : null;
     // Ordinary model hover would repaint/refresh and clear this tool's reference.
     if (target === this.editor.world.canvas) event.stopImmediatePropagation();
-    const label = target?.closest<HTMLElement>("[data-plane-target], [data-plane]");
-    const id = label?.getAttribute("data-plane-target");
-    const frame = id
-      ? planes[id as PlaneId]
-      : this.editor.store.data.constructionPlanes?.find(
-          (plane) => plane.id === label?.getAttribute("data-plane"),
-        )?.frame;
+    const label = target?.closest<HTMLElement>("[data-plane]");
+    const frame = this.editor.store.data.constructionPlanes?.find(
+      (plane) => plane.id === label?.getAttribute("data-plane"),
+    )?.frame;
     const hit =
       frame && accepts(frame) && !(label instanceof HTMLButtonElement && label.disabled)
-        ? { frame, vertices: planePatchVertices(frame) }
+        ? { frame, vertices: planePatchVertices(frame, this.editor.world.planeBounds(frame)) }
         : target === this.editor.world.canvas
           ? pickPlaneInterior(this.editor, { x: event.clientX, y: event.clientY }, accepts)
           : null;

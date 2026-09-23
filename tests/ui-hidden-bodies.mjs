@@ -4,7 +4,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function hiddenBodiesRoute(page, global = false) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   const center = await at(page, 0, 0);
@@ -60,7 +60,7 @@ export async function hiddenBodiesRoute(page, global = false) {
 
 export async function hiddenRevolveRoute(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [10, 10]);
   const center = await at(page, 5, 5);

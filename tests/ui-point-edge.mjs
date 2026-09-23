@@ -4,7 +4,7 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function pointEdgeRoute(page, name) {
   for (const reverse of [false, true]) {
     await reset(page);
-    await page.getByRole("button", { name: "Sketch on XY" }).click();
+    await chooseTool(page, "Sketch on XY", "sketch-xy");
     await page.keyboard.press("l");
     await drag(page, [0, 4], [0, 12]);
     await page.keyboard.press("l");

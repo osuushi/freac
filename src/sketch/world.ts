@@ -6,6 +6,7 @@ import {
   planeCameraPose,
 } from "./camera-motion.js";
 import { Arcball, levelOrientation } from "./camera-orbit.js";
+import { minimumPlaneBounds, type PlaneBounds } from "./plane-bounds.js";
 import {
   type PlaneFrame,
   type PlaneId,
@@ -39,6 +40,8 @@ export class World {
   canEnterSketch = () => true;
   planePicker: ((id: PlaneId) => void) | null = null;
   planePickerAccept: ((frame: PlaneFrame) => boolean) | null = null;
+  planeBounds: (frame: PlaneFrame) => PlaneBounds = minimumPlaneBounds;
+  longPress: ((event: PointerEvent) => void) | null = null;
   planePickerLabel = "Project onto";
   sketchEntry: ((id: PlaneId) => void) | null = null;
   private readonly observer: ResizeObserver;

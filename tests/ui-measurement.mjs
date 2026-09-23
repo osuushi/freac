@@ -115,7 +115,7 @@ export async function measurementRoute(page, name) {
 async function sketchMeasurements(page, name) {
   // A fresh sketch proves plane-based line angles and typed edits update the readout.
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-10, -4], [10, -4]);
   await drag(page, [-10, 4], [10, 4]);

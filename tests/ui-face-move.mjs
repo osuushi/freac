@@ -121,7 +121,7 @@ async function repositionPivot(page, original) {
 }
 
 async function reselectMovedHole(page, hole) {
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await inspect(page);
   await chooseTool(page, "return to modeling", "modeling");
   await inspect(page);

@@ -50,7 +50,7 @@ try {
   await page.keyboard.press("Enter");
   await waitFile(join(first.workspace, "paste-check.txt"));
   assert.equal(await readFile(join(first.workspace, "paste-check.txt"), "utf8"), "paste worked");
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -6], [10, 6]);
   pointEquals((await corners(page))[2], [10, 6]);

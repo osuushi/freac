@@ -5,7 +5,7 @@ export async function editIntentRoute(page, name) {
   const results = [];
   for (const extra of [false, true]) {
     await reset(page);
-    await page.getByRole("button", { name: "Sketch on XY" }).click();
+    await chooseTool(page, "Sketch on XY", "sketch-xy");
     await page.keyboard.press("r");
     await drag(page, [-10, -5], [10, 5]);
     if (extra) {

@@ -49,7 +49,7 @@ export async function bodyChamferRoute(page, name, electron) {
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, accepted);
   await bodyArchiveRoute(page, `${name}-chamfer`, electron);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   const point = await at(page, 6, -6);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(point.x, point.y);

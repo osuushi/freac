@@ -23,7 +23,7 @@ export async function bodyMoveRoute(page, name) {
 }
 async function bodyMoveAtAlignedViewport(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   if (String((await inspect(page)).gridSnap) === "true")
     await chooseTool(page, "grid snap", "grid");
   await page.keyboard.press("r");

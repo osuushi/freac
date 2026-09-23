@@ -114,7 +114,7 @@ throw new Error("sandbox script rollback");
     "PASS actual Codex: guidance in model-visible input; bundled CLI works inside workspace-write sandbox (no model prompt sent)",
   );
 
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -6], [10, 6]);
   await settled(page);

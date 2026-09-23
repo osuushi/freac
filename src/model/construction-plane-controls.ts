@@ -149,7 +149,7 @@ export class ConstructionPlaneControls {
       void this.remove();
     }
   }
-  private select(plane: ConstructionPlane): void {
+  select(plane: ConstructionPlane): void {
     if (this.editor.blocked) return;
     if (this.picker.choose) {
       this.picker.choose(structuredClone(plane.frame));

@@ -20,6 +20,7 @@ type Kind =
   | "revolve"
   | "extrude"
   | "placement"
+  | "selection-choice"
   | "model-selection"
   | "pointer"
   | "bezier"

@@ -22,7 +22,7 @@ function arcs(document, original, radius) {
 }
 export async function jointBowRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [8, 0], [0, 0]);
   await page.keyboard.press("l");
@@ -85,7 +85,7 @@ export async function jointBowRoute(page, name) {
 }
 async function rectangleBow(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -5], [10, 5]);
   const original = (await inspect(page)).document;

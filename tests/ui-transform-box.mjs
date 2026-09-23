@@ -25,7 +25,7 @@ async function accept(page) {
 }
 export async function transformBoxRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [20, 10]);
   await chooseTool(page, "transform", "transform");
@@ -74,7 +74,7 @@ export async function transformBoxRoute(page, name) {
 }
 async function curvedRoute(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [10, 0]);
   await page.keyboard.press("m");
@@ -122,7 +122,7 @@ async function curvedRoute(page) {
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, converted);
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-10, 0], [10, 0]);
   const guide = await center(page.locator(".bow-handle").first());

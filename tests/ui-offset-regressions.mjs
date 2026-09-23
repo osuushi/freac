@@ -29,7 +29,7 @@ export async function offsetAdjacentRoute(page, name) {
       ),
     });
     await inspect(page);
-    await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+    await chooseTool(page, "Sketch on XY", "sketch-xy");
     await inspect(page);
     await page.keyboard.press("Meta+a");
     await chooseTool(page, "offset sketch curves", "sketch-offset");
@@ -50,7 +50,7 @@ export async function offsetAdjacentRoute(page, name) {
     assert.deepEqual((await inspect(page)).document.sketches[0], result);
   }
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -6], [10, 6]);
   await page.getByRole("button", { name: "Offset loop", exact: true }).click();

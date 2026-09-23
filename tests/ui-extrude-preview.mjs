@@ -4,7 +4,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function extrusionPreviewRoute(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-15, -10], [15, 10]);
   const pick = await at(page, 0, 0);
@@ -87,7 +87,7 @@ async function invalidatedPreview(page, pick, gate) {
 // boundary while a preview reply is outstanding, then retire that late reply.
 export async function extrusionCancelRoute(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-15, -10], [15, 10]);
   const pick = await at(page, 0, 0);

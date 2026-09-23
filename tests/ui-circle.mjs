@@ -21,7 +21,7 @@ export async function circleRoute(page, name) {
   await page.keyboard.press("c");
   assert.equal((await inspect(page)).activePlane, null);
   for (const plane of ["XY", "XZ", "YZ"]) {
-    await page.getByRole("button", { name: `Sketch on ${plane}` }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await chooseTool(page, "circle", "circle");
     await drag(page, [0, 0], [8, 0]);
     assert.equal((await inspect(page)).tool, "circle");
@@ -67,7 +67,7 @@ export async function circleRoute(page, name) {
 
 async function mixedAndSnaps(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [5, 0]);
   await page.keyboard.press("l");
@@ -107,7 +107,7 @@ async function mixedAndSnaps(page) {
 
 async function heldCircle(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   const a = await at(page, 0, 0),
     b = await at(page, 8, 0);

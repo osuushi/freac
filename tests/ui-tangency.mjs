@@ -28,7 +28,7 @@ async function radius(page, value) {
 }
 export async function tangencyRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [3, 0]);
   await page.keyboard.press("l");

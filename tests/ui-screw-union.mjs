@@ -28,7 +28,7 @@ async function volume(page, expected) {
 }
 export async function screwUnionRoute(page, name, electron) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   const points = [
     [0, 10],
@@ -49,7 +49,7 @@ export async function screwUnionRoute(page, name, electron) {
   await page.keyboard.press("Escape");
   assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [20, 0], [27, 0]);
   await revolve(page, [20, 0], [0, -10]);
@@ -67,7 +67,7 @@ export async function screwUnionRoute(page, name, electron) {
   assert.deepEqual((await inspect(page)).document, accepted);
   await bodyArchiveRoute(page, `${name}-screw-union`, electron);
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-2, 0], [3, 4]);
   await revolve(page, [1, 2], [0, -5]);

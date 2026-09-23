@@ -63,3 +63,9 @@ The future trust bootstrap remains unresolved. A matching code displayed by JS
 served over an unverified connection does not authenticate that JS. No DNS forwarding,
 certificate installation, home-grown authenticated key exchange or trust claim is
 introduced by this increment.
+
+A stationary 600 ms finger/Pencil hold in Modeling opens the overlap chooser.
+Touch movement cancels the hold and retains navigation; a second contact cancels it
+for pan/pinch. Chooser taps are ordinary UI activation and bypass viewport touch
+suppression. Browser automation covers pointer delivery and Chromium touch events;
+physical iPad/Pencil behavior still requires hardware review.

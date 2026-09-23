@@ -6,7 +6,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 async function step(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   const points = [
     [0, 0],

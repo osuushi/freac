@@ -80,43 +80,7 @@ button:focus-visible {
   outline: 2px solid #3c7bc7;
   outline-offset: 2px;
 }
-.plane-label {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  overflow: hidden;
-  pointer-events: auto;
-  transform: translate(-50%, -50%);
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 2px;
-  color: transparent;
-  background: transparent;
-  box-shadow: none;
-}
-.plane-label:hover,
-.plane-label:active {
-  border-color: transparent;
-  background: transparent;
-  box-shadow: none;
-}
-.plane-label:disabled {
-  pointer-events: none;
-}
-.plane-label:focus-visible {
-  width: max-content;
-  height: auto;
-  overflow: visible;
-  padding: 6px 9px;
-  border: 1px solid #3c7bc7;
-  border-radius: 6px;
-  color: #1f5e9e;
-  background: #ffffffed;
-  box-shadow: 0 2px 6px #28344414;
-  font-size: 12px;
-  outline: none;
-}
+
 .origin {
   position: absolute;
   font-size: 11px;

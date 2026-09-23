@@ -7,7 +7,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function symmetricExtrudeRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -6], [10, 6]);
   const pick = await at(page, 0, 0);
@@ -83,7 +83,7 @@ export async function symmetricExtrudeRoute(page, name) {
 
 async function checkboxAndCancel(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -6], [10, 6]);
   const pick = await at(page, 0, 0);

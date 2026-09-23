@@ -6,7 +6,7 @@ import { chooseTool } from "./ui-tools.mjs";
 const data = async (page) => (await inspect(page)).document.sketches[0];
 export async function trimConstraintRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-10, 0], [10, 0]);
   await page.getByRole("button", { name: "Lock Length", exact: true }).click();
@@ -27,7 +27,7 @@ export async function trimConstraintRoute(page, name) {
   await chooseTool(page, "undo", "undo");
   assert.deepEqual(await data(page), original);
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   const samples = [[4.3, 4.3]],
     blank = await pixels(page, samples);

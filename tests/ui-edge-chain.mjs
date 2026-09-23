@@ -4,7 +4,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function roundedPlate(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   await page.keyboard.press("v");

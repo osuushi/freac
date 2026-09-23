@@ -16,6 +16,8 @@ export function drawRegionFills(editor: SketchEditor): () => void {
     depthWrite: false,
     stencilWrite: true,
     stencilRef: 1,
+    stencilWriteMask: 1,
+    stencilFuncMask: 1,
     stencilFunc: THREE.NotEqualStencilFunc,
     stencilZPass: THREE.ReplaceStencilOp,
   });

@@ -50,7 +50,7 @@ export async function menuDiscoveryRoute(page, name) {
 
 export async function menuSketchToolsRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await chooseTool(page, "rectangle", "rectangle");
   await drag(page, [0, 0], [20, 10]);
   await chooseTool(page, "select", "select");

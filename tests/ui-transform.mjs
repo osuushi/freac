@@ -18,7 +18,7 @@ function translated(before, after, dx, dy) {
 export async function transformRoute(page, name) {
   for (const plane of ["XY", "XZ", "YZ"]) {
     await reset(page);
-    await page.getByRole("button", { name: `Sketch on ${plane}` }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await page.keyboard.press("l");
     await drag(page, [-20, -10], [-10, -10]);
     await page.getByRole("button", { name: "Constrain horizontal", exact: true }).click();
@@ -85,7 +85,7 @@ export async function transformRoute(page, name) {
 
 async function smallArcLayout(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-4, 0], [4, 0]);
   const guide = await page.locator(".bow-handle").nth(1).boundingBox();

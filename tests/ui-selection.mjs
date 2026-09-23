@@ -24,7 +24,7 @@ function transformed(before, after, map) {
 }
 async function drawSelection(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-25, -10], [-15, 0]);
   await page.keyboard.press("r");
@@ -124,7 +124,7 @@ async function rotatedResizeAndExit(page, name) {
   await page.waitForFunction(() => window.freacInspect().activePlane === null);
   assert.equal((await inspect(page)).activePlane, null);
   assert.equal(JSON.stringify((await inspect(page)).document), beforeOrbit);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   assert.equal(JSON.stringify((await inspect(page)).document), beforeOrbit);
   await click(page, (corners[0].x + corners[2].x) / 2, (corners[0].y + corners[2].y) / 2);
   await chooseTool(page, "delete", "delete");
@@ -138,7 +138,7 @@ async function rotatedResizeAndExit(page, name) {
 }
 async function overlapChoice(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   await page.keyboard.press("r");

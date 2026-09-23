@@ -27,13 +27,13 @@ This is a broad filter: concavities, selected-face coverage and existing imprint
 may leave ineffective references selectable. Exact validation runs only on picking
 a reference. World/saved patches retain their normal translucent fills; candidate
 outlines remain visible. Hover adds a blue fill to exactly the reference the shared
-click picker would choose, including a planar face's actual boundary. Explicit
-labels highlight their own reference. Hover clears on leaving, navigation or tool
+click picker would choose, including a planar face's actual boundary. Entities rows highlight their own saved reference. Hover clears on leaving, navigation or tool
 exit and never changes geometry. Discovery does not create previews or alter history.
 World and saved plane patches can be picked throughout their displayed interiors,
 using the nearest eligible reference when patches and planar faces overlap.
-Picking stays on the canvas so camera gestures remain available; labels and saved
-plane outlines also remain clickable.
+Picking stays on the canvas so camera gestures remain available. World/saved patches
+share adaptive bounds and have no floating labels; saved references remain available
+in Entities. At coincident hit depths, an eligible face wins the tie against a patch.
 
 Clicking a valid reference produces a temporary exact preview. Enter, clicking away,
 selecting another entity or toggling the active command accepts in one Undo step;

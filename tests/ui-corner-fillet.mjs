@@ -4,7 +4,7 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function cornerFilletRoute(page, name) {
   for (const plane of ["XY", "XZ", "YZ"]) {
     await reset(page);
-    await page.getByRole("button", { name: `Sketch on ${plane}` }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await page.keyboard.press("r");
     await drag(page, [0, 0], [20, 10]);
     await chooseTool(page, "select", "select");
@@ -30,7 +30,7 @@ export async function cornerFilletRoute(page, name) {
     assert.deepEqual((await inspect(page)).document, before);
   }
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [0, 0], [10, 0]);
   await page.keyboard.press("l");

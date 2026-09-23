@@ -4,7 +4,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function bodyMultiselectRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   const points = [];
   for (const x of [-18, 12]) {

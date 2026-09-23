@@ -5,7 +5,7 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function rectangleBowRoute(page, name) {
   for (const plane of ["XY", "XZ", "YZ"]) {
     await reset(page);
-    await page.getByRole("button", { name: `Sketch on ${plane}` }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await page.keyboard.press("r");
     await drag(page, [-10, -5], [10, 5]);
     await chooseTool(page, "select", "select");

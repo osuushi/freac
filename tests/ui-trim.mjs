@@ -11,7 +11,7 @@ export async function trimLineRoute(page, name) {
   await reset(page);
   await page.keyboard.press("t");
   assert.equal((await inspect(page)).activePlane, null);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await line(page, [-10, 0], [10, 0]);
   await line(page, [-4, -6], [-4, 6]);
   await line(page, [4, -6], [4, 6]);
@@ -54,7 +54,7 @@ export async function trimLineRoute(page, name) {
 }
 export async function trimCircleRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [6, 0]);
   await line(page, [-10, 0], [10, 0]);
@@ -83,7 +83,7 @@ export async function trimCircleRoute(page, name) {
   await chooseTool(page, "undo", "undo");
   await inspect(page);
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [6, 0]);
   await line(page, [-10, 6], [10, 6]);

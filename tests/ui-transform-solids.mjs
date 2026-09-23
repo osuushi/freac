@@ -16,7 +16,7 @@ async function accept(page) {
 }
 export async function transformSolidRoute(page, name, round = false) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press(round ? "c" : "r");
   await drag(page, round ? [0, 0] : [-10, -10], round ? [10, 0] : [10, 10]);
   const p = await at(page, 0, 0);
@@ -77,11 +77,11 @@ export async function transformSolidRoute(page, name, round = false) {
 }
 export async function transformSketchPlacementRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [2, 2], [10, 6]);
   await chooseTool(page, "return to modeling", "modeling");
-  await page.getByRole("button", { name: "Sketch on XZ", exact: true }).click();
+  await chooseTool(page, "Sketch on XZ", "sketch-xz");
   await page.keyboard.press("c");
   await drag(page, [-10, 5], [-6, 5]);
   await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();

@@ -5,7 +5,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function circleFeedback(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   const samples = [
     [2.3, 1.7],
     [12.3, 1.7],

@@ -27,7 +27,7 @@ async function radius(page, value) {
 }
 async function circles(page, internal) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, internal ? [0, 0] : [10, 0], internal ? [8, 0] : [13, 0]);
   await page.keyboard.press("c");

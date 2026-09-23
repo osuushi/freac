@@ -5,39 +5,15 @@ import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Point } from "../sketch/planes.js";
+import { faceRayHits, screenRay } from "./body-ray-hits.js";
 import { featureEdges } from "./feature-edges.js";
 
 export function pickFace(editor: SketchEditor, screen: Point) {
   if (!editor.bodiesVisible) return undefined;
-  const rect = editor.world.canvas.getBoundingClientRect();
-  const ray = new THREE.Raycaster();
-  ray.setFromCamera(
-    new THREE.Vector2(
-      ((screen.x - rect.left) / rect.width) * 2 - 1,
-      1 - ((screen.y - rect.top) / rect.height) * 2,
-    ),
-    editor.world.camera,
-  );
-  let closest: { body: string; face: string; depth: number } | undefined;
-  const a = new THREE.Vector3(),
-    b = new THREE.Vector3(),
-    c = new THREE.Vector3(),
-    hit = new THREE.Vector3();
-  for (const body of (editor.display.bodies ?? []).filter((body) =>
-    editor.visibility.visible(body.id),
-  ))
-    for (const face of body.faces) {
-      for (let i = 0; i < face.vertices.length; i += 9) {
-        a.fromArray(face.vertices, i);
-        b.fromArray(face.vertices, i + 3);
-        c.fromArray(face.vertices, i + 6);
-        if (!ray.ray.intersectTriangle(a, b, c, false, hit)) continue;
-        const depth = hit.distanceTo(editor.world.camera.position);
-        if (!closest || depth < closest.depth) closest = { body: body.id, face: face.id, depth };
-      }
-    }
-  return closest;
+  const bodies = (editor.display.bodies ?? []).filter((b) => editor.visibility.visible(b.id));
+  return faceRayHits(bodies, screenRay(editor, screen), editor.world.camera.position)[0];
 }
+
 function faceGeometry(vertices: number[]): THREE.BufferGeometry {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
@@ -93,15 +69,7 @@ export function bodyView(editor: SketchEditor): () => void {
             : hover?.kind === "face" && hover.face === face.id
               ? "#ead3aa"
               : "#cad4df";
-        const material = new THREE.MeshStandardMaterial({
-          color,
-          roughness: 0.75,
-          metalness: 0,
-          side: THREE.DoubleSide,
-          polygonOffset: true,
-          polygonOffsetFactor: 1,
-          polygonOffsetUnits: 1,
-        });
+        const material = bodyMaterial(color);
         group.add(new THREE.Mesh(faceGeometry(face.vertices), material));
       }
       for (const edge of featureEdges(body)) {
@@ -149,4 +117,21 @@ function clearBodyMeshes(group: THREE.Group): void {
     mesh.material.dispose();
     group.remove(mesh);
   }
+}
+
+function bodyMaterial(color: string): THREE.MeshStandardMaterial {
+  return new THREE.MeshStandardMaterial({
+    color,
+    roughness: 0.75,
+    metalness: 0,
+    side: THREE.DoubleSide,
+    stencilWrite: true,
+    stencilRef: 2,
+    stencilWriteMask: 2,
+    stencilFunc: THREE.AlwaysStencilFunc,
+    stencilZPass: THREE.ReplaceStencilOp,
+    polygonOffset: true,
+    polygonOffsetFactor: 1,
+    polygonOffsetUnits: 1,
+  });
 }

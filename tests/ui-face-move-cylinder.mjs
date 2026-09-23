@@ -8,7 +8,7 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function cylinderFaceMoveRoute(page, name) {
   const fixture = JSON.parse(readFileSync("tests/fixtures/hole-in-cylinder.json", "utf8"));
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await inspect(page);
   await chooseTool(page, "return to modeling", "modeling");
   await inspect(page);

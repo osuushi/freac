@@ -5,7 +5,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function cutawayRoute(page, name, plane = "XY") {
   await reset(page);
-  await page.getByRole("button", { name: `Sketch on ${plane}`, exact: true }).click();
+  await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
   await page.keyboard.press("r");
   await drag(page, [-18, -18], [18, 18]);
   const pick = await at(page, 5, 3);
@@ -16,8 +16,7 @@ export async function cutawayRoute(page, name, plane = "XY") {
   await inspect(page);
   await page.keyboard.press("Enter");
   const body = (await inspect(page)).document.bodies;
-  await page.getByRole("button", { name: `Sketch on ${plane}`, exact: true }).focus();
-  await page.keyboard.press("Enter");
+  await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
   const blank = await pixels(page, [[3.4, 4]]);
   await page.keyboard.press("l");
   await drag(page, [-8, 4], [8, 4]);

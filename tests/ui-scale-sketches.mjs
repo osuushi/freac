@@ -5,11 +5,11 @@ import { chooseTool } from "./ui-tools.mjs";
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-5, `${a} != ${b}`);
 export async function scaleWholeSketchRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [4, 4], [12, 8]);
   await chooseTool(page, "return to modeling", "modeling");
-  await page.getByRole("button", { name: "Sketch on XZ", exact: true }).click();
+  await chooseTool(page, "Sketch on XZ", "sketch-xz");
   await page.keyboard.press("c");
   await drag(page, [-10, 6], [-6, 6]);
   await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
@@ -56,7 +56,7 @@ export async function scaleWholeSketchRoute(page, name) {
 }
 export async function scaleConstraintRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [8, 8], [14, 8]);
   await page.getByRole("button", { name: "Lock Radius", exact: true }).click();

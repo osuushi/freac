@@ -6,7 +6,7 @@ export async function sourceSketchVisibilityRoute(page, name) {
   for (const tool of ["extrude", "revolve"]) {
     for (const coverage of ["single", "partial", "all"]) {
       await reset(page);
-      await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+      await chooseTool(page, "Sketch on XY", "sketch-xy");
       await page.keyboard.press("r");
       await drag(page, [5, -15], [15, -5]);
       if (coverage !== "single") await drag(page, [5, 5], [15, 15]);
@@ -82,7 +82,7 @@ export async function sourceSketchVisibilityRoute(page, name) {
 export async function sourceSketchPreviewUndoRoute(page, name) {
   for (const tool of ["extrude", "revolve"]) {
     await reset(page);
-    await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+    await chooseTool(page, "Sketch on XY", "sketch-xy");
     await page.keyboard.press("r");
     await drag(page, [5, -15], [15, -5]);
     const center = await at(page, 10, -10);

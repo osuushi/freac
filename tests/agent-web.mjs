@@ -8,6 +8,7 @@ import { AgentProcess } from "../.build/host/host/agent-process.js";
 import { agentMenuRoute } from "./agent-menu.mjs";
 import { agentTouchRoute, observeAgentTerminal } from "./agent-touch.mjs";
 import { corners, drag, pointEquals } from "./ui-helpers.mjs";
+import { chooseTool } from "./ui-tools.mjs";
 
 // Browser rendering acceptance against a real PTY; Electron tests own the production bridge.
 const root = await mkdtemp(join(tmpdir(), "freac-agent-web-"));
@@ -92,7 +93,7 @@ try {
         await new Promise((resolve) => setTimeout(resolve, 50));
       }
       assert.equal(await readFile(join(root, `${name}.txt`), "utf8"), name);
-      await page.getByRole("button", { name: "Sketch on XY" }).click();
+      await chooseTool(page, "Sketch on XY", "sketch-xy");
       await page.keyboard.press("r");
       await drag(page, [-10, -6], [10, 6]);
       pointEquals((await corners(page))[2], [10, 6]);

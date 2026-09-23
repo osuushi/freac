@@ -5,7 +5,7 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function standaloneRotationRoute(page, name) {
   for (const plane of ["XY", "XZ", "YZ"]) {
     await reset(page);
-    await page.getByRole("button", { name: `Sketch on ${plane}`, exact: true }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await page.keyboard.press("r");
     await drag(page, [-10, -6], [10, 6]);
     const original = (await inspect(page)).document;

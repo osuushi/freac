@@ -50,7 +50,7 @@ async function archive(page, name, expected) {
 }
 export async function scaleSketchRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [5, 3], [15, 9]);
   const original = (await inspect(page)).document;
@@ -133,7 +133,7 @@ async function sketchGestureChecks(page, name, accepted) {
 }
 export async function scaleBodyRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   const c = await at(page, 0, 0);

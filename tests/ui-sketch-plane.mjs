@@ -4,12 +4,12 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function sketchPlaneRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-12, -8], [12, 8]);
   const first = (await inspect(page)).document.sketches[0];
   await chooseTool(page, "return to modeling", "modeling");
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   assert.equal((await inspect(page)).activeSketch, first.id, "A visible plane sketch is reopened");
   await chooseTool(page, "return to modeling", "modeling");
   await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
@@ -40,7 +40,7 @@ export async function sketchPlaneRoute(page, name) {
   state = await inspect(page);
   assert.equal(state.document.sketches.length, 1);
   await page.getByRole("button", { name: "Hide Sketch 1", exact: true }).click();
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   assert.equal((await inspect(page)).activeSketch, null, "A hidden plane sketch is not reopened");
   await page.screenshot({ path: `.cache/sketch-review/${name}-sketch-plane.png` });
   console.log(

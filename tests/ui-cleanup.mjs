@@ -21,7 +21,7 @@ async function undo(page) {
 }
 export async function createStack(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   const center = await at(page, 0, 0);

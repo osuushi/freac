@@ -106,7 +106,7 @@ async function extrusionProjection(page, x, y) {
 
 async function selectProfiles(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-20, -8], [-10, 2]);
   await page.keyboard.press("Escape");

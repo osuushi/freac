@@ -7,12 +7,13 @@ import { trackballRoute } from "./ui-camera-trackball.mjs";
 import { at, click, drag, inspect, reset } from "./ui-helpers.mjs";
 import { modelFrustumSelectionRoute } from "./ui-model-frustum-selection.mjs";
 import { pointChoiceRoute } from "./ui-point-choice.mjs";
+import { chooseTool } from "./ui-tools.mjs";
 import { typedSelectionRoute } from "./ui-typed-selection.mjs";
 
 async function mouseSelection(page, name) {
   await typedSelectionRoute(page, name);
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-20, 0], [-5, 0]);
   await drag(page, [5, 0], [20, 0]);
@@ -96,7 +97,7 @@ async function modelSelection(page, name) {
 }
 async function overlapSelection(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   await page.keyboard.press("r");

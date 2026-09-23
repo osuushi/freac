@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { _electron } from "playwright";
 import { drag, inspect, settled } from "./ui-helpers.mjs";
+import { chooseTool } from "./ui-tools.mjs";
 
 const root = await mkdtemp(join(tmpdir(), "freac-documents-"));
 const path = join(root, "Drawing.freac");
@@ -61,7 +62,7 @@ async function status() {
   return page.evaluate(() => window.freacDocument.status());
 }
 async function draw() {
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [0, 0], [20, 10]);
   await page.keyboard.press("Escape");
@@ -139,7 +140,7 @@ try {
   await launch();
   assert.equal((await status()).path, path, "Relaunch restores current file identity");
   assert.equal((await inspect(page)).document.sketches.length, 1);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [30, 0], [40, 10]);
   await page.keyboard.press("Escape");

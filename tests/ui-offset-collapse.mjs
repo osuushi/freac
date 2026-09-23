@@ -89,7 +89,7 @@ export async function offsetCollapseRoute(page, name, app) {
 }
 async function stacked(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [10, 0]);
   await page.keyboard.press("Enter");

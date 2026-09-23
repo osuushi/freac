@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
-import { chooseTool } from "./ui-tools.mjs";
+import { pickPlane } from "./ui-plane-targets.mjs";
+import { chooseTool, toolEnabled } from "./ui-tools.mjs";
 export async function projectionFacesRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-25, -12], [-10, 12]);
   await page.keyboard.press("r");
@@ -35,7 +36,7 @@ export async function projectionFacesRoute(page, name) {
   assert.ok(state.modelingSelection.every((s) => s.kind === "face"));
   await chooseTool(page, "project", "project");
   await inspect(page);
-  await page.getByRole("button", { name: "Project onto XY", exact: true }).click();
+  await pickPlane(page, "XY");
   state = await inspect(page);
   assert.equal(state.activePlane, null);
   assert.equal(state.document.sketches.length, 0);
@@ -51,10 +52,10 @@ export async function projectionFacesRoute(page, name) {
   state = await inspect(page);
   assert.equal(state.document.sketches.length, 0);
   assert.equal(state.modelingSelection.length, 2);
-  assert.ok(await page.getByRole("button", { name: "Sketch on XY", exact: true }).isEnabled());
+  assert.ok(await toolEnabled(page, "Sketch on XY", "sketch-xy"));
   await chooseTool(page, "project", "project");
   await inspect(page);
-  await page.getByRole("button", { name: "Project onto XY", exact: true }).click();
+  await pickPlane(page, "XY");
   await inspect(page);
   await page.getByRole("button", { name: "Accept projection", exact: true }).click();
   state = await inspect(page);

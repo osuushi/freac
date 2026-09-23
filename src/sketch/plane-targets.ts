@@ -4,25 +4,19 @@ import {
   disposePlaneTarget,
   type PlaneTarget,
   planeTargetBaseColor,
-  projectedTargetCorners,
+  positionPlanePatch,
 } from "./plane-target-mesh.js";
-import { type PlaneId, type Point, worldPoint } from "./planes.js";
+import type { Point } from "./planes.js";
 import type { World } from "./world.js";
-
-const buttonAnchor: Record<PlaneId, Point> = {
-  XY: { x: 13.5, y: 13.5 },
-  XZ: { x: -13.5, y: 13.5 },
-  YZ: { x: -13.5, y: -13.5 },
-};
 
 export function installPlaneTargets(
   world: World,
-  overlay: HTMLElement,
+  _overlay: HTMLElement,
   occupied: (point: Point, depth: number) => boolean,
   onHover: () => void,
 ): () => void {
-  const targets = createPlaneTargets(world, overlay),
-    interaction = new PlaneTargetInteraction(world, targets, occupied, onHover);
+  const targets = createPlaneTargets(world);
+  const interaction = new PlaneTargetInteraction(world, targets, occupied, onHover);
   world.changed.add(interaction.update);
   interaction.update();
   return () => {
@@ -31,109 +25,38 @@ export function installPlaneTargets(
     for (const target of targets) disposePlaneTarget(world, target);
   };
 }
-
 class PlaneTargetInteraction {
   private raycaster = new THREE.Raycaster();
   private abort = new AbortController();
   private hovered: PlaneTarget | null = null;
-  private lastPointer: Point | null = null;
-  private coverageTimer: ReturnType<typeof setTimeout> | undefined;
-
   constructor(
     private world: World,
     private targets: PlaneTarget[],
     private occupied: (point: Point, depth: number) => boolean,
     private onHover: () => void,
   ) {
-    world.canvas.addEventListener("pointermove", this.pointerMove, {
-      signal: this.abort.signal,
-      capture: true,
-    });
-    world.canvas.addEventListener("pointerleave", this.pointerLeave, {
-      signal: this.abort.signal,
-    });
-    world.canvas.addEventListener("click", this.canvasClick, {
-      signal: this.abort.signal,
-      capture: true,
-    });
-    for (const target of targets) {
-      target.button.addEventListener("pointermove", () => this.setHovered(target), {
-        signal: this.abort.signal,
-      });
-      target.button.addEventListener("pointerleave", this.pointerLeave, {
-        signal: this.abort.signal,
-      });
-      target.button.addEventListener("focus", () => this.setHovered(target), {
-        signal: this.abort.signal,
-      });
-      target.button.addEventListener("blur", this.pointerLeave, { signal: this.abort.signal });
-      target.button.addEventListener("click", () => this.activate(target), {
-        signal: this.abort.signal,
-      });
-    }
+    const options = { signal: this.abort.signal, capture: true };
+    world.canvas.addEventListener("pointermove", this.move, options);
+    world.canvas.addEventListener("pointerleave", () => this.highlight(null), options);
+    world.canvas.addEventListener("click", this.click, options);
   }
-
   update = (): void => {
-    const rect = this.world.canvas.getBoundingClientRect();
-    layoutTargets(this.world, this.targets, rect);
-    for (const target of this.targets) paint(target, this.hovered === target);
-    if (this.world.active || (this.hovered && !this.available(this.hovered))) this.setHovered(null);
-    clearTimeout(this.coverageTimer);
-    // Coverage picking scans the model. Do it only after navigation settles,
-    // never once per plane per camera frame. Canvas clicks still check coverage.
-    if (!this.world.active) this.coverageTimer = setTimeout(this.refresh, 100);
-  };
-
-  dispose(): void {
-    clearTimeout(this.coverageTimer);
-    this.abort.abort();
-  }
-
-  private pointerMove = (event: PointerEvent): void => {
-    if (this.world.planePickerAccept) {
-      this.setHovered(null);
-      return;
-    }
-    if (event.buttons) return;
-    this.lastPointer = { x: event.clientX, y: event.clientY };
-    const target = this.hitAt(this.lastPointer);
-    if (target) event.stopImmediatePropagation();
-    this.setHovered(target);
-  };
-
-  private pointerLeave = (): void => this.setHovered(null);
-
-  private canvasClick = (event: MouseEvent): void => {
-    // Cut references share one depth-aware picker with saved planes and faces.
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || this.world.planePickerAccept)
-      return;
-    const target = this.hitAt({ x: event.clientX, y: event.clientY });
-    if (!target) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    this.activate(target);
-  };
-
-  private refresh = (): void => {
     for (const target of this.targets) {
-      const screen = this.world.project(worldPoint(target.frame, buttonAnchor[target.id]));
-      target.button.style.pointerEvents =
-        this.available(target) &&
-        !this.occupied(
-          screen,
-          new THREE.Vector3(...worldPoint(target.frame, buttonAnchor[target.id])).distanceTo(
-            this.world.camera.position,
-          ),
-        )
-          ? "auto"
-          : "none";
+      target.mesh.visible =
+        !this.world.active &&
+        (!this.world.planePickerAccept || this.world.planePickerAccept(target.frame));
+      positionPlanePatch(target.mesh, target.frame, this.world.planeBounds(target.frame));
     }
-    if (this.lastPointer) this.setHovered(this.hitAt(this.lastPointer));
+    if (this.hovered && !this.available(this.hovered)) this.hovered = null;
+    this.paint();
   };
-
-  private hitAt(point: Point): PlaneTarget | null {
-    const available = this.targets.filter((target) => this.available(target));
-    if (!available.length) return null;
+  private available(target: PlaneTarget): boolean {
+    return (
+      target.mesh.visible &&
+      (this.world.planePicker ? this.world.canNavigate() : this.world.canEnterSketch())
+    );
+  }
+  private hit(point: Point): PlaneTarget | null {
     const rect = this.world.canvas.getBoundingClientRect();
     this.raycaster.setFromCamera(
       new THREE.Vector2(
@@ -142,64 +65,47 @@ class PlaneTargetInteraction {
       ),
       this.world.camera,
     );
+    const targets = this.targets.filter((t) => this.available(t));
     const hit = this.raycaster.intersectObjects(
-      available.map((target) => target.mesh),
+      targets.map((t) => t.mesh),
       false,
     )[0];
     if (!hit || this.occupied(point, hit.point.distanceTo(this.world.camera.position))) return null;
-    return available.find((target) => target.mesh === hit.object) ?? null;
+    return targets.find((t) => t.mesh === hit.object) ?? null;
   }
-
-  private available(target: PlaneTarget): boolean {
-    return target.group.visible && !target.button.disabled && !target.button.hidden;
-  }
-
-  private setHovered(target: PlaneTarget | null): void {
-    if (this.world.planePickerAccept) target = null;
-    if (this.hovered === target) return;
-    for (const candidate of this.targets) paint(candidate, candidate === target);
-    this.hovered = target;
-    if (target) this.onHover();
-    this.world.renderer.render(this.world.scene, this.world.camera);
-  }
-
-  private activate(target: PlaneTarget): void {
-    if (this.world.planePicker && this.world.canNavigate()) {
-      this.world.planePicker(target.id);
-      return;
-    }
-    if (!this.world.canEnterSketch()) return;
-    if (this.world.sketchEntry) this.world.sketchEntry(target.id);
+  private move = (event: PointerEvent): void => {
+    if (event.buttons || this.world.planePickerAccept) return;
+    const target = this.hit({ x: event.clientX, y: event.clientY });
+    if (target) event.stopImmediatePropagation();
+    this.highlight(target);
+  };
+  private click = (event: MouseEvent): void => {
+    if (event.button || event.metaKey || event.ctrlKey || this.world.planePickerAccept) return;
+    const target = this.hit({ x: event.clientX, y: event.clientY });
+    if (!target) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (this.world.planePicker) this.world.planePicker(target.id);
+    else if (this.world.sketchEntry) this.world.sketchEntry(target.id);
     else this.world.enter(target.id);
+  };
+  private paint(): void {
+    for (const t of this.targets) {
+      const active = t === this.hovered;
+      t.mesh.userData.hovered = active;
+      t.mesh.material.color.set(active ? "#83b9ee" : planeTargetBaseColor(t.id));
+      t.mesh.material.opacity = active ? 0.43 : 0.224;
+      t.mesh.material.stencilWrite = !this.world.planePicker;
+    }
   }
-}
-
-function layoutTargets(world: World, targets: PlaneTarget[], rect: DOMRect): void {
-  const visible = world.active === null;
-  for (const target of targets) {
-    const enabled = world.planePicker ? world.canNavigate() : world.canEnterSketch();
-    const allowed = !world.planePickerAccept || world.planePickerAccept(target.frame);
-    target.group.visible = visible && allowed;
-    target.button.hidden = !visible || !allowed;
-    target.button.disabled = !enabled;
-    target.button.setAttribute(
-      "aria-label",
-      world.planePicker ? `${world.planePickerLabel} ${target.id}` : `Sketch on ${target.id}`,
-    );
-    target.button.title = world.planePicker
-      ? `${world.planePickerLabel} ${target.id}`
-      : `Sketch on ${target.id}`;
-    if (!visible) continue;
-    const corners = projectedTargetCorners(world, target),
-      screen = world.project(worldPoint(target.frame, buttonAnchor[target.id]));
-    target.button.style.left = `${screen.x - rect.left}px`;
-    target.button.style.top = `${screen.y - rect.top}px`;
-    target.button.dataset.projectedPolygon = JSON.stringify(corners);
+  private highlight(target: PlaneTarget | null): void {
+    if (this.hovered === target) return;
+    this.hovered = target;
+    this.paint();
+    if (target) this.onHover();
+    this.world.requestDraw();
   }
-}
-
-function paint(target: PlaneTarget, active: boolean): void {
-  target.mesh.material.color.set(active ? "#83b9ee" : planeTargetBaseColor(target.id));
-  target.mesh.material.opacity = (target.button.disabled ? 0.16 : active ? 0.62 : 0.32) * 0.7;
-  target.button.dataset.hovered = String(active);
+  dispose(): void {
+    this.abort.abort();
+  }
 }

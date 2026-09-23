@@ -30,5 +30,5 @@ export function installTabletChrome(app: HTMLElement): void {
   const hint = app.querySelector(".navigation-hint");
   if (hint)
     hint.textContent =
-      "Pencil · edit   One finger · rotate   Two fingers · pan / pinch   ` / ~ · Escape";
+      "Pencil · edit   One finger · rotate   Two fingers · pan / pinch   Hold · choose overlap   ` / ~ · Escape";
 }

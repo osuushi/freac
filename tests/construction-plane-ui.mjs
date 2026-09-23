@@ -8,6 +8,7 @@ import { drag, inspect, reset, settled } from "./ui-helpers.mjs";
 import { planeCutRoute } from "./ui-plane-cuts.mjs";
 import { planeFaceReferenceRoute } from "./ui-plane-face-reference.mjs";
 import { planePlacementRoute } from "./ui-plane-placement.mjs";
+import { pickPlane } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function movePlane(page, axis, value) {
@@ -24,7 +25,7 @@ async function route(page, name) {
   page.on("pageerror", (e) => errors.push(e.message));
   await reset(page);
   await chooseTool(page, "construction plane", "construction-plane");
-  await page.getByRole("button", { name: "Use plane XY", exact: true }).click();
+  await pickPlane(page, "XY");
   await movePlane(page, "Z", "12");
   assert.equal((await inspect(page)).document.constructionPlanes, undefined);
   await page.keyboard.press("Enter");

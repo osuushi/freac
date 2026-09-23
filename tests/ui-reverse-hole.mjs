@@ -14,7 +14,7 @@ async function selectRegion(page) {
 }
 export async function reverseHoleRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on YZ", exact: true }).click();
+  await chooseTool(page, "Sketch on YZ", "sketch-yz");
   await inspect(page);
   await chooseTool(page, "return to modeling", "modeling");
   await openDocument(page, {

@@ -18,7 +18,7 @@ try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
       await page.goto(server.resolvedUrls.local[0]);
       await reset(page);
-      await page.getByRole("button", { name: "Sketch on XY" }).click();
+      await chooseTool(page, "Sketch on XY", "sketch-xy");
       await page.keyboard.press("l");
       await drag(page, [0, 0], [20, 10]);
       const line = (await inspect(page)).document.sketches[0].curves[0];

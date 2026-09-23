@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { launchElectron } from "./native-documents.mjs";
 import { drag, settled } from "./ui-helpers.mjs";
+import { chooseTool } from "./ui-tools.mjs";
 
 const root = await mkdtemp(join(tmpdir(), "freac-updates-"));
 const app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
@@ -29,7 +30,7 @@ try {
   });
   await checkMenu();
   assert.match((await prompts()).at(-1), /signed macOS release/);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -6], [10, 6]);
   await page.keyboard.press("Escape");

@@ -7,7 +7,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 async function acuteHintRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [0, 0], [20, 0]);
   await page.keyboard.press("l");
@@ -50,7 +50,7 @@ async function acuteHintRoute(page, name) {
 export async function filletCursorRoute(page, name) {
   await acuteHintRoute(page, name);
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [0, 0], [15, 0]);
   await page.keyboard.press("l");

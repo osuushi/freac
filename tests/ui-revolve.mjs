@@ -10,7 +10,7 @@ async function value(page, name, value) {
 }
 export async function revolveRoute(page, name, electron, cleanup = false) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.mouse.move(640, 425);
   await page.keyboard.down("Control");
   await page.mouse.wheel(0, -90);

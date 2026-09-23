@@ -35,7 +35,7 @@ export async function trimArcRoute(page, name) {
   await chooseTool(page, "undo", "undo");
   assert.deepEqual(await data(page), original);
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   for (let i = 0; i < 2; i++) {
     await page.keyboard.press("l");
     await drag(page, [-10, 0], [10, 0]);

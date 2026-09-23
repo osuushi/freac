@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import { pickModels } from "../sketch/model-selection.js";
-import { planeTargetHalfSize } from "../sketch/plane-target-mesh.js";
 import type { Point } from "../sketch/planes.js";
 import type { ConstructionPlane } from "./construction-plane.js";
 
@@ -25,16 +24,21 @@ export function pickSavedPlane(editor: SketchEditor, screen: Point, maxDepth = I
     const hit = ray.ray.intersectPlane(support, new THREE.Vector3());
     if (!hit) continue;
     const local = hit.clone().sub(origin);
+    const bounds = editor.world.planeBounds(plane.frame);
     if (
-      Math.abs(local.dot(u)) > planeTargetHalfSize ||
-      Math.abs(local.dot(v)) > planeTargetHalfSize
+      local.dot(u) < bounds.minX ||
+      local.dot(u) > bounds.maxX ||
+      local.dot(v) < bounds.minY ||
+      local.dot(v) > bounds.maxY
     )
       continue;
     const depth = hit.distanceTo(editor.world.camera.position);
     if (depth > maxDepth + 1e-5 || (closest && closest.depth <= depth)) continue;
     closest = { plane, depth };
   }
-  return closest && !pickModels(editor, screen, closest.depth).length ? closest : null;
+  return closest && (editor.world.planePicker || !pickModels(editor, screen).length)
+    ? closest
+    : null;
 }
 
 /** Canvas capture keeps saved-plane interiors ahead of ordinary model handlers. */

@@ -60,7 +60,7 @@ try {
       const discard = page.getByRole("button", { name: "Don’t Save", exact: true });
       if (await discard.isVisible()) await discard.click();
       await settled(page);
-      await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+      await chooseTool(page, "Sketch on XY", "sketch-xy");
       await settled(page);
       await chooseTool(page, "rectangle", "rectangle");
       await drag(page, [-10, -10], [10, 10]);

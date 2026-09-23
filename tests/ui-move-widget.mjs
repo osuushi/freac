@@ -81,7 +81,7 @@ async function rotationCheck(page, pivot, axis, before, gesture = false) {
 async function sketchAnchors(page, name) {
   for (const plane of ["XY", "XZ", "YZ"]) {
     await reset(page);
-    await page.getByRole("button", { name: `Sketch on ${plane}`, exact: true }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await chooseTool(page, "grid snap", "grid");
     await page.keyboard.press("l");
     await drag(page, [-10, -5], [10, 5]);
@@ -117,7 +117,7 @@ async function sketchAnchors(page, name) {
 }
 async function bodyAnchors(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await chooseTool(page, "grid snap", "grid");
   await page.keyboard.press("r");
   await drag(page, [-4, -4], [16, 8]);
@@ -239,7 +239,7 @@ export async function moveWidgetRoute(page, name) {
 async function faceCenterAnchors(page, name) {
   for (const kind of ["rectangle", "circle"]) {
     await reset(page);
-    await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+    await chooseTool(page, "Sketch on XY", "sketch-xy");
     await chooseTool(page, "grid snap", "grid");
     await page.keyboard.press(kind === "circle" ? "c" : "r");
     await drag(page, kind === "circle" ? [0, 0] : [-10, -6], kind === "circle" ? [6, 0] : [10, 6]);

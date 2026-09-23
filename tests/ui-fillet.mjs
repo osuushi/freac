@@ -6,7 +6,7 @@ import { chooseTool } from "./ui-tools.mjs";
 const data = async (page) => (await inspect(page)).document.sketches[0];
 export async function filletRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [0, 0], [10, 0]);
   await page.keyboard.press("l");
@@ -108,7 +108,7 @@ async function filletMovement(page, beforeMove) {
 
 export async function filletLossRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [0, 0], [10, 0]);
   await page.getByRole("button", { name: "Lock Length", exact: true }).click();

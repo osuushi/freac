@@ -48,7 +48,7 @@ try {
         buffer: Buffer.from(JSON.stringify(archive)),
       });
       await inspect(page);
-      await page.getByRole("button", { name: "Sketch on XZ", exact: true }).click();
+      await chooseTool(page, "Sketch on XZ", "sketch-xz");
       await page.waitForFunction(
         () =>
           !document

@@ -24,7 +24,7 @@ export async function cleanupAvailabilityRoute(page, plate) {
   assert.deepEqual((await inspect(page)).document, before.document);
   for (const mode of ["fillet", "chamfer"]) {
     await reset(page);
-    await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+    await chooseTool(page, "Sketch on XY", "sketch-xy");
     await page.keyboard.press("l");
     const points = [
       [-10, -10],

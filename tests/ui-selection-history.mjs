@@ -165,7 +165,7 @@ async function drawLines(page) {
     [],
     "New resets selection history",
   );
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-20, 0], [-5, 0]);
   await page.keyboard.press("l");

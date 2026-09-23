@@ -7,7 +7,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function plate(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   const center = await at(page, 0, 0),
@@ -71,7 +71,7 @@ export async function bodyFilletRoute(page, name, electron, cleanup = false) {
   await bodyArchiveRoute(page, `${name}-fillet`, electron);
   // Reload gives the shared modeling camera; enter a surviving planar face.
   // Use the top view via the original sketch's plane, then return to modeling.
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   const center = await at(page, 6, -6);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(center.x, center.y);
@@ -118,7 +118,7 @@ async function dragCancelAndAccept(page, name) {
 
 export async function circularFinish(page, name, mode = "fillet") {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [8, 0]);
   const center = await at(page, 0, 0),

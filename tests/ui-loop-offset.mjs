@@ -6,7 +6,7 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function loopOffsetRoute(page, name) {
   for (const plane of ["XY", "XZ", "YZ"]) {
     await reset(page);
-    await page.getByRole("button", { name: `Sketch on ${plane}` }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await page.keyboard.press("r");
     await drag(page, plane === "XZ" ? [-10, 5] : [-10, -5], plane === "XZ" ? [10, -5] : [10, 5]);
     const before = (await inspect(page)).document.sketches[0];
@@ -77,7 +77,7 @@ export async function loopOffsetRoute(page, name) {
 
 async function offsetArcRadius(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-4, 0], [4, 0]);
   await page.keyboard.press("l");
@@ -106,7 +106,7 @@ async function offsetArcRadius(page) {
 
 async function concaveArcCorner(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   for (const [a, b, target] of [
     [
       [0, 0],
@@ -163,7 +163,7 @@ async function bow(page, target) {
 }
 async function curvedLoop(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   for (const [a, b, target] of [
     [
       [-5, -3],
@@ -245,7 +245,7 @@ async function curvedLoop(page, name) {
 export async function concaveAndAmbiguous(page) {
   for (const crossed of [false, true]) {
     await reset(page);
-    await page.getByRole("button", { name: "Sketch on XY" }).click();
+    await chooseTool(page, "Sketch on XY", "sketch-xy");
     const points = crossed
       ? [
           [0, 0],

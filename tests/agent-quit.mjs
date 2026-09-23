@@ -3,6 +3,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { launchElectron } from "./native-documents.mjs";
 import { drag, settled } from "./ui-helpers.mjs";
+import { chooseTool } from "./ui-tools.mjs";
 
 const app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
 try {
@@ -20,7 +21,7 @@ try {
   );
   await page.getByRole("button", { name: "Open agent terminal" }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -6], [10, 6]);
   await settled(page);

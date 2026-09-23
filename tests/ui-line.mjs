@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { click, drag, inspect, pointEquals, reset, settled } from "./ui-helpers.mjs";
+import { chooseTool } from "./ui-tools.mjs";
 
 export async function lineRoute(page, name) {
   await reset(page);
@@ -7,7 +8,7 @@ export async function lineRoute(page, name) {
   assert.equal(await tool.isVisible(), false);
   await page.keyboard.press("l");
   assert.equal((await inspect(page)).activePlane, null);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await drag(page, [-10, 0], [0, 0]);
   assert.equal((await inspect(page)).tool, "line");
   // A click after release must neither extend the line nor commit another one.

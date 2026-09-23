@@ -13,7 +13,7 @@ async function bowSelected(page, radius) {
 export async function curvedRoundingRoute(page, name) {
   for (const both of [false, true]) {
     await reset(page);
-    await page.getByRole("button", { name: "Sketch on XY" }).click();
+    await chooseTool(page, "Sketch on XY", "sketch-xy");
     await page.keyboard.press("l");
     await drag(page, [0, 0], [20, 0]);
     if (both) await bowSelected(page, 30);

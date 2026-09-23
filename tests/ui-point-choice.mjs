@@ -8,7 +8,7 @@ const choice = (page, n) => menu(page).getByRole("button", { name: `Point ${n}`,
 const curves = async (page) => (await inspect(page)).document.sketches[0].curves;
 async function rays(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   for (const end of [
     [12, 0],
@@ -89,7 +89,7 @@ export async function pointChoiceRoute(page, name) {
 }
 async function centeredChoice(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [5, 0]);
   await page.keyboard.press("l");
@@ -145,7 +145,7 @@ async function pointFeedback(page, name) {
 
 async function curvedAndCornerChoices(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-6, 0], [6, 0]);
   const handle = await page.locator(".bow-handle").nth(1).boundingBox(),
@@ -167,7 +167,7 @@ async function curvedAndCornerChoices(page) {
   pointEquals(edges[0].a, [-8, -2]);
   pointEquals(edges[1].a, [-6, 0]);
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [10, 10]);
   await page.keyboard.press("l");

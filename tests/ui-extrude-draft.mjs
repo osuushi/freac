@@ -8,7 +8,7 @@ const volume = (length, offset) =>
   (Math.abs(length) * (400 + 20 * (20 + 2 * offset) + (20 + 2 * offset) ** 2)) / 3;
 export async function extrudeDraftRoute(page, name, electron) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   const center = await at(page, 0, 0);

@@ -4,7 +4,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function redrawRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-18, -18], [18, 18]);
   const pick = await at(page, 5, 3);
@@ -19,19 +19,19 @@ export async function redrawRoute(page, name) {
   // A burst is deliberately synchronous to prove event coalescing independently
   // of operating-system wheel delivery. Real wheel/drag routes run alongside it.
   const updates = await page.evaluate(async () => {
-    const target = document.querySelector('[data-plane-target="XY"]');
+    const target = document.querySelector(".origin");
     const observer = new MutationObserver(() => {});
-    observer.observe(target, { attributes: true, attributeFilter: ["data-projected-polygon"] });
+    observer.observe(target, { attributes: true, attributeFilter: ["style"] });
     const canvas = document.querySelector("canvas");
     for (let i = 0; i < 20; i++)
       canvas.dispatchEvent(new WheelEvent("wheel", { deltaX: 1, cancelable: true }));
     const immediate = observer.takeRecords().length;
     let painted = 0;
     observer.disconnect();
-    const frames = new MutationObserver((records) => {
-      painted += records.length;
+    const frames = new MutationObserver(() => {
+      painted += 1;
     });
-    frames.observe(target, { attributes: true, attributeFilter: ["data-projected-polygon"] });
+    frames.observe(target, { attributes: true, attributeFilter: ["style"] });
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     frames.disconnect();
     return { immediate, painted };
@@ -40,15 +40,14 @@ export async function redrawRoute(page, name) {
   const after = await inspect(page);
   assert.notDeepEqual(after.camera.target, before.camera.target);
   assert.deepEqual(after.document, before.document);
-  await page.waitForTimeout(150);
   assert.equal(
-    await page.locator('[data-plane-target="XY"]').evaluate((button) => button.style.pointerEvents),
-    "none",
-    "Covered plane label passes clicks through to body geometry after settling",
+    await page.locator(".plane-label").count(),
+    0,
+    "No floating labels intercept geometry",
   );
   await page.mouse.click(pick.x - 20, pick.y);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   console.log(
-    `${name}: solid navigation batches 20 inputs into one paint; covered label and face picking pass`,
+    `${name}: solid navigation batches 20 inputs into one paint; label-free face picking passes`,
   );
 }

@@ -5,7 +5,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function curvedRegionRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   const samples = [
     [2.3, 2.7],
     [11.3, 11.3],

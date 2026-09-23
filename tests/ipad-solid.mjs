@@ -4,7 +4,7 @@ import { at, inspect, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function tabletSolidRoute(page, name) {
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await settled(page);
   const center = await at(page, 3, 3);
   const other = await at(page, -3, -3);
@@ -32,7 +32,7 @@ export async function tabletSolidRoute(page, name) {
   await settled(page);
   assert.equal((await inspect(page)).preview, null, "Reconnect discards unfinished geometry");
   assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await settled(page);
   const pick = await at(page, 3, 3);
   const edge = await at(page, -10, -4),

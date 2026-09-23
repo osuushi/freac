@@ -4,7 +4,7 @@ import { browseTools, chooseTool } from "./ui-tools.mjs";
 
 export async function focusLossRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-15, -10], [15, 10]);
   const width = page.getByRole("textbox", { name: "Width", exact: true });
@@ -87,7 +87,7 @@ async function moveFocusRoutes(page, pick) {
   );
 
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-15, -10], [15, 10]);
   const inside = await at(page, 0, 0);
@@ -104,7 +104,7 @@ async function moveFocusRoutes(page, pick) {
 
 async function heldGestureRoute(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   const a = await at(page, -10, -5),
     b = await at(page, 10, 5);

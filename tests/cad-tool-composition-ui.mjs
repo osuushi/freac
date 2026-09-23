@@ -7,6 +7,7 @@ import { launchElectron, openDocument, saveDocument } from "./native-documents.m
 import { orient } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { pickPlane } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-5, `${a} != ${b}`);
@@ -15,7 +16,7 @@ async function cut(page) {
   await worldClick(page, [0, -6, 13]);
   const before = (await inspect(page)).document.bodies[0];
   await chooseTool(page, "imprint", "imprint");
-  await page.getByRole("button", { name: "Use plane YZ", exact: true }).click();
+  await pickPlane(page, "YZ");
   await inspect(page);
   await page.keyboard.press("Enter");
   const imprinted = (await inspect(page)).document;
@@ -23,7 +24,7 @@ async function cut(page) {
   assert.ok(imprinted.bodies[0].faces.length > before.faces.length);
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await chooseTool(page, "split body", "split");
-  await page.getByRole("button", { name: "Use plane YZ", exact: true }).click();
+  await pickPlane(page, "YZ");
   await inspect(page);
   await page.keyboard.press("Enter");
   const pieces = (await inspect(page)).document.bodies;
@@ -39,7 +40,7 @@ async function route(page, name) {
   page.on("pageerror", (error) => errors.push(error.message));
   await reset(page);
   await chooseTool(page, "construction plane", "construction-plane");
-  await page.getByRole("button", { name: "Use plane XY", exact: true }).click();
+  await pickPlane(page, "XY");
   await page.getByRole("button", { name: "Move plane Z", exact: true }).click();
   await page.getByRole("textbox", { name: "Plane translation Z", exact: true }).fill("12");
   await page.keyboard.press("Enter");

@@ -20,7 +20,7 @@ async function radius(page, value) {
 }
 export async function concentricRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [8, 0], [12, 0]);
   await drag(page, [-10, 0], [-8, 0]);

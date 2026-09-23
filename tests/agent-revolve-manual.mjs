@@ -5,7 +5,7 @@ import { chooseTool } from "./ui-tools.mjs";
 /** Actual CAD controls, with grid-aligned coordinates across browser runtimes. */
 export async function manualHelix(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   if (String((await inspect(page)).gridSnap) !== "true")
     await chooseTool(page, "grid snap", "grid");
   await page.keyboard.press("r");

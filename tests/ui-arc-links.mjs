@@ -17,7 +17,7 @@ const radiusOf = (a) =>
   (Math.hypot(a.b.x - a.a.x, a.b.y - a.a.y) * (1 + a.bulge * a.bulge)) / (4 * Math.abs(a.bulge));
 export async function startArc(page, height) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-4, 0], [4, 0]);
   const box = await page.locator(".bow-handle").nth(1).boundingBox();

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
-import { type PlaneFrame, type Point, planes, worldPoint } from "../sketch/planes.js";
+import { minimumPlaneBounds, type PlaneBounds, planeCorners } from "../sketch/plane-bounds.js";
+import { type PlaneFrame, type Point, planes } from "../sketch/planes.js";
 import { pickFace } from "./body-view.js";
 
 /** Pick the displayed patches, not their infinite support or SVG outline. */
@@ -43,21 +44,25 @@ export function pickPlaneInterior(
     const hit = ray.ray.intersectPlane(plane, new THREE.Vector3());
     if (!hit) continue;
     const local = hit.clone().sub(origin);
-    if (Math.abs(local.dot(u)) > 20 || Math.abs(local.dot(v)) > 20) continue;
+    const bounds = editor.world.planeBounds(frame);
+    if (
+      local.dot(u) < bounds.minX ||
+      local.dot(u) > bounds.maxX ||
+      local.dot(v) < bounds.minY ||
+      local.dot(v) > bounds.maxY
+    )
+      continue;
     const depth = hit.distanceTo(editor.world.camera.position);
-    if (!closest || depth < closest.depth)
-      closest = { frame, depth, vertices: planePatchVertices(frame) };
+    if (!closest || depth < closest.depth - 1e-5)
+      closest = { frame, depth, vertices: planePatchVertices(frame, bounds) };
   }
   return closest;
 }
 
-export function planePatchVertices(frame: PlaneFrame): number[] {
-  return [
-    [-20, -20],
-    [20, -20],
-    [20, 20],
-    [-20, -20],
-    [20, 20],
-    [-20, 20],
-  ].flatMap(([x, y]) => worldPoint(frame, { x, y }));
+export function planePatchVertices(
+  frame: PlaneFrame,
+  bounds: PlaneBounds = minimumPlaneBounds(),
+): number[] {
+  const corners = planeCorners(frame, bounds);
+  return [0, 1, 2, 0, 2, 3].flatMap((i) => corners[i]);
 }

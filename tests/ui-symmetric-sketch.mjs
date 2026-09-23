@@ -17,7 +17,7 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function symmetricSketchRoute(page, name) {
   for (const plane of ["XY", "XZ", "YZ"]) {
     await reset(page);
-    await page.getByRole("button", { name: `Sketch on ${plane}`, exact: true }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await page.keyboard.press("r");
     await drag(page, [4, 4], [14, 10], ["Alt"]);
     let points = await corners(page);
@@ -62,7 +62,7 @@ export async function symmetricSketchRoute(page, name) {
 
 async function centeredLineAndModifiers(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   const a = await at(page, 0, 0),
     b = await at(page, 10, 0);
@@ -108,7 +108,7 @@ async function centeredLineAndModifiers(page) {
 
 async function attachmentsAndLocks(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [10, 0], [20, 0]);
   await page.keyboard.press("l");
@@ -123,7 +123,7 @@ async function attachmentsAndLocks(page) {
   sketch = (await inspect(page)).document.sketches[0];
   pointEquals(sketch.curves[1].a, [-12, 2]);
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [10, 6], ["Alt"]);
   await page.getByRole("button", { name: "Lock Width", exact: true }).click();

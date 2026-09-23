@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { at, click, drag, inspect, reset } from "./ui-helpers.mjs";
+import { chooseTool } from "./ui-tools.mjs";
 
 // Sample the screenshot, not renderer internals: this catches missing stencil,
 // material/depth mistakes and fills that cover only an invisible model region.
@@ -31,7 +32,7 @@ export const tinted = (before, after) =>
   );
 export async function fillRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   const samples = [
     [-7.3, -7.3],
     [16.3, 6.3],

@@ -8,7 +8,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function mirrorSketchRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [5, 3], [15, 9]);
   const original = (await inspect(page)).document;
@@ -87,7 +87,7 @@ export async function mirrorSketchRoute(page, name) {
 
 export async function mirrorBodyRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [5, 3], [15, 9]);
   const center = await at(page, 10, 6);

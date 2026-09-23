@@ -5,7 +5,7 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function rectangleBowSides(page, name) {
   for (let index = 0; index < 4; index++) {
     await reset(page);
-    await page.getByRole("button", { name: "Sketch on XY" }).click();
+    await chooseTool(page, "Sketch on XY", "sketch-xy");
     await page.keyboard.press("r");
     await drag(page, [-10, -5], [10, 5]);
     if (index === 0) await page.getByRole("button", { name: "Lock Width", exact: true }).click();

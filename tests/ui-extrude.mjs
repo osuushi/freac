@@ -6,7 +6,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function extrudeRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-15, -10], [15, 10]);
   const pick = await at(page, 5, 3);
@@ -130,7 +130,7 @@ async function reopen(page, name, splitBodies) {
 
 export async function extrusionGestureRoute(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XZ", exact: true }).click();
+  await chooseTool(page, "Sketch on XZ", "sketch-xz");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [5, 0]);
   const pick = await at(page, 0, 0);

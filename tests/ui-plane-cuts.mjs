@@ -5,6 +5,7 @@ import { orient } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, drag, inspect, reset, settled } from "./ui-helpers.mjs";
 import { planeHover } from "./ui-plane-hover.mjs";
+import { pickPlane } from "./ui-plane-targets.mjs";
 import { chooseTool, toolEnabled } from "./ui-tools.mjs";
 
 async function startCut(page, mode) {
@@ -23,14 +24,14 @@ async function startCut(page, mode) {
   assert.equal(await page.locator(".plane-widget").count(), 0);
   assert.ok(await page.locator(".plane-candidate-outlines polyline").count());
   assert.equal(
-    await page.getByRole("button", { name: "Use plane XY", exact: true }).count(),
-    0,
+    (await inspect(page)).planeTargets.find((p) => p.id === "XY").visible,
+    false,
     "Coplanar world plane excluded",
   );
 }
 export async function planeCutRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   const center = await at(page, 0, 0);
@@ -166,7 +167,7 @@ async function falsePositiveReference(page, original) {
     original,
     "Broad-phase false positive preserves geometry",
   );
-  await page.getByRole("button", { name: "Use plane YZ", exact: true }).click();
+  await pickPlane(page, "YZ");
   assert.equal(
     (await inspect(page)).preview.bodies[0].faces.length,
     7,

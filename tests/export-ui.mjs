@@ -37,7 +37,7 @@ try {
   await exportCapture(page, name, app);
   await reset(page);
   assert.equal(!(await toolEnabled(page, "export 3mf", "export-3mf")), true);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   // Exact odd-millimeter bounds are independent of the current adaptive grid spacing.
   await chooseTool(page, "grid snap", "grid");
   await page.keyboard.press("r");

@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { findRaycastPoint } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function cameraRoute(page, name) {
   await animatedEntry(page, name);
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [20, 10]);
   const before = await inspect(page);
@@ -32,7 +33,7 @@ export async function cameraRoute(page, name) {
     [scrollPan.camera.position, scrollPan.camera.up],
   );
   assert.deepEqual(rotated.document, before.document);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   const aligned = await inspect(page);
   await page.mouse.move(980, 620);
   await page.mouse.down({ button: "right" });
@@ -76,11 +77,16 @@ export async function cameraRoute(page, name) {
 
 async function animatedEntry(page, name) {
   await reset(page);
-  const entry = await page.evaluate(() => {
+  const target = await findRaycastPoint(page, "XY");
+  const entry = await page.evaluate((point) => {
     const before = window.freacInspect().camera;
-    document.querySelector('[data-plane-target="XY"]')?.click();
+    document
+      .querySelector("canvas")
+      .dispatchEvent(
+        new MouseEvent("click", { bubbles: true, clientX: point.x, clientY: point.y }),
+      );
     return { before, after: window.freacInspect().camera };
-  });
+  }, target);
   assert.equal(entry.after.moving, true, "Plane entry starts a camera transition");
   assert.deepEqual(
     entry.after.position,
@@ -117,10 +123,15 @@ async function animatedEntry(page, name) {
   await page.screenshot({ path: `.cache/sketch-review/${name}-animated-region-entry.png` });
 
   await chooseTool(page, "return to modeling", "modeling");
-  const moving = await page.evaluate(() => {
-    document.querySelector('[data-plane-target="XY"]')?.click();
+  const nextTarget = await findRaycastPoint(page, "XY");
+  const moving = await page.evaluate((point) => {
+    document
+      .querySelector("canvas")
+      .dispatchEvent(
+        new MouseEvent("click", { bubbles: true, clientX: point.x, clientY: point.y }),
+      );
     return window.freacInspect().camera.moving;
-  });
+  }, nextTarget);
   assert.equal(moving, true);
   await page.mouse.move(1000, 600);
   await page.mouse.wheel(20, 10);
@@ -172,7 +183,7 @@ async function orbitDrag(page, dx, dy) {
 }
 
 async function safariPinchEvents(page) {
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   const before = await inspect(page);
   await page.evaluate(() => {
     const canvas = document.querySelector("canvas");

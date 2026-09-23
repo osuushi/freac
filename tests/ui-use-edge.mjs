@@ -5,7 +5,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function useEdgeRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [5, 0]);
   const center = await at(page, 0, 0);
@@ -61,7 +61,7 @@ export async function useEdgeRoute(page, name) {
 
 export async function useLineEdgeRoute(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   const center = await at(page, 3, 3),

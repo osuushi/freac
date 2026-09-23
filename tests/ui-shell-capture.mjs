@@ -10,7 +10,7 @@ const fixture = JSON.parse(await readFile("tests/fixtures/shell-cylindrical-spli
 async function loadCapture(page) {
   await reset(page);
   // Use ordinary plane controls to look straight into the cavity after shelling.
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await inspect(page);
   await chooseTool(page, "return to modeling", "modeling");
   await openDocument(page, {
@@ -60,7 +60,7 @@ export async function shellCaptureRoute(page, name, electron) {
   assert.deepEqual((await inspect(page)).document, accepted);
   await bodyArchiveRoute(page, `${name}-shell-capture`, electron);
   await page.getByRole("button", { name: "Hide Body 1", exact: true }).click();
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await inspect(page);
   await chooseTool(page, "return to modeling", "modeling");
   await page.getByRole("button", { name: "Show Body 1", exact: true }).click();

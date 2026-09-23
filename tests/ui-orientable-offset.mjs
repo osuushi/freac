@@ -67,7 +67,7 @@ export async function orientableFaceOffsetRoute(page, name, app) {
 export async function orientableSketchOffsetRoute(page, name) {
   for (const plane of ["XY", "XZ", "YZ"]) {
     await reset(page);
-    await page.getByRole("button", { name: `Sketch on ${plane}`, exact: true }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await page.keyboard.press("l");
     await drag(page, [-10, 0], [10, 0]);
     const original = (await inspect(page)).document;
@@ -106,7 +106,7 @@ export async function orientableSketchOffsetRoute(page, name) {
 async function sketchLoopAndCircle(page) {
   for (const kind of ["circle", "loop"]) {
     await reset(page);
-    await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+    await chooseTool(page, "Sketch on XY", "sketch-xy");
     await page.keyboard.press(kind === "circle" ? "c" : "r");
     await drag(page, kind === "circle" ? [0, 0] : [-10, -6], kind === "circle" ? [6, 0] : [10, 6]);
     const original = (await inspect(page)).document;

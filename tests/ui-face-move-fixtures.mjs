@@ -6,7 +6,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function makeFeature(page, pocket = false, sides = 4, through = false) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   const pick = await at(page, 6, 6);

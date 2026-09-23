@@ -19,7 +19,7 @@ async function start(page, center, axis) {
 }
 export async function revolveSolidRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [10, 5]);
   await chooseTool(page, "return to modeling", "modeling");
@@ -27,7 +27,7 @@ export async function revolveSolidRoute(page, name) {
   close((await inspect(page)).preview.bodies[0].volume, 500 * Math.PI);
   await page.getByRole("button", { name: "Accept revolution", exact: true }).click();
   const shaft = (await inspect(page)).document.bodies[0];
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [8, 1], [12, 3], ["Shift"]);
   await chooseTool(page, "return to modeling", "modeling");
@@ -70,7 +70,7 @@ export async function revolveSolidRoute(page, name) {
 
 async function partialFaceRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [3, -5], [9, 5]);
   await chooseTool(page, "return to modeling", "modeling");

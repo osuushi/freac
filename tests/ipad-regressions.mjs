@@ -1,12 +1,11 @@
 import assert from "node:assert/strict";
 import { at, inspect, settled } from "./ui-helpers.mjs";
+import { findRaycastPoint } from "./ui-plane-targets.mjs";
 
 export async function tabletRegressions(page, pen) {
   const before = await inspect(page);
   assert.ok(Math.abs(before.camera.position[0] - before.camera.target[0]) > 1);
-  const plane = page.getByRole("button", { name: "Sketch on XY", exact: true });
-  const box = await plane.boundingBox();
-  const tap = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  const tap = await findRaycastPoint(page, "XY");
   await pen.down(tap);
   await pen.up(tap);
   assert.ok(await page.evaluate(() => window.freacInspect().camera.moving));

@@ -20,7 +20,7 @@ async function undo(page) {
 }
 async function createOperands(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   const rectangles = [
     [-15, -10, 15, 10],

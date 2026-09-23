@@ -6,7 +6,7 @@ import { chooseTool } from "./ui-tools.mjs";
 const data = async (page) => (await inspect(page)).document.sketches[0];
 export async function coincidenceRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [3, 5], [8, 5]);
   await drag(page, [-10, 0], [-5, 0]);

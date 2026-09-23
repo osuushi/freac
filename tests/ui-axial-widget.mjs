@@ -13,7 +13,7 @@ async function settledBroom(page, root) {
 
 export async function axialCleanupRoute(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   const points = [
     [-10, -10],

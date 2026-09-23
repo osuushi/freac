@@ -12,7 +12,7 @@ async function number(page, name, value) {
 }
 async function start(page, tool, a, b) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press(tool);
   await drag(page, a, b);
 }

@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { click, drag, inspect, reset } from "./ui-helpers.mjs";
+import { chooseTool } from "./ui-tools.mjs";
 export async function typedSelectionRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [20, 10]);
   let state = await inspect(page);

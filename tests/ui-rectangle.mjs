@@ -23,7 +23,7 @@ async function rectangleEditing(page, name) {
   await page.keyboard.press("r");
   assert.equal((await inspect(page)).activePlane, null, "R must not choose a plane");
   assert.equal((await inspect(page)).document.sketches.length, 0);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await drag(page, [0, 0], [20, 10]);
   pointEquals((await corners(page))[2], [20, 10]);
   assert.equal(await page.getByRole("textbox", { name: "Width", exact: true }).inputValue(), "20");
@@ -116,7 +116,7 @@ async function planesAndCancellation(page) {
   // Separate fresh routes ensure vertical planes use local coordinates identically.
   for (const plane of ["XZ", "YZ"]) {
     await reset(page);
-    await page.getByRole("button", { name: `Sketch on ${plane}` }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await chooseTool(page, "grid snap", "grid");
     await page.keyboard.press("r");
     await drag(page, [-10, -5], [10, 5]);
@@ -132,7 +132,7 @@ async function planesAndCancellation(page) {
   }
   // Grid off plus Shift allows a fractional position without geometry attraction.
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await chooseTool(page, "grid snap", "grid");
   await page.evaluate(() =>
@@ -173,7 +173,7 @@ async function planesAndCancellation(page) {
 
 async function numericDuringDrag(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   const start = await at(page, -20, 0),
     end = await at(page, -10, 6);

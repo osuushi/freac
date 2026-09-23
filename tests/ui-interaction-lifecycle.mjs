@@ -6,7 +6,7 @@ import { chooseTool, toolEnabled } from "./ui-tools.mjs";
 export async function interactionLifecycleRoute(page, name) {
   for (const kind of ["pointer", "bow", "fillet", "offset"]) {
     await reset(page);
-    await page.getByRole("button", { name: "Sketch on XY" }).click();
+    await chooseTool(page, "Sketch on XY", "sketch-xy");
     await page.keyboard.press("r");
     await drag(page, [-10, -5], [10, 5]);
     await page.keyboard.press("v");
@@ -70,7 +70,7 @@ async function startPoint(page, kind) {
 }
 async function numericOwnership(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -5], [10, 5]);
   const original = (await inspect(page)).document;

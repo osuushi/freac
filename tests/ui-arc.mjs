@@ -30,7 +30,7 @@ async function bow(page, side, target) {
 export async function arcRoute(page, name) {
   await reset(page);
   for (const plane of ["XY", "XZ", "YZ"]) {
-    await page.getByRole("button", { name: `Sketch on ${plane}` }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await page.keyboard.press("l");
     await drag(page, [-4, 0], [4, 0]);
     assert.equal(await page.locator(".bow-guide").count(), 2);
@@ -107,7 +107,7 @@ export async function arcRoute(page, name) {
 }
 async function mixedArc(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   const blank = await pixels(page, [[0.3, 0.8]]);
   await page.keyboard.press("l");
   await drag(page, [-4, 0], [4, 0]);

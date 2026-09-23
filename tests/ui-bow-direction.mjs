@@ -12,7 +12,7 @@ async function selectPair(page, first, second) {
 }
 export async function bowDirectionRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-20, -10], [-10, -10]);
   await drag(page, [10, -10], [10, 10]);
@@ -27,7 +27,7 @@ export async function bowDirectionRoute(page, name) {
   assert.equal(await page.locator(".bow-handle").count(), 2, "Single edge keeps its bow controls");
 
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-25, -10], [-5, 10]);
   await page.keyboard.press("r");
@@ -57,7 +57,7 @@ export async function bowDirectionRoute(page, name) {
   assert.deepEqual((await inspect(page)).document, original);
 
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   await page.keyboard.press("l");

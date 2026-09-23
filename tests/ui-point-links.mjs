@@ -15,7 +15,7 @@ const choice = (page, n) => chooser(page).getByRole("button", { name: `Point ${n
 const data = async (page) => (await inspect(page)).document.sketches[0];
 export async function pointLinkRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   for (const end of [
     [10, 0],
     [0, 10],
@@ -66,7 +66,7 @@ export async function pointLinkRoute(page, name) {
 
 export async function circleLinkRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [4, 0]);
   await page.keyboard.press("l");
@@ -103,7 +103,7 @@ export async function circleLinkRoute(page, name) {
 
 export async function pointTangentRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-10, 0], [0, 0], ["Shift"]);
   await page.keyboard.press("l");
@@ -128,7 +128,7 @@ export async function pointTangentRoute(page, name) {
   close(firstDirection.x * secondDirection.y - firstDirection.y * secondDirection.x, 0);
   assert.ok(firstDirection.x * secondDirection.x + firstDirection.y * secondDirection.y < 0);
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   for (const end of [
     [10, 0],
     [0, 10],

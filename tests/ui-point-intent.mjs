@@ -15,7 +15,7 @@ async function hover(page, point, kind) {
 }
 async function joinedLines(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-20, -10], [-10, -10]);
   const original = (await inspect(page)).document.sketches[0].curves[0];
@@ -71,7 +71,7 @@ async function joinedLines(page) {
 }
 async function geometryAndGrid(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [20, 10]);
   await page.keyboard.press("l");
@@ -119,7 +119,7 @@ export async function pointIntentRoute(page, name) {
 
 async function sharedCorners(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [10, 10]);
   await page.keyboard.press("r");

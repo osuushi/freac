@@ -24,14 +24,35 @@ founder feedback update these contracts before further tools depend on them.
   of ending at small rectangular patches. Emphasize the active plane without
   replacing the world background. Adapt visible grid density to zoom while
   preserving unit spacing labels, axis alignment and snap locations. Choose a
-  coordinate plane through three large, flat translucent sections centered on
-  the world origin. They intersect along the coordinate axes and never shift to
-  avoid geometry. Camera raycasts drive pointer hover and activation; accessible
-  plane names retain keyboard and screen-reader entry. Model and sketch geometry wins pointer picking only at or in front of a plane
-  section. Compare the actual cursor intersection depth, including faces inside
-  hollow or concave bodies; geometry behind a plane does not cover it. Saved
-  plane interiors participate in this ordering, with saved planes winning ties
-  against world planes. Hover and click use the same depth test.
+  coordinate plane through three translucent patches on their actual support planes.
+  Each patch projects the bounding box of all visible bodies/sketches into its frame,
+  extends 20% beyond each side and retains a 40 mm minimum around its origin. Accepted
+  geometry sizes the patches; active gestures freeze them. Plane widgets do not
+  contribute to those bounds. Body silhouettes mask plane fill, retaining the faint
+  grid where the plane is in front; geometry occludes planes behind it. Explicit
+  reference picking can show a stronger fill.
+  Ordinary body/sketch geometry always wins over plane interiors, regardless of
+  which lies nearer the camera. Among otherwise available reference patches, depth
+  decides and saved planes win ties. No floating plane labels. Keyboard and
+  screen-reader plane entry lives in Tools as Sketch on XY/XZ/YZ.
+- Holding a primary pointer still for 600 ms in Modeling opens an explicit overlap
+  chooser. Ordinary clicks retain precedence; movement beyond the normal drag
+  threshold cancels the hold (6 px for touch). A delayed progress ring signals it.
+  Candidates include front-facing body faces, edges with at least one locally
+  front-facing adjacent face, whole bodies, and visible canonical/saved plane
+  patches. Back/back edges are excluded; silhouette edges remain eligible. Curved
+  faces use the triangle normal nearest the hit on the edge. Candidates are sorted
+  by camera distance, including occluded front-facing geometry. Hidden entities
+  are excluded.
+  Each choice shows the actual target geometry in the current camera orientation,
+  with subdued body context and shared thumbnail framing. Text identifies the type;
+  canonical planes additionally name XY/XZ/YZ. Hover/focus highlights that exact
+  viewport entity, including occluded targets. Click/tap chooses it; Shift adds and
+  Command/Ctrl toggles geometry. Canonical planes enter their workspace; saved planes
+  become selected with existing Move/Sketch actions. Escape, outside press, navigation,
+  view/document changes and window blur dismiss the chooser. The hold's trailing
+  click is consumed. This is transient UI state and creates no history entry.
+  Sketch point disambiguation retains its existing interaction.
 - Entering a sketch animates the camera into its aligned plane view while preserving
   spatial context. The transition interpolates orientation and the view target; a
   region double-click also centers and fits that region. Orbiting out reveals the

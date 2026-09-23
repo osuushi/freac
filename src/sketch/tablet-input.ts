@@ -53,6 +53,7 @@ class TabletInput {
   private viewport(target: EventTarget | null): boolean {
     return (
       target instanceof Node &&
+      !(target instanceof Element && target.closest(".selection-overlap")) &&
       (target === this.world.canvas || this.world.overlay.contains(target))
     );
   }
@@ -93,11 +94,12 @@ class TabletInput {
       if (
         button &&
         !button.matches(
-          ".plane-label, .orientable-handle, .body-axis-handle, .move-anchor, .scale-anchor, .scale-handle, .axial-arrow, .extrude-axis-sphere, .pivot-control, .move-control",
+          ".orientable-handle, .body-axis-handle, .move-anchor, .scale-anchor, .scale-handle, .axial-arrow, .extrude-axis-sphere, .pivot-control, .move-control",
         )
       )
         return;
     }
+    this.world.longPress?.(event);
     consume(event);
     this.suppressClickUntil = performance.now() + 1000;
     this.touches.set(event.pointerId, point(event));
@@ -107,6 +109,7 @@ class TabletInput {
   };
   private move = (event: PointerEvent): void => {
     if (!this.touches.has(event.pointerId)) return;
+    this.world.longPress?.(event);
     consume(event);
     this.touches.set(event.pointerId, point(event));
     if (this.pen !== null || !this.world.canNavigate()) {
@@ -157,6 +160,7 @@ class TabletInput {
       return;
     }
     if (!this.touches.delete(event.pointerId)) return;
+    this.world.longPress?.(event);
     consume(event);
     this.suppressClickUntil = performance.now() + 1000;
     const level = this.rotating && !this.touches.size && event.type === "pointerup";

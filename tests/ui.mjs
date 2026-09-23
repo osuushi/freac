@@ -87,6 +87,7 @@ import { sketchPlaneRoute } from "./ui-sketch-plane.mjs";
 import { solidFacesRoute } from "./ui-solid-faces.mjs";
 import { tangencyRoute } from "./ui-tangency.mjs";
 import { tangentJunctionRoute } from "./ui-tangent-junction.mjs";
+import { chooseTool } from "./ui-tools.mjs";
 import { transformRoute } from "./ui-transform.mjs";
 import { trimCircleRoute, trimLineRoute } from "./ui-trim.mjs";
 import { trimArcRoute } from "./ui-trim-arcs.mjs";
@@ -116,11 +117,11 @@ try {
         if (message.type() === "error") errors.push(message.text());
       });
       await page.goto(server.resolvedUrls.local[0]);
-      await page.getByRole("button", { name: "Sketch on XY" }).waitFor();
+      await page.waitForFunction(() => !!window.freacInspect);
       await page.screenshot({ path: `.cache/sketch-review/${name}-world.png` });
       await planeTargetsRoute(page, name);
       for (const plane of ["XY", "XZ", "YZ"]) {
-        await page.getByRole("button", { name: `Sketch on ${plane}` }).click();
+        await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
         await page
           .getByRole("status")
           .filter({ hasText: `${plane} sketch` })

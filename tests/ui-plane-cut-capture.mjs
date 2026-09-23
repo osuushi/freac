@@ -5,6 +5,7 @@ import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { inspect, reset } from "./ui-helpers.mjs";
+import { pickPlane } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const fixture = JSON.parse(await readFile("tests/fixtures/plane-cut-bent-shell.json", "utf8"));
@@ -25,7 +26,7 @@ export async function planeCutCaptureRoute(page, name) {
     await chooseTool(page, "Split Body", "split");
     // The XY label is occluded by the captured body; pick its exposed patch.
     if (plane === "XY") await worldClick(page, [-18, -18, 0]);
-    else await page.getByRole("button", { name: `Use plane ${plane}`, exact: true }).click();
+    else await pickPlane(page, plane);
     const state = await inspect(page);
     assert.ok(state.preview?.bodies.length >= 2, state.notice);
     assert.deepEqual(state.document, original);
@@ -42,7 +43,7 @@ export async function planeCutCaptureRoute(page, name) {
   if (!(await inspect(page)).modelingSelection.length)
     await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await chooseTool(page, "Split Body", "split");
-  await page.getByRole("button", { name: "Use plane YZ", exact: true }).click();
+  await pickPlane(page, "YZ");
   await inspect(page);
   await page.keyboard.press("Enter");
   const after = (await inspect(page)).document;

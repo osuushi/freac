@@ -28,7 +28,7 @@ async function release(page) {
 }
 async function rectangle(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-20, -10], [0, 10]);
   await page.keyboard.press("v");

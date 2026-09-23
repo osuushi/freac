@@ -12,7 +12,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 async function baseLine(page, end = [0, 0]) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-10, 0], end);
   return (await inspect(page)).document;

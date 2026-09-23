@@ -6,7 +6,7 @@ import { planeHover } from "./ui-plane-hover.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function box(page, from, to, depth) {
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, from, to);
   const center = await at(page, (from[0] + to[0]) / 2, (from[1] + to[1]) / 2);
@@ -27,8 +27,9 @@ export async function planeFaceReferenceRoute(page, name) {
   await page.waitForFunction(() =>
     document.querySelector('[role="status"]')?.textContent?.includes("Pick an outlined"),
   );
-  await planeHover(page, [28, 0, 10], `${name}-face`);
-  await worldClick(page, [28, 0, 10]);
+  // Adaptive XZ now crosses the cap center; pick on the exposed front half.
+  await planeHover(page, [28, -2, 10], `${name}-face`);
+  await worldClick(page, [28, -2, 10]);
   const preview = (await inspect(page)).preview;
   assert.ok(preview);
   assert.equal(preview.bodies[0].faces.length, before.bodies[0].faces.length + 1);
@@ -42,7 +43,7 @@ export async function planeFaceReferenceRoute(page, name) {
   await page.waitForFunction(() =>
     document.querySelector('[role="status"]')?.textContent?.includes("Pick an outlined"),
   );
-  await worldClick(page, [28, 0, 10]);
+  await worldClick(page, [28, -2, 10]);
   assert.equal((await inspect(page)).preview.bodies.length, 3);
   await page.getByRole("button", { name: "Select Body 2", exact: true }).click();
   const after = await inspect(page);

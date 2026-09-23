@@ -5,7 +5,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 async function tube(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [10, 0]);
   await drag(page, [0, 0], [4, 0]);

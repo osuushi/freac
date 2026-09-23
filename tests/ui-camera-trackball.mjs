@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
+import { chooseTool } from "./ui-tools.mjs";
 
 export async function trackballRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await inspect(page);
   await page.keyboard.press("r");
   await drag(page, [0, 0], [20, 10]);

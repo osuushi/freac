@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { pickSavedPlane } from "../src/model/saved-plane-picking.js";
 import type { SketchEditor } from "../src/sketch/editor.js";
 import { pickModels } from "../src/sketch/model-selection.js";
+import { minimumPlaneBounds } from "../src/sketch/plane-bounds.js";
 import { planes } from "../src/sketch/planes.js";
 
 function scene(faceZ: number) {
@@ -17,6 +18,7 @@ function scene(faceZ: number) {
     modeling: { targets: [] },
     world: {
       camera,
+      planeBounds: minimumPlaneBounds,
       canvas: { getBoundingClientRect: () => ({ left: 0, top: 0, width: 400, height: 400 }) },
     },
     display: {
@@ -35,10 +37,12 @@ function scene(faceZ: number) {
   } as unknown as SketchEditor;
 }
 const cursor = { x: 200, y: 200 };
-test("plane depth excludes the rear wall but retains foreground and coplanar geometry", () => {
+test("ordinary geometry wins over a plane in front, behind or coplanar", () => {
   const behind = scene(-10);
   assert.equal(pickModels(behind, cursor)[0]?.kind, "face");
   assert.deepEqual(pickModels(behind, cursor, 100), []);
+  assert.equal(pickSavedPlane(behind, cursor), null);
+  behind.world.planePicker = () => {};
   assert.equal(pickSavedPlane(behind, cursor)?.plane.id, "plane");
   for (const z of [0, 10]) {
     const editor = scene(z);

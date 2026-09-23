@@ -31,7 +31,7 @@ async function commandDrag(page, from, dx, dy) {
 
 export async function transformFollowupRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await chooseTool(page, "grid snap", "grid");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [20, 10]);

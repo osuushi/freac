@@ -21,7 +21,7 @@ export async function worldClick(page, xyz, shift = false) {
 }
 export async function makePlate(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   await page.keyboard.press("c");
@@ -152,7 +152,7 @@ async function holeOffset(page, name, electron, cleanup = false) {
   const loaded = (await inspect(page)).document.bodies[0];
   close(loaded.faces.find((f) => f.id === hole.id).cylinder.radius, 2.5);
   // Re-enter a surviving planar face and create a fresh sketch on it.
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await chooseTool(page, "return to modeling", "modeling");
   await worldClick(page, [6, 6, 5]);
   await chooseTool(page, "sketch on face", "sketch-on-face");

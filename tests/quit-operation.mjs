@@ -21,7 +21,7 @@ try {
     };
     dialog.showSaveDialog = async () => ({ canceled: false, filePath: file });
   }, file);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-15, -10], [15, 10]);
   const pick = await at(page, 0, 0);

@@ -15,6 +15,7 @@ import { FaceOffsetControls } from "../model/face-offset-controls.js";
 import { MeasurementControls } from "../model/measurement-controls.js";
 import { MirrorControls } from "../model/mirror-controls.js";
 import { ModelingTools } from "../model/modeling-tools.js";
+import { OverlapInput } from "../model/overlap-input.js";
 import { PlaneCutControls } from "../model/plane-cut-controls.js";
 import { ProjectionControls } from "../model/projection-controls.js";
 import { ScaleControls } from "../model/scale-controls.js";
@@ -22,6 +23,9 @@ import { SectionControls } from "../model/section-controls.js";
 import { ShellControls } from "../model/shell-controls.js";
 import { TopologyMoveControls } from "../model/topology-move-controls.js";
 import { ToolMenu } from "../tools/menu.js";
+import { installPlaneBounds } from "./plane-bounds.js";
+import { planeEntryTools } from "./plane-entry-tools.js";
+import { inspectPlaneTargets } from "./plane-target-inspection.js";
 import "../model/entity-viewer.css";
 import { BodyEdgeControls } from "../model/body-edge-controls.js";
 import { bodyView } from "../model/body-view.js";
@@ -65,13 +69,14 @@ const app = document.querySelector<HTMLElement>("#app");
 if (!app) throw new Error("Missing app root");
 app.innerHTML = `<div id="world"></div><div id="overlay"></div>
   <header><strong>freac</strong><span class="mode-label">Modeling</span></header>
-  <div class="status" role="status"></div><div class="navigation-hint">Two-finger scroll · pan &nbsp; ⌘-drag · orbit &nbsp; Pinch · zoom</div>`;
+  <div class="status" role="status"></div><div class="navigation-hint">Two-finger scroll · pan &nbsp; ⌘-drag · orbit &nbsp; Pinch · zoom &nbsp; Hold · choose overlap</div>`;
 const host = app.querySelector<HTMLElement>("#world"),
   overlay = app.querySelector<HTMLElement>("#overlay"),
   status = app.querySelector<HTMLElement>(".status");
 if (!host || !overlay || !status) throw new Error("Missing viewport elements");
 const world = new World(host, overlay),
   editor = new SketchEditor(world);
+installPlaneBounds(editor);
 const readouts = document.createElement("div");
 readouts.className = "selection-readouts";
 app.append(readouts);
@@ -80,7 +85,8 @@ const disposeLabels = worldLabels(
     world,
     overlay,
     (point, depth) =>
-      pickModels(editor, point, depth).length > 0 || !!pickSavedPlane(editor, point, depth),
+      (!world.planePicker && pickModels(editor, point).length > 0) ||
+      !!pickSavedPlane(editor, point, depth),
     () => {
       editor.modeling.hover = null;
       editor.refresh();
@@ -146,12 +152,14 @@ const disposeVisibility = visibilityControls(editor);
 const entities = new EntityViewer(editor, app);
 const constructionPlanes = new ConstructionPlaneControls(editor, overlay, entities.referenceRows);
 const measurements = new MeasurementControls(editor, app, readouts);
+const overlaps = new OverlapInput(editor, (plane) => constructionPlanes.select(plane));
 const planeCuts = new PlaneCutControls(editor, overlay, constructionPlanes.picker);
 const disposeAgent = installAgentDock(app);
 const disposeInspection = installInspection(editor);
 installIPadButton(editor, app);
 installTabletChrome(app);
 const disposeScript = installScriptView(editor, app);
+const disposePlaneEntry = planeEntryTools(editor);
 const toolMenu = new ToolMenu(editor, app);
 world.changed.add(() => {
   const mode = app.querySelector(".mode-label");
@@ -185,6 +193,7 @@ Object.defineProperty(window, "freacInspect", {
         ? { kind: editor.interactions.current.kind, phase: editor.interactions.current.phase }
         : null,
       activePlane: world.active,
+      planeTargets: inspectPlaneTargets(world),
       activeSketch: editor.sketch?.id ?? null,
       modelingSelection: editor.modeling.targets.map((t) =>
         t.kind !== "profile"
@@ -262,6 +271,7 @@ window.addEventListener(
     scaling.dispose();
     disposeVisibility();
     entities.dispose();
+    overlaps.dispose();
     constructionPlanes.dispose();
     planeCuts.dispose();
     measurements.dispose();
@@ -282,6 +292,7 @@ window.addEventListener(
     beziers.dispose();
     trim.dispose();
     offsets.dispose();
+    disposePlaneEntry();
     disposeLabels();
     world.dispose();
   },

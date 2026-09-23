@@ -17,7 +17,7 @@ async function handle(page, key, to, curve) {
 }
 export async function bezierRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("b");
   await drag(page, [-15, 0], [15, 0]);
   let curve = (await inspect(page)).document.sketches[0].curves[0];
@@ -72,7 +72,7 @@ export async function bezierRoute(page, name) {
 
 export async function bezierFusionRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-15, 0], [15, 0]);
   await page.keyboard.press("b");
@@ -95,7 +95,7 @@ export async function bezierFusionRoute(page, name) {
 
 export async function bezierTangencyRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [0, 0], [10, 0]);
   await page.keyboard.press("b");
@@ -123,7 +123,7 @@ export async function bezierTangencyRoute(page, name) {
 
 export async function cubicTangentCouplingRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("b");
   await drag(page, [-10, 0], [0, 0]);
   await page.keyboard.press("b");

@@ -1,14 +1,14 @@
 import type { SketchEditor } from "../sketch/editor.js";
-import { type PlaneFrame, worldPoint } from "../sketch/planes.js";
+import type { PlaneFrame } from "../sketch/planes.js";
 import type { ConstructionPlane } from "./construction-plane.js";
 import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
 import { EntityReorder } from "./entity-reorder.js";
+import { SavedPlaneView } from "./saved-plane-view.js";
 import "./construction-plane.css";
 
 export class ConstructionPlaneView {
-  private svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  private labels = document.createElement("div");
+  private patches: SavedPlaneView;
   private key = "";
   selected: string | null = null;
   private hovered: string | null = null;
@@ -16,17 +16,15 @@ export class ConstructionPlaneView {
   accepts: ((frame: PlaneFrame) => boolean) | undefined;
   constructor(
     private editor: SketchEditor,
-    overlay: HTMLElement,
+    _overlay: HTMLElement,
     private rows: HTMLElement,
     private choose: (plane: ConstructionPlane) => void,
     private sketch: (plane: ConstructionPlane) => void,
   ) {
-    this.svg.classList.add("construction-plane-view");
-    this.labels.className = "construction-plane-labels";
-    overlay.append(this.svg, this.labels);
+    this.patches = new SavedPlaneView(editor);
   }
   update(): void {
-    this.svg.classList.toggle("cutting", !!this.accepts);
+    this.patches.update(this.selected, this.hovered, this.accepts);
     const e = this.editor,
       planes = e.display.constructionPlanes ?? [];
     const key = JSON.stringify([
@@ -47,8 +45,6 @@ export class ConstructionPlaneView {
       return;
     }
     this.key = key;
-    this.svg.replaceChildren();
-    this.labels.replaceChildren();
     this.rows.replaceChildren();
     const heading = document.createElement("h3");
     heading.textContent = `Planes (${planes.length})`;
@@ -68,14 +64,9 @@ export class ConstructionPlaneView {
     this.selection();
   }
   private selection(): void {
-    for (const root of [this.svg, this.rows, this.labels])
-      for (const item of root.querySelectorAll("[data-plane]")) {
-        const selected = item.getAttribute("data-plane") === this.selected;
-        if (item.tagName === "polygon") {
-          item.classList.toggle("selected", selected);
-          item.classList.toggle("hovered", item.getAttribute("data-plane") === this.hovered);
-        } else item.setAttribute("aria-pressed", String(selected));
-      }
+    this.patches.update(this.selected, this.hovered, this.accepts);
+    for (const item of this.rows.querySelectorAll("[data-plane]"))
+      item.setAttribute("aria-pressed", String(item.getAttribute("data-plane") === this.selected));
   }
   private add(plane: ConstructionPlane, name: string): void {
     const e = this.editor,
@@ -111,33 +102,9 @@ export class ConstructionPlaneView {
     new EntityReorder(e, row, labelButton, plane.id, "plane");
     row.append(labelButton, eye);
     this.rows.append(row);
-    if (!visible || e.world.active || !allowed) return;
-    const corners = [
-      { x: -20, y: -20 },
-      { x: 20, y: -20 },
-      { x: 20, y: 20 },
-      { x: -20, y: 20 },
-    ].map((p) => e.world.project(worldPoint(plane.frame, p)));
-    const polygon = document.createElementNS(this.svg.namespaceURI, "polygon");
-    polygon.setAttribute("points", corners.map((p) => `${p.x},${p.y}`).join(" "));
-    polygon.setAttribute("data-plane", plane.id);
-    polygon.setAttribute("class", this.selected === plane.id ? "selected" : "");
-    polygon.addEventListener("click", () => {
-      if (!e.blocked) this.choose(plane);
-    });
-    polygon.addEventListener("dblclick", () => {
-      if (!this.choosing) this.sketch(plane);
-    });
-    this.svg.append(polygon);
-    const label = button(),
-      anchor = corners[2];
-    label.style.left = `${anchor.x}px`;
-    label.style.top = `${anchor.y}px`;
-    this.labels.append(label);
   }
   dispose(): void {
-    this.svg.remove();
-    this.labels.remove();
+    this.patches.dispose();
     this.rows.replaceChildren();
   }
 }

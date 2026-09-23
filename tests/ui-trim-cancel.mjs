@@ -4,7 +4,7 @@ import { chooseTool, toolEnabled } from "./ui-tools.mjs";
 
 export async function trimCancellationRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -6], [10, 6]);
   await page.keyboard.press("t");

@@ -7,6 +7,7 @@ import { createServer } from "vite";
 import { launchElectron, openDocument, saveDocument } from "./native-documents.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { drag, inspect } from "./ui-helpers.mjs";
+import { pickPlane } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function rename(page, from, to, key = "Enter") {
@@ -54,7 +55,7 @@ async function route(page, name) {
   await rename(page, "Sketch 1", "Cancelled", "Escape");
   assert.equal(await page.getByRole("button", { name: "Select Sketch 1", exact: true }).count(), 1);
   await rename(page, "Sketch 1", "Profile", "Tab");
-  await page.getByRole("button", { name: "Sketch on XZ", exact: true }).click();
+  await chooseTool(page, "Sketch on XZ", "sketch-xz");
   await page.keyboard.press("l");
   await drag(page, [20, 20], [30, 30]);
   await chooseTool(page, "return to modeling", "modeling");
@@ -80,7 +81,7 @@ async function route(page, name) {
   await page.keyboard.press("Escape");
   for (const plane of ["XY", "XZ"]) {
     await chooseTool(page, "Construction plane", "construction-plane");
-    await page.getByRole("button", { name: `Use plane ${plane}`, exact: true }).click();
+    await pickPlane(page, plane);
     await page.keyboard.press("Enter");
     await inspect(page);
     await page.keyboard.press("Escape");
@@ -114,7 +115,7 @@ async function route(page, name) {
   );
 }
 async function longDragRoute(page, name) {
-  await page.getByRole("button", { name: "Sketch on YZ", exact: true }).click();
+  await chooseTool(page, "Sketch on YZ", "sketch-yz");
   await page.keyboard.press("l");
   await drag(page, [20, 20], [30, 30]);
   await chooseTool(page, "return to modeling", "modeling");

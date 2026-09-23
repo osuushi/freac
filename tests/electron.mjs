@@ -76,6 +76,7 @@ import { selectionRoute } from "./ui-selection.mjs";
 import { solidFacesRoute } from "./ui-solid-faces.mjs";
 import { tangencyRoute } from "./ui-tangency.mjs";
 import { tangentJunctionRoute } from "./ui-tangent-junction.mjs";
+import { chooseTool } from "./ui-tools.mjs";
 import { transformRoute } from "./ui-transform.mjs";
 import { trimCircleRoute, trimLineRoute } from "./ui-trim.mjs";
 import { trimArcRoute } from "./ui-trim-arcs.mjs";
@@ -90,7 +91,7 @@ try {
   const page = await app.firstWindow();
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.getByRole("status").filter({ hasText: "XY sketch" }).waitFor();
   assert.equal(
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),

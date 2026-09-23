@@ -11,7 +11,7 @@ async function gridSpacing(page) {
 
 export async function movementSnappingRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [0, 0], [20, 0]);
   await page.keyboard.press("v");
@@ -30,7 +30,7 @@ export async function movementSnappingRoute(page, name) {
   curve = (await inspect(page)).document.sketches[0].curves[0];
   pointEquals(curve.a, delta);
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   const rectangleStep = await gridSpacing(page);
   const extent = [11 * rectangleStep, 7 * rectangleStep];
@@ -46,7 +46,7 @@ export async function movementSnappingRoute(page, name) {
 export async function rectangleEdgeRoute(page, name) {
   for (const plane of ["XY", "XZ", "YZ"]) {
     await reset(page);
-    await page.getByRole("button", { name: `Sketch on ${plane}` }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await page.keyboard.press("r");
     await drag(page, [-10, -5], [10, 5]);
     await page.keyboard.press("v");
@@ -91,7 +91,7 @@ export async function rectangleEdgeRoute(page, name) {
 
 export async function movementGeometrySnapRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [0, 0], [20, 0]);
   await chooseTool(page, "grid snap", "grid");
@@ -131,7 +131,7 @@ export async function movementGeometrySnapRoute(page, name) {
 
 export async function rotatedEdgeRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -5], [10, 5]);
   await page.getByRole("textbox", { name: "Angle", exact: true }).fill("37");

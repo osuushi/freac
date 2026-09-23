@@ -26,7 +26,7 @@ async function offsetDrag(page, dx, dy) {
 export async function offsetRoute(page, name) {
   for (const plane of ["XY", "XZ", "YZ"]) {
     await reset(page);
-    await page.getByRole("button", { name: `Sketch on ${plane}` }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await page.keyboard.press("l");
     await drag(page, [-8, 0], [8, 0]);
     await page.getByRole("button", { name: "Lock Length", exact: true }).click();
@@ -59,7 +59,7 @@ export async function offsetRoute(page, name) {
     assert.deepEqual(await sketch(page), result);
   }
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [5, 0]);
   await page.getByRole("button", { name: "Lock Radius", exact: true }).click();
@@ -101,7 +101,7 @@ export async function offsetRoute(page, name) {
 async function arcOffsets(page) {
   for (const height of [2, 8]) {
     await reset(page);
-    await page.getByRole("button", { name: "Sketch on XY" }).click();
+    await chooseTool(page, "Sketch on XY", "sketch-xy");
     await page.keyboard.press("l");
     await drag(page, [-4, 0], [4, 0]);
     const guide = await page.locator(".bow-handle").nth(1).boundingBox();

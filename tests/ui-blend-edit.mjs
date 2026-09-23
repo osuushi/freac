@@ -72,17 +72,22 @@ export async function orient(page, normal) {
   }
   const from = forward.clone().applyAxisAngle(axis, bias + angle / 4);
   const to = forward.clone().applyAxisAngle(axis, bias - angle / 4);
+  const start = {
+    x: box.x + box.width / 2 + from.x * radius,
+    y: box.y + box.height / 2 - from.y * radius,
+  };
+  const end = {
+    x: box.x + box.width / 2 + to.x * radius,
+    y: box.y + box.height / 2 - to.y * radius,
+  };
   await page.keyboard.down("Meta");
-  await page.mouse.move(
-    box.x + box.width / 2 + from.x * radius,
-    box.y + box.height / 2 - from.y * radius,
-  );
+  await page.mouse.move(start.x, start.y);
   await page.mouse.down();
-  await page.mouse.move(
-    box.x + box.width / 2 + to.x * radius,
-    box.y + box.height / 2 - to.y * radius,
-    { steps: 8 },
-  );
+  // Even a subpixel correction must start an actual orbit, not become Command-click.
+  // Arcball is relative to the original press, so the final pose remains the requested one.
+  if (Math.hypot(end.x - start.x, end.y - start.y) <= 4)
+    await page.mouse.move(start.x + 8, start.y, { steps: 2 });
+  await page.mouse.move(end.x, end.y, { steps: 8 });
   await page.mouse.up();
   await page.keyboard.up("Meta");
   await inspect(page);

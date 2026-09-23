@@ -20,7 +20,7 @@ export async function cubicOffsetRoute(page, name) {
     ),
   });
   await inspect(page);
-  await page.getByRole("button", { name: "Sketch on XZ", exact: true }).click();
+  await chooseTool(page, "Sketch on XZ", "sketch-xz");
   await inspect(page);
   await page.keyboard.press("Meta+a");
   assert.equal((await inspect(page)).selection.length, sketch.curves.length);

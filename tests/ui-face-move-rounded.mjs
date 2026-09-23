@@ -53,7 +53,7 @@ export async function roundedFaceMoveRoute(page, name, electron, file = "fillete
     distance = fixture.operation.translation[axis];
   const ids = fixture.operation.faces.map((f) => f.face);
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await inspect(page);
   await chooseTool(page, "return to modeling", "modeling");
   await openDocument(page, {

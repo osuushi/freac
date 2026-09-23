@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Point, Vector } from "../sketch/planes.js";
+import { edgeFacesCamera, screenRay } from "./body-ray-hits.js";
 import { pickFace } from "./body-view.js";
 import { featureEdges } from "./feature-edges.js";
 
@@ -10,6 +11,7 @@ export function pickBodyEdge(editor: SketchEditor, screen: Point) {
   if (!editor.bodiesVisible) return null;
   let best: { body: string; edge: string; distance: number; depth: number; point: Vector } | null =
     null;
+  const ray = screenRay(editor, screen);
   const camera = editor.world.camera.position;
   for (const body of editor.display.bodies ?? []) {
     if (!editor.visibility.visible(body.id)) continue;
@@ -29,6 +31,7 @@ export function pickBodyEdge(editor: SketchEditor, screen: Point) {
         const distance = Math.hypot(screen.x - p.x, screen.y - p.y);
         if (distance > 7 || (best && distance > best.distance + 0.1)) continue;
         const depth = a.lerp(b, t).distanceTo(camera);
+        if (!edgeFacesCamera(body, edge.id, a.toArray() as Vector, ray.direction)) continue;
         const covering = pickFace(editor, p);
         if (covering && depth > covering.depth + 0.06) continue;
         if (!best || distance < best.distance - 0.1 || depth < best.depth)

@@ -6,7 +6,7 @@ export async function mirrorCurvesRoute(page, name) {
   // Exercise both other sketch planes and the existing cubic/arc edit controls.
   for (const plane of ["XZ", "YZ"]) {
     await reset(page);
-    await page.getByRole("button", { name: `Sketch on ${plane}`, exact: true }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await chooseTool(page, "grid snap", "grid");
     await page.keyboard.press("b");
     await drag(page, [4, 4], [16, 4]);
@@ -77,7 +77,7 @@ async function handle(page, key, to) {
 
 export async function mirrorConstraintRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await chooseTool(page, "grid snap", "grid");
   await page.keyboard.press("l");
   await drag(page, [-12, -10], [-2, -5]);
@@ -114,7 +114,7 @@ export async function mirrorConstraintRoute(page, name) {
 export async function mirrorAxisPickingRoute(page, name) {
   for (const plane of ["XY", "XZ", "YZ"]) {
     await reset(page);
-    await page.getByRole("button", { name: `Sketch on ${plane}`, exact: true }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await page.keyboard.press("l");
     await drag(page, [5, 5], [15, 10]);
     const original = (await inspect(page)).document;

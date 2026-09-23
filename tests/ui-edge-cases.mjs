@@ -14,7 +14,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 async function controlsAndRejection(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await chooseTool(page, "rectangle", "rectangle");
   await drag(page, [0, 0], [20, 10]);
   await chooseTool(page, "select", "select");
@@ -50,7 +50,7 @@ async function controlsAndRejection(page) {
 }
 async function heldLineAndFocus(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   const a = await at(page, -10, -5),
     b = await at(page, 0, -5);
@@ -82,7 +82,7 @@ async function heldLineAndFocus(page) {
 async function sharedPlanes(page, name) {
   await reset(page);
   for (const plane of ["XY", "XZ", "YZ"]) {
-    await page.getByRole("button", { name: `Sketch on ${plane}` }).click();
+    await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await page.keyboard.press("r");
     await drag(page, [3, 3], [13, 9]);
     await page.mouse.move(1050, 650);
@@ -101,7 +101,7 @@ async function sharedPlanes(page, name) {
     () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
   );
   await page.screenshot({ path: `.cache/sketch-review/${name}-three-planes.png` });
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("v");
   await page.mouse.move(1000, 600);
   await page.mouse.down({ button: "middle" });

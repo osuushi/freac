@@ -4,7 +4,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 async function hollowCylinder(page) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [10, 0]);
   await page.keyboard.press("c");
@@ -32,7 +32,7 @@ async function hollowCylinder(page) {
 export async function sketchSectionsRoute(page, name) {
   const originalBody = await hollowCylinder(page);
   let state;
-  await page.getByRole("button", { name: "Sketch on XZ", exact: true }).click();
+  await chooseTool(page, "Sketch on XZ", "sketch-xz");
   assert.equal((await inspect(page)).tool, "select", "plane entry starts in Select");
   const right = await at(page, 7, 10),
     hole = await at(page, 0, 10);

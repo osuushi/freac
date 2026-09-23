@@ -22,7 +22,7 @@ async function unchangedMenu(page) {
 }
 async function sketchAndExtrude(page) {
   await chooseTool(page, "new document", "new");
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await chooseTool(page, "rectangle", "rectangle");
   await drag(page, [-10, -10], [10, 10]);
   let state = await inspect(page);

@@ -30,7 +30,7 @@ async function value(page, action, axis, amount) {
 }
 export async function sketchPlacementWidgetRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [10, 10], [30, 20]);
   const inside = await at(page, 20, 15);

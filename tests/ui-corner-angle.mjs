@@ -10,7 +10,7 @@ async function number(page, value) {
 }
 export async function cornerAngleRoute(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [0, 0], [10, 0]);
   await drag(page, [0, 10], [0, 0], ["Shift"]); // Angle edits must not create links.

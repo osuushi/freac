@@ -4,7 +4,7 @@ import { chooseTool, toolEnabled } from "./ui-tools.mjs";
 
 export async function backendPersistence(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [20, 10]);
   const before = await inspect(page);
@@ -26,7 +26,7 @@ export async function backendPersistence(page, name) {
 
 export async function delayedBackend(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [20, 10]);
   await page.keyboard.press("v");
@@ -118,7 +118,7 @@ async function cancelledReply(page, original, released = false) {
 
 export async function rejectedReply(page, name) {
   await reset(page);
-  await page.getByRole("button", { name: "Sketch on XY" }).click();
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [20, 10]);
   await page.keyboard.press("v");
