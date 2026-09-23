@@ -132,6 +132,12 @@ export class ModelClient {
     if (reply.error) throw new Error(reply.error);
     return reply.history ?? [];
   }
+  async sections(frame: import("./planes.js").PlaneFrame, bodies: string[]) {
+    const reply = await call({ kind: "sections", frame, bodies });
+    if (reply.error) throw new Error(reply.error);
+    if (!reply.sections) throw new Error("Cross sections unavailable");
+    return reply.sections;
+  }
   async measure(targets: import("../model/measurement.js").MeasurementTarget[]) {
     const reply = await call({ kind: "measure", targets });
     if (reply.error) throw new Error(reply.error);

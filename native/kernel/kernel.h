@@ -63,3 +63,5 @@ std::vector<Result> deleteTopology(const Tree&, const std::vector<Operand>&, std
 
 std::vector<Result> shellBodies(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);
 std::vector<Result> cutWithPlane(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);
+
+void sketchSections(std::ostream&, const Tree&, const std::vector<Operand>&);

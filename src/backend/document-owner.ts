@@ -6,8 +6,8 @@ import { describeOperation, type HistoryOperation } from "../sketch/operation-hi
 import { editDocument, isDirectDocumentEdit } from "./document-edits.js";
 import { type PreviewRequest, previewDocument } from "./document-preview.js";
 import { DocumentStore } from "./document-store.js";
+import { GeometryQueries } from "./geometry-queries.js";
 import { materialize } from "./kernel-result.js";
-import { measurementInput } from "./measurement-input.js";
 import { NativeSolver } from "./native-solver.js";
 import { validateDocument } from "./open-document.js";
 import { planeCutAvailable } from "./plane-cut.js";
@@ -17,7 +17,7 @@ import { SolidEdits } from "./solid-edits.js";
 
 export class DocumentOwner {
   private kernel: SolidCalculator;
-  private measurementKernel: SolidCalculator;
+  private queries: GeometryQueries;
   private solids: SolidEdits;
   private cleanupAvailable = false;
   private planeCutAvailable = false;
@@ -34,7 +34,7 @@ export class DocumentOwner {
     kernelExecutable?: string,
   ) {
     this.kernel = new SolidCalculator(kernelExecutable);
-    this.measurementKernel = new SolidCalculator(kernelExecutable);
+    this.queries = new GeometryQueries(kernelExecutable);
     this.solids = new SolidEdits(this.kernel);
     this.scripts = new ScriptEdits(() => this.store, this.solids, this.kernel, solver);
   }
@@ -83,16 +83,8 @@ export class DocumentOwner {
   async call(request: ModelRequest): Promise<ModelReply> {
     if (this.scripts.busy && request.kind !== "read" && request.kind !== "read-history")
       return { view: this.view, error: "Finish or cancel the running script first" };
-    if (request.kind === "measure") {
-      try {
-        const result = await this.measurementKernel.calculate(
-          measurementInput(this.store.data, request.targets),
-        );
-        return { view: this.view, measurement: result.measurement };
-      } catch (error) {
-        return { view: this.view, error: error instanceof Error ? error.message : String(error) };
-      }
-    }
+    if (request.kind === "sections" || request.kind === "measure")
+      return this.queries.call(this.view, request);
     if (request.kind === "read-history") return { view: this.view, history: this.store.history };
     if (request.kind === "supersede-preview") {
       if (
@@ -281,7 +273,7 @@ export class DocumentOwner {
     this.store.accept(candidate, operation);
   }
   close(): void {
-    this.measurementKernel.close();
+    this.queries.close();
     this.solver.close();
     this.kernel.close();
   }

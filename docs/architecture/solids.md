@@ -106,3 +106,22 @@ Hidden entities remain listed with a Show control, but cannot be selected there.
 Visibility remains window state, not document deletion or an Undo edit. Hidden
 bodies retain their exact accepted geometry through operations and remain in
 saved documents and whole-document exports.
+
+## Sketch-plane cross sections
+
+Entering a planar sketch workspace clips visible bodies at that plane and fills
+its material cross sections. A read-only exact solid/plane intersection supplies
+separate regions with holes; presentation triangles never define their boundaries.
+Section and measurement queries share a serialized read-only kernel worker.
+Plane/body/visibility changes invalidate sections; stale replies cannot install them.
+
+In Select, hovering an uncopied section interior highlights that region. Clicking
+copies its entire boundary, including holes, into the current sketch (or creates
+one on that workspace), in one Undo step. Separate regions remain independently
+clickable. Existing sketch handles/curves take picking priority; drawing tools and
+navigation retain their gestures. Fully copied regions no longer intercept clicks.
+The copied curves are independent, editable ordinary sketch curves with joined
+endpoints. Lines/circles/arcs remain analytic; other curves use the existing
+0.001 mm bounded cubic approximation. Bodies are unchanged and no dependency is
+created. Hidden bodies contribute no caps or click targets. The cap itself is
+transient view geometry and creates neither a saved object nor an Undo entry.

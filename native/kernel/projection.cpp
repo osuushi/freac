@@ -1,6 +1,11 @@
 #include "kernel.h"
 #include "sketch-curve.h"
 #include <BRep_Tool.hxx>
+#include <BRepAlgoAPI_Common.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
+#include <TopExp.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopTools_IndexedMapOfShape.hxx>
 #include <GC_MakeArcOfCircle.hxx>
 #include <GeomAdaptor_Curve.hxx>
 #include <GeomProjLib.hxx>
@@ -14,6 +19,7 @@
 #include <Geom_TrimmedCurve.hxx>
 #include <TColgp_Array1OfPnt.hxx>
 #include <TopoDS.hxx>
+#include <TopoDS_Edge.hxx>
 #include <gp_Pln.hxx>
 #include <gp_Circ.hxx>
 #include <algorithm>
@@ -127,5 +133,39 @@ void projectCurves(std::ostream& out, const Tree& input, const std::vector<Opera
         if (!found) throw std::runtime_error("Selected projection edge no longer exists");
     }
     for (const auto& item:input.get_child("curves")) projectCurve(output,sketchCurve(item.second),plane);
+    out << "]}";
+}
+
+// Intersect the exact solid with an infinite planar face. Each returned face is
+// a material region: inner wires remain holes and disconnected faces stay separate.
+void sketchSections(std::ostream& out, const Tree& input, const std::vector<Operand>& bodies) {
+    const auto& frame = input.get_child("frame");
+    const auto origin = point(frame.get_child("origin"));
+    const gp_Vec u(point(frame.get_child("u")).XYZ()), v(point(frame.get_child("v")).XYZ());
+    Handle(Geom_Plane) plane = new Geom_Plane(gp_Ax3(origin, gp_Dir(u.Crossed(v)), gp_Dir(u)));
+    const auto support = BRepBuilderAPI_MakeFace(plane->Pln()).Face();
+    out << std::setprecision(17) << "{\"sections\":[";
+    bool firstRegion = true;
+    for (const auto& body : bodies) {
+        BRepAlgoAPI_Common common(body.shape, support);
+        if (!common.IsDone() || common.HasErrors()) throw std::runtime_error("Cannot calculate sketch cross section");
+        for (TopExp_Explorer faces(common.Shape(), TopAbs_FACE); faces.More(); faces.Next()) {
+            if (!firstRegion) out << ',';
+            firstRegion = false;
+            out << "{\"body\":" << quoted(body.id) << ",\"curves\":[";
+            Output output{out, origin, u, v};
+            TopTools_IndexedMapOfShape edges;
+            TopExp::MapShapes(faces.Current(), TopAbs_EDGE, edges);
+            for (int i = 1; i <= edges.Extent(); ++i) {
+                const auto edge = TopoDS::Edge(edges(i));
+                if (BRep_Tool::Degenerated(edge)) continue;
+                double first, last;
+                const auto curve = BRep_Tool::Curve(edge, first, last);
+                if (curve.IsNull()) throw std::runtime_error("Cross section has no spatial boundary");
+                projectCurve(output, new Geom_TrimmedCurve(curve, first, last), plane);
+            }
+            out << "]}";
+        }
+    }
     out << "]}";
 }

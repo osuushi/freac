@@ -19,6 +19,7 @@ import type { OperationHistoryEntry } from "./operation-history.js";
 import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
+  | { kind: "sections"; frame: PlaneFrame; bodies: string[] }
   | { kind: "selection"; changes: import("./history-selection.js").SelectionChanges }
   | { kind: "rename-entity"; id: string; name: string }
   | { kind: "reorder-entity"; id: string; beforeId: string | null }
@@ -79,6 +80,7 @@ export interface ModelView {
   solveMs: number;
 }
 export type ModelReply = {
+  sections?: import("../model/sketch-section.js").SketchSection[];
   documentChanged?: boolean;
   view: ModelView;
   error?: string;
