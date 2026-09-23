@@ -4,6 +4,7 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import { DocumentOwner } from "./backend/document-owner.js";
 import { NativeSolver } from "./backend/native-solver.js";
 import { AgentSession } from "./host/agent-session.js";
+import { AppUpdates } from "./host/app-updates.js";
 import { DocumentSession } from "./host/document-session.js";
 import { installFixtureCapture } from "./host/fixture-capture.js";
 import { IPadSession } from "./host/ipad-session.js";
@@ -81,9 +82,15 @@ app
     if (hidden && process.platform === "darwin") app.dock?.hide();
     agent = new AgentSession();
     documents = new DocumentSession(owner, openWindow, agent);
+    const updates = new AppUpdates(
+      () => documents.restartForUpdate(),
+      () => documents.updateInstallFailed(),
+    );
+    documents.updates = updates;
     ipad = new IPadSession(join(directory, "../renderer"), documents, agent);
     await documents.restore();
     await openWindow();
+    await updates.start();
     app.on("activate", () => {
       if (!documentWindow) void openWindow();
     });

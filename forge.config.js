@@ -34,6 +34,7 @@ export default {
       join(release, "native"),
       join(release, "licenses"),
       join(release, "build.json"),
+      ...(signed ? [resolve("packaging/updates.json")] : []),
     ],
     ignore: (path) =>
       path !== "" &&

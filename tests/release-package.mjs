@@ -27,6 +27,10 @@ try {
   page.on("pageerror", (error) => errors.push(error.message));
   await settled(page);
   assert.equal(await app.evaluate(({ app }) => app.isPackaged), true);
+  const metadata = JSON.parse(
+    await readFile(join(executablePath, "../../Resources/build.json"), "utf8"),
+  );
+  assert.equal(await app.evaluate(({ app }) => app.getVersion()), metadata.version);
   assert.equal(
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),
     false,

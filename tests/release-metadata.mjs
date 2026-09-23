@@ -1,7 +1,32 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { updateFeed } from "../scripts/release/update-feed.mjs";
 import { releaseVersion } from "../scripts/release/version.mjs";
+
+test("static preview feed names the exact timestamped ZIP and packaged numeric version", () => {
+  const metadata = {
+    ...releaseVersion("2026-09-22T14:35:12Z"),
+    architecture: "arm64",
+    minimumMacOS: "14.0",
+  };
+  const feed = updateFeed(metadata, "osuushi/freac");
+  assert.equal(feed.currentRelease, "2026.265.52512");
+  assert.equal(feed.releases[0].version, feed.currentRelease);
+  assert.equal(feed.releases[0].updateTo.version, feed.currentRelease);
+  assert.equal(
+    feed.releases[0].updateTo.url,
+    "https://github.com/osuushi/freac/releases/download/20260922T143512Z/Freac-20260922T143512Z-arm64.zip",
+  );
+  for (const change of [
+    { version: "0.2.0" },
+    { tag: "latest" },
+    { architecture: "x64" },
+    { minimumMacOS: "15.0" },
+  ])
+    assert.throws(() => updateFeed({ ...metadata, ...change }, "osuushi/freac"));
+  assert.throws(() => updateFeed(metadata, "https://elsewhere.test"));
+});
 
 test("release names preserve UTC seconds while Apple versions stay numeric", () => {
   const value = releaseVersion("2026-09-22T14:35:12Z");

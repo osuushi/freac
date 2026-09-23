@@ -12,6 +12,16 @@ import { readInspectionView } from "./inspection-view.js";
 import { sessionDialogs as dialog } from "./session-dialogs.js";
 
 export class DocumentSession {
+  updates?: { check(): void; install(): void };
+
+  restartForUpdate(): void {
+    if (!this.window) this.updates?.install();
+    else this.dispatch("restart-update");
+  }
+  updateInstallFailed(): void {
+    this.closing = false;
+    this.needsRestore = false;
+  }
   remote?: {
     active(): boolean;
     emit(method: string, value: unknown): void;
@@ -157,11 +167,14 @@ export class DocumentSession {
       if (this.window === window) this.window = null;
     });
     this.update();
-    installDocumentMenu((command) => this.dispatch(command));
+    installDocumentMenu(
+      (command) => this.dispatch(command),
+      () => this.updates?.check(),
+    );
   }
   private dispatch(command: DocumentCommand): void {
     if (this.remote?.active()) {
-      if (command === "close" || command === "quit") {
+      if (command === "close" || command === "quit" || command === "restart-update") {
         void this.remote.close().then(async () => {
           const result = await this.command(command);
           if (!this.closing) this.window?.webContents.reload();
@@ -196,15 +209,12 @@ export class DocumentSession {
     if (this.busy || !window) return { replaced: false };
     this.busy = true;
     try {
+      if (command === "restart-update" && !this.updates) throw new Error("Updates unavailable");
+      const quitting = command === "quit" || command === "restart-update";
       await this.script.cancel();
       if (command === "save" || command === "save-as") {
         if (await this.files.save(window, command === "save-as")) this.warning = undefined;
-      } else if (
-        command === "new" ||
-        command === "open" ||
-        command === "close" ||
-        command === "quit"
-      ) {
+      } else if (command === "new" || command === "open" || command === "close" || quitting) {
         let path: string | undefined;
         if (command === "open") {
           const result = await dialog.showOpenDialog(window, {
@@ -216,22 +226,24 @@ export class DocumentSession {
           path = result.filePaths[0];
         }
         const prepared = path ? await this.files.prepare(path) : undefined;
-        if (!(await this.leaveDocument(window, command === "close" || command === "quit")))
+        if (!(await this.leaveDocument(window, command === "close" || quitting)))
           return { replaced: false };
         if (command === "new") await this.files.new();
         if (path) await this.files.open(path, prepared);
         this.agent.reset();
         this.warning = undefined;
-        if (command === "close" || command === "quit") {
+        if (command === "close" || quitting) {
           this.needsRestore = true;
           this.closing = true;
-          if (command === "quit") app.quit();
+          if (command === "restart-update") this.updates?.install();
+          else if (command === "quit") app.quit();
           else window.close();
         }
         return { replaced: command === "new" || command === "open" };
       } else throw new Error("Unknown document command");
       return { replaced: false };
     } catch (error) {
+      this.closing = false;
       return { replaced: false, error: error instanceof Error ? error.message : String(error) };
     } finally {
       this.agent.endReplacement();

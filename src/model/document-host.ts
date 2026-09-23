@@ -5,6 +5,7 @@ export type DocumentCommand =
   | "save-as"
   | "close"
   | "quit"
+  | "restart-update"
   | "undo"
   | "redo";
 export interface DocumentStatus {

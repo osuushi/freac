@@ -2,7 +2,10 @@ import { Menu } from "electron";
 import type { DocumentCommand } from "../model/document-host.js";
 import { showAbout, showLicenses } from "./about.js";
 
-export function installDocumentMenu(dispatch: (command: DocumentCommand) => void): void {
+export function installDocumentMenu(
+  dispatch: (command: DocumentCommand) => void,
+  checkUpdates: () => void,
+): void {
   const item = (label: string, accelerator: string, command: DocumentCommand) => ({
     label,
     accelerator,
@@ -16,6 +19,7 @@ export function installDocumentMenu(dispatch: (command: DocumentCommand) => void
               label: "Freac",
               submenu: [
                 { label: "About Freac", click: () => void showAbout() },
+                { label: "Check for Updates…", click: checkUpdates },
                 { type: "separator" as const },
                 { role: "services" as const },
                 { type: "separator" as const },

@@ -8,6 +8,15 @@ const app = resolve(".build/packages/Freac-darwin-arm64/Freac.app");
 const resources = join(app, "Contents/Resources");
 const run = (command, args) => execFileSync(command, args, { encoding: "utf8" });
 const metadata = JSON.parse(await readFile(join(resources, "build.json"), "utf8"));
+const packaged = JSON.parse(await readFile(join(resources, "app/package.json"), "utf8"));
+assert.equal(packaged.version, metadata.version, "Updater version must match the feed");
+const updateConfig = await readFile(join(resources, "updates.json"), "utf8").catch(() => null);
+assert.equal(updateConfig !== null, process.env.FREAC_SIGN === "1");
+if (updateConfig)
+  assert.deepEqual(
+    JSON.parse(updateConfig),
+    JSON.parse(await readFile("packaging/updates.json", "utf8")),
+  );
 assert.equal(metadata.architecture, "arm64");
 const inventory = JSON.parse(await readFile(join(resources, "licenses/inventory.json"), "utf8"));
 for (const name of [

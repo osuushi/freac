@@ -87,7 +87,8 @@ async function runDocumentCommand(
   host: DocumentHost,
   command: DocumentCommand,
 ): Promise<void> {
-  if (toolMenuOpen() && command !== "close" && command !== "quit") {
+  const leaving = command === "close" || command === "quit" || command === "restart-update";
+  if (toolMenuOpen() && !leaving) {
     if (
       (command === "undo" || command === "redo") &&
       document.activeElement instanceof HTMLInputElement
@@ -95,7 +96,7 @@ async function runDocumentCommand(
       document.execCommand(command);
     return;
   }
-  if (editor.store.scriptRunning && (command === "close" || command === "quit")) {
+  if (editor.store.scriptRunning && leaving) {
     const result = await host.command(command);
     if (result.error) {
       editor.message = result.error;

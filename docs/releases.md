@@ -3,8 +3,8 @@
 Freac's original code is LGPL-2.1-or-later; dependency licenses remain unchanged.
 The first distribution target is Apple Silicon on macOS 14 or newer, outside the
 App Store. Release builds are manually requested from `main`; they do not run
-on pushes or pull requests. Intel, Windows installers and automatic updates are
-outside this release pipeline.
+on pushes or pull requests. Intel and Windows installers are outside this release
+pipeline. Signed Apple Silicon releases receive automatic preview updates.
 
 ## Local package and verification
 
@@ -70,6 +70,53 @@ use its basic form (`20260922T143512Z`). npm and Apple metadata receive numeric
 versions, while `build.json`, Info.plist and About retain the full timestamp and
 commit. The timestamp is generated once per run. Reruns get a new release identity.
 The stable bundle ID is `com.osuushi.freac`.
+
+## Automatic preview updates
+
+GitHub Releases hosts the DMG and a ZIP of the final signed, notarized, stapled
+app. GitHub Pages hosts only the static feed at
+`https://osuushi.github.io/freac/updates/preview/darwin-arm64/RELEASES.json`.
+Enable Pages with **Settings → Pages → Source: GitHub Actions** before the first
+release using this workflow. The `github-pages` environment must allow `main`.
+This pipeline owns the Pages deployment; a future website must include this feed
+in its deployment rather than replace it. No update server or app credentials
+are needed; the repository and release downloads must remain public.
+
+The release job creates the manifest from the same `build.json` as the app,
+publishes all release assets, then deploys Pages. The preview feed explicitly
+selects our timestamped prereleases; it never relies on GitHub's latest-release
+selection, which would also encounter source-only releases. Only the newest
+full ZIP is needed in the manifest; previous release assets remain available.
+Do not increase the minimum supported OS without separating incompatible clients
+onto an appropriate feed. The generator rejects builds outside macOS 14 arm64.
+
+Only signed packages contain `updates.json`; development and unsigned packages
+do not make update requests. Freac checks 30 seconds after launch and every six
+hours, or through **Freac → Check for Updates…**. A downloaded update offers
+**Restart to update** or **Later**. Restart passes through the normal tool guard,
+agent shutdown and unsaved-document Save/Cancel/Discard flow. Later keeps working;
+Electron applies the staged update after a normal quit. Background network errors
+are logged quietly; manual checks report failure. Hidden acceptance runs do not
+schedule network checks.
+
+Electron's `serverType: "json"` initializes Squirrel with its application version
+([AutoUpdater::SetFeedURL, pinned Electron source](https://github.com/electron/electron/blob/07e460719c75b2ec5ee4893f7d2192ef31c7b8c2/shell/browser/auto_updater_mac.mm#L83)).
+Freac uses the numeric `package.json` version (`year.day-of-year.seconds-of-day`)
+for feed comparisons, preserving ordering across same-day builds and year changes.
+The JSON shape and deferred installation are described in the
+[Electron update guide](https://www.electronjs.org/docs/latest/tutorial/updates)
+and [autoUpdater API](https://www.electronjs.org/docs/latest/api/auto-updater).
+We rely on Electron/Squirrel for download, signature validation and installation.
+
+Run `npm run test:release` and, after `npm run build`, `node tests/app-updates.mjs`.
+The hidden Electron test draws real geometry and exercises the menu, Later,
+Cancel and save-before-install with the OS update transport stubbed. It does not
+prove signed installation. It also checks that an installer error restores the
+normal save-on-close guard. Release acceptance requires installing signed build A
+in a writable Applications folder, publishing newer signed build B, checking for
+updates, canceling once with edited geometry, then saving and restarting. Verify
+B's About timestamp and reopen the saved drawing. Existing builds without the
+updater need one manual installation. No signed A→B update has been verified yet.
 
 ## Source and license distribution
 
