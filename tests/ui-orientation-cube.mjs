@@ -46,6 +46,12 @@ export async function orientationCubeRoute(page, name) {
     assert.deepEqual(state.camera.target, before.camera.target);
     assert.equal(state.camera.height, before.camera.height);
     assert.deepEqual(state.document, before.document);
+    await target.locator("polygon").click();
+    const canonical = (await inspect(page)).camera;
+    const expectedUp = face === "Top" ? [0, 1, 0] : face === "Bottom" ? [0, -1, 0] : [0, 0, 1];
+    canonical.up.forEach((v, i) => {
+      assert.ok(Math.abs(v - expectedUp[i]) < 1e-8);
+    });
   }
   await page.mouse.move(center.x, center.y);
   await page.mouse.down();

@@ -91,7 +91,10 @@ corner bevels. Labels are projected in each face plane, rotating and foreshorten
 with the rigid cube. Edge clicks align to the equal-weight diagonal of their two
 axes (flat 45°); corner clicks align to the equal-weight three-axis isometric view.
 Bevels have tooltips and accessible names but no visible labels.
-Side and diagonal views keep Z upright; Top uses +Y up and Bottom uses −Y up.
+A face click from an oblique view chooses the nearest of its four quarter-turn
+orientations, avoiding an unnecessary roll. Clicking an already face-aligned view
+again resets it to canonical roll. Canonical side and diagonal views keep Z upright;
+canonical Top uses +Y up and Bottom uses −Y up. Bevel views retain canonical roll.
 All visible surfaces support Tab and Enter/Space. Alignment animates over 280 ms
 with cubic ease-out, using the shared camera transition. Reduced motion applies
 the orientation immediately; subsequent navigation interrupts the animation.

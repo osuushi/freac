@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import { cubeAlignment } from "./orientation-cube-alignment.js";
 import { createOrientationCube } from "./orientation-cube-view.js";
 import { pointerDragThreshold } from "./pointer-intent.js";
 import type { World } from "./world.js";
@@ -71,9 +71,7 @@ class CubeInput {
     const world = this.world;
     if (!world.canNavigate() || world.orbit.active) return;
     world.exit();
-    const quaternion = new THREE.Quaternion().setFromRotationMatrix(
-      new THREE.Matrix4().lookAt(face.normal, new THREE.Vector3(), face.up),
-    );
+    const quaternion = cubeAlignment(face, world.camera.quaternion);
     world.animateOrientation(quaternion);
   }
   private start = (event: PointerEvent): void => {
