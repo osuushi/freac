@@ -15,6 +15,7 @@ import {
   type Vector,
   worldPoint,
 } from "./planes.js";
+import { SketchForeground } from "./world-foreground.js";
 import { createGrids } from "./world-grid.js";
 import { installNavigation } from "./world-navigation.js";
 
@@ -48,6 +49,7 @@ export class World {
   private readonly removeNavigation: () => void;
   private cameraAnimation: number | null = null;
   private pendingDraw: number | null = null;
+  private readonly foreground = new SketchForeground();
   private readonly sketchClip = new THREE.Plane();
   readonly orbit = new Arcball();
   get cameraTransitioning(): boolean {
@@ -97,6 +99,9 @@ export class World {
     for (const listener of this.changed) listener();
     this.updateSketchClipping();
     this.renderer.render(this.scene, this.camera);
+    if (this.activeFrame) {
+      this.foreground.render(this.renderer, this.scene, this.camera, this.sketchClip);
+    }
   }
   private updateSketchClipping(): void {
     const frame = this.activeFrame;
@@ -249,6 +254,7 @@ export class World {
     this.observer.disconnect();
     this.removeNavigation();
     this.grids.dispose();
+    this.foreground.dispose();
     this.renderer.dispose();
     this.canvas.remove();
     this.changed.clear();
