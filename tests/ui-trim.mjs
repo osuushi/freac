@@ -44,6 +44,7 @@ export async function trimLineRoute(page, name) {
   await chooseTool(page, "redo", "redo");
   await inspect(page);
   await page.keyboard.press("v");
+  await click(page, -10, 0);
   await drag(page, [-10, 0], [-12, 2], ["Shift"]);
   sketch = await data(page);
   pointEquals(sketch.curves[0].a, [-12, 2]);

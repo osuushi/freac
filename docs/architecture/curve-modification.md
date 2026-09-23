@@ -19,7 +19,10 @@ retains that endpoint; radius and center relationships can follow both arc remna
 Direction constraints stay on one line remnant with a parallel relationship to
 the other, avoiding redundant copies of every direction equation. Tangency follows
 only a remnant with finite contact. Whole-edge length relationships that no longer
-hold are disclosed for removal. New cutting endpoints do not Fuse to cutters.
+hold are disclosed for removal. A new cutting endpoint automatically Fuses when
+exactly one other surviving curve endpoint meets it. This runs after overlapping
+span removal and belongs to the same Undo step. Untouched endpoints, ambiguous
+junctions and cuts meeting an edge interior do not acquire new links.
 
 Trimming a rectangle removes its convenience group and preserves the meaningful
 ordinary constraints. If an entire side disappears, its perpendicular relationship

@@ -11,6 +11,7 @@ import {
 import { distance } from "./geometry.js";
 import { fusePoints, linkedPointCoordinate, unfusePoints } from "./point-links.js";
 import { spanCurve, type TrimSpan, trimRemainders } from "./trim-geometry.js";
+import { fuseTrimCorners, newTrimEndpoints } from "./trim-links.js";
 import { overlappingTrim } from "./trim-overlap.js";
 
 function mappedPoint(
@@ -57,7 +58,7 @@ function remapConstraint(
     };
   });
 }
-export function trimSketch(original: Sketch, span: TrimSpan) {
+function rewriteTrim(original: Sketch, span: TrimSpan) {
   const source = span.curve,
     pieces = trimRemainders(span);
   // Trimming a rectangle casts its convenience group to its ordinary constraints.
@@ -178,17 +179,28 @@ function preserveRelations(
 /** Clear the highlighted locus in this sketch in one accepted rewrite. */
 export function trimOverlappingSketch(original: Sketch, span: TrimSpan) {
   const highlight = spanCurve(span);
-  let result = trimSketch(original, span);
+  let result = rewriteTrim(original, span);
+  const created = newTrimEndpoints(span.curve, result.pieces);
   const pending = result.sketch.curves.filter((c) => c.id !== span.curve.id);
   while (pending.length) {
     const curve = pending.pop();
     if (!curve) break;
     const overlap = overlappingTrim(curve, highlight);
     if (!overlap) continue;
-    const next = trimSketch(result.sketch, overlap);
+    const next = rewriteTrim(result.sketch, overlap);
+    created.push(...newTrimEndpoints(curve, next.pieces));
     pending.push(...next.pieces);
     result = { ...next, cast: result.cast || next.cast };
   }
+  result = { ...result, sketch: fuseTrimCorners(result.sketch, created) };
   const retained = new Set(result.sketch.constraints.map((c) => c.id));
   return { ...result, removed: original.constraints.filter((c) => !retained.has(c.id)) };
+}
+
+export function trimSketch(original: Sketch, span: TrimSpan) {
+  const result = rewriteTrim(original, span);
+  return {
+    ...result,
+    sketch: fuseTrimCorners(result.sketch, newTrimEndpoints(span.curve, result.pieces)),
+  };
 }
