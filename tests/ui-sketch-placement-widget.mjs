@@ -37,7 +37,7 @@ export async function sketchPlacementWidgetRoute(page, name) {
   const original = (await inspect(page)).document.sketches[0];
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(inside.x, inside.y);
-  await chooseTool(page, "move sketch", "move-sketch");
+  await chooseTool(page, "transform", "transform");
   const root = page.locator(".sketch-placement-gizmo");
   assert.equal(await root.getAttribute("data-mode"), "2d");
   assert.equal(await root.locator(".body-translate-handle:visible").count(), 2);
@@ -123,7 +123,7 @@ async function reopen(page, name, sketch) {
   await openDocument(page, file);
   assert.deepEqual((await inspect(page)).document.sketches[0], sketch);
   await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
-  await chooseTool(page, "move sketch", "move-sketch");
+  await chooseTool(page, "transform", "transform");
   await page
     .getByRole("button", { name: "Reposition sketch pivot", exact: true })
     .waitFor({ state: "visible" });

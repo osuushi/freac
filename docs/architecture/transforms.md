@@ -141,30 +141,59 @@ not orbit when the gesture starts on the anchor. Free anchor placement does not 
 Escape, pointer cancellation or focus loss restores the gesture's original anchor.
 Geometry movement/rotation retains its existing solver/kernel, preview and Undo behavior.
 
-### Uniform Scale (founder-approved contract, 2026-09-21)
+### Transform (founder-directed, 2026-09-22)
 
-Scale accepts selected whole sketch curves, whole sketches in modeling, complete
-bodies, selected faces or selected edges. Resolve supported combinations explicitly;
-never silently omit selected targets. Scaling uses one positive uniform factor
-about a movable sphere pivot, with exact numeric entry and a local drag control.
-The pivot belongs to UI state. It follows the established Move placement/snapping
-conventions and does not add history or become persistent geometry.
+**Transform (M)** combines the former Move and Scale tools. The existing capsule
+arrows, rotation markers and movable sphere anchor remain, with a bounding box
+for resizing. Move, rotate, resize and scale are search aliases for Transform.
+The earlier Move widget and Option-copy contracts above continue to govern its
+movement controls. Selected points still move as points; bounding-box scaling
+currently requires whole curves, whole sketches, bodies, faces or edges.
 
-The initial factor is one. Release retains the temporary preview; Enter/check
-accepts one Undo step and Escape/cross cancels. Identity and rejected edits preserve
-Redo. Nonpositive or nonfinite factors cannot accept. Existing locks and external
-sketch relationships are retained: an incompatible exact scale rejects rather
-than asking the solver to deform the result or removing constraints.
+Sketch boxes follow local workspace X/Y; modeling boxes use world X/Y/Z. Edge
+midpoint handles change the axes perpendicular to that edge; corners change the
+available extents independently. Modeling also exposes single-axis face-center
+handles. End-on directions retain their existing extent. Handles keep constant
+CSS-pixel size while the box itself follows geometry. The shared sphere chooses
+the scale/rotation anchor and retains existing Move placement/snapping behavior.
+A handle coincident with the anchor has no scaling leverage and is hidden.
+Projected handles that overlap the sphere or rotation glyphs are also hidden
+so those controls remain reachable; moving the anchor or view exposes them again.
+To keep both controls reachable, translation arrows extend along their existing
+axis only when a box handle overlaps their nominal position. The numeric card
+clears the combined box, arrows and anchor. This is the narrow exception to the
+earlier fixed-position Move assembly; arrow orientation and size remain unchanged.
 
-For a whole sketch, uniformly transform its frame origin about the world pivot,
-keep its unit axes unchanged, and scale its local coordinates/radii. This scales
-the actual world geometry while keeping the plane frame orthonormal. Construction
-planes from which a sketch was created remain independent.
+Local X/Y/Z factors allow exact entry; **Uniform scale** links the factors.
+Positive finite factors are required; collapsed or reflected scale candidates
+cannot accept. Grid snapping quantizes handle destinations. Shift suppresses
+point attraction without disabling the grid. Scaling release retains a temporary
+preview; Enter/check accepts one Undo step, Escape/cross cancels. Complete or cancel
+that scale edit before using the movement controls. Movement keeps its established
+gesture completion rules. Identity and rejected edits preserve Redo. Multiple whole
+sketches can move or rotate together, including Option-copy, in one Undo step.
 
-Whole bodies transform exactly. Selected faces/edges scale and reconnect their
-neighbors through the existing boundary editing path, with validity, tolerance
-and topology correspondence checks. Scaling a cap or complete rim about its center
-can taper the adjoining walls; this does not promise every possible Draft operation.
-Unsupported reconnections remain recoverable errors. Directional/nonuniform scale
-is deferred: sketch circles/arcs would require an additional representation or
-approved approximation policy.
+DocumentOwner applies the exact requested affine coordinates and validates the
+existing constraints; it does not ask the solver to deform the selection to fit.
+Incompatible locks or external relationships reject visibly without silent removal.
+For whole sketches, transform the world geometry and construct an orthonormal plane
+frame; local coordinates absorb the nonuniform stretch or shear. Independent
+construction planes remain unchanged.
+
+Circles and arcs remain analytic under a similarity transform in their own plane.
+Otherwise they become ordinary cubic Bézier segments with a maximum final-space
+position error of **0.001 mm**, bounded using cubic Hermite interpolation.
+Subdivision is independent of zoom and refuses more than 4096 segments per curve.
+Original arc endpoints remain exact; endpoint relationships transfer to the first
+and last pieces. Adjacent pieces are fused, including the closing circle join.
+The first piece retains the original curve ID, other pieces receive distinct
+stable document-local IDs, and all resulting pieces remain selected after acceptance.
+Construction status is retained. Constraints that require the old circular edge or
+center reject the conversion with an explanation. Undo restores primitives and links.
+
+Whole solids use the exact kernel affine transform; no sketch Bézier approximation
+is applied to their authoritative BRep. Faces/edges use boundary reconnection with
+unchanged validity, tolerance and topology correspondence checks. Rational rims use
+matching parameterizations when rebuilding ruled walls. Curve-length matching and
+reported volume use accurate integration for rational geometry. Unsupported
+reconnections remain recoverable errors.

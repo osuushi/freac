@@ -128,7 +128,17 @@ const bodyActions = new BodyActions(
 );
 const deleteAction = new DeleteTopologyAction(editor);
 const mirror = new MirrorControls(editor, overlay);
-const scaling = new ScaleControls(editor, overlay);
+const scaling = new ScaleControls(editor, overlay, () => {
+  if (editor.world.active) return editor.activateMove();
+  else if (
+    editor.modeling.targets.every((target) => target.kind === "sketch" || target.kind === "profile")
+  )
+    modelControls.move();
+  else {
+    editor.modeling.setTool("move");
+    editor.refresh();
+  }
+});
 const projection = new ProjectionControls(editor, overlay);
 const sections = new SectionControls(editor);
 const bodyEdges = new BodyEdgeControls(editor);
@@ -153,7 +163,7 @@ world.changed.add(() => {
     (world.active
       ? `${world.active} sketch · ${world.spacing} mm grid · ${editor.tool === "trim" ? "Trim · click a highlighted span" : (editor.snap?.label ?? "Shift bypasses geometry snaps · Option / Alt draws/resizes about center")}`
       : editor.modeling.targets.length
-        ? `${editor.modeling.targets.length} ${editor.modeling.targets.every((t) => t.kind === "body") ? "body" : editor.modeling.targets.every((t) => t.kind === "edge") ? "edge" : editor.modeling.targets.every((t) => t.kind === "face") ? "face" : editor.modeling.targets.every((t) => t.kind === "sketch") ? "sketch" : editor.modeling.targets.every((t) => t.kind === "profile") ? "region" : "item"} selected${editor.modeling.targets.every((t) => t.kind === "body" || t.kind === "sketch") ? " · M to move" : ""}`
+        ? `${editor.modeling.targets.length} ${editor.modeling.targets.every((t) => t.kind === "body") ? "body" : editor.modeling.targets.every((t) => t.kind === "edge") ? "edge" : editor.modeling.targets.every((t) => t.kind === "face") ? "face" : editor.modeling.targets.every((t) => t.kind === "sketch") ? "sketch" : editor.modeling.targets.every((t) => t.kind === "profile") ? "region" : "item"} selected${editor.modeling.targets.every((t) => t.kind === "body" || t.kind === "sketch") ? " · M to transform" : ""}`
         : editor.tool === "rectangle"
           ? "Rectangle · Choose a plane to sketch"
           : editor.tool === "trim"

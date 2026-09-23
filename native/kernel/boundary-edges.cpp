@@ -1,5 +1,6 @@
 #include "boundary-move.h"
 #include "boundary-validation.h"
+#include "scale-transform.h"
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
@@ -10,6 +11,7 @@
 #include <GeomConvert.hxx>
 #include <Geom_BSplineCurve.hxx>
 #include <Geom_TrimmedCurve.hxx>
+#include <GCPnts_AbscissaPoint.hxx>
 
 namespace boundary_move {
 namespace {
@@ -22,7 +24,7 @@ TopoDS_Edge rebuild(const TopoDS_Edge& source, const Edit& edit) {
     require(!a.IsNull() && !b.IsNull(), "Cannot reconnect an edge without endpoints");
     if (edit.rigidEdges.Contains(edge)
         || (edit.movedVertices.Contains(a) && edit.movedVertices.Contains(b)))
-        return TopoDS::Edge(BRepBuilderAPI_Transform(edge, edit.transform, true).Shape());
+        return TopoDS::Edge(affineShape(edge, edit.transform));
     const auto p = edit.moved(a), q = edit.moved(b);
     require(p.Distance(q) > tolerance, "Movement collapses a boundary");
     if (BRepAdaptor_Curve(edge).GetType() == GeomAbs_Line)
@@ -55,9 +57,13 @@ void buildEdges(Edit& edit) {
 }
 bool sameBoundary(const TopoDS_Edge& a, const TopoDS_Edge& b) {
     if (a.IsSame(b)) return true;
-    GProp_GProps x, y;
-    BRepGProp::LinearProperties(a, x);
-    BRepGProp::LinearProperties(b, y);
-    return std::abs(x.Mass() - y.Mass()) < tolerance && samplesOn(a, b) && samplesOn(b, a);
+    BRepAdaptor_Curve x(a), y(b);
+    // Default mass-property quadrature loses more than the matching tolerance
+    // on rational spline seams. Integrate both lengths to explicit accuracy.
+    const auto length = [](const BRepAdaptor_Curve& curve) {
+        return GCPnts_AbscissaPoint::Length(curve, curve.FirstParameter(),
+                                          curve.LastParameter(), tolerance * 0.1);
+    };
+    return std::abs(length(x) - length(y)) < tolerance && samplesOn(a, b) && samplesOn(b, a);
 }
 }

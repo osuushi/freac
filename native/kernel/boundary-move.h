@@ -3,14 +3,14 @@
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Vertex.hxx>
-#include <gp_Trsf.hxx>
+#include <gp_GTrsf.hxx>
 
 // Boundary neighborhood model shared by edge and face selection.
 namespace boundary_move {
 constexpr double tolerance = 1e-6;
 struct Edit {
     const Operand* body = nullptr;
-    gp_Trsf transform;
+    gp_GTrsf transform;
     TopTools_IndexedMapOfShape rigidFaces, rigidEdges, movedVertices;
     TopTools_IndexedMapOfShape sourceEdges;
     std::vector<TopoDS_Edge> edges;

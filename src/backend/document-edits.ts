@@ -53,12 +53,22 @@ export function editDocument(
         constructionPlanes: (document.constructionPlanes ?? []).filter((p) => p.id !== request.id),
       };
     case "place-sketch": {
-      const sketch = document.sketches.find((s) => s.id === request.sketchId);
-      if (!sketch) throw new Error("Sketch no longer exists");
-      return withSketch(document, {
-        ...(request.duplicate ? copySketch(sketch) : sketch),
-        plane: request.frame,
-      });
+      const placements = [
+        { sketchId: request.sketchId, frame: request.frame },
+        ...(request.additional ?? []),
+      ];
+      if (new Set(placements.map((p) => p.sketchId)).size !== placements.length)
+        throw new Error("Select each sketch once");
+      let next = document;
+      for (const placement of placements) {
+        const sketch = document.sketches.find((s) => s.id === placement.sketchId);
+        if (!sketch) throw new Error("Sketch no longer exists");
+        next = withSketch(next, {
+          ...(request.duplicate ? copySketch(sketch) : sketch),
+          plane: placement.frame,
+        });
+      }
+      return next;
     }
     case "merge-sketches": {
       return mergeDocumentSketches(document, request.targetSketchId, request.sourceSketchIds);

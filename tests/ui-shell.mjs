@@ -71,7 +71,7 @@ export async function shellRoute(page, name, electron) {
   await input.fill("-1");
   close((await inspect(page)).preview.bodies[0].volume, 1408);
   await input.press("Tab");
-  await chooseTool(page, "move", "move");
+  await chooseTool(page, "transform", "transform");
   state = await inspect(page);
   close(state.document.bodies[0].volume, 1408);
   assert.equal(state.modelingTool, "move");

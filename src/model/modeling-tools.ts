@@ -1,6 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
-import { type ModelingTool, modelingSketch } from "../sketch/model-selection.js";
+import type { ModelingTool } from "../sketch/model-selection.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { SelectionTools } from "./selection-tools.js";
 
@@ -23,7 +23,8 @@ export class ModelingTools {
     private edgeMode: (mode: "fillet" | "chamfer") => void,
   ) {
     const catalog = toolCatalog(editor);
-    for (const [tool, label, shortcut, aliases, related] of entries)
+    for (const [tool, label, shortcut, aliases, related] of entries) {
+      if (tool === "move") continue;
       this.disposers.push(
         catalog.register({
           id: tool,
@@ -31,11 +32,12 @@ export class ModelingTools {
           shortcut,
           aliases,
           related,
-          category: tool === "move" ? "Transform" : "Solid",
+          category: "Solid",
           reason: () => this.reason(tool),
           run: () => this.choose(tool),
         }),
       );
+    }
     this.menu = new SelectionTools(editor);
     onModelKeydown(
       (event) => {
@@ -62,10 +64,10 @@ export class ModelingTools {
                     ModelingTool
                   >
                 )[key];
-        if (!tool || (tool === "move" && modelingSketch(editor))) return;
+        if (!tool) return;
         event.preventDefault();
         event.stopImmediatePropagation();
-        void catalog.invoke(tool);
+        void catalog.invoke(tool === "move" ? "transform" : tool);
       },
       { signal: this.abort.signal, capture: true },
     );

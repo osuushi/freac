@@ -132,7 +132,9 @@ async function bodyAnchors(page, name) {
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await page.keyboard.press("m");
   const anchor = page.getByRole("button", { name: "Reposition body pivot", exact: true }),
-    root = page.locator(".body-gizmo:not(.topology-move-gizmo):not(.sketch-placement-gizmo)");
+    root = page.locator(
+      ".body-gizmo:not([hidden]):not(.topology-move-gizmo):not(.sketch-placement-gizmo)",
+    );
   assert.equal(await root.getAttribute("data-mode"), "2d");
   assert.equal(await root.locator(".body-translate-handle:visible").count(), 2);
   assert.equal(await root.locator(".body-rotate-handle:visible").count(), 1);

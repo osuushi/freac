@@ -56,7 +56,7 @@ The former panel actions are registered under these homes:
 | --- | --- |
 | Sketch | Line, Rectangle, Circle, Curve, Trim, sketch Offset, sketch Fillet |
 | Solid | Extrude, Revolve, Shell, face Offset, Fillet, Chamfer, Union, Subtract, Intersect, Split Body, Imprint, Clean up |
-| Transform | Move, Move sketch, Duplicate, Mirror, Scale |
+| Transform | Transform (move, rotate and scale), Duplicate, Mirror |
 | Constrain | Existing geometric constraints, Fuse, Unfuse, applicable locks |
 | Reference | Construction plane, Project |
 | Select | Select, existing selection refinements, Clear selection |

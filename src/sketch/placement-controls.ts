@@ -2,6 +2,7 @@ import { dragFrame } from "../model/body-drag.js";
 import { BodyGizmo } from "../model/body-gizmo.js";
 import { BodyPivotDrag } from "../model/body-pivot-drag.js";
 import { axes } from "../model/body-placement.js";
+import { selectionAnchor } from "../model/selection-anchor.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import type { InteractionLease } from "./active-interaction.js";
 import { copySketch } from "./copy-selection.js";
@@ -17,6 +18,7 @@ import { type PlacementAxis, placedFrame, sketchCenter } from "./sketch-placemen
 type Session = {
   sketch: Sketch;
   copy: Sketch;
+  additional: { sketch: Sketch; copy: Sketch }[];
   duplicate: boolean;
   axis: PlacementAxis;
   rotate: boolean;
@@ -124,7 +126,8 @@ export class PlacementControls {
     );
   };
   private start(event: PointerEvent, axis: PlacementAxis, rotate: boolean): void {
-    const sketch = modelingSketch(this.editor);
+    const sketches = this.selectedSketches(),
+      sketch = sketches[0];
     if (event.button || !sketch || this.session || this.editor.blocked) return;
     event.preventDefault();
     const lease = this.editor.interactions.acquire("placement", () => this.cancel());
@@ -132,6 +135,7 @@ export class PlacementControls {
     this.session = {
       sketch,
       copy: copySketch(sketch),
+      additional: sketches.slice(1).map((sketch) => ({ sketch, copy: copySketch(sketch) })),
       duplicate: event.altKey,
       axis,
       rotate,
@@ -157,9 +161,16 @@ export class PlacementControls {
       const frame = placedFrame(s.sketch, s.axis, s.rotate, value, s.pivot);
       s.valid = true;
       s.value = value;
-      s.lease.show(
-        withSketch(this.editor.store.data, { ...(s.duplicate ? s.copy : s.sketch), plane: frame }),
-      );
+      let candidate = withSketch(this.editor.store.data, {
+        ...(s.duplicate ? s.copy : s.sketch),
+        plane: frame,
+      });
+      for (const item of s.additional)
+        candidate = withSketch(candidate, {
+          ...(s.duplicate ? item.copy : item.sketch),
+          plane: placedFrame(item.sketch, s.axis, s.rotate, value, s.pivot),
+        });
+      s.lease.show(candidate);
       if (!numericFocus(this.input)) this.input.value = String(Number(value.toFixed(4)));
       this.editor.message = "";
     } catch (error) {
@@ -177,10 +188,15 @@ export class PlacementControls {
       sketchId: s.sketch.id,
       duplicate: s.duplicate,
       frame: placedFrame(s.sketch, s.axis, s.rotate, s.value, s.pivot),
+      additional: s.additional.map(({ sketch }) => ({
+        sketchId: sketch.id,
+        frame: placedFrame(sketch, s.axis, s.rotate, s.value, s.pivot),
+      })),
     });
     if (result && s.duplicate) {
-      const copy = this.editor.store.data.sketches.find((sketch) => !before.has(sketch.id));
-      if (copy) this.editor.modeling.targets = [{ kind: "sketch", sketch: copy.id }];
+      this.editor.modeling.targets = this.editor.store.data.sketches
+        .filter((sketch) => !before.has(sketch.id))
+        .map((sketch) => ({ kind: "sketch", sketch: sketch.id }));
     }
     if (result && this.pivot && !s.rotate) this.pivot = this.previewPivot();
     this.finish();
@@ -195,9 +211,21 @@ export class PlacementControls {
     s?.lease.release();
     this.editor.refresh();
   }
+  private selectedSketches(): Sketch[] {
+    const single = modelingSketch(this.editor);
+    if (single) return [single];
+    const targets = this.editor.modeling.targets;
+    if (!targets.length || targets.some((t) => t.kind !== "sketch")) return [];
+    return targets
+      .map((target) => this.editor.store.data.sketches.find((s) => s.id === target.sketch))
+      .filter((sketch) => sketch !== undefined);
+  }
   private currentPivot(): Vector {
-    const sketch = modelingSketch(this.editor);
-    return this.pivot ?? (sketch ? sketchCenter(sketch) : [0, 0, 0]);
+    const sketches = this.selectedSketches();
+    return (
+      this.pivot ??
+      (sketches.length === 1 ? sketchCenter(sketches[0]) : selectionAnchor(this.editor))
+    );
   }
   private previewPivot(): Vector {
     const s = this.session;
@@ -205,9 +233,11 @@ export class PlacementControls {
     return s.rotate ? s.pivot : (s.pivot.map((v, i) => v + axes[s.axis][i] * s.value) as Vector);
   }
   private update = (): void => {
-    const sketch = modelingSketch(this.editor);
-    if (this.selected !== (sketch?.id ?? null)) {
-      this.selected = sketch?.id ?? null;
+    const sketches = this.selectedSketches(),
+      sketch = sketches[0];
+    const key = sketches.map((s) => s.id).join(",") || null;
+    if (this.selected !== key) {
+      this.selected = key;
       this.pivot = null;
     }
     this.root.hidden = !!this.editor.world.active || !sketch || !this.enabled;

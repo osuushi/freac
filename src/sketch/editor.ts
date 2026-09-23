@@ -74,6 +74,8 @@ export class SketchEditor {
   constraintHover: string | null = null;
   gridSnap = true;
   pivot: Point | null = null;
+  /** Current visible movement widget anchor; shared with bounding-box scaling. */
+  transformAnchor: { point: import("./planes.js").Vector; active: boolean } | null = null;
   placingPivot = false;
   hover: Hit | null = null;
   selectionBox: { a: Point; b: Point } | null = null;
@@ -100,6 +102,9 @@ export class SketchEditor {
   cancelNumeric: () => void = () => {};
   editDuringDrag: (quantity: Quantity, value: number) => void = () => {};
   constructor(readonly world: World) {
+    world.changed.add(() => {
+      this.transformAnchor = null;
+    });
     installWorkspaceSync(this);
     this.store.selectionHistory = this.selectionHistory;
     this.world.changed.add(() => this.selectionHistory.observe());

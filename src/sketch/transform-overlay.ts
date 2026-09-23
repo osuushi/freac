@@ -30,8 +30,8 @@ export class TransformOverlay {
     });
     this.move.className = "move-control";
     this.move.type = "button";
-    this.move.setAttribute("aria-label", "Move (M)");
-    this.move.append(sketchIcon("move"), "Move");
+    this.move.setAttribute("aria-label", "Transform (M)");
+    this.move.append(sketchIcon("move"), "Transform");
     this.move.addEventListener("click", () => void editor.activateMove());
     this.anchor.className = "move-anchor sketch-move-anchor";
     this.anchor.setAttribute("aria-label", "Reposition sketch pivot");
@@ -73,7 +73,7 @@ export class TransformOverlay {
       r = e.world.canvas.getBoundingClientRect();
     this.svg.replaceChildren();
     this.svg.setAttribute("viewBox", `0 0 ${r.width} ${r.height}`);
-    this.move.hidden = !frame || e.isDragging;
+    this.move.hidden = !frame || e.isDragging || e.moveMode;
     this.move.disabled = e.blocked;
     this.move.setAttribute("aria-pressed", String(e.moveMode));
     if (sketch && frame) {
@@ -93,6 +93,7 @@ export class TransformOverlay {
       p = project(frame.handle),
       widget = transformHandles(e);
     if (widget) {
+      e.transformAnchor = { point: worldPoint(sketch.plane, frame.pivot), active: e.moveMode };
       this.anchor.style.left = `${c.x}px`;
       this.anchor.style.top = `${c.y}px`;
       if (widget.rotationVisible)

@@ -77,7 +77,7 @@ export async function planarFaceMoveRoute(page, name, pocket = false, sides = 4,
   for (let i = 0; i < faces.length; i++)
     await pickFeatureFace(page, faces[i], i > 0, pocket, sides === 0);
   assert.equal((await inspect(page)).modelingSelection.length, faces.length);
-  await chooseTool(page, "move", "move");
+  await chooseTool(page, "transform", "transform");
   await quantity(page, "Move faces X", 2);
   let state = await inspect(page);
   assert.ok(state.preview, await page.getByRole("status").textContent());

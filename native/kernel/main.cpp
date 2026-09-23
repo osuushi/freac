@@ -45,7 +45,7 @@ void validate(const TopoDS_Shape& shape) {
 }
 double volume(const TopoDS_Shape& shape) {
     if (shape.IsNull()) return 0;
-    GProp_GProps props; BRepGProp::VolumeProperties(shape, props);
+    GProp_GProps props; BRepGProp::VolumeProperties(shape, props, 1e-10);
     const double value = std::abs(props.Mass());
     if (!std::isfinite(value)) throw std::runtime_error("Non-finite solid volume");
     return value;

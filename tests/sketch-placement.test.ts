@@ -46,3 +46,40 @@ test("placement rotates the plane around a relocated world anchor", () => {
   assert.ok(Math.abs(frame.origin[1] - 5) < 1e-12);
   assert.deepEqual(sketch.plane.origin, [5, 8, 0]);
 });
+
+test("multiple sketch placement validates atomically and copies in one Undo", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const a = rectangle(emptySketch(planes.XY), { x: 0, y: 0 }, { x: 10, y: 5 }).sketch;
+    const b = rectangle(emptySketch(planes.XZ), { x: 2, y: 4 }, { x: 8, y: 12 }).sketch;
+    await owner.call({ kind: "edit", sketch: a });
+    await owner.call({ kind: "edit", sketch: b });
+    const before = owner.view.data;
+    const frame = placedFrame(a, "Z", true, 30, [1, 2, 3]);
+    const other = placedFrame(b, "Z", true, 30, [1, 2, 3]);
+    const invalid = await owner.call({
+      kind: "place-sketch",
+      sketchId: a.id,
+      frame,
+      additional: [{ sketchId: b.id, frame: { ...other, v: other.u } }],
+    });
+    assert.ok(invalid.error);
+    assert.deepEqual(owner.view.data, before);
+    const copied = await owner.call({
+      kind: "place-sketch",
+      sketchId: a.id,
+      frame,
+      duplicate: true,
+      additional: [{ sketchId: b.id, frame: other }],
+    });
+    assert.equal(copied.error, undefined);
+    assert.equal(owner.view.data.sketches.length, 4);
+    assert.deepEqual(owner.view.data.sketches.slice(0, 2), before.sketches);
+    assert.deepEqual(owner.view.data.sketches[2].plane, frame);
+    assert.deepEqual(owner.view.data.sketches[3].plane, other);
+    await owner.call({ kind: "undo" });
+    assert.deepEqual(owner.view.data, before);
+  } finally {
+    owner.close();
+  }
+});

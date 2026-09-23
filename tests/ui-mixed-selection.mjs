@@ -25,7 +25,7 @@ export async function mixedSelectionRoute(page, name, electron) {
     ["body", "face"],
   );
   assert.equal((await inspect(page)).modelingTool, null);
-  await chooseTool(page, "move", "move");
+  await chooseTool(page, "transform", "transform");
   await button(page, "Move faces Z").click();
   await page.getByRole("textbox", { name: "Face translation Z", exact: true }).fill("2");
   let state = await inspect(page);

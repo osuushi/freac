@@ -81,7 +81,7 @@ try {
   await page.keyboard.press("Escape");
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
-  await chooseTool(page, "move", "move");
+  await chooseTool(page, "transform", "transform");
   await page.getByRole("button", { name: "Move body X", exact: true }).click();
   await page.locator(".body-transform-value").fill("3");
   await page.keyboard.press("Enter");

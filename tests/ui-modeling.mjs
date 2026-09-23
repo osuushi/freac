@@ -40,7 +40,7 @@ export async function modelingRoute(page, name) {
   selected = (await inspect(page)).modelingSelection;
   assert.equal(selected.length, 2);
   close(selected[1].area, holeArea);
-  await chooseTool(page, "move sketch", "move-sketch");
+  await chooseTool(page, "transform", "transform");
   await orient(page, [1, 1, 1]);
   await numericPlacement(page, "Move", "Z", 10);
   let moved = (await inspect(page)).document.sketches[0];

@@ -82,7 +82,7 @@ function installShortcuts(
           l: "line",
           c: "circle",
           t: "trim",
-          m: "sketch-move",
+          m: "transform",
           v: "select",
         } as Record<string, string>
       )[event.key.toLowerCase()];

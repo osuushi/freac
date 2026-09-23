@@ -27,7 +27,7 @@ export async function projectionRoute(page, name) {
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(circlePoint.x, circlePoint.y);
   await inspect(page);
-  await chooseTool(page, "move sketch", "move-sketch");
+  await chooseTool(page, "transform", "transform");
   await orient(page, [1, 1, 1]);
   await page.getByRole("button", { name: "Rotate sketch X", exact: true }).click();
   await page.getByRole("textbox", { name: "Rotation X", exact: true }).fill("45");

@@ -119,7 +119,7 @@ export async function useLineEdgeRoute(page) {
   await page.getByRole("button", { name: "Show Sketch 1", exact: true }).click();
   await page.mouse.click(sourcePick.x, sourcePick.y);
   assert.equal((await inspect(page)).modelingSelection[0].sketch, state.document.sketches[0].id);
-  await chooseTool(page, "move sketch", "move-sketch");
+  await chooseTool(page, "transform", "transform");
   await orient(page, [1, 1, 1]);
   await page.getByRole("button", { name: "Move sketch Z", exact: true }).click();
   await page.getByRole("textbox", { name: "Translation Z", exact: true }).fill("10");

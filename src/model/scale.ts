@@ -10,14 +10,25 @@ export type ScaleSource =
       faces: BodyFaceOffset["faces"];
       edges: BodyEdgeFinish["edges"];
     };
-export type ScaleOperation = ScaleSource & { pivot: Vector; factor: number };
+export type ScaleOperation = ScaleSource & { pivot: Vector; factor: number; factors?: Vector };
 
-export function scalePoint(point: Vector, pivot: Vector, factor: number): Vector {
-  return point.map((value, i) => pivot[i] + factor * (value - pivot[i])) as Vector;
+export function scaleFactors(operation: ScaleOperation): Vector {
+  return operation.factors ?? [operation.factor, operation.factor, operation.factor];
 }
+
+export function identityScale(operation: ScaleOperation): boolean {
+  return scaleFactors(operation).every((value) => value === 1);
+}
+
 export function validateScale(operation: ScaleOperation): void {
   if (!Number.isFinite(operation.factor) || operation.factor <= 0)
     throw new Error("Enter a positive scale factor");
+  if (
+    operation.factors &&
+    (operation.factors.length !== 3 ||
+      !operation.factors.every((value) => Number.isFinite(value) && value > 0))
+  )
+    throw new Error("Enter positive X, Y and Z scale factors");
   if (
     !Array.isArray(operation.pivot) ||
     operation.pivot.length !== 3 ||

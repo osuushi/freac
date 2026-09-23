@@ -52,7 +52,7 @@ export async function flangeMoveRoute(page, name, electron) {
   await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
   const original = (await inspect(page)).document;
   await selectFlange(page);
-  await chooseTool(page, "move", "move");
+  await chooseTool(page, "transform", "transform");
   await orient(page, [1, 0, 0.2]);
   const box = await page.getByRole("button", { name: "Move faces Z", exact: true }).boundingBox();
   const a = await project(page, [0, 0, 14.5]),
@@ -79,7 +79,7 @@ export async function flangeMoveRoute(page, name, electron) {
   await bodyArchiveRoute(page, `${name}-flange`, electron);
   const reopened = (await inspect(page)).document;
   await selectFlange(page, 2);
-  await chooseTool(page, "move", "move");
+  await chooseTool(page, "transform", "transform");
   check(await quantity(page, "faces", "Z", -2), reopened, -2);
   await page.getByRole("button", { name: "Accept face movement", exact: true }).click();
   close((await inspect(page)).document.bodies[0].bounds[5], original.bodies[0].bounds[5]);

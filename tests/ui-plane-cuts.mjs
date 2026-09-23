@@ -74,7 +74,7 @@ export async function planeCutRoute(page, name) {
   state = await inspect(page);
   assert.equal(state.modelingSelection[0]?.kind, "edge");
   assert.ok(!original.bodies[0].edges.some((e) => e.id === state.modelingSelection[0].edge));
-  await chooseTool(page, "move", "move");
+  await chooseTool(page, "transform", "transform");
   await page.getByRole("button", { name: "Move edges Z", exact: true }).click();
   await page.getByRole("textbox", { name: "Edge translation Z", exact: true }).fill("2");
   await settled(page);

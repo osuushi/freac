@@ -146,7 +146,7 @@ async function wholeSketch(page) {
   const inside = await at(page, -10, 0);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(inside.x, inside.y);
-  await chooseTool(page, "move sketch", "move-sketch");
+  await chooseTool(page, "transform", "transform");
   const before = (await inspect(page)).document;
   await hold(page, page.getByRole("button", { name: "Move sketch X", exact: true }));
   await page.keyboard.down("Alt");
@@ -194,7 +194,7 @@ async function body(page) {
   let state = await release(page);
   assert.equal(state.document.bodies.length, 2);
   assert.deepEqual(state.document.bodies[0], before.bodies[0]);
-  assert.equal(state.document.bodies[1].volume, before.bodies[0].volume);
+  close(state.document.bodies[1].volume, before.bodies[0].volume, "copied volume");
   const after = state.document;
   await history(page, before, after);
   await page.getByRole("button", { name: "Select Body 2", exact: true }).click();

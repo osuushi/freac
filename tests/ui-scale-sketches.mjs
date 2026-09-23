@@ -18,8 +18,9 @@ export async function scaleWholeSketchRoute(page, name) {
     .click({ modifiers: ["Shift"] });
   const before = (await inspect(page)).document;
   assert.equal((await inspect(page)).modelingSelection.length, 2);
-  await chooseTool(page, "scale", "scale");
-  await page.getByRole("textbox", { name: "Scale factor", exact: true }).fill("2");
+  await chooseTool(page, "transform", "transform");
+  await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
+  await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("2");
   let state = await inspect(page);
   assert.deepEqual(state.document, before);
   assert.equal(state.preview.sketches.length, 2);
@@ -39,7 +40,7 @@ export async function scaleWholeSketchRoute(page, name) {
       close(next.b.y, old.b.y * 2);
     }
   }
-  await page.getByRole("button", { name: "Accept scale", exact: true }).click();
+  await page.getByRole("button", { name: "Accept transform scale", exact: true }).click();
   const accepted = (await inspect(page)).document;
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before);
@@ -60,31 +61,38 @@ export async function scaleConstraintRoute(page, name) {
   await drag(page, [8, 8], [14, 8]);
   await page.getByRole("button", { name: "Lock Radius", exact: true }).click();
   const before = (await inspect(page)).document;
-  await chooseTool(page, "scale", "scale");
-  const input = page.getByRole("textbox", { name: "Scale factor", exact: true });
+  await chooseTool(page, "transform", "transform");
+  await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
+  const input = page.getByRole("textbox", { name: "Transform scale X", exact: true });
   await input.fill("");
   await input.pressSequentially("2", { delay: 40 });
   await inspect(page);
-  for (const key of ["Tab", "Shift+Tab"]) {
-    await page.keyboard.press(key);
-    assert.ok(
-      await input.evaluate((field) => field === document.activeElement),
-      "Tab cycles the modal numeric field",
-    );
-  }
+  await page.keyboard.press("Tab");
+  assert.ok(
+    await page
+      .getByRole("textbox", { name: "Transform scale Y", exact: true })
+      .evaluate((field) => field === document.activeElement),
+  );
+  await page.keyboard.press("Shift+Tab");
+  assert.ok(await input.evaluate((field) => field === document.activeElement));
   assert.equal(await input.inputValue(), "2", "Ordinary typing reaches Scale's field");
   const state = await inspect(page);
   assert.deepEqual(state.document, before);
   assert.equal(state.preview, null);
-  assert.ok(await page.getByRole("button", { name: "Accept scale", exact: true }).isDisabled());
-  assert.match(await page.getByRole("status").textContent(), /Scale conflicts/);
-  await page.getByRole("textbox", { name: "Scale factor", exact: true }).fill("1");
+  assert.ok(
+    await page.getByRole("button", { name: "Accept transform scale", exact: true }).isDisabled(),
+  );
+  assert.match(await page.getByRole("status").textContent(), /Transform conflicts/);
+  await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("1");
   await inspect(page);
-  await page.getByRole("button", { name: "Cancel scale", exact: true }).click();
+  await page.getByRole("button", { name: "Cancel transform scale", exact: true }).click();
+  await inspect(page);
+  await chooseTool(page, "select", "select");
   await page.getByRole("button", { name: "Unlock Radius", exact: true }).click();
   await inspect(page);
-  await chooseTool(page, "scale", "scale");
-  await page.getByRole("textbox", { name: "Scale factor", exact: true }).fill("2");
+  await chooseTool(page, "transform", "transform");
+  await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
+  await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("2");
   await inspect(page);
   await page.keyboard.press("Enter");
   close(

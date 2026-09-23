@@ -1,7 +1,8 @@
 .scale-widget {
   position: absolute;
-  width: 0;
-  height: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
   z-index: 30;
 }
@@ -11,40 +12,6 @@
 .scale-widget button,
 .scale-card {
   pointer-events: auto;
-}
-.scale-anchor,
-.scale-handle {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  touch-action: none;
-  padding: 0;
-}
-.scale-anchor {
-  width: 20px;
-  height: 20px;
-  border: 1.5px solid #151515;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fff 25%, #e6e6e6 72%, #c8c8c8);
-}
-.scale-anchor[data-snapped="true"],
-.scale-anchor:hover {
-  outline: 2px solid #347cc1;
-}
-.scale-handle {
-  width: 48px;
-  height: 48px;
-  border: none;
-  background: transparent;
-}
-.scale-handle svg {
-  width: 48px;
-  height: 48px;
-}
-.scale-handle:hover {
-  filter: drop-shadow(0 0 2px #347cc1);
-}
-.scale-handle[data-invalid="true"] {
-  filter: drop-shadow(0 0 3px #c42323);
 }
 .scale-card {
   position: absolute;
@@ -72,4 +39,43 @@
 }
 .scale-card input[aria-invalid="true"] {
   border-color: #b3261e;
+}
+
+/* Bounding geometry stays in the workspace frame; only handle size is screen-space. */
+.transform-box-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: #687b8d;
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
+.transform-box-handle {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 5px solid transparent;
+  background: white;
+  background-clip: padding-box;
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1.5px #151515;
+  touch-action: none;
+}
+.transform-box-handle:hover {
+  background-color: #b7dfff;
+}
+.scale-widget[data-invalid="true"] .transform-box-lines {
+  stroke: #b3261e;
+}
+.scale-card input[type="checkbox"] {
+  width: auto;
+}
+.scale-card label[hidden] {
+  display: none;
 }

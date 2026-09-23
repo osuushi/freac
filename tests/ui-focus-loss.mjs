@@ -93,7 +93,7 @@ async function moveFocusRoutes(page, pick) {
   const inside = await at(page, 0, 0);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(inside.x, inside.y);
-  await chooseTool(page, "move sketch", "move-sketch");
+  await chooseTool(page, "transform", "transform");
   await page.getByRole("button", { name: "Move sketch X", exact: true }).click();
   await page.getByRole("textbox", { name: "Translation X", exact: true }).fill("5");
   await blurAndReturn(page);

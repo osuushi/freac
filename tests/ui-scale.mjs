@@ -8,14 +8,15 @@ import { chooseTool } from "./ui-tools.mjs";
 
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-5, `${a} != ${b}`);
 async function start(page) {
-  await chooseTool(page, "scale", "scale");
+  await chooseTool(page, "transform", "transform");
+  await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
 }
 async function factor(page, value) {
-  await page.getByRole("textbox", { name: "Scale factor", exact: true }).fill(String(value));
+  await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill(String(value));
   return inspect(page);
 }
 async function accept(page) {
-  await page.getByRole("button", { name: "Accept scale", exact: true }).click();
+  await page.getByRole("button", { name: "Accept transform scale", exact: true }).click();
   return inspect(page);
 }
 async function center(locator) {
@@ -54,7 +55,7 @@ export async function scaleSketchRoute(page, name) {
   await drag(page, [5, 3], [15, 9]);
   const original = (await inspect(page)).document;
   await start(page);
-  const pivot = await center(page.getByRole("button", { name: "Scale pivot", exact: true }));
+  const pivot = await center(page.locator(".move-anchor:visible"));
   const origin = original.sketches[0].curves[0].a;
   const endpoint = original.sketches[0].curves[0].b;
   const corner = await at(page, origin.x, origin.y);
@@ -72,11 +73,13 @@ export async function scaleSketchRoute(page, name) {
   await page.evaluate(() => window.dispatchEvent(new Event("blur")));
   assert.equal((await inspect(page)).interaction.kind, "scale", "released preview survives blur");
   await factor(page, 0);
-  assert.ok(await page.getByRole("button", { name: "Accept scale", exact: true }).isDisabled());
-  await page.getByRole("button", { name: "Cancel scale", exact: true }).click();
+  assert.ok(
+    await page.getByRole("button", { name: "Accept transform scale", exact: true }).isDisabled(),
+  );
+  await page.getByRole("button", { name: "Cancel transform scale", exact: true }).click();
   await start(page);
   assert.equal(
-    await page.getByLabel("Scale factor", { exact: true }).getAttribute("aria-invalid"),
+    await page.getByLabel("Transform scale X", { exact: true }).getAttribute("aria-invalid"),
     "false",
   );
   await factor(page, 2);
@@ -99,7 +102,7 @@ async function sketchGestureChecks(page, name, accepted) {
   await page.mouse.click(pick.x, pick.y);
   await start(page);
   const camera = (await inspect(page)).camera;
-  const anchor = await center(page.getByRole("button", { name: "Scale pivot", exact: true }));
+  const anchor = await center(page.locator(".move-anchor:visible"));
   await page.keyboard.down("Meta");
   await page.mouse.move(anchor.x, anchor.y);
   await page.mouse.down();
@@ -109,8 +112,8 @@ async function sketchGestureChecks(page, name, accepted) {
   let state = await inspect(page);
   assert.ok(state.activePlane, "Command pivot drag does not exit sketch");
   assert.deepEqual(state.camera, camera, "Command pivot drag does not orbit");
-  const handle = await center(page.getByRole("button", { name: "Drag scale factor", exact: true }));
-  const sphere = await center(page.getByRole("button", { name: "Scale pivot", exact: true }));
+  const handle = await center(page.locator(".transform-box-handle:visible").last());
+  const sphere = await center(page.locator(".move-anchor:visible"));
   const len = Math.hypot(handle.x - sphere.x, handle.y - sphere.y);
   await page.mouse.move(handle.x, handle.y);
   await page.mouse.down();
@@ -121,13 +124,13 @@ async function sketchGestureChecks(page, name, accepted) {
   );
   await page.mouse.up();
   state = await inspect(page);
-  assert.ok(Number(await page.getByLabel("Scale factor", { exact: true }).inputValue()) > 1.3);
+  assert.ok(Number(await page.getByLabel("Transform scale X", { exact: true }).inputValue()) > 1.3);
   assert.deepEqual(state.document, accepted, "glyph release stays temporary");
   await page.screenshot({ path: `.cache/sketch-review/${name}-scale-sketch.png` });
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, accepted);
   await start(page);
-  const held = await center(page.getByRole("button", { name: "Drag scale factor", exact: true }));
+  const held = await center(page.locator(".transform-box-handle:visible").last());
   await page.mouse.move(held.x, held.y);
   await page.mouse.down();
   await page.mouse.move(held.x + 12, held.y - 12);
@@ -158,17 +161,13 @@ export async function scaleBodyRoute(page, name) {
   await orient(page, [1, 1, 1]);
   assert.equal((await inspect(page)).interaction.kind, "scale");
   await page.screenshot({ path: `.cache/sketch-review/${name}-scale-oblique.png` });
-  const glyph = await page
-    .getByRole("button", { name: "Drag scale factor", exact: true })
-    .boundingBox();
+  const glyph = await page.locator(".transform-box-handle:visible").last().boundingBox();
   await page.mouse.move(950, 650);
   await page.keyboard.down("Control");
   await page.mouse.wheel(0, -30);
   await page.keyboard.up("Control");
   await inspect(page);
-  const zoomed = await page
-    .getByRole("button", { name: "Drag scale factor", exact: true })
-    .boundingBox();
+  const zoomed = await page.locator(".transform-box-handle:visible").last().boundingBox();
   assert.ok(
     Math.abs(zoomed.width - glyph.width) < 0.01,
     "glyph width stays fixed to subpixel precision",
@@ -211,7 +210,7 @@ export async function scaleBodyRoute(page, name) {
   state = await factor(page, 0.8);
   assert.ok(state.preview.bodies[0].volume < body.volume);
   await page.screenshot({ path: `.cache/sketch-review/${name}-scale-edge.png` });
-  await page.getByRole("button", { name: "Cancel scale", exact: true }).click();
+  await page.getByRole("button", { name: "Cancel transform scale", exact: true }).click();
   assert.equal((await inspect(page)).interaction, null);
   console.log(
     `${name}: body and local face/edge scale, reconnection taper, history, archive and re-edit passed`,

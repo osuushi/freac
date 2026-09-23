@@ -29,6 +29,7 @@ export class SolidCalculator extends NativeCalculator<
       ids: string[];
       pivot: import("../sketch/planes.js").Vector;
       factor: number;
+      factors?: import("../sketch/planes.js").Vector;
       bodies: readonly Body[];
     }
   | {
@@ -37,6 +38,7 @@ export class SolidCalculator extends NativeCalculator<
       edges: BodyEdgeFinish["edges"];
       pivot: import("../sketch/planes.js").Vector;
       factor: number;
+      factors?: import("../sketch/planes.js").Vector;
       bodies: readonly Body[];
     }
   | ReturnType<typeof import("./measurement-input.js").measurementInput>

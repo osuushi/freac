@@ -1,8 +1,10 @@
 #include "boundary-move.h"
 #include "boundary-validation.h"
+#include "scale-transform.h"
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
+#include <BRepBuilderAPI_NurbsConvert.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepFill.hxx>
 #include <BRepOffsetAPI_MakeFilling.hxx>
@@ -41,6 +43,12 @@ TopoDS_Face band(const TopoDS_Face& face, const Edit& edit) {
         boundaries.push_back(edit.edge(edge));
     }
     if (!seam || boundaries.size() != 2) return {};
+    if (edit.transform.Form() == gp_Other) {
+        // Match GTransform's rational conic parameterization on both rims.
+        // Mixing analytic and rational parameters twists the intermediate sections.
+        for (auto& edge : boundaries)
+            edge = TopoDS::Edge(BRepBuilderAPI_NurbsConvert(edge, true).Shape());
+    }
     // The original parameter directions define correspondence, not nearest points
     // after movement. This also works when either closed boundary is no longer circular.
     return BRepFill::Face(boundaries[0], boundaries[1]);
@@ -58,7 +66,7 @@ bool onPlane(const gp_Pln& plane, const std::vector<TopoDS_Edge>& edges) {
 }
 TopoDS_Face rebuildFace(const TopoDS_Face& source, const Edit& edit) {
     if (edit.rigidFaces.Contains(source))
-        return TopoDS::Face(BRepBuilderAPI_Transform(source, edit.transform, true).Shape());
+        return TopoDS::Face(affineShape(source, edit.transform));
     if (!edit.affected(source)) return TopoDS::Face(BRepBuilderAPI_Copy(source).Shape());
     auto face = source;
     face.Orientation(TopAbs_FORWARD);

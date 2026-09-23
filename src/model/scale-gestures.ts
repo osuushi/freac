@@ -1,23 +1,25 @@
-import * as THREE from "three";
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import { replayPointerModifiers } from "../sketch/modifier-pointer.js";
 import type { Vector } from "../sketch/planes.js";
 import { anchorSnap } from "./anchor-snapping.js";
-import { type ScaleWidget, scalePlaneNormal } from "./scale-widget.js";
+import type { ScaleWidget } from "./scale-widget.js";
+import { type BoxHandle, boxLocal, boxWorld, type TransformBox } from "./transform-box.js";
 
 interface State {
   pivot: Vector;
-  factor: number;
+  factors: Vector;
+  box: TransformBox;
   lease: InteractionLease;
 }
 type Drag = State & {
   id: number;
   x: number;
   y: number;
-  pivotDrag: boolean;
-  plane: THREE.Plane;
-  hit: THREE.Vector3;
-  direction: { x: number; y: number };
+  handle: BoxHandle;
+  moved: boolean;
+  start: Vector;
+  directions: { x: number; y: number }[];
 };
 export class ScaleGestures {
   private abort = new AbortController();
@@ -26,90 +28,139 @@ export class ScaleGestures {
     private editor: SketchEditor,
     private widget: ScaleWidget,
     private state: () => State | null,
-    private change: (pivot: Vector, factor: number) => void,
+    private change: (factors: Vector) => void,
   ) {
+    widget.onstart = (event, handle) => this.start(event, handle);
     const options = { signal: this.abort.signal };
-    widget.anchor.addEventListener("pointerdown", (e) => this.start(e, true), options);
-    widget.handle.addEventListener("pointerdown", (e) => this.start(e, false), options);
     window.addEventListener("pointermove", this.move, options);
+    replayPointerModifiers(this.abort.signal, () => !!this.drag, this.move);
     window.addEventListener(
       "pointerup",
       (event) => {
-        if (event.pointerId !== this.drag?.id) return;
+        const drag = this.drag;
+        if (!drag || event.pointerId !== drag.id) return;
         this.move(event);
         this.stop();
+        if (!drag.moved) {
+          const input = widget.factors[drag.handle.axes[0]];
+          input.focus();
+          input.select();
+        }
       },
       options,
     );
-    for (const button of [widget.anchor, widget.handle])
-      button.addEventListener("click", (e) => e.stopPropagation(), options);
   }
-  private point(event: PointerEvent, plane: THREE.Plane): THREE.Vector3 | null {
-    const bounds = this.editor.world.canvas.getBoundingClientRect(),
-      ray = new THREE.Raycaster();
-    ray.setFromCamera(
-      new THREE.Vector2(
-        (2 * (event.clientX - bounds.x)) / bounds.width - 1,
-        1 - (2 * (event.clientY - bounds.y)) / bounds.height,
-      ),
-      this.editor.world.camera,
-    );
-    return ray.ray.intersectPlane(plane, new THREE.Vector3());
-  }
-  private start(event: PointerEvent, pivotDrag: boolean): void {
+  private start(event: PointerEvent, handle: BoxHandle): void {
+    if (event.button || this.editor.blocked) return;
     const state = this.state();
-    if (event.button || !state || state.lease.phase !== "editing" || this.editor.blocked) return;
+    if (state?.lease.phase !== "editing") return;
     event.preventDefault();
     event.stopPropagation();
-    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(
-      scalePlaneNormal(this.editor),
-      new THREE.Vector3(...state.pivot),
-    );
-    const hit = this.point(event, plane);
-    if (!hit) return;
+    const pivot = boxLocal(state.box, state.pivot);
+    const start = handle.point.map(
+      (v, i) => pivot[i] + (v - pivot[i]) * state.factors[i],
+    ) as Vector;
+    const p = this.editor.world.project(boxWorld(state.box, start));
+    const directions = [0, 1, 2].map((axis) => {
+      const point = [...start] as Vector;
+      point[axis] += 1;
+      const q = this.editor.world.project(boxWorld(state.box, point));
+      return { x: q.x - p.x, y: q.y - p.y };
+    });
     this.drag = {
       ...state,
-      pivot: [...state.pivot],
-      pivotDrag,
-      plane,
-      hit,
+      factors: [...state.factors],
       id: event.pointerId,
       x: event.clientX,
       y: event.clientY,
-      direction: { ...this.widget.direction },
+      handle,
+      moved: false,
+      start,
+      directions,
     };
-    state.lease.capture(pivotDrag ? this.widget.anchor : this.widget.handle, event.pointerId);
-    this.editor.refresh();
+    state.lease.capture(event.currentTarget as Element, event.pointerId);
   }
   private move = (event: PointerEvent): void => {
-    const drag = this.drag;
-    if (!drag || event.pointerId !== drag.id || drag.lease.phase !== "editing") return;
-    if (!drag.pivotDrag) {
-      const distance =
-        (event.clientX - drag.x) * drag.direction.x + (event.clientY - drag.y) * drag.direction.y;
-      this.change(drag.pivot, drag.factor * 2 ** (distance / 96));
-      return;
-    }
-    const snap = event.metaKey
+    const d = this.drag;
+    if (!d || event.pointerId !== d.id || d.lease.phase !== "editing") return;
+    let dx = event.clientX - d.x,
+      dy = event.clientY - d.y;
+    d.moved ||= Math.hypot(dx, dy) > 3;
+    if (!d.moved) return;
+    const pivot = boxLocal(d.box, d.pivot);
+    const snap = event.shiftKey
       ? null
       : anchorSnap(this.editor, { x: event.clientX, y: event.clientY });
-    this.widget.anchor.dataset.snapped = String(!!snap);
-    const hit = this.point(event, drag.plane);
-    if (snap) this.change(snap, drag.factor);
-    else if (hit)
-      this.change(
-        new THREE.Vector3(...drag.pivot).add(hit.sub(drag.hit)).toArray() as Vector,
-        drag.factor,
-      );
+    if (snap) {
+      const p = this.editor.world.project(boxWorld(d.box, d.start)),
+        q = this.editor.world.project(snap);
+      dx = q.x - p.x;
+      dy = q.y - p.y;
+    }
+    const axes = d.handle.axes.filter((i) => Math.abs(d.handle.point[i] - pivot[i]) > 1e-8);
+    const values = [...d.factors] as Vector;
+    if (this.widget.linked.checked) {
+      const p = this.editor.world.project(d.pivot),
+        q = this.editor.world.project(boxWorld(d.box, d.start));
+      const x = q.x - p.x,
+        y = q.y - p.y,
+        length = x * x + y * y;
+      if (length < 1) return;
+      const ratio = 1 + (dx * x + dy * y) / length;
+      for (let i = 0; i < 3; i++) values[i] *= ratio;
+    } else {
+      const delta = projectedDelta(d.directions, axes, dx, dy);
+      for (const i of axes) {
+        let destination = d.start[i] + delta[i];
+        if (this.editor.gridSnap && !snap)
+          destination =
+            Math.round(destination / this.editor.world.spacing) * this.editor.world.spacing;
+        values[i] = (destination - pivot[i]) / (d.handle.point[i] - pivot[i]);
+      }
+    }
+    this.change(values);
   };
   stop(): void {
     this.drag?.lease.releaseCapture();
     this.drag = null;
-    delete this.widget.anchor.dataset.snapped;
-    this.editor.refresh();
   }
   dispose(): void {
     this.stop();
     this.abort.abort();
   }
+}
+
+/** Screen-space least squares, retaining unobservable components in end-on views. */
+function projectedDelta(
+  directions: { x: number; y: number }[],
+  axes: number[],
+  dx: number,
+  dy: number,
+): Vector {
+  const result: Vector = [0, 0, 0];
+  if (axes.length === 1) {
+    const i = axes[0],
+      p = directions[i],
+      norm = p.x ** 2 + p.y ** 2;
+    if (norm > 1e-12) result[i] = (dx * p.x + dy * p.y) / norm;
+    return result;
+  }
+  let xx = 0,
+    xy = 0,
+    yy = 0;
+  for (const i of axes) {
+    const p = directions[i];
+    xx += p.x ** 2;
+    xy += p.x * p.y;
+    yy += p.y ** 2;
+  }
+  const determinant = xx * yy - xy * xy;
+  if (determinant > 1e-12 * (xx + yy) ** 2) {
+    const x = (yy * dx - xy * dy) / determinant,
+      y = (xx * dy - xy * dx) / determinant;
+    for (const i of axes) result[i] = directions[i].x * x + directions[i].y * y;
+  } else if (xx + yy > 1e-12) {
+    for (const i of axes) result[i] = (directions[i].x * dx + directions[i].y * dy) / (xx + yy);
+  }
+  return result;
 }

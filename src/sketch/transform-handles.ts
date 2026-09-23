@@ -1,8 +1,9 @@
 import * as THREE from "three";
+import { clearTransformArrow } from "../model/transform-clearance.js";
 import { bowGuides } from "./arc-edit.js";
 import type { SketchEditor } from "./editor.js";
 import { rotationOffset, rotationVisible, widgetRadius } from "./move-widget/geometry.js";
-import type { Point } from "./planes.js";
+import { type Point, worldPoint } from "./planes.js";
 import { hasTransformWidget, selectionFrame } from "./selection-frame.js";
 export function transformHandles(editor: SketchEditor) {
   const frame = selectionFrame(editor),
@@ -17,6 +18,16 @@ export function transformHandles(editor: SketchEditor) {
       y: center.y + (axis === "y" ? widgetRadius * unit : 0),
     },
   }));
+  if (editor.moveMode)
+    for (const handle of axes) {
+      const pivot = worldPoint(sketch.plane, center);
+      const tip = clearTransformArrow(editor, pivot, worldPoint(sketch.plane, handle.point));
+      const delta = new THREE.Vector3(...tip).sub(new THREE.Vector3(...pivot));
+      handle.point = {
+        x: center.x + delta.dot(new THREE.Vector3(...sketch.plane.u)),
+        y: center.y + delta.dot(new THREE.Vector3(...sketch.plane.v)),
+      };
+    }
   // A bow handle owns its visible position. Move/M hides bow guides and exposes
   // every transform arrow when the two affordances would otherwise overlap.
   const guides = bowGuides(editor);

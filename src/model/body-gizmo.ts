@@ -11,6 +11,7 @@ import {
 import type { Vector } from "../sketch/planes.js";
 import { axes } from "./body-placement.js";
 import { projectedAxis } from "./extrude-axis.js";
+import { clearTransformArrow } from "./transform-clearance.js";
 import "./body-gizmo.css";
 
 export class BodyGizmo {
@@ -55,6 +56,7 @@ export class BodyGizmo {
   ): void {
     const world = editor.world,
       origin = world.project(pivot);
+    if (!this.root.hidden) editor.transformAnchor = { point: [...pivot], active: true };
     this.root.style.left = `${origin.x}px`;
     this.root.style.top = `${origin.y}px`;
     this.pivot.setAttribute("aria-pressed", String(movingPivot));
@@ -90,9 +92,8 @@ export class BodyGizmo {
           handle.axis === "N" ? 102 : widgetRadius,
         );
       }
-      const end = world.project(
-        new THREE.Vector3(...pivot).addScaledVector(offset, unit).toArray() as Vector,
-      );
+      const tip = new THREE.Vector3(...pivot).addScaledVector(offset, unit).toArray() as Vector;
+      const end = world.project(handle.rotate ? tip : clearTransformArrow(editor, pivot, tip));
       if (boundary) {
         end.x = origin.x + boundary.x * 144;
         end.y = origin.y + boundary.y * 144;

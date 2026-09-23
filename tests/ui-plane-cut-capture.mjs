@@ -54,7 +54,7 @@ export async function planeCutCaptureRoute(page, name) {
   await bodyArchiveRoute(page, `${name}-plane-cut`);
   const beforeMove = (await inspect(page)).document;
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
-  await chooseTool(page, "move", "move");
+  await chooseTool(page, "transform", "transform");
   await page.getByRole("button", { name: "Move body X", exact: true }).click();
   await page.getByRole("textbox", { name: "Body translation X", exact: true }).fill("3");
   await inspect(page);

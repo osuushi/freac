@@ -81,7 +81,7 @@ export async function prepareShoulder(page, name, round) {
 export async function edgeMoveRoute(page, name, electron, round) {
   const original = await prepareShoulder(page, name, round);
   await selectBoundary(page, round, 8);
-  await chooseTool(page, "move", "move");
+  await chooseTool(page, "transform", "transform");
   const selected = (await inspect(page)).modelingSelection;
   let state = await quantity(page, 1);
   assert.ok(state.preview, await page.getByRole("status").textContent());

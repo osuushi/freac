@@ -1,82 +1,175 @@
-import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
-import { alignedAxis, uprightAxis } from "../sketch/move-widget/geometry.js";
 import type { Vector } from "../sketch/planes.js";
+import {
+  type BoxHandle,
+  boxEdges,
+  boxHandles,
+  boxLocal,
+  boxWorld,
+  type TransformBox,
+} from "./transform-box.js";
 import "./scale.css";
 
-export function scalePlaneNormal(editor: SketchEditor): THREE.Vector3 {
-  const frame = editor.world.activeFrame;
-  if (frame) return new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v));
-  const aligned = alignedAxis(editor.world.camera);
-  return aligned === null
-    ? new THREE.Vector3(...uprightAxis(editor.world.camera))
-    : new THREE.Vector3().setComponent(aligned, 1);
-}
 export class ScaleWidget {
   readonly root = document.createElement("div");
   readonly card = document.createElement("div");
-  readonly factor = document.createElement("input");
-  readonly anchor = document.createElement("button");
-  readonly handle = document.createElement("button");
+  readonly factors = [0, 1, 2].map(() => document.createElement("input"));
+  readonly linked = document.createElement("input");
   readonly accept = document.createElement("button");
   readonly cancel = document.createElement("button");
-  direction = { x: 1, y: -1 };
+  readonly handles = document.createElement("div");
+  private svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  private buttons = new Map<string, HTMLButtonElement>();
+  private geometry = new Map<string, BoxHandle>();
+  onstart: (event: PointerEvent, handle: BoxHandle) => void = () => {};
   constructor(overlay: HTMLElement) {
     this.root.className = "scale-widget";
     this.root.hidden = true;
     this.card.className = "scale-card";
-    this.anchor.className = "scale-anchor";
-    this.anchor.setAttribute("aria-label", "Scale pivot");
-    this.anchor.title = "Move scale pivot · Command bypasses snapping";
-    this.handle.className = "scale-handle";
-    this.handle.setAttribute("aria-label", "Drag scale factor");
-    this.handle.title = "Drag outward to grow, inward to shrink";
-    this.handle.innerHTML =
-      '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M9 27h12v12H9z M24 10h14v14H24z" fill="white" stroke="#151515" stroke-width="1.5"/><path d="M22 26 36 12m-9 0h9v9" fill="none" stroke="#151515" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 26 36 12m-9 0h9v9" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    const label = document.createElement("label");
-    label.textContent = "Factor ";
-    this.factor.type = "text";
-    this.factor.inputMode = "decimal";
-    this.factor.setAttribute("aria-label", "Scale factor");
-    label.append(this.factor, " ×");
+    this.svg.classList.add("transform-box-lines");
+    this.svg.setAttribute("aria-hidden", "true");
+    for (const [i, input] of this.factors.entries()) {
+      const label = document.createElement("label");
+      label.textContent = `${["X", "Y", "Z"][i]} `;
+      input.type = "text";
+      input.inputMode = "decimal";
+      input.value = "1";
+      input.setAttribute("aria-label", `Transform scale ${["X", "Y", "Z"][i]}`);
+      label.append(input, " ×");
+      this.card.append(label);
+    }
+    const linked = document.createElement("label");
+    this.linked.type = "checkbox";
+    linked.append(this.linked, "Uniform scale");
     this.accept.textContent = "✓";
-    this.accept.setAttribute("aria-label", "Accept scale");
+    this.accept.setAttribute("aria-label", "Accept transform scale");
     this.cancel.textContent = "×";
-    this.cancel.setAttribute("aria-label", "Cancel scale");
+    this.cancel.setAttribute("aria-label", "Cancel transform scale");
     const actions = document.createElement("div");
     actions.append(this.accept, this.cancel);
-    this.card.append(label, actions);
-    this.root.append(this.anchor, this.handle, this.card);
+    this.card.append(linked, actions);
+    this.root.append(this.svg, this.handles, this.card);
     overlay.append(this.root);
   }
-  position(editor: SketchEditor, pivot: Vector): void {
-    const world = editor.world,
-      normal = scalePlaneNormal(editor);
-    const frame = world.activeFrame;
-    const axis = Math.abs(normal.z) > 0.5 ? new THREE.Vector3(1, 0, 0) : new THREE.Vector3(0, 0, 1);
-    const u = frame ? new THREE.Vector3(...frame.u) : axis;
-    const v = frame ? new THREE.Vector3(...frame.v) : normal.clone().cross(u);
-    const offset = u.add(v).multiplyScalar((64 * world.height) / world.canvas.clientHeight);
-    const p = world.project(pivot),
-      h = world.project(new THREE.Vector3(...pivot).add(offset).toArray() as Vector);
-    const bounds = world.canvas.getBoundingClientRect();
-    this.root.style.left = `${p.x - bounds.left}px`;
-    this.root.style.top = `${p.y - bounds.top}px`;
-    const dx = h.x - p.x,
-      dy = h.y - p.y,
-      length = Math.hypot(dx, dy);
-    this.direction = length > 1 ? { x: dx / length, y: dy / length } : { x: 0, y: -1 };
-    this.handle.style.left = `${dx}px`;
-    this.handle.style.top = `${dy}px`;
-    this.handle.style.transform = `translate(-50%, -50%) rotate(${(Math.atan2(this.direction.y, this.direction.x) * 180) / Math.PI + 45}deg)`;
-    this.card.style.left = `${dx + 34}px`;
-    this.card.style.top = `${dy + 28}px`;
+  values(): Vector {
+    return this.factors.map((input) => (input.value.trim() ? Number(input.value) : NaN)) as Vector;
   }
-  update(active: boolean, valid: boolean, busy: boolean, closing: boolean): void {
-    this.root.hidden = !active;
+  setValues(values: Vector): void {
+    this.factors.forEach((input, i) => {
+      input.value = String(Number(values[i].toPrecision(10)));
+    });
+  }
+  position(editor: SketchEditor, box: TransformBox, pivot: Vector, factors: Vector): void {
+    const bounds = editor.world.canvas.getBoundingClientRect();
+    const local = boxLocal(box, pivot);
+    const project = (point: Vector) => {
+      const scaled = point.map((v, i) => local[i] + (v - local[i]) * factors[i]) as Vector;
+      const p = editor.world.project(boxWorld(box, scaled));
+      return { x: p.x - bounds.left, y: p.y - bounds.top };
+    };
+    this.svg.setAttribute("viewBox", `0 0 ${bounds.width} ${bounds.height}`);
+    this.svg.replaceChildren();
+    for (const [a, b] of boxEdges(box)) {
+      const p = project(a),
+        q = project(b);
+      const line = document.createElementNS(this.svg.namespaceURI, "line");
+      for (const [key, value] of Object.entries({ x1: p.x, y1: p.y, x2: q.x, y2: q.y }))
+        line.setAttribute(key, String(value));
+      this.svg.append(line);
+    }
+    this.geometry = new Map(boxHandles(box).map((handle) => [handle.key, handle]));
+    this.positionHandles(project, local);
+    const points = [...this.geometry.values()].map((handle) => project(handle.point));
+    for (const control of this.root.parentElement?.querySelectorAll(
+      ".body-axis-handle, [data-move-marker], .move-anchor",
+    ) ?? []) {
+      const rect = control.getBoundingClientRect();
+      if (!rect.width || !rect.height) continue;
+      points.push(
+        { x: rect.left - bounds.left, y: rect.top - bounds.top },
+        { x: rect.right - bounds.left, y: rect.bottom - bounds.top },
+      );
+    }
+    const right = Math.max(...points.map((p) => p.x)),
+      left = Math.min(...points.map((p) => p.x));
+    const top = Math.min(...points.map((p) => p.y));
+    const x = right + 28 < bounds.width - 175 ? right + 28 : left - 175;
+    this.card.style.left = `${Math.min(bounds.width - 175, Math.max(8, x))}px`;
+    this.card.style.top = `${Math.min(bounds.height - 205, Math.max(8, top + 28))}px`;
+    const zLabel = this.factors[2].parentElement;
+    if (zLabel) zLabel.hidden = !!box.frame;
+  }
+  private positionHandles(
+    project: (point: Vector) => { x: number; y: number },
+    local: Vector,
+  ): void {
+    const occupied: { x: number; y: number }[] = [];
+    const anchor = project(local);
+    const bounds = this.root.getBoundingClientRect();
+    const rotations = [
+      ...(this.root.parentElement?.querySelectorAll(
+        '.body-rotate-handle, [data-move-marker="rotation"]',
+      ) ?? []),
+    ]
+      .map((control) => control.getBoundingClientRect())
+      .filter((rect) => rect.width && rect.height);
+    for (const [key, button] of this.buttons)
+      if (!this.geometry.has(key)) {
+        button.remove();
+        this.buttons.delete(key);
+      }
+    for (const handle of this.geometry.values()) {
+      let button = this.buttons.get(handle.key);
+      if (!button) {
+        button = document.createElement("button");
+        button.className = "transform-box-handle";
+        button.dataset.handle = handle.key;
+        const key = handle.key;
+        button.addEventListener("pointerdown", (event) => {
+          const current = this.geometry.get(key);
+          if (current) this.onstart(event, current);
+        });
+        button.addEventListener("click", (e) => e.stopPropagation());
+        this.buttons.set(key, button);
+        this.handles.append(button);
+      }
+      const p = project(handle.point);
+      button.hidden =
+        Math.hypot(p.x - anchor.x, p.y - anchor.y) < 22 ||
+        rotations.some(
+          (rect) =>
+            p.x + bounds.left > rect.left - 10 &&
+            p.x + bounds.left < rect.right + 10 &&
+            p.y + bounds.top > rect.top - 10 &&
+            p.y + bounds.top < rect.bottom + 10,
+        ) ||
+        handle.axes.every((axis) => Math.abs(handle.point[axis] - local[axis]) < 1e-8) ||
+        handle.axes.every((axis) => {
+          const point = [...handle.point] as Vector;
+          point[axis] += 1;
+          const q = project(point);
+          return Math.hypot(q.x - p.x, q.y - p.y) < 1e-5;
+        }) ||
+        occupied.some((q) => Math.hypot(q.x - p.x, q.y - p.y) < 0.1);
+      if (!button.hidden) occupied.push(p);
+      button.style.left = `${p.x}px`;
+      button.style.top = `${p.y}px`;
+      button.setAttribute(
+        "aria-label",
+        `Scale ${handle.axes.map((i) => ["X", "Y", "Z"][i]).join(" ")} ${handle.key}`,
+      );
+      button.title = "Drag to resize about the anchor; click to type";
+    }
+  }
+  update(visible: boolean, active: boolean, valid: boolean, busy: boolean, closing: boolean): void {
+    this.root.hidden = !visible;
+    this.accept.hidden = this.cancel.hidden = !active;
     this.accept.disabled = !valid || busy;
-    this.factor.disabled = closing;
-    this.handle.dataset.invalid = String(!valid && this.factor.value !== "1");
+    this.root.setAttribute("aria-busy", String(busy));
+    this.root.dataset.invalid = String(active && !valid && !busy);
+    this.factors.forEach((input) => {
+      input.disabled = closing;
+    });
   }
   dispose(): void {
     this.root.remove();

@@ -106,7 +106,7 @@ async function groupDragAndSketch(page) {
   await page
     .getByRole("button", { name: "Select Body 2", exact: true })
     .click({ modifiers: ["Shift"] });
-  await chooseTool(page, "move", "move");
+  await chooseTool(page, "transform", "transform");
   const beforeDrag = (await inspect(page)).document.bodies;
   const box = await page.getByRole("button", { name: "Move body Y", exact: true }).boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);

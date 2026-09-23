@@ -30,7 +30,7 @@ export async function moveToolRoute(page, name) {
   await chooseTool(page, "undo", "undo");
   await inspect(page);
   await click(page, -17, 0);
-  await page.getByRole("button", { name: "Move (M)", exact: true }).click();
+  await page.getByRole("button", { name: "Transform (M)", exact: true }).click();
   await axisValue(page, "y", 4);
   line = (await inspect(page)).document.sketches[0].curves[0];
   pointEquals(line.a, [-20, 4]);
@@ -70,6 +70,7 @@ export async function moveToolRoute(page, name) {
     await chooseTool(page, "undo", "undo");
     await inspect(page);
   }
+  await click(page, 25, -20);
   await click(page, -17, 0);
   const input = page.getByRole("textbox", { name: "Length", exact: true });
   await input.focus();

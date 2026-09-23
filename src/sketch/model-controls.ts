@@ -2,16 +2,13 @@ import { ExtrudeControls } from "../model/extrude-controls.js";
 import { ModelSelectionDrag } from "../model/model-selection-drag.js";
 import { RevolveControls } from "../model/revolve-controls.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
-import type { CameraFraming } from "./camera-motion.js";
-import { boundaryPoints } from "./curve-spans.js";
-import { newId, type Sketch } from "./document.js";
+import { newId } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { modelDoubleClick } from "./model-double-click.js";
 import { onModelKeydown } from "./model-keys.js";
 import { type ModelingTarget, modelingSketch, pickModel, pickModels } from "./model-selection.js";
 import { PlacementControls } from "./placement-controls.js";
-import { worldPoint } from "./planes.js";
-import type { Profile } from "./profiles.js";
+import { profileFraming } from "./profile-framing.js";
 
 export class ModelControls {
   private disposers: (() => void)[] = [];
@@ -49,15 +46,6 @@ export class ModelControls {
     const sketch = () =>
       base() ?? (modelingSketch(editor) ? null : "Select a sketch or its filled region");
     this.disposers.push(
-      catalog.register({
-        id: "move-sketch",
-        label: "Move sketch",
-        category: "Transform",
-        aliases: ["place sketch", "rotate sketch plane"],
-        shortcut: "M",
-        reason: sketch,
-        run: () => this.move(),
-      }),
       catalog.register({
         id: "edit-sketch",
         label: "Edit sketch",
@@ -180,12 +168,6 @@ export class ModelControls {
         editor.isDragging
       )
         return;
-      if (event.key.toLowerCase() === "m" && modelingSketch(editor)) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        void toolCatalog(editor).invoke("move-sketch");
-        return;
-      }
       if (
         event.key === "Enter" &&
         !event.defaultPrevented &&
@@ -218,10 +200,14 @@ export class ModelControls {
   activateRevolve(): void {
     this.revolve.begin();
   }
-  private move(): void {
+  move(): void {
     const sketch = modelingSketch(this.editor);
-    if (!sketch) return;
-    this.editor.modeling.targets = [{ kind: "sketch", sketch: sketch.id }];
+    if (sketch) this.editor.modeling.targets = [{ kind: "sketch", sketch: sketch.id }];
+    else if (
+      !this.editor.modeling.targets.length ||
+      this.editor.modeling.targets.some((t) => t.kind !== "sketch")
+    )
+      return;
     this.placement.enabled = true;
     this.editor.refresh();
   }
@@ -279,21 +265,4 @@ export class ModelControls {
     this.selectionDrag.dispose();
     this.revolve.dispose();
   }
-}
-
-function profileFraming(editor: SketchEditor, sketch: Sketch, profile: Profile): CameraFraming {
-  const world = editor.world,
-    unitsPerPixel = world.height / Math.max(1, world.canvas.clientHeight),
-    points = boundaryPoints(profile.outer, unitsPerPixel),
-    lowX = Math.min(...points.map((point) => point.x)),
-    highX = Math.max(...points.map((point) => point.x)),
-    lowY = Math.min(...points.map((point) => point.y)),
-    highY = Math.max(...points.map((point) => point.y)),
-    center = { x: (lowX + highX) / 2, y: (lowY + highY) / 2 },
-    aspect = world.canvas.clientWidth / Math.max(1, world.canvas.clientHeight),
-    fittedHeight = Math.max(highY - lowY, (highX - lowX) / Math.max(aspect, 1e-6)) * 1.5;
-  return {
-    target: worldPoint(sketch.plane, center),
-    height: Math.max(0.5, Math.min(10000, fittedHeight)),
-  };
 }

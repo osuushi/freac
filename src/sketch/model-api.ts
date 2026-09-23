@@ -50,7 +50,13 @@ export type ModelRequest =
   | { kind: "finish-edges"; operation: BodyEdgeFinish }
   | { kind: "revolve"; revolution: Revolution }
   | { kind: "extrude"; extrusion: Extrusion }
-  | { kind: "place-sketch"; sketchId: string; frame: PlaneFrame; duplicate?: boolean }
+  | {
+      kind: "place-sketch";
+      sketchId: string;
+      frame: PlaneFrame;
+      duplicate?: boolean;
+      additional?: { sketchId: string; frame: PlaneFrame }[];
+    }
   | { kind: "merge-sketches"; targetSketchId: string; sourceSketchIds: string[] }
   | {
       kind: "delete-entities";

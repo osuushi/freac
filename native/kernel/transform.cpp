@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "scale-transform.h"
 #include <BRepBuilderAPI_Transform.hxx>
 #include <gp_Ax1.hxx>
 #include <gp_Ax2.hxx>
@@ -10,21 +11,17 @@ std::vector<Result> transformBodies(const Tree& input, const std::vector<Operand
                                    std::vector<std::string>& participants) {
     const bool mirror = input.get<std::string>("kind") == "mirror";
     const bool scale = input.get<std::string>("kind") == "scale";
+    const auto affine = scale ? scaleTransform(input) : gp_GTrsf();
     gp_Trsf transform;
-    if (scale) {
-        const double factor = input.get<double>("factor");
-        if (!std::isfinite(factor) || factor <= 0) throw std::runtime_error("Enter a positive scale factor");
-        const auto pivot = point(input.get_child("pivot"));
-        if (!std::isfinite(pivot.X()) || !std::isfinite(pivot.Y()) || !std::isfinite(pivot.Z()))
-            throw std::runtime_error("Choose a finite scale pivot");
-        transform.SetScale(pivot, factor);
+    if (scale && affine.Form() != gp_Other) {
+        transform = affine.Trsf();
     } else if (mirror) {
         const auto origin = point(input.get_child("plane.origin"));
         const auto normal = point(input.get_child("plane.normal"));
         const gp_Vec axis(normal.X(), normal.Y(), normal.Z());
         if (axis.Magnitude() < 1e-12) throw std::runtime_error("Invalid mirror normal");
         transform.SetMirror(gp_Ax2(origin, gp_Dir(axis)));
-    } else {
+    } else if (!scale) {
         const auto pivot = point(input.get_child("pivot"));
         const auto axisPoint = point(input.get_child("axis"));
         const gp_Vec axis(axisPoint.X(), axisPoint.Y(), axisPoint.Z());
@@ -44,6 +41,21 @@ std::vector<Result> transformBodies(const Tree& input, const std::vector<Operand
     std::vector<Result> results;
     for (const auto& body : bodies) {
         if (!selected.erase(body.id)) continue;
+        if (scale && affine.Form() == gp_Other) {
+            BRepBuilderAPI_GTransform operation(body.shape, affine, true);
+            if (!operation.IsDone()) throw std::runtime_error("Body transform failed");
+            const auto planes = affinePlanes(body.shape, affine, operation);
+            const auto shape = planes->Apply(operation.Shape());
+            validate(shape);
+            if (volume(shape) <= 0) throw std::runtime_error("Transform produced a non-positive solid");
+            Result result{shape, {}, {}};
+            result.bodies.push_back(body.id);
+            participants.push_back(body.id);
+            for (const auto& entity : body.entities)
+                result.predecessors.push_back({entity.id, planes->Apply(operation.ModifiedShape(entity.shape))});
+            results.push_back(std::move(result));
+            continue;
+        }
         BRepBuilderAPI_Transform operation(body.shape, transform, true);
         if (!operation.IsDone()) throw std::runtime_error("Body transform failed");
         validate(operation.Shape());

@@ -1,5 +1,6 @@
 #include "boundary-move.h"
 #include "boundary-validation.h"
+#include "scale-transform.h"
 #include <BRep_Tool.hxx>
 #include <gp_Ax1.hxx>
 
@@ -10,8 +11,13 @@ bool Edit::affected(const TopoDS_Shape& shape) const {
     return false;
 }
 gp_Pnt Edit::moved(const TopoDS_Vertex& vertex) const {
-    const auto p = BRep_Tool::Pnt(vertex);
-    return movedVertices.Contains(vertex) ? p.Transformed(transform) : p;
+    auto p = BRep_Tool::Pnt(vertex);
+    if (movedVertices.Contains(vertex)) {
+        auto xyz = p.XYZ();
+        transform.Transforms(xyz);
+        p.SetXYZ(xyz);
+    }
+    return p;
 }
 TopoDS_Edge Edit::edge(const TopoDS_Edge& original) const {
     auto result = edges.at(sourceEdges.FindIndex(original) - 1);
@@ -66,17 +72,14 @@ void carryFaces(Edit& edit) {
 Edit selection(const Tree& input, const std::vector<Operand>& bodies) {
     Edit edit;
     if (input.get<std::string>("kind") == "scale-boundaries") {
-        const double factor = input.get<double>("factor");
-        const auto pivot = point(input.get_child("pivot"));
-        require(std::isfinite(factor) && factor > 0, "Enter a positive scale factor");
-        require(std::isfinite(pivot.X()) && std::isfinite(pivot.Y()) && std::isfinite(pivot.Z()),
-                "Choose a finite scale pivot");
-        edit.transform.SetScale(pivot, factor);
+        edit.transform = scaleTransform(input);
     } else {
         const auto translation = point(input.get_child("translation"));
         require(std::isfinite(translation.X()) && std::isfinite(translation.Y())
                 && std::isfinite(translation.Z()), "Enter a finite movement");
-        edit.transform.SetTranslation(gp_Vec(translation.X(), translation.Y(), translation.Z()));
+        gp_Trsf movement;
+        movement.SetTranslation(gp_Vec(translation.X(), translation.Y(), translation.Z()));
+        edit.transform = gp_GTrsf(movement);
         const double angle = input.get<double>("angle", 0);
         require(std::isfinite(angle), "Enter a finite rotation");
         if (angle != 0) {
@@ -85,7 +88,7 @@ Edit selection(const Tree& input, const std::vector<Operand>& bodies) {
             gp_Trsf rotation;
             rotation.SetRotation(gp_Ax1(pivot, gp_Dir(axis.X(), axis.Y(), axis.Z())),
                                  angle * std::acos(-1) / 180);
-            edit.transform = edit.transform * rotation;
+            edit.transform = edit.transform * gp_GTrsf(rotation);
         }
     }
     addTargets(edit, input, bodies, "faces", "face", TopAbs_FACE);

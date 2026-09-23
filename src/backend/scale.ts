@@ -1,4 +1,4 @@
-import { type ScaleOperation, validateScale } from "../model/scale.js";
+import { identityScale, type ScaleOperation, validateScale } from "../model/scale.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
 import { scaleSketch } from "./scale-sketch.js";
@@ -21,7 +21,7 @@ export async function scaleDocument(
     const sketches = document.sketches.map((s) =>
       ids.includes(s.id) ? scaleSketch(s, operation) : s,
     );
-    return operation.factor === 1 ? document : { ...document, sketches };
+    return identityScale(operation) ? document : { ...document, sketches };
   }
   if (operation.kind !== "solids") throw new Error("Unknown scale selection");
   const bodies = document.bodies ?? [];
@@ -53,7 +53,7 @@ export async function scaleDocument(
       keys.add(key);
     }
   }
-  if (operation.factor === 1) return document;
+  if (identityScale(operation)) return document;
   let next = bodies;
   const apply = (result: Parameters<typeof materialize>[1]) => {
     next = continuingBodies(next, materialize(next, result));
@@ -65,6 +65,7 @@ export async function scaleDocument(
         ids: operation.ids,
         pivot: operation.pivot,
         factor: operation.factor,
+        factors: operation.factors,
         bodies,
       }),
     );
@@ -76,6 +77,7 @@ export async function scaleDocument(
         edges: operation.edges.filter((t) => t.body === id),
         pivot: operation.pivot,
         factor: operation.factor,
+        factors: operation.factors,
         bodies,
       }),
     );

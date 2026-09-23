@@ -24,22 +24,6 @@ export function sketchTools(editor: SketchEditor): () => void {
         run: () => editor.setTool(id),
       }),
     );
-  disposers.push(
-    catalog.register({
-      id: "sketch-move",
-      label: "Move sketch geometry",
-      category: "Transform",
-      shortcut: "M",
-      aliases: ["translate sketch", "rotate sketch"],
-      reason: () =>
-        !editor.world.active || !editor.selectionOwners.size
-          ? "Select sketch curves or points"
-          : editor.interactions.current?.kind === "numeric"
-            ? null
-            : idleReason(editor),
-      run: () => editor.activateMove(),
-    }),
-  );
   for (const id of ["undo", "redo"] as const)
     disposers.push(
       catalog.register({

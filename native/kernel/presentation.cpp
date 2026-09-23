@@ -140,7 +140,7 @@ void present(std::ostream& out, const Result& result) {
     BRepMesh_IncrementalMesh mesh(result.shape, 0.05, false, 0.2, OSD_ThreadPool::DefaultPool()->HasThreads());
     timing.phase("mesh");
     out << "{\"brep\":" << quoted(encode(result.shape)) << ",\"volume\":" << volume(result.shape);
-    GProp_GProps properties; BRepGProp::VolumeProperties(result.shape, properties);
+    GProp_GProps properties; BRepGProp::VolumeProperties(result.shape, properties, 1e-10);
     out << ",\"center\":"; xyz(out, properties.CentreOfMass().XYZ());
     out << ",\"predecessorBodies\":[";
     for (size_t i = 0; i < result.bodies.size(); ++i) { if (i) out << ','; out << quoted(result.bodies[i]); }
