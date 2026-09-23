@@ -45,7 +45,7 @@ test("Anchor plane follows the upright canonical axis, including Y-up and invert
   assert.deepEqual(uprightAxis(camera([4, -5, 3])), [0, 0, 1]);
 });
 
-test("rotation markers hide edge-on on either side while arrows keep fixed world planes", () => {
+test("rotation markers hide edge-on on either side; reference widths remain perpendicular", () => {
   assert.equal(rotationVisible(camera([1, 0, 0]), [0, 0, 1]), false);
   assert.equal(rotationVisible(camera([0, 0, 1]), [0, 0, 1]), true);
   assert.equal(rotationVisible(camera([0, 0, -1]), [0, 0, 1]), true);

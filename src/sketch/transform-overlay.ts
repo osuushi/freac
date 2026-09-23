@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { BodyPivotDrag } from "../model/body-pivot-drag.js";
+import { cameraFacingWidth } from "../model/widget-frame.js";
 import type { SketchEditor } from "./editor.js";
 import { markerMarkup } from "./move-widget/geometry.js";
 import { worldPoint } from "./planes.js";
@@ -106,10 +107,7 @@ export class TransformOverlay {
       for (const h of widget.axes) {
         const tip = project(h.point);
         const u = h.axis === "x" ? sketch.plane.u : sketch.plane.v;
-        const v =
-          h.axis === "x"
-            ? sketch.plane.v
-            : (sketch.plane.u.map((n) => -n) as [number, number, number]);
+        const v = cameraFacingWidth(e.world.camera, u);
         this.marker(tip.x, tip.y, markerMarkup(e.world.camera, u, v, false), h.axis);
       }
     } else if (sketchRotationVisible(e)) {

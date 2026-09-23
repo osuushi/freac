@@ -2,7 +2,6 @@ import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import {
   alignedAxis,
-  arrowWidthAxis,
   markerMarkup,
   rotationOffset,
   rotationVisible,
@@ -12,6 +11,7 @@ import type { Vector } from "../sketch/planes.js";
 import { axes } from "./body-placement.js";
 import { projectedAxis } from "./extrude-axis.js";
 import { clearTransformArrow } from "./transform-clearance.js";
+import { cameraFacingWidth } from "./widget-frame.js";
 import "./body-gizmo.css";
 
 export class BodyGizmo {
@@ -90,7 +90,7 @@ export class BodyGizmo {
               .applyQuaternion(world.camera.quaternion)
               .toArray() as Vector)
           : direction;
-        v = arrowWidthAxis(u);
+        v = cameraFacingWidth(world.camera, u);
         offset = new THREE.Vector3(...direction).multiplyScalar(
           handle.axis === "N" ? 102 : widgetRadius,
         );
