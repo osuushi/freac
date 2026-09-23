@@ -35,6 +35,7 @@ export async function orientationCubeRoute(page, name) {
       await page.mouse.up();
       await inspect(page);
     }
+    await assertFaceLabel(target);
     await target.locator("polygon").click();
     const state = await inspect(page);
     const offset = state.camera.position.map((v, i) => v - state.camera.target[i]);
@@ -69,4 +70,25 @@ export async function orientationCubeRoute(page, name) {
   console.log(
     `${name}: cube face alignment, drag, Escape, keyboard and unchanged geometry/history passed`,
   );
+}
+
+async function assertFaceLabel(target) {
+  const face = await target.evaluate((group) => {
+    const points = Array.from(group.querySelector("polygon").points);
+    const m = group.querySelector("text").transform.baseVal.consolidate().matrix;
+    return { points: points.map(({ x, y }) => [x, y]), matrix: [m.a, m.b, m.c, m.d, m.e, m.f] };
+  });
+  // SVG DOM matrices/point lists round to float32: allow far less than one pixel.
+  const [a, b, c, d, x, y] = face.matrix;
+  const edgeX = face.points[1][0] - face.points[0][0];
+  const edgeY = face.points[1][1] - face.points[0][1];
+  const upX = face.points[2][0] - face.points[1][0];
+  const upY = face.points[2][1] - face.points[1][1];
+  assert.ok(
+    Math.abs(a * edgeY - b * edgeX) < 1e-4,
+    "Text baseline lies on the projected face axis",
+  );
+  assert.ok(Math.abs(c * upY - d * upX) < 1e-4, "Text height foreshortens with its face");
+  assert.ok(Math.abs(x - face.points.reduce((sum, p) => sum + p[0], 0) / 4) < 1e-4);
+  assert.ok(Math.abs(y - face.points.reduce((sum, p) => sum + p[1], 0) / 4) < 1e-4);
 }

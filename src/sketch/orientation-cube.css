@@ -12,8 +12,8 @@
   cursor: grabbing;
 }
 .orientation-cube polygon {
-  stroke: #687482;
-  stroke-width: 1.2;
+  stroke: #151515;
+  stroke-width: 1.5;
   stroke-linejoin: round;
 }
 .orientation-cube g:hover polygon,
@@ -26,7 +26,7 @@
   outline: none;
 }
 .orientation-cube text {
-  fill: #344151;
+  fill: #151515;
   font-size: 10px;
   font-weight: 600;
   text-anchor: middle;

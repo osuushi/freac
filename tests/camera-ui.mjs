@@ -7,6 +7,7 @@ import { cameraRoute } from "./ui-camera.mjs";
 import { redrawRoute } from "./ui-camera-redraw.mjs";
 import { trackballRoute } from "./ui-camera-trackball.mjs";
 import { orientationCubeRoute } from "./ui-orientation-cube.mjs";
+import { bevelViewsRoute } from "./ui-orientation-cube-bevels.mjs";
 import { planeTargetsRoute } from "./ui-plane-targets.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
@@ -32,6 +33,7 @@ try {
     throw error;
   });
   await orientationCubeRoute(page, name);
+  await bevelViewsRoute(page, name);
   await cameraRoute(page, name);
   await trackballRoute(page, name);
   await planeTargetsRoute(page, name);

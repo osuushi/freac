@@ -71,12 +71,10 @@ class CubeInput {
     const world = this.world;
     if (!world.canNavigate() || world.orbit.active) return;
     world.exit();
-    const distance = world.camera.position.distanceTo(world.target);
-    world.camera.position
-      .copy(world.target)
-      .addScaledVector(new THREE.Vector3(...face.normal), distance);
-    world.camera.up.set(...(face.up as [number, number, number]));
-    world.requestDraw();
+    const quaternion = new THREE.Quaternion().setFromRotationMatrix(
+      new THREE.Matrix4().lookAt(face.normal, new THREE.Vector3(), face.up),
+    );
+    world.animateOrientation(quaternion);
   }
   private start = (event: PointerEvent): void => {
     event.stopPropagation();

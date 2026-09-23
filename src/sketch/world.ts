@@ -3,6 +3,7 @@ import {
   alignCameraToPlane,
   applyCameraPose,
   type CameraFraming,
+  type CameraPose,
   planeCameraPose,
 } from "./camera-motion.js";
 import { Arcball, levelOrientation } from "./camera-orbit.js";
@@ -136,18 +137,27 @@ export class World {
     alignCameraToPlane(this, frame);
   }
   private animateTo(frame: PlaneFrame, framing: CameraFraming): void {
+    this.animatePose(planeCameraPose(this, frame, framing));
+  }
+  animateOrientation(quaternion: THREE.Quaternion): void {
+    this.animatePose({
+      target: this.target.clone(),
+      quaternion,
+      distance: this.camera.position.distanceTo(this.target),
+      height: this.height,
+    });
+  }
+  private animatePose(end: CameraPose): void {
     this.cancelCameraMotion();
     this.camera.lookAt(this.target);
     this.camera.updateMatrixWorld();
     const start = {
-        target: this.target.clone(),
-        quaternion: this.camera.quaternion.clone(),
-        distance: this.camera.position.distanceTo(this.target),
-        height: this.height,
-      },
-      end = planeCameraPose(this, frame, framing),
-      duration = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 280;
-    if (!duration) {
+      target: this.target.clone(),
+      quaternion: this.camera.quaternion.clone(),
+      distance: this.camera.position.distanceTo(this.target),
+      height: this.height,
+    };
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
       applyCameraPose(this, end);
       this.draw();
       return;
@@ -159,24 +169,7 @@ export class World {
     this.draw();
   }
   levelHorizon(): void {
-    this.cancelCameraMotion();
-    const quaternion = levelOrientation(this);
-    const start = {
-      target: this.target.clone(),
-      quaternion: this.camera.quaternion.clone(),
-      distance: this.camera.position.distanceTo(this.target),
-      height: this.height,
-    };
-    const end = { ...start, quaternion };
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      applyCameraPose(this, end);
-      this.requestDraw();
-      return;
-    }
-    const started = performance.now();
-    this.cameraAnimation = requestAnimationFrame((now) =>
-      this.cameraStep(start, end, started, now),
-    );
+    this.animateOrientation(levelOrientation(this));
   }
   private cameraStep(
     start: ReturnType<typeof planeCameraPose>,
