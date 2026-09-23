@@ -43,10 +43,11 @@ class OrbitDrag {
     if (
       event.target instanceof Element &&
       event.target.closest(
-        ".move-anchor, .scale-anchor, .scale-handle, .extrude-axis-sphere, .extrude-twist-handle",
+        ".move-anchor, .body-axis-handle, .scale-anchor, .scale-handle, .extrude-axis-sphere, .extrude-twist-handle",
       )
     )
       return;
+    if (event.metaKey && this.world.transformBoxContains?.(event.clientX, event.clientY)) return;
     if (event.button !== 0 || !event.metaKey || !this.onViewport(event.target)) return;
     consume(event);
     if (!this.world.canNavigate() || this.drag || this.pending) return;

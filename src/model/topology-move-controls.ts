@@ -10,6 +10,10 @@ import { BodyGizmo } from "./body-gizmo.js";
 import { BodyPivotDrag } from "./body-pivot-drag.js";
 import { axes } from "./body-placement.js";
 import {
+  createTopologyMoveActions,
+  updateTopologyMovePresentation,
+} from "./topology-move-presentation.js";
+import {
   movementCenter,
   movementNormal,
   movementRequest,
@@ -20,8 +24,8 @@ import {
 export class TopologyMoveControls {
   private gizmo: BodyGizmo;
   private pivotDrag: BodyPivotDrag;
-  private accept = document.createElement("button");
-  private cancelButton = document.createElement("button");
+  private accept: HTMLButtonElement;
+  private cancelButton: HTMLButtonElement;
   private abort = new AbortController();
   private pivot: Vector = [0, 0, 0];
   private customPivot = false;
@@ -49,10 +53,6 @@ export class TopologyMoveControls {
     private kind: "faces" | "edges" = "faces",
   ) {
     this.gizmo = new BodyGizmo(overlay, this.start, kind);
-    this.gizmo.root.classList.add(
-      "topology-move-gizmo",
-      kind === "faces" ? "face-move-gizmo" : "edge-move-gizmo",
-    );
     this.pivotDrag = new BodyPivotDrag(
       editor,
       this.gizmo.pivot,
@@ -67,19 +67,14 @@ export class TopologyMoveControls {
         editor.refresh();
       },
     );
-    this.gizmo.pivot.title = "Drag to reposition the movement pivot; click to reset";
-    this.accept.textContent = "✓";
-    this.accept.setAttribute("aria-label", `Accept ${kind === "faces" ? "face" : "edge"} movement`);
-    this.accept.className = "face-move-accept";
-    this.cancelButton.textContent = "×";
-    this.cancelButton.className = "face-move-cancel";
-    this.cancelButton.setAttribute(
-      "aria-label",
-      `Cancel ${kind === "faces" ? "face" : "edge"} movement`,
+    const actions = createTopologyMoveActions(
+      this.gizmo,
+      kind,
+      () => void this.finish(),
+      () => void this.cancel(),
     );
-    this.gizmo.root.append(this.accept, this.cancelButton);
-    this.accept.onclick = () => void this.finish();
-    this.cancelButton.onclick = () => void this.cancel();
+    this.accept = actions.accept;
+    this.cancelButton = actions.cancelButton;
     this.events();
     editor.world.changed.add(this.update);
     this.update();
@@ -110,18 +105,30 @@ export class TopologyMoveControls {
     }
     if (this.lease.phase !== "editing") return;
     this.rotate = rotate;
-    this.pointer = {
-      id: event.pointerId,
-      x: event.clientX,
-      y: event.clientY,
-      moved: false,
-      frame: dragFrame(this.editor, this.pivot, axis, event.clientX, event.clientY, this.direction),
-    };
+    if (event.pointerId !== -1)
+      this.pointer = {
+        id: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        moved: false,
+        frame: dragFrame(
+          this.editor,
+          this.pivot,
+          axis,
+          event.clientX,
+          event.clientY,
+          this.direction,
+        ),
+      };
     this.gizmo.input.setAttribute(
       "aria-label",
       `${this.kind === "faces" ? "Face" : "Edge"} ${rotate ? "rotation" : "translation"} ${axis === "N" ? "normal" : axis}`,
     );
-    this.lease.capture(event.currentTarget as Element, event.pointerId);
+    if (event.pointerId !== -1) this.lease.capture(event.currentTarget as Element, event.pointerId);
+    else {
+      this.gizmo.input.focus();
+      this.gizmo.input.select();
+    }
     event.preventDefault();
     this.queue(0);
   };
@@ -266,26 +273,19 @@ export class TopologyMoveControls {
     }
     if (!this.lease && !this.customPivot && targets)
       this.pivot = movementCenter(this.editor, targets) ?? this.pivot;
-    const current = this.editor.interactions.current;
-    this.gizmo.root.hidden =
-      !!this.editor.world.active ||
-      this.editor.modeling.tool !== "move" ||
-      (!targets && !this.lease) ||
-      (!!current &&
-        current.kind !== (this.kind === "faces" ? "face-move" : "edge-move") &&
-        current.kind !== "body-move");
-    this.gizmo.input.hidden = !this.lease;
-    this.accept.hidden = this.cancelButton.hidden = !this.lease;
-    this.accept.disabled = !this.valid || !!this.running || this.value === 0;
-    this.gizmo.root.dataset.geometryInvalid = String(this.invalid);
-    this.gizmo.root.setAttribute("aria-busy", String(!!this.running));
-    this.gizmo.input.setAttribute("aria-invalid", String(this.invalid));
-    this.gizmo.update(
+    updateTopologyMovePresentation(
       this.editor,
+      this.gizmo,
+      this.kind,
+      targets,
       this.pivot,
-      false,
-      this.kind === "edges",
-      movementNormal(this.editor, targets),
+      this.lease,
+      this.valid,
+      !!this.running,
+      this.value,
+      this.invalid,
+      this.accept,
+      this.cancelButton,
     );
   };
   dispose(): void {

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { orient } from "./ui-blend-edit.mjs";
+import { orient, project } from "./ui-blend-edit.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -35,21 +35,39 @@ export async function transformSolidRoute(page, name) {
   await factor(page, "X", 2);
   await factor(page, "Y", 0.5);
   await factor(page, "Z", 3);
-  let state = await accept(page);
+  assert.ok(await page.getByRole("button", { name: "Move body X", exact: true }).isVisible());
+  await page.getByRole("button", { name: "Move body X", exact: true }).click();
+  let state = await inspect(page);
+  assert.equal(state.interaction?.kind, "body-move");
   close(state.document.bodies[0].volume, original.bodies[0].volume * 3);
   const body = state.document.bodies[0];
   close(body.bounds[3] - body.bounds[0], 40);
   close(body.bounds[4] - body.bounds[1], 10);
   close(body.bounds[5] - body.bounds[2], 30);
-  await page.getByRole("button", { name: "Move body X", exact: true }).click();
   await page.locator(".body-transform-value").fill("5");
   await page.keyboard.press("Enter");
   state = await inspect(page);
   close(state.document.bodies[0].center[0], body.center[0] + 5);
-  await orient(page, [1, 1, 1]);
-  await page.screenshot({ path: `.cache/sketch-review/${name}-transform-solid-oblique.png` });
-  await orient(page, [1, 0, 0]);
   await page.screenshot({ path: `.cache/sketch-review/${name}-transform-solid-end-on.png` });
+  await orient(page, [1, 1, 1]);
+  const center = state.document.bodies[0].center;
+  const inside = await project(page, [center[0] + 5, center[1], center[2]]);
+  await page.keyboard.down("Meta");
+  await page.mouse.move(inside.x, inside.y);
+  await page.mouse.down();
+  await page.mouse.move(inside.x + 45, inside.y + 30, { steps: 8 });
+  await page.mouse.up();
+  await page.keyboard.up("Meta");
+  state = await inspect(page);
+  const change = state.document.bodies[0].center.map((value, i) => value - center[i]);
+  assert.ok(Math.hypot(...change) > 1, `Command box move: ${change}`);
+  assert.ok(
+    change.some((value) => Math.abs(value) < 1e-4),
+    `Movement must stay in the anchor plane: ${change}`,
+  );
+  assert.equal(state.camera.orbitActive, false);
+  await page.screenshot({ path: `.cache/sketch-review/${name}-transform-solid-oblique.png` });
+  await chooseTool(page, "undo", "undo");
   await chooseTool(page, "undo", "undo");
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);

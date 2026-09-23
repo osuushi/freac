@@ -36,6 +36,9 @@ export class BodyGizmo {
         );
         button.title = `${rotate ? "Rotate around" : "Move along"} ${axis === "N" ? "boundary normal" : axis} · drag or click to type`;
         button.addEventListener("pointerdown", (event) => start(event, axis, rotate));
+        button.addEventListener("transform-numeric-tap", () =>
+          start(new PointerEvent("pointerdown", { pointerId: -1 }), axis, rotate),
+        );
         this.root.append(button);
         this.handles.push({ axis, rotate, button });
       }

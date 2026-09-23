@@ -59,7 +59,52 @@ export class ScaleWidget {
       input.value = String(Number(values[i].toPrecision(10)));
     });
   }
-  position(editor: SketchEditor, box: TransformBox, pivot: Vector, factors: Vector): void {
+  contains(
+    editor: SketchEditor,
+    box: TransformBox,
+    pivot: Vector,
+    factors: Vector,
+    x: number,
+    y: number,
+  ): boolean {
+    const local = boxLocal(box, pivot);
+    const dimensions = [0, 1, 2].filter((i) => box.max[i] - box.min[i] > 1e-8).length;
+    const projected = boxHandles(box)
+      .filter((handle) => handle.axes.length === dimensions)
+      .map((handle) => {
+        const point = handle.point.map((v, i) => local[i] + (v - local[i]) * factors[i]) as Vector;
+        return editor.world.project(boxWorld(box, point));
+      });
+    const cross = (
+      a: { x: number; y: number },
+      b: { x: number; y: number },
+      c: { x: number; y: number },
+    ) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    const sorted = projected.sort((a, b) => a.x - b.x || a.y - b.y);
+    const lower: typeof sorted = [],
+      upper: typeof sorted = [];
+    for (const p of sorted) {
+      while (lower.length > 1 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0)
+        lower.pop();
+      lower.push(p);
+    }
+    for (const p of [...sorted].reverse()) {
+      while (upper.length > 1 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0)
+        upper.pop();
+      upper.push(p);
+    }
+    const hull = [...lower.slice(0, -1), ...upper.slice(0, -1)];
+    return (
+      hull.length > 2 && hull.every((p, i) => cross(p, hull[(i + 1) % hull.length], { x, y }) >= 0)
+    );
+  }
+  position(
+    editor: SketchEditor,
+    box: TransformBox,
+    pivot: Vector,
+    widgetPivot: Vector,
+    factors: Vector,
+  ): void {
     const bounds = editor.world.canvas.getBoundingClientRect();
     const local = boxLocal(box, pivot);
     const project = (point: Vector) => {
@@ -78,7 +123,11 @@ export class ScaleWidget {
       this.svg.append(line);
     }
     this.geometry = new Map(boxHandles(box).map((handle) => [handle.key, handle]));
-    this.positionHandles(project, local);
+    const anchor = editor.world.project(widgetPivot);
+    this.positionHandles(project, boxLocal(box, widgetPivot), {
+      x: anchor.x - bounds.left,
+      y: anchor.y - bounds.top,
+    });
     const points = [...this.geometry.values()].map((handle) => project(handle.point));
     for (const control of this.root.parentElement?.querySelectorAll(
       ".body-axis-handle, [data-move-marker], .move-anchor",
@@ -102,9 +151,9 @@ export class ScaleWidget {
   private positionHandles(
     project: (point: Vector) => { x: number; y: number },
     local: Vector,
+    anchor: { x: number; y: number },
   ): void {
     const occupied: { x: number; y: number }[] = [];
-    const anchor = project(local);
     const bounds = this.root.getBoundingClientRect();
     const rotations = [
       ...(this.root.parentElement?.querySelectorAll(
@@ -158,7 +207,7 @@ export class ScaleWidget {
         "aria-label",
         `Scale ${handle.axes.map((i) => ["X", "Y", "Z"][i]).join(" ")} ${handle.key}`,
       );
-      button.title = "Drag to resize about the anchor; click to type";
+      button.title = "Drag to resize · Option: about anchor · Shift: uniform · click to type";
     }
   }
   update(visible: boolean, active: boolean, valid: boolean, busy: boolean, closing: boolean): void {

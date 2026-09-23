@@ -1,24 +1,28 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
-import { modelingSketch } from "../sketch/model-selection.js";
 import type { Vector } from "../sketch/planes.js";
-import { toolCatalog } from "../tools/catalog.js";
 import type { ScaleOperation, ScaleSource } from "./scale.js";
 import { ScaleGestures } from "./scale-gestures.js";
 import { scalePivot, scaleSelection } from "./scale-selection.js";
 import { ScaleWidget } from "./scale-widget.js";
-import { boxLocal, selectionBox, type TransformBox } from "./transform-box.js";
+import { boxLocal, boxWorld, selectionBox, type TransformBox } from "./transform-box.js";
+import { TransformBoxMove } from "./transform-box-move.js";
+import { installTransformHandoff } from "./transform-handoff.js";
+import { registerTransformTool } from "./transform-tool.js";
 
 export class ScaleControls {
   private disposeTool: () => void;
   private widget: ScaleWidget;
   private gestures: ScaleGestures;
+  private boxMove: TransformBoxMove;
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
   private source: ScaleSource | null = null;
   private box: TransformBox | null = null;
   private pivot: Vector = [0, 0, 0];
+  private operationPivot: Vector = [0, 0, 0];
+  private previousPivot: { x: number; y: number } | null = null;
   private originalIds = new Set<string>();
   private valid = false;
   private pending: ScaleOperation | null = null;
@@ -29,30 +33,7 @@ export class ScaleControls {
     overlay: HTMLElement,
     activate: () => void | Promise<void>,
   ) {
-    this.disposeTool = toolCatalog(editor).register({
-      id: "transform",
-      label: "Transform",
-      category: "Transform",
-      shortcut: "M",
-      aliases: ["move", "translate", "rotate", "resize", "scale", "non-uniform scale"],
-      reason: () =>
-        (editor.interactions.current && !editor.interactions.current.finish
-          ? "Finish or cancel the current edit first"
-          : null) ??
-        (scaleSelection(editor) ||
-        (!editor.world.active && modelingSketch(editor)) ||
-        (editor.world.active && editor.selectionOwners.size)
-          ? null
-          : "Select sketch or solid geometry"),
-      run: async () => {
-        const current = editor.interactions.current;
-        if (current && !(await current.finish?.())) {
-          editor.message ||= "Finish or cancel the current edit before switching tools";
-          return;
-        }
-        await activate();
-      },
-    });
+    this.disposeTool = registerTransformTool(editor, activate);
     this.widget = new ScaleWidget(overlay);
     this.gestures = new ScaleGestures(
       editor,
@@ -60,14 +41,22 @@ export class ScaleControls {
       () => {
         if (!this.lease) this.begin();
         return this.lease && this.box
-          ? { pivot: this.pivot, factors: this.widget.values(), box: this.box, lease: this.lease }
+          ? {
+              pivot: this.pivot,
+              operationPivot: this.operationPivot,
+              factors: this.widget.values(),
+              box: this.box,
+              lease: this.lease,
+            }
           : null;
       },
-      (factors) => {
+      (factors, pivot) => {
+        this.operationPivot = pivot;
         this.widget.setValues(factors);
         this.queue();
       },
     );
+    this.boxMove = new TransformBoxMove(editor, () => this.finish());
     this.widget.accept.onclick = () => void this.finish();
     this.widget.cancel.onclick = () => void this.cancel();
     this.widget.factors.forEach((input, index) => {
@@ -77,10 +66,40 @@ export class ScaleControls {
           this.widget.factors.forEach((other, i) => {
             if (i !== index) other.value = input.value;
           });
+        if (this.box) {
+          const box = this.box;
+          const local = boxLocal(box, this.pivot);
+          const factors = this.widget.values();
+          this.operationPivot = boxWorld(
+            box,
+            local.map((value, i) =>
+              Number.isFinite(factors[i]) && factors[i] !== 1 ? box.min[i] : value,
+            ) as Vector,
+          );
+        }
         this.queue();
       };
     });
     this.events();
+    installTransformHandoff(
+      editor,
+      () => !!this.lease && !this.gestures.active,
+      () => this.finish(),
+      this.abort.signal,
+    );
+    editor.world.transformBoxContains = (x, y) => {
+      const source = this.source ?? scaleSelection(editor);
+      const box = this.box ?? (source ? selectionBox(editor, source) : null);
+      if (!box || (!this.lease && !editor.transformAnchor?.active)) return false;
+      return this.widget.contains(
+        editor,
+        box,
+        this.lease ? this.operationPivot : (editor.transformAnchor?.point ?? scalePivot(editor)),
+        this.lease ? this.widget.values() : [1, 1, 1],
+        x,
+        y,
+      );
+    };
     editor.world.changed.add(this.update);
     this.update();
   }
@@ -99,11 +118,18 @@ export class ScaleControls {
     this.source = source;
     this.box = box;
     this.pivot = e.transformAnchor?.point ?? scalePivot(e);
+    this.operationPivot = [...this.pivot];
+    this.previousPivot = e.pivot;
+    if (source.kind === "curves") {
+      const local = boxLocal(box, this.pivot);
+      e.pivot = { x: local[0], y: local[1] };
+    }
     this.originalIds = new Set(e.sketch?.curves.map((c) => c.id));
     this.valid = true;
     this.latest = this.pending = null;
     e.message = "";
-    e.notice = "Transform · Resize about the anchor · Enter to accept · Escape to cancel";
+    e.notice =
+      "Transform · Option resizes about anchor · Shift scales uniformly · Enter accepts · Escape cancels";
   }
   private events(): void {
     const options = { signal: this.abort.signal, capture: true };
@@ -135,7 +161,12 @@ export class ScaleControls {
       input.setAttribute("aria-invalid", String(!Number.isFinite(factors[i]) || factors[i] <= 0));
     });
     if (valid) {
-      this.pending = this.latest = { ...this.source, pivot: [...this.pivot], factor: 1, factors };
+      this.pending = this.latest = {
+        ...this.source,
+        pivot: [...this.operationPivot],
+        factor: 1,
+        factors,
+      };
       if (!this.running) this.running = this.drain();
     } else this.editor.message = "Enter positive scale factors";
     this.editor.refresh();
@@ -199,12 +230,15 @@ export class ScaleControls {
     lease.show(null);
     await this.editor.store.cancelPreview();
     await this.running;
+    if (this.source?.kind === "curves") this.editor.pivot = this.previousPivot;
     this.end(lease);
   }
   private end(lease: InteractionLease): void {
     this.lease = null;
     this.source = null;
     this.box = null;
+    this.previousPivot = null;
+    this.operationPivot = [0, 0, 0];
     this.widget.setValues([1, 1, 1]);
     this.widget.factors.forEach((input) => {
       input.setAttribute("aria-invalid", "false");
@@ -231,6 +265,7 @@ export class ScaleControls {
       this.widget.position(
         e,
         box,
+        active ? this.operationPivot : (e.transformAnchor?.point ?? scalePivot(e)),
         active ? this.pivot : (e.transformAnchor?.point ?? scalePivot(e)),
         factors.every((v) => Number.isFinite(v) && v > 0) ? factors : [1, 1, 1],
       );
@@ -240,7 +275,9 @@ export class ScaleControls {
     this.abort.abort();
     this.editor.world.changed.delete(this.update);
     this.gestures.dispose();
+    this.boxMove.dispose();
     this.widget.dispose();
+    this.editor.world.transformBoxContains = null;
     this.disposeTool();
   }
 }

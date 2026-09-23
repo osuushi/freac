@@ -35,6 +35,7 @@ export class World {
   height = 80;
   spacing = 1;
   canNavigate = () => true;
+  transformBoxContains: ((x: number, y: number) => boolean) | null = null;
   canEnterSketch = () => true;
   planePicker: ((id: PlaneId) => void) | null = null;
   planePickerAccept: ((frame: PlaneFrame) => boolean) | null = null;

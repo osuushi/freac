@@ -8,6 +8,7 @@ import { type BoxHandle, boxLocal, boxWorld, type TransformBox } from "./transfo
 
 interface State {
   pivot: Vector;
+  operationPivot: Vector;
   factors: Vector;
   box: TransformBox;
   lease: InteractionLease;
@@ -24,11 +25,14 @@ type Drag = State & {
 export class ScaleGestures {
   private abort = new AbortController();
   private drag: Drag | null = null;
+  get active(): boolean {
+    return !!this.drag;
+  }
   constructor(
     private editor: SketchEditor,
     private widget: ScaleWidget,
     private state: () => State | null,
-    private change: (factors: Vector) => void,
+    private change: (factors: Vector, pivot: Vector) => void,
   ) {
     widget.onstart = (event, handle) => this.start(event, handle);
     const options = { signal: this.abort.signal };
@@ -56,7 +60,7 @@ export class ScaleGestures {
     if (state?.lease.phase !== "editing") return;
     event.preventDefault();
     event.stopPropagation();
-    const pivot = boxLocal(state.box, state.pivot);
+    const pivot = boxLocal(state.box, state.operationPivot);
     const start = handle.point.map(
       (v, i) => pivot[i] + (v - pivot[i]) * state.factors[i],
     ) as Vector;
@@ -87,7 +91,15 @@ export class ScaleGestures {
       dy = event.clientY - d.y;
     d.moved ||= Math.hypot(dx, dy) > 3;
     if (!d.moved) return;
-    const pivot = boxLocal(d.box, d.pivot);
+    const centered = boxLocal(d.box, d.pivot);
+    const pivot = [...centered] as Vector;
+    if (!event.altKey)
+      for (let axis = 0; axis < (d.box.frame ? 2 : 3); axis++) {
+        if (d.handle.axes.includes(axis))
+          pivot[axis] =
+            d.handle.point[axis] === d.box.max[axis] ? d.box.min[axis] : d.box.max[axis];
+        else if (event.shiftKey || this.widget.linked.checked) pivot[axis] = d.box.min[axis];
+      }
     const snap = event.shiftKey
       ? null
       : anchorSnap(this.editor, { x: event.clientX, y: event.clientY });
@@ -99,15 +111,15 @@ export class ScaleGestures {
     }
     const axes = d.handle.axes.filter((i) => Math.abs(d.handle.point[i] - pivot[i]) > 1e-8);
     const values = [...d.factors] as Vector;
-    if (this.widget.linked.checked) {
-      const p = this.editor.world.project(d.pivot),
+    if (event.shiftKey || this.widget.linked.checked) {
+      const p = this.editor.world.project(boxWorld(d.box, pivot)),
         q = this.editor.world.project(boxWorld(d.box, d.start));
       const x = q.x - p.x,
         y = q.y - p.y,
         length = x * x + y * y;
       if (length < 1) return;
       const ratio = 1 + (dx * x + dy * y) / length;
-      for (let i = 0; i < 3; i++) values[i] *= ratio;
+      for (let i = 0; i < (d.box.frame ? 2 : 3); i++) values[i] *= ratio;
     } else {
       const delta = projectedDelta(d.directions, axes, dx, dy);
       for (const i of axes) {
@@ -115,10 +127,10 @@ export class ScaleGestures {
         if (this.editor.gridSnap && !snap)
           destination =
             Math.round(destination / this.editor.world.spacing) * this.editor.world.spacing;
-        values[i] = (destination - pivot[i]) / (d.handle.point[i] - pivot[i]);
+        values[i] = d.factors[i] + (destination - d.start[i]) / (d.handle.point[i] - pivot[i]);
       }
     }
-    this.change(values);
+    this.change(values, boxWorld(d.box, pivot));
   };
   stop(): void {
     this.drag?.lease.releaseCapture();

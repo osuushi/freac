@@ -161,7 +161,7 @@ world.changed.add(() => {
     editor.message ||
     editor.notice ||
     (world.active
-      ? `${world.active} sketch · ${world.spacing} mm grid · ${editor.tool === "trim" ? "Trim · click a highlighted span" : (editor.snap?.label ?? "Shift bypasses geometry snaps · Option / Alt draws/resizes about center")}`
+      ? `${world.active} sketch · ${world.spacing} mm grid · ${editor.tool === "trim" ? "Trim · click a highlighted span" : (editor.snap?.label ?? (editor.moveMode ? "Transform · Shift uniform · Option about anchor · ⌘-drag box moves" : "Shift bypasses geometry snaps · Option / Alt draws/resizes about center"))}`
       : editor.modeling.targets.length
         ? `${editor.modeling.targets.length} ${editor.modeling.targets.every((t) => t.kind === "body") ? "body" : editor.modeling.targets.every((t) => t.kind === "edge") ? "edge" : editor.modeling.targets.every((t) => t.kind === "face") ? "face" : editor.modeling.targets.every((t) => t.kind === "sketch") ? "sketch" : editor.modeling.targets.every((t) => t.kind === "profile") ? "region" : "item"} selected${editor.modeling.targets.every((t) => t.kind === "body" || t.kind === "sketch") ? " · M to transform" : ""}`
         : editor.tool === "rectangle"

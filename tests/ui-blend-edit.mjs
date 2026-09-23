@@ -31,13 +31,47 @@ export async function orient(page, normal) {
   if (angle < 1e-5) return;
   const axis = forward.clone().cross(target).normalize();
   if (axis.lengthSq() < 1e-10) axis.set(1, 0, 0);
-  // Arcball uses twice the hemisphere angle. Symmetric endpoints stay inside
-  // its untapered center; bias small rotations away from the anchor sphere.
-  const bias = angle < Math.PI / 3 ? Math.PI / 9 : 0;
-  const from = forward.clone().applyAxisAngle(axis, bias + angle / 4);
-  const to = forward.clone().applyAxisAngle(axis, bias - angle / 4);
+  // Arcball uses twice the hemisphere angle. Choose a start outside an active
+  // Transform box, otherwise Command would move the selection in its plane.
+  const defaultBias = angle < Math.PI / 3 ? Math.PI / 9 : 0;
   const box = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
   const radius = Math.min(box.width, box.height) / 2;
+  let bias = defaultBias;
+  for (const candidate of [
+    defaultBias,
+    Math.PI / 2 - angle / 4 - 0.12,
+    -Math.PI / 2 + angle / 4 + 0.12,
+  ]) {
+    const p = forward.clone().applyAxisAngle(axis, candidate + angle / 4);
+    const x = box.x + box.width / 2 + p.x * radius;
+    const y = box.y + box.height / 2 - p.y * radius;
+    const safe = await page.evaluate(
+      ({ x, y }) => {
+        const target = document.elementFromPoint(x, y);
+        const overlay = document.querySelector("#overlay");
+        const canvas = document.querySelector("canvas");
+        if (!target || (target !== canvas && target !== overlay && !overlay?.contains(target)))
+          return false;
+        if (target instanceof Element && target.closest("button, input, .scale-card")) return false;
+        const handles = [...document.querySelectorAll(".transform-box-handle")]
+          .map((handle) => handle.getBoundingClientRect())
+          .filter((rect) => rect.width && rect.height);
+        if (!handles.length) return true;
+        const left = Math.min(...handles.map((rect) => rect.left)) - 20;
+        const right = Math.max(...handles.map((rect) => rect.right)) + 20;
+        const top = Math.min(...handles.map((rect) => rect.top)) - 20;
+        const bottom = Math.max(...handles.map((rect) => rect.bottom)) + 20;
+        return x < left || x > right || y < top || y > bottom;
+      },
+      { x, y },
+    );
+    if (safe) {
+      bias = candidate;
+      break;
+    }
+  }
+  const from = forward.clone().applyAxisAngle(axis, bias + angle / 4);
+  const to = forward.clone().applyAxisAngle(axis, bias - angle / 4);
   await page.keyboard.down("Meta");
   await page.mouse.move(
     box.x + box.width / 2 + from.x * radius,

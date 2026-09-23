@@ -91,6 +91,7 @@ export class PointerGestures {
       this.editor.tool === "trim" ||
       this.editor.world.cameraTransitioning ||
       this.editor.blocked ||
+      (event.metaKey && this.editor.world.transformBoxContains?.(event.clientX, event.clientY)) ||
       !this.editor.world.active
     )
       return;

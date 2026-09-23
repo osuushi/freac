@@ -155,7 +155,9 @@ midpoint handles change the axes perpendicular to that edge; corners change the
 available extents independently. Modeling also exposes single-axis face-center
 handles. End-on directions retain their existing extent. Handles keep constant
 CSS-pixel size while the box itself follows geometry. The shared sphere chooses
-the scale/rotation anchor and retains existing Move placement/snapping behavior.
+the rotation anchor and Option-resize anchor, and retains existing Move
+placement/snapping behavior. It stays fixed during a scale preview even when the
+selected geometry's bounds change.
 A handle coincident with the anchor has no scaling leverage and is hidden.
 Projected handles that overlap the sphere or rotation glyphs are also hidden
 so those controls remain reachable; moving the anchor or view exposes them again.
@@ -164,14 +166,25 @@ axis only when a box handle overlaps their nominal position. The numeric card
 clears the combined box, arrows and anchor. This is the narrow exception to the
 earlier fixed-position Move assembly; arrow orientation and size remain unchanged.
 
-Local X/Y/Z factors allow exact entry; **Uniform scale** links the factors.
-Positive finite factors are required; collapsed or reflected scale candidates
-cannot accept. Grid snapping quantizes handle destinations. Shift suppresses
-point attraction without disabling the grid. Scaling release retains a temporary
-preview; Enter/check accepts one Undo step, Escape/cross cancels. Complete or cancel
-that scale edit before using the movement controls. Movement keeps its established
-gesture completion rules. Identity and rejected edits preserve Redo. Multiple whole
-sketches can move or rotate together, including Option-copy, in one Undo step.
+By default, dragging a box edge or corner keeps its opposite side or corner
+fixed. Option/Alt instead resizes symmetrically about the sphere anchor. Shift
+makes scaling uniform across the available axes, including axes not directly
+dragged by an edge handle; without Option, their lower bounds remain fixed.
+Shift also bypasses point attraction. Held modifiers update the preview during
+the drag. Local X/Y/Z factors allow exact entry and use the box's lower bound
+on each changed axis; **Uniform scale** links the factors. Positive finite
+factors are required; collapsed or reflected scale candidates cannot accept.
+Grid snapping quantizes handle destinations. Scaling release retains a temporary
+preview; Enter/check accepts one Undo step, Escape/cross cancels. The Move arrows
+and sphere remain visible while scaling. Starting an anchor or arrow gesture
+accepts a valid scale preview, then hands that pointer gesture to the Move
+control. Command-dragging inside the box moves the selection in one plane: the
+active sketch plane in sketch mode, an aligned view plane in 3D, otherwise the
+camera-level upright plane used by free anchor movement. It also accepts a valid
+scale preview before movement. The move creates its own Undo step. Movement keeps
+its established gesture completion rules. Identity and rejected edits preserve
+Redo. Multiple whole sketches can move or rotate together, including Option-copy,
+in one Undo step.
 
 DocumentOwner applies the exact requested affine coordinates and validates the
 existing constraints; it does not ask the solver to deform the selection to fit.

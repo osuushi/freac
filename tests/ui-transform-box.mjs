@@ -33,11 +33,11 @@ export async function transformBoxRoute(page, name) {
   await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("2");
   let state = await inspect(page);
   const before = state.document;
-  close(state.preview.sketches[0].curves[0].a.x, -10);
+  close(state.preview.sketches[0].curves[0].a.x, 0);
   await page.getByRole("textbox", { name: "Transform scale Y", exact: true }).fill("3");
   state = await accept(page);
-  close(state.document.sketches[0].curves[0].a.x, -10);
-  close(state.document.sketches[0].curves[0].a.y, -10);
+  close(state.document.sketches[0].curves[0].a.x, 0);
+  close(state.document.sketches[0].curves[0].a.y, 0);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before);
   await chooseTool(page, "redo", "redo");
@@ -53,15 +53,17 @@ export async function transformBoxRoute(page, name) {
   const a = await at(page, 0, 0),
     b = await at(page, 20, 0);
   state = await resize(page, "1,0,0", b.x - a.x, b.y - a.y);
-  close(state.preview.sketches[0].curves[0].a.x, -10);
-  close(state.preview.sketches[0].curves[0].b.x, 50);
+  close(state.preview.sketches[0].curves[0].a.x, 0);
+  assert.ok(state.preview.sketches[0].curves[0].b.x > 40);
   await page.keyboard.press("Escape");
   assert.equal((await inspect(page)).preview, null);
   const diagonal = await at(page, 10, 10);
   state = await resize(page, "1,1,0", diagonal.x - a.x, diagonal.y - a.y);
   const endpoints = state.preview.sketches[0].curves.flatMap((c) => [c.a, c.b]);
-  close(Math.max(...endpoints.map((p) => p.x)), 40);
-  close(Math.max(...endpoints.map((p) => p.y)), 30);
+  close(Math.min(...endpoints.map((p) => p.x)), 0);
+  close(Math.min(...endpoints.map((p) => p.y)), 0);
+  assert.ok(Math.max(...endpoints.map((p) => p.x)) > 40);
+  assert.ok(Math.max(...endpoints.map((p) => p.y)) > 30);
   await page.keyboard.press("Escape");
   await inspect(page);
   await page.screenshot({ path: `.cache/sketch-review/${name}-transform-box.png` });

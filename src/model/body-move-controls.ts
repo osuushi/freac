@@ -119,18 +119,23 @@ export class BodyMoveControls {
     s.axis = axis;
     s.rotate = rotate;
     s.edit.axis = axes[axis];
-    this.pointer = {
-      id: event.pointerId,
-      x: event.clientX,
-      y: event.clientY,
-      moved: false,
-      frame: dragFrame(this.editor, this.pivot, axis, event.clientX, event.clientY),
-    };
+    if (event.pointerId !== -1)
+      this.pointer = {
+        id: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        moved: false,
+        frame: dragFrame(this.editor, this.pivot, axis, event.clientX, event.clientY),
+      };
     this.gizmo.input.setAttribute(
       "aria-label",
       `${s.pivotOnly ? "Pivot" : rotate ? "Body rotation" : "Body translation"} ${axis}`,
     );
-    s.lease.capture(event.currentTarget as Element, event.pointerId);
+    if (event.pointerId !== -1) s.lease.capture(event.currentTarget as Element, event.pointerId);
+    else {
+      this.gizmo.input.focus();
+      this.gizmo.input.select();
+    }
     event.preventDefault();
     this.editor.refresh();
   };
@@ -270,7 +275,8 @@ export class BodyMoveControls {
       !!this.editor.world.active ||
       this.editor.modeling.tool !== "move" ||
       (!bodies.length && !this.session) ||
-      (!!this.editor.interactions.current && this.editor.interactions.current.kind !== "body-move");
+      (!!this.editor.interactions.current &&
+        !["body-move", "scale"].includes(this.editor.interactions.current.kind));
     this.gizmo.input.hidden = !this.session || !this.gizmo.input.hasAttribute("aria-label");
     this.gizmo.input.setAttribute("aria-invalid", String(this.session?.valid === false));
     const session = this.session;

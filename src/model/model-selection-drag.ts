@@ -46,6 +46,7 @@ export class ModelSelectionDrag {
       this.editor.world.active ||
       this.editor.blocked ||
       this.editor.isDragging ||
+      (event.metaKey && this.editor.world.transformBoxContains?.(event.clientX, event.clientY)) ||
       !this.available()
     )
       return;

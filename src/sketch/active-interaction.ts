@@ -3,6 +3,7 @@ import type { SketchDocument } from "./document.js";
 type Kind =
   | "entity-reorder"
   | "scale"
+  | "transform-box-move"
   | "construction-plane"
   | "plane-cut"
   | "mirror"
@@ -130,7 +131,12 @@ export class InteractionLease {
       },
       { signal: this.abort.signal },
     );
-    element.setPointerCapture(id);
+    try {
+      element.setPointerCapture(id);
+    } catch (error) {
+      // A queued widget handoff can replay its complete gesture after physical release.
+      if (!(error instanceof DOMException && error.name === "NotFoundError")) throw error;
+    }
   }
   releaseCapture(): void {
     const capture = this.captureTarget;
