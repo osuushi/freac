@@ -220,17 +220,19 @@ reconnections remain recoverable errors.
 ### Planar movement shadows (founder trial, 2026-09-23)
 
 In modeling, Command-hover inside a Transform box previews the selected geometry's
-orthogonal outlines on the fixed world XY/XZ/YZ planes. The camera-selected movement
-plane is blue; the other two outlines are muted. Plane labels and thin perpendicular
+soft, translucent filled shadows on the fixed world XY/XZ/YZ planes. The camera-selected
+movement plane has a slightly stronger blue-gray shadow; the others are neutral.
+Plane labels and thin perpendicular
 anchor-to-projection guides connect the object to these references. During the drag,
-dashed outlines retain the starting footprints while solid outlines follow the current
-preview. Release, cancellation and loss of focus clear the guides. Hovering or dragging
+only the current preview casts shadows; no starting-position footprint is retained.
+Release, cancellation and loss of focus clear the guides. Hovering or dragging
 the anchor shows the same projection context; repositioning the anchor changes its
 guides without pretending that the geometry has moved. Active sketch workspaces retain
 their existing planar feedback.
 
-These are display-only silhouettes from presentation triangles, and projected curves
-for sketch/edge selections, not exact sections or model geometry. Interior triangle
-strokes are masked out, retaining concave boundaries and projected openings. World
+These are display-only silhouettes from presentation triangles, and softened projected
+curves for sketch/edge selections, not exact sections or model geometry. Silhouettes are
+filled as a union, preserving concave boundaries and projected openings, then blurred
+in screen space for constant softness through zoom. World
 planes remain fixed at the origin; an offscreen projection can consequently be outside
 the viewport. No extra camera view, persistent object or Undo entry is introduced.

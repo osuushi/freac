@@ -14,88 +14,64 @@ function element<K extends keyof SVGElementTagNameMap>(
   return node;
 }
 function layer(parent: SVGGElement) {
-  const id = `movement-shadow-${serial++}`;
-  const group = element("g");
-  const mask = element("mask", { id, maskUnits: "userSpaceOnUse", "mask-type": "luminance" });
-  const background = element("rect", { fill: "white" });
-  const cutout = element("path", { fill: "black", stroke: "none" });
-  mask.append(background, cutout);
-  const surface = element("path", { mask: `url(#${id})`, "vector-effect": "non-scaling-stroke" });
-  const lines = element("path", { "vector-effect": "non-scaling-stroke" });
-  group.append(mask, surface, lines);
+  const group = element("g", { class: "shadow-current" });
+  const surface = element("path", { class: "shadow-surface" });
+  const lines = element("path", { class: "shadow-lines", "vector-effect": "non-scaling-stroke" });
+  group.append(surface, lines);
   parent.append(group);
-  return { group, mask, background, cutout, surface, lines };
+  return { surface, lines };
 }
-type Layer = ReturnType<typeof layer>;
 function setGeometry(
-  target: Layer,
+  target: ReturnType<typeof layer>,
   geometry: ShadowGeometry,
   axes: readonly [number, number],
-  pad: number,
 ) {
   const paths = shadowPaths(geometry, axes);
   target.surface.setAttribute("d", paths.surface);
-  target.cutout.setAttribute("d", paths.surface);
   target.lines.setAttribute("d", paths.lines);
-  let left = Infinity,
-    right = -Infinity,
-    top = Infinity,
-    bottom = -Infinity;
-  for (const points of [...geometry.triangles, ...geometry.lines])
-    for (const p of points) {
-      left = Math.min(left, p[axes[0]]);
-      right = Math.max(right, p[axes[0]]);
-      top = Math.min(top, p[axes[1]]);
-      bottom = Math.max(bottom, p[axes[1]]);
-    }
-  if (!Number.isFinite(left)) return;
-  for (const node of [target.mask, target.background])
-    for (const [key, value] of Object.entries({
-      x: left - pad,
-      y: top - pad,
-      width: right - left + pad * 2,
-      height: bottom - top + pad * 2,
-    }))
-      node.setAttribute(key, String(value));
 }
 
-/** Masking the silhouette's interior removes triangulation strokes without a model operation. */
+/** Blur the union silhouette in screen space, keeping softness constant through zoom. */
 export class MovementShadowView {
   readonly root = element("svg", { class: "movement-shadows", "aria-hidden": "true" });
+  private blur = element("filter", {
+    id: `movement-shadow-blur-${serial++}`,
+    filterUnits: "userSpaceOnUse",
+    x: "-12",
+    y: "-12",
+    "color-interpolation-filters": "sRGB",
+  });
   private planes = shadowPlanes.map((plane) => {
     const root = element("g", { "data-plane": plane.name });
+    const soft = element("g", { class: "shadow-soft", filter: `url(#${this.blur.id})` });
     const projected = element("g");
-    const start = layer(projected),
-      current = layer(projected);
-    start.group.classList.add("shadow-start");
-    current.group.classList.add("shadow-current");
+    const current = layer(projected);
+    soft.append(projected);
     const tether = element("path", { class: "shadow-tether" });
     const label = element("text", { class: "shadow-label" });
     label.textContent = plane.name;
-    root.append(projected, tether, label);
+    root.append(soft, tether, label);
     this.root.append(root);
-    return { ...plane, root, projected, start, current, tether, label };
+    return { ...plane, root, projected, current, tether, label };
   });
   private previous: ShadowGeometry | null = null;
-  private original: ShadowGeometry | null = null;
-  private padding = 0;
   constructor(private editor: SketchEditor) {
+    this.blur.append(element("feGaussianBlur", { stdDeviation: "3" }));
+    const definitions = element("defs");
+    definitions.append(this.blur);
+    this.root.prepend(definitions);
     this.root.style.display = "none";
     editor.world.overlay.prepend(this.root);
   }
-  draw(
-    current: ShadowGeometry,
-    original: ShadowGeometry | null,
-    anchor: Vector,
-    normal: number,
-  ): void {
+  draw(current: ShadowGeometry, moving: boolean, anchor: Vector, normal: number): void {
     const world = this.editor.world,
       bounds = world.canvas.getBoundingClientRect();
     this.root.style.display = "";
-    this.root.dataset.moving = String(!!original);
+    this.root.dataset.moving = String(moving);
     this.root.setAttribute("viewBox", `0 0 ${bounds.width} ${bounds.height}`);
+    this.blur.setAttribute("width", String(bounds.width + 24));
+    this.blur.setAttribute("height", String(bounds.height + 24));
     const origin = world.project([0, 0, 0]);
-    const pad = (world.height / bounds.height) * 6;
     const labels: { x: number; y: number }[] = [];
     for (const plane of this.planes) {
       plane.root.dataset.active = String(plane.normal === normal);
@@ -109,11 +85,7 @@ export class MovementShadowView {
         "transform",
         `matrix(${basis[0].x} ${basis[0].y} ${basis[1].x} ${basis[1].y} ${origin.x - bounds.left} ${origin.y - bounds.top})`,
       );
-      if (current !== this.previous || pad !== this.padding)
-        setGeometry(plane.current, current, plane.axes, pad);
-      if (original && (original !== this.original || pad !== this.padding))
-        setGeometry(plane.start, original, plane.axes, pad);
-      plane.start.group.style.display = original ? "" : "none";
+      if (current !== this.previous) setGeometry(plane.current, current, plane.axes);
       const foot: Vector = [...anchor];
       foot[plane.normal] = 0;
       const a = world.project(anchor),
@@ -130,8 +102,6 @@ export class MovementShadowView {
       plane.label.setAttribute("y", String(label.y));
     }
     this.previous = current;
-    this.original = original;
-    this.padding = pad;
   }
   hide(): void {
     this.root.style.display = "none";

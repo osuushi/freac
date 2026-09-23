@@ -28,7 +28,7 @@ export async function shadowHoleRoute(page, name) {
   const shadows = page.locator(".movement-shadows:visible");
   assert.equal(await shadows.count(), 1);
   const fill = await shadows
-    .locator('[data-plane="XY"] mask path')
+    .locator('[data-plane="XY"] .shadow-surface')
     .last()
     .evaluate((path) => ({
       hole: path.isPointInFill(new DOMPoint(15, 15)),

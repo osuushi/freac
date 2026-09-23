@@ -29,10 +29,7 @@ export async function cameraFacingMove(page, project, body) {
   await page.mouse.move(to.x, to.y, { steps: 8 });
   await inspect(page);
   assert.equal(await shadows.getAttribute("data-moving"), "true");
-  assert.equal(
-    await shadows.locator('[data-plane="YZ"] .shadow-start > path').first().getAttribute("d"),
-    starting,
-  );
+  assert.equal(await shadows.locator(".shadow-start").count(), 0);
   assert.notEqual(
     await shadows.locator('[data-plane="YZ"] .shadow-current > path').first().getAttribute("d"),
     starting,

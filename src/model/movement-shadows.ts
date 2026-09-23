@@ -13,7 +13,7 @@ export class MovementShadows {
   private sourceKey = "";
   private document: SketchDocument | null = null;
   private current: ShadowGeometry = { triangles: [], lines: [] };
-  private original: ShadowGeometry | null = null;
+  private moving = false;
   private anchor: Vector = [0, 0, 0];
   private normal = 2;
   constructor(private editor: SketchEditor) {
@@ -33,7 +33,7 @@ export class MovementShadows {
   begin(source: ScaleSource, anchor: Vector, plane: THREE.Plane): void {
     this.prepare(source, anchor, plane);
     if (!this.source) return;
-    this.original = this.current;
+    this.moving = true;
     this.draw();
   }
   move(anchor: Vector): void {
@@ -53,11 +53,11 @@ export class MovementShadows {
         this.editor.world.height / this.editor.world.canvas.clientHeight,
       );
     }
-    this.view.draw(this.current, this.original, this.anchor, this.normal);
+    this.view.draw(this.current, this.moving, this.anchor, this.normal);
   };
   hide(): void {
     this.source = null;
-    this.original = null;
+    this.moving = false;
     this.document = null;
     this.view.hide();
   }

@@ -11,23 +11,24 @@
   fill: none;
   stroke-linejoin: round;
 }
-.movement-shadows .shadow-current {
-  stroke: currentColor;
-  stroke-width: 2.5;
-  opacity: 0.65;
+.movement-shadows .shadow-soft {
+  opacity: 0.22;
+  color: #39434f;
 }
-.movement-shadows .shadow-start {
-  stroke: #8793a0;
-  stroke-width: 2;
-  stroke-dasharray: 5 4;
-  opacity: 0.55;
+.movement-shadows .shadow-surface {
+  fill: currentColor;
+  stroke: none;
+}
+.movement-shadows .shadow-lines {
+  stroke: currentColor;
+  stroke-width: 4;
 }
 .movement-shadows [data-active="true"] {
   color: #1769b5;
 }
-.movement-shadows [data-active="true"] .shadow-current {
-  stroke-width: 3.5;
-  opacity: 0.9;
+.movement-shadows [data-active="true"] .shadow-soft {
+  color: #344f68;
+  opacity: 0.28;
 }
 .movement-shadows .shadow-tether {
   stroke: currentColor;
@@ -43,11 +44,4 @@
   font:
     600 11px system-ui,
     sans-serif;
-}
-.movement-shadows mask path {
-  fill: black;
-  stroke: none;
-}
-.movement-shadows mask rect {
-  stroke: none;
 }
