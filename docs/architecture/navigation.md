@@ -84,3 +84,26 @@ Active WebKit gestures suppress duplicate wheel handling. Scale-only events use
 the last pointer position, or viewport center if none exists. Automated tests
 exercise pointer/wheel input and synthetic gesture-scale events; they do not
 establish physical trackpad or iPad touch behavior.
+
+### Orientation cube
+
+The upper-right cube follows the current camera. Drag with the primary pointer to
+use the same Arcball rotation and release leveling as Command-drag; a face click
+aligns Front (−Y), Back (+Y), Left (−X), Right (+X), Top (+Z), or Bottom (−Z).
+The white/near-black cube has six inset labeled faces, twelve edge bevels and eight
+corner bevels. Labels are projected in each face plane, rotating and foreshortening
+with the rigid cube. Edge clicks align to the equal-weight diagonal of their two
+axes (flat 45°); corner clicks align to the equal-weight three-axis isometric view.
+Bevels have tooltips and accessible names but no visible labels.
+A face click from an oblique view chooses the nearest of its four quarter-turn
+orientations, avoiding an unnecessary roll. Clicking an already face-aligned view
+again resets it to canonical roll. Canonical side and diagonal views keep Z upright;
+canonical Top uses +Y up and Bottom uses −Y up. Bevel views retain canonical roll.
+All visible surfaces support Tab and Enter/Space. Alignment animates over 280 ms
+with cubic ease-out, using the shared camera transition. Reduced motion applies
+the orientation immediately; subsequent navigation interrupts the animation.
+Navigation retains the view target, distance
+and zoom, and exits the planar workspace. It creates no geometry edit or camera
+Undo step; normal sketch exit still clears selection through selection history.
+Pointer capture retains drags outside the cube; Escape, cancellation and focus
+loss stop without leveling. Active modeling gestures block cube navigation.
