@@ -39,7 +39,12 @@ File menu commands and Cmd/Ctrl-N/O/S, Shift-Cmd/Ctrl-S and Cmd/Ctrl-W share the
 The title and macOS represented-file/edited indicators reflect the current document.
 Dirty state compares accepted archive contents to the saved baseline, including Undo
 back to saved contents; previews and navigation do not dirty the document. File dialogs
-and loading block edits; active gestures/tools must finish or cancel first.
+and loading block edits. Quit, window close and update restart complete a released
+active operation through its normal acceptance path before asking about unsaved work.
+Canceling the save prompt keeps that accepted operation available to Undo. Failed
+completion keeps the window open and the operation available for correction. Held
+pointer gestures must finish first; other file commands still require tools to finish
+or cancel first.
 
 The last successfully opened/saved path is remembered in the Electron user-data
 preferences and reopened at launch. New clears the current-file preference but retains the last successfully used folder.

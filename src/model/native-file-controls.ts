@@ -54,7 +54,7 @@ export function nativeFileControls(editor: SketchEditor, host: DocumentHost): ()
         close: "Close document",
       }[command],
       category: "Document & Edit",
-      reason: () => idleReason(editor),
+      reason: () => (command === "close" ? null : idleReason(editor)),
       run: () => run(command),
     }),
   );
@@ -111,6 +111,14 @@ async function runDocumentCommand(
       document.execCommand(command);
     } else await editor.history(command);
     return;
+  }
+  if (leaving && !editor.isDragging && !editor.finishing) {
+    await editor.commitNumeric();
+    const interaction = editor.interactions.current;
+    if (interaction?.finish) {
+      if (!(await interaction.finish())) return;
+      await editor.store.settled();
+    }
   }
   if (editor.blocked || editor.isDragging) return;
   if (editor.interactions.current) {

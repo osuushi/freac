@@ -115,7 +115,7 @@ export class AppUpdates {
       const result = await dialog.showMessageBox({
         type: "info",
         message: "A Freac update is ready.",
-        detail: `${this.release}\nRestart now, or keep working and install when you next quit. Finish any active tool first; unsaved work will use the usual save prompt.`,
+        detail: `${this.release}\nRestart now, or keep working and install when you next quit. The active operation will be completed before the usual unsaved-work prompt.`,
         buttons: ["Restart to update", "Later"],
         defaultId: 1,
         cancelId: 1,
