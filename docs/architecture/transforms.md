@@ -150,8 +150,10 @@ The earlier Move widget and Option-copy contracts above continue to govern its
 movement controls. Selected points still move as points; bounding-box scaling
 currently requires whole curves, whole sketches, bodies, faces or edges.
 
-Sketch boxes follow local workspace X/Y; modeling boxes use world X/Y/Z. Edge
-midpoint handles change the axes perpendicular to that edge; corners change the
+Sketch boxes follow local workspace X/Y; modeling boxes use world X/Y/Z.
+Whole-body bounds use kernel surface extrema, independent of display tessellation
+and rational spline control points, including after nonuniform scaling.
+Edge midpoint handles change the axes perpendicular to that edge; corners change the
 available extents independently. Modeling also exposes single-axis face-center
 handles. End-on directions retain their existing extent. Handles keep constant
 CSS-pixel size while the box itself follows geometry. The shared sphere chooses

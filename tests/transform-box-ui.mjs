@@ -16,6 +16,7 @@ async function run(page, name) {
   try {
     await transformBoxRoute(page, name);
     await transformSolidRoute(page, name);
+    await transformSolidRoute(page, `${name}-curved`, true);
     await transformSketchPlacementRoute(page, name);
     assert.deepEqual(errors, []);
   } catch (error) {

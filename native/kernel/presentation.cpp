@@ -144,7 +144,8 @@ void present(std::ostream& out, const Result& result) {
     out << ",\"center\":"; xyz(out, properties.CentreOfMass().XYZ());
     out << ",\"predecessorBodies\":[";
     for (size_t i = 0; i < result.bodies.size(); ++i) { if (i) out << ','; out << quoted(result.bodies[i]); }
-    Bnd_Box box; BRepBndLib::Add(result.shape, box, false);
+    // Transform handles need surface extrema, not rational spline control-hull bounds.
+    Bnd_Box box; BRepBndLib::AddOptimal(result.shape, box, false, false);
     double x, y, z, X, Y, Z; box.Get(x, y, z, X, Y, Z);
     out << "],\"bounds\":"; numbers(out, {x, y, z, X, Y, Z});
     TopTools_IndexedMapOfShape edges; TopExp::MapShapes(result.shape, TopAbs_EDGE, edges);

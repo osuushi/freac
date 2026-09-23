@@ -169,6 +169,45 @@ test("native whole body anisotropic scaling preserves volume ratio, topology and
     owner.close();
   }
 });
+test("scaled cylindrical surface bounds follow extrema instead of spline control points", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const body = await lift(owner, circle());
+    const reply = await owner.call({
+      kind: "scale",
+      operation: {
+        kind: "solids",
+        ids: [body.id],
+        faces: [],
+        edges: [],
+        pivot: [0, 0, 0],
+        factor: 1,
+        factors: [1.851423839, 1.514801323, 1.178178808],
+      },
+    });
+    assert.equal(reply.error, undefined);
+    const next = reply.view.candidate?.bodies?.[0];
+    assert.ok(next);
+    const expected = [
+      -2 * 1.851423839,
+      -1.514801323,
+      0,
+      8 * 1.851423839,
+      9 * 1.514801323,
+      10 * 1.178178808,
+    ];
+    next.bounds.forEach((value, i) => {
+      close(value, expected[i]);
+    });
+    await owner.call({ kind: "accept" });
+    await owner.call({ kind: "undo" });
+    assert.deepEqual(owner.view.data.bodies?.[0], body);
+    await owner.call({ kind: "redo" });
+    assert.deepEqual(owner.view.data.bodies?.[0].bounds, next.bounds);
+  } finally {
+    owner.close();
+  }
+});
 for (const round of [false, true])
   test(`native ${round ? "circular" : "rectangular"} cap anisotropic scaling reconnects`, async () => {
     const owner = new DocumentOwner();

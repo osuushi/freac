@@ -14,11 +14,11 @@ async function accept(page) {
   await page.getByRole("button", { name: "Accept transform scale", exact: true }).click();
   return inspect(page);
 }
-export async function transformSolidRoute(page, name) {
+export async function transformSolidRoute(page, name, round = false) {
   await reset(page);
   await page.getByRole("button", { name: "Sketch on XY", exact: true }).click();
-  await page.keyboard.press("r");
-  await drag(page, [-10, -10], [10, 10]);
+  await page.keyboard.press(round ? "c" : "r");
+  await drag(page, round ? [0, 0] : [-10, -10], round ? [10, 0] : [10, 10]);
   const p = await at(page, 0, 0);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(p.x, p.y);
