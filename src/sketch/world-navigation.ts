@@ -1,5 +1,6 @@
 import { panCamera } from "./camera-motion.js";
 import { installOrbitDrag } from "./orbit-input.js";
+import { installOrientationCube } from "./orientation-cube.js";
 import { installTabletInput } from "./tablet-input.js";
 import { installTrackpad } from "./trackpad-input.js";
 import type { World } from "./world.js";
@@ -8,6 +9,7 @@ export function installNavigation(world: World): () => void {
   const canvas = world.canvas;
   const abort = new AbortController();
   const options = { signal: abort.signal };
+  const removeCube = installOrientationCube(world);
   installTabletInput(world, abort.signal);
   let drag: { id: number; x: number; y: number } | null = null;
   for (const surface of [canvas, world.overlay])
@@ -53,6 +55,7 @@ export function installNavigation(world: World): () => void {
   installTrackpad(world, abort.signal);
   return () => {
     stop();
+    removeCube();
     abort.abort();
   };
 }
