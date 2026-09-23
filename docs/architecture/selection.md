@@ -45,7 +45,7 @@ founder feedback update these contracts before further tools depend on them.
   faces use the triangle normal nearest the hit on the edge. Candidates are sorted
   by camera distance, including occluded front-facing geometry. Hidden entities
   are excluded.
-  A circular meter fills over the hold delay; it indicates elapsed hold time, not
+  A disk grows from its center to a fixed circular outline over the hold delay; it indicates elapsed hold time, not
   processing. The delay is currently fixed; a future preferences window can expose it.
   Each choice shows the actual target geometry in the current camera orientation,
   with subdued body context and shared thumbnail framing. Plane thumbnails include
