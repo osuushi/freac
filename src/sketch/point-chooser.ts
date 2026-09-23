@@ -1,9 +1,9 @@
 import { displayPoints } from "./curve-geometry.js";
 import type { SketchEditor } from "./editor.js";
 import { distance } from "./geometry.js";
-import { coincidentPoints } from "./line-edit.js";
 import { onModelKeydown } from "./model-keys.js";
 import { type Hit, pointKey } from "./picking.js";
+import { pointChoiceGroups } from "./point-choice-groups.js";
 import { PointLinkControls } from "./point-link-controls.js";
 import {
   choosePoints,
@@ -18,6 +18,7 @@ export class PointChooser {
   private readonly root = document.createElement("div");
   private previous: SketchEditor["pointMenu"] = null;
   private compact = false;
+  private grouping = "";
   private readonly abort = new AbortController();
   private readonly links: PointLinkControls;
   constructor(
@@ -51,14 +52,14 @@ export class PointChooser {
     editor.world.changed.add(this.update);
     this.update();
   }
-  private diagram(hit: Hit, centerExtent: number): SVGSVGElement {
+  private diagram(hits: Hit[], centerExtent: number): SVGSVGElement {
     const svg = document.createElementNS(ns, "svg"),
       sketch = this.editor.sketch;
     svg.setAttribute("viewBox", "0 0 52 52");
     svg.setAttribute("aria-hidden", "true");
     if (!sketch) return svg;
-    const origin = this.editor.world.projectLocal(sketch.plane, hit.point);
-    const branches = pointBranches(hit);
+    const origin = this.editor.world.projectLocal(sketch.plane, hits[0].point);
+    const branches = hits.flatMap(pointBranches);
     for (const branch of branches) {
       const curve = sketch.curves.find((c) => c.id === branch.curve);
       if (!curve) continue;
@@ -90,6 +91,40 @@ export class PointChooser {
     svg.append(point);
     return svg;
   }
+  private choice(hits: Hit[], index: number, centerExtent: number): HTMLButtonElement {
+    const { editor } = this;
+    const button = document.createElement("button");
+    const keys = new Set(hits.map(pointKey));
+    button.type = "button";
+    button.setAttribute("aria-label", `Point ${index + 1}`);
+    button.dataset.pointKey = pointKey(hits[0]) ?? "";
+    button.append(this.diagram(hits, centerExtent));
+    const hover = () => {
+      editor.pointHover = hits[0];
+      editor.refresh();
+    };
+    button.addEventListener("pointerenter", hover);
+    button.addEventListener("focus", hover);
+    button.addEventListener("click", (event) => {
+      if (editor.blocked || editor.isDragging) return;
+      const menu = editor.pointMenu;
+      const toggle = event.metaKey || event.ctrlKey;
+      const additive = event.shiftKey || toggle;
+      const selected = additive ? selectedPointHits(editor) : [];
+      const allSelected = hits.every((hit) => selected.some((p) => pointKey(p) === pointKey(hit)));
+      const next =
+        toggle && allSelected
+          ? selected.filter((p) => !keys.has(pointKey(p)))
+          : [
+              ...selected,
+              ...hits.filter((hit) => !selected.some((p) => pointKey(p) === pointKey(hit))),
+            ];
+      choosePoints(editor, next, additive ? editor.selectedCurves : []);
+      editor.pointMenu = menu;
+      hover();
+    });
+    return button;
+  }
   private update = (): void => {
     const { editor } = this,
       menu = editor.pointMenu;
@@ -98,20 +133,13 @@ export class PointChooser {
       this.previous = null;
       return;
     }
-    const refs = menu.hits.map((hit) =>
-      hit.kind === "endpoint"
-        ? hit.endpoint
-        : hit.kind === "circleCenter"
-          ? { curve: hit.curve, end: "center" as const }
-          : null,
-    );
-    const linked = editor.sketch && refs[0] ? coincidentPoints(editor.sketch, refs[0]) : [];
-    const compact =
-      !menu.inspect &&
-      refs.every((ref) => ref && linked.some((p) => p.curve === ref.curve && p.end === ref.end));
-    if (menu !== this.previous || compact !== this.compact) {
+    const groups = editor.sketch ? pointChoiceGroups(editor.sketch, menu.hits) : [];
+    const grouping = JSON.stringify(groups.map((group) => group.map(pointKey)));
+    const compact = !menu.inspect && groups.length === 1 && groups[0].length > 1;
+    if (menu !== this.previous || compact !== this.compact || grouping !== this.grouping) {
       this.previous = menu;
       this.compact = compact;
+      this.grouping = grouping;
       this.root.classList.toggle("compact", compact);
       this.root.replaceChildren();
       const sketch = editor.sketch;
@@ -131,38 +159,8 @@ export class PointChooser {
             }),
         ),
       );
-      for (const [index, hit] of (compact ? [] : menu.hits).entries()) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.setAttribute("aria-label", `Point ${index + 1}`);
-        button.dataset.pointKey = pointKey(hit) ?? "";
-        button.append(this.diagram(hit, centerExtent));
-        button.addEventListener("pointerenter", () => {
-          editor.pointHover = hit;
-          editor.refresh();
-        });
-        button.addEventListener("focus", () => {
-          editor.pointHover = hit;
-          editor.refresh();
-        });
-        button.addEventListener("click", (event) => {
-          if (editor.blocked || editor.isDragging) return;
-          const toggle = event.metaKey || event.ctrlKey;
-          const additive = event.shiftKey || toggle;
-          const selected = additive ? selectedPointHits(editor) : [];
-          const key = pointKey(hit);
-          const next = selected.some((p) => pointKey(p) === key)
-            ? toggle
-              ? selected.filter((p) => pointKey(p) !== key)
-              : selected
-            : [...selected, hit];
-          choosePoints(editor, next, additive ? editor.selectedCurves : []);
-          editor.pointMenu = menu;
-          editor.pointHover = hit;
-          editor.refresh();
-        });
-        this.root.append(button);
-      }
+      for (const [index, hits] of (compact ? [] : groups).entries())
+        this.root.append(this.choice(hits, index, centerExtent));
       const hint = document.createElement("span");
       hint.textContent = "Shift adds · Command/Ctrl toggles";
       hint.className = "point-choice-hint";
@@ -172,7 +170,11 @@ export class PointChooser {
     for (const button of this.root.querySelectorAll<HTMLButtonElement>("button[data-point-key]"))
       button.setAttribute(
         "aria-pressed",
-        String(pointSelected(editor, button.dataset.pointKey ?? "")),
+        String(
+          groups
+            .find((group) => pointKey(group[0]) === button.dataset.pointKey)
+            ?.every((hit) => pointSelected(editor, pointKey(hit) ?? "")) ?? false,
+        ),
       );
     this.links.update(compact);
     const rect = editor.world.canvas.getBoundingClientRect();

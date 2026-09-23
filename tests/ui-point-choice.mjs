@@ -38,6 +38,7 @@ export async function pointChoiceRoute(page, name) {
     "Choosing points does not change document",
   );
   await pointFeedback(page, name);
+  const chosen = (await inspect(page)).pointChoice;
   await drag(page, [0, 0], [2, 2]);
   let edges = await curves(page);
   pointEquals(edges[0].a, [2, 2]);
@@ -45,7 +46,7 @@ export async function pointChoiceRoute(page, name) {
   pointEquals(edges[2].a, [0, 0]);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before);
-  assert.equal((await inspect(page)).pointChoice, null);
+  assert.deepEqual((await inspect(page)).pointChoice, chosen, "Undo restores the point selection");
   // Shift without pointer movement reopens the junction chooser.
   const origin = await at(page, 0, 0);
   await page.mouse.move(origin.x, origin.y);
@@ -79,6 +80,7 @@ export async function pointChoiceRoute(page, name) {
   pointEquals(edges[2].a, [0, 0]);
   await chooseTool(page, "undo", "undo");
   // With no explicit narrowing, immediate Select drag still moves all three.
+  await click(page, 18, -15);
   await drag(page, [0, 0], [2, -2]);
   for (const edge of await curves(page)) pointEquals(edge.a, [2, -2]);
   await centeredChoice(page);
@@ -148,6 +150,7 @@ async function curvedAndCornerChoices(page) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-6, 0], [6, 0]);
+  await page.locator(".bow-handle").nth(1).waitFor();
   const handle = await page.locator(".bow-handle").nth(1).boundingBox(),
     target = await at(page, 0, 3);
   await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);

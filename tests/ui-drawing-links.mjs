@@ -159,6 +159,7 @@ async function bowAttachedLine(page, before) {
   await click(page, 20, 15);
   const line = before.curves[1];
   await click(page, (line.a.x + line.b.x) / 2, (line.a.y + line.b.y) / 2);
+  await page.locator(".bow-handle").first().waitFor();
   const handle = await page.locator(".bow-handle").first().boundingBox();
   await page.mouse.click(handle.x + handle.width / 2, handle.y + handle.height / 2);
   await page.getByRole("textbox", { name: "Radius", exact: true }).fill("4");

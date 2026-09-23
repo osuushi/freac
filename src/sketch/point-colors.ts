@@ -4,13 +4,20 @@ import type { Curve, Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { distance } from "./geometry.js";
 import { hitIds, pointHits, pointKey } from "./picking.js";
+import { pointChoiceGroups } from "./point-choice-groups.js";
 import { type PointBranch, pointBranches, pointSelected } from "./point-selection.js";
 
 export function pointFeedback(editor: SketchEditor, sketch: Sketch) {
   const points = pointHits(sketch).filter((hit) => pointSelected(editor, pointKey(hit) ?? ""));
   const affected = new Set(points.flatMap((hit) => [...hitIds(hit)]));
   const selected = points.flatMap(pointBranches);
-  const hovered = editor.pointHover ? pointBranches(editor.pointHover) : [];
+  const hover = editor.pointHover;
+  const hoverGroup = hover
+    ? pointChoiceGroups(sketch, editor.pointMenu?.hits ?? [hover]).find((group) =>
+        group.some((hit) => pointKey(hit) === pointKey(hover)),
+      )
+    : null;
+  const hovered = hoverGroup?.flatMap(pointBranches) ?? [];
   return { affected, selected, hovered };
 }
 export function coloredCurve(

@@ -97,8 +97,8 @@ export class PointLinkControls {
     this.unfuse.replaceChildren(compact ? sketchIcon("unfuse") : document.createTextNode("Unfuse"));
     this.unfuse.title = "Unfuse selected points";
     this.fuse.disabled = this.editor.blocked || points.length < 2;
-    this.unfuse.disabled =
-      this.editor.blocked || !sketch || !points.some((p) => pointLinked(sketch, p));
+    this.unfuse.hidden = !sketch || !points.some((p) => pointLinked(sketch, p));
+    this.unfuse.disabled = this.editor.blocked;
   }
   private reason(action: "fuse" | "unfuse" | "coincident"): string | null {
     const points = selectedPointReferences(this.editor),
