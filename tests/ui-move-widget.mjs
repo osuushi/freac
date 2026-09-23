@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { orient } from "./ui-blend-edit.mjs";
+import { cameraFacingMove } from "./ui-camera-facing-move.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -157,28 +158,14 @@ async function bodyAnchors(page, name) {
 }
 async function spatialAnchor(page, name, anchor, root, vertex, original, body) {
   // Orbit through the real Command gesture, then verify the three-axis mode.
-  await orient(page, [1, 1, 1]);
+  await orient(page, [4, 3, 3]);
   assert.equal(await root.getAttribute("data-mode"), "3d");
   assert.equal(await root.locator(".body-translate-handle:visible").count(), 3);
   assert.equal(await root.locator(".body-rotate-handle:visible").count(), 3);
   const project = await projection(page);
-  const up = new THREE.Vector3(0, 1, 0).applyQuaternion(project.camera.quaternion);
-  const direction = project.camera.getWorldDirection(new THREE.Vector3());
-  const canonical = [
-    [1, 0, 0],
-    [0, 1, 0],
-    [0, 0, 1],
-  ];
-  const upright = canonical.reduce((a, b) =>
-    Math.abs(up.dot(new THREE.Vector3(...b))) /
-      Math.sqrt(1 - direction.dot(new THREE.Vector3(...b)) ** 2) >
-    Math.abs(up.dot(new THREE.Vector3().fromArray(a))) /
-      Math.sqrt(1 - direction.dot(new THREE.Vector3().fromArray(a)) ** 2)
-      ? b
-      : a,
-  );
+  // YZ has the largest projected unit square in this oblique view.
   const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(
-    new THREE.Vector3(...upright),
+    new THREE.Vector3(1, 0, 0),
     new THREE.Vector3(...vertex),
   );
   const from = await center(anchor),
@@ -190,6 +177,7 @@ async function spatialAnchor(page, name, anchor, root, vertex, original, body) {
   assert.deepEqual((await inspect(page)).document, original);
   await rotationCheck(page, expected, "X", body);
   await rotationCheck(page, expected, "Z", body);
+  await cameraFacingMove(page, project, body);
   await page.screenshot({ path: `.cache/sketch-review/${name}-widget-oblique.png` });
   const size = await root.locator('.body-translate-handle[data-axis="X"]').boundingBox();
   await page.mouse.move(850, 600);
@@ -236,7 +224,7 @@ async function spatialAnchor(page, name, anchor, root, vertex, original, body) {
   }
   await page.screenshot({ path: `.cache/sketch-review/${name}-widget-diagonal.png` });
   console.log(
-    `${name}: sketch anchor/snap/Command/cancel on XY/XZ/YZ; 2D/3D, visible vertex, occluded origin, upright-plane anchor rotations and constant screen scale passed`,
+    `${name}: sketch anchor/snap/Command/cancel on XY/XZ/YZ; 2D/3D, visible vertex, occluded origin, camera-facing plane anchor rotations and constant screen scale passed`,
   );
 }
 

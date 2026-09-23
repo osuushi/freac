@@ -132,9 +132,11 @@ without changing its local curves; a relocated anchor supplies its rotation cent
 Existing edge movement remains translation-only, including its boundary-normal control.
 
 The anchor is renderer UI state, independent of accepted geometry and Undo. In sketch
-mode it drags in the workspace plane. In aligned modeling views it drags in the visible
-canonical plane; otherwise it uses the plane through the anchor perpendicular to the
-upright canonical axis selected by camera leveling. Thus Y-up uses XZ. During dragging,
+mode it drags in the workspace plane. In modeling it uses the principal plane
+(XY/XZ/YZ) with the largest projected unit-square area. If the top two areas differ
+by at most 5% of the largest, it falls back to the plane perpendicular to the
+upright canonical axis selected by camera leveling (Y-up uses XZ). The plane passes
+through the anchor and stays fixed for the gesture. During dragging,
 a visible point of interest within 10 CSS pixels takes precedence over free placement:
 origin, topology vertices, recognized circular/rectangular planar face centers, and
 sketch points. Body triangles provide occlusion only, never extra snap vertices.
@@ -183,8 +185,8 @@ preview; Enter/check accepts one Undo step, Escape/cross cancels. The Move arrow
 and sphere remain visible while scaling. Starting an anchor or arrow gesture
 accepts a valid scale preview, then hands that pointer gesture to the Move
 control. Command-dragging inside the box moves the selection in one plane: the
-active sketch plane in sketch mode, an aligned view plane in 3D, otherwise the
-camera-level upright plane used by free anchor movement. It also accepts a valid
+active sketch plane in sketch mode, and the same camera-facing principal plane
+with near-tie upright fallback used by free anchor movement in 3D. It also accepts a valid
 scale preview before movement. The move creates its own Undo step. Movement keeps
 its established gesture completion rules. Identity and rejected edits preserve
 Redo. Multiple whole sketches can move or rotate together, including Option-copy,

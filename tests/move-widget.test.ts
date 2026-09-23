@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "three";
+import { movementNormal } from "../src/model/transform-plane.js";
 import {
   alignedAxis,
   arrowWidthAxis,
@@ -39,10 +40,39 @@ test("Move suppresses an end-on axis on either camera side, with a bounded 12 de
   assert.equal(alignedAxis(camera([1, 1, 1])), null);
 });
 
-test("Anchor plane follows the upright canonical axis, including Y-up and inverted Y-up", () => {
+test("Near-tie fallback identifies the upright canonical axis, including inverted Y-up", () => {
   assert.deepEqual(uprightAxis(camera([4, 3, 5], [0, 1, 0])), [0, 1, 0]);
   assert.deepEqual(uprightAxis(camera([4, 3, 5], [0, -1, 0])), [0, 1, 0]);
   assert.deepEqual(uprightAxis(camera([4, -5, 3])), [0, 0, 1]);
+});
+
+test("Planar movement chooses the largest projected square on either camera side", () => {
+  for (const sign of [-1, 1]) {
+    for (const [position, normal] of [
+      [
+        [4, 3, 2],
+        [1, 0, 0],
+      ],
+      [
+        [2, 4, 3],
+        [0, 1, 0],
+      ],
+      [
+        [3, 2, 4],
+        [0, 0, 1],
+      ],
+    ]) {
+      assert.deepEqual(movementNormal(camera(position.map((v) => sign * v))).toArray(), normal);
+    }
+  }
+  assert.deepEqual(movementNormal(camera([4, 3, 5], [0, 1, 0])).toArray(), [0, 0, 1]);
+});
+
+test("Only close area matches fall back to the upright plane", () => {
+  assert.deepEqual(movementNormal(camera([1, 1, 1])).toArray(), [0, 0, 1]);
+  assert.deepEqual(movementNormal(camera([1, 0.96, 0.5])).toArray(), [0, 0, 1]);
+  assert.deepEqual(movementNormal(camera([1, 0.94, 0.5])).toArray(), [1, 0, 0]);
+  assert.deepEqual(movementNormal(camera([1, 0.5, 0.96], [0, -1, 0])).toArray(), [0, 1, 0]);
 });
 
 test("rotation markers hide edge-on on either side; reference widths remain perpendicular", () => {

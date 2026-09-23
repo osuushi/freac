@@ -1,18 +1,28 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
-import { alignedAxis, uprightAxis } from "../sketch/move-widget/geometry.js";
+import { uprightAxis } from "../sketch/move-widget/geometry.js";
 import type { Vector } from "../sketch/planes.js";
 
-/** The visible sketch plane, aligned view plane, or camera-level upright plane. */
+/** Unit-square projected area is proportional to the absolute view/normal dot product. */
+export function movementNormal(camera: THREE.Camera): THREE.Vector3 {
+  const direction = camera.getWorldDirection(new THREE.Vector3());
+  const areas = [0, 1, 2].map((axis) => ({
+    axis,
+    area: Math.abs(direction.getComponent(axis)),
+  }));
+  areas.sort((a, b) => b.area - a.area);
+  return areas[0].area - areas[1].area <= areas[0].area * 0.05
+    ? new THREE.Vector3(...uprightAxis(camera))
+    : new THREE.Vector3().setComponent(areas[0].axis, 1);
+}
+
+/** The active sketch plane or most camera-facing principal plane. */
 export function transformPlane(editor: SketchEditor, origin: Vector): THREE.Plane {
   const world = editor.world;
   const frame = world.activeFrame;
-  const aligned = alignedAxis(world.camera);
   const normal = frame
     ? new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v))
-    : aligned !== null
-      ? new THREE.Vector3().setComponent(aligned, 1)
-      : new THREE.Vector3(...uprightAxis(world.camera));
+    : movementNormal(world.camera);
   return new THREE.Plane().setFromNormalAndCoplanarPoint(normal, new THREE.Vector3(...origin));
 }
 
