@@ -6,6 +6,7 @@ import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { coplanar, type PlaneFrame, type Point } from "../sketch/planes.js";
 import { stableClipping } from "../sketch/stable-clipping.js";
+import { foregroundBodyLayer } from "../sketch/world-foreground.js";
 import type { Body } from "./body.js";
 import { faceRayHits, screenRay } from "./body-ray-hits.js";
 import { featureEdges } from "./feature-edges.js";
@@ -38,6 +39,8 @@ export function bodyView(editor: SketchEditor): () => void {
   const group = new THREE.Group();
   const ambient = new THREE.HemisphereLight(0xffffff, 0x778899, 2);
   const light = new THREE.DirectionalLight(0xffffff, 2);
+  ambient.layers.enable(foregroundBodyLayer);
+  light.layers.enable(foregroundBodyLayer);
   light.position.set(40, -60, 90);
   editor.world.scene.add(group, ambient, light);
   let previous = "",
@@ -93,6 +96,7 @@ export function bodyView(editor: SketchEditor): () => void {
       }
       addBodyEdges(group, body, editor, selectedEdges);
     }
+    group.traverse((object) => object.layers.enable(foregroundBodyLayer));
   };
   editor.world.changed.add(update);
   return () => {

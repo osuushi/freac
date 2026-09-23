@@ -15,8 +15,12 @@ choosing a drawing tool in Modeling can still arm a new plane-first drawing flow
 ### Sketch-plane visibility
 
 While a planar workspace is active, renderer clipping makes geometry on the
-camera side of its plane fully transparent. Coplanar and behind-plane geometry
-remain visible; a 0.0001 mm rendering tolerance retains coplanar geometry.
+camera side of its plane absent from the main pass. Bodies and their edges on
+that side render into a separate depth-tested buffer, clipped at the same plane,
+and composite over the main scene at 20% opacity. Overlapping foreground bodies
+therefore do not accumulate transparency. Sketch curves and grids do not enter
+this foreground pass. Coplanar and behind-plane geometry remain normally visible;
+a 0.0001 mm rendering tolerance retains coplanar geometry.
 The cutaway follows the current workspace frame and camera side, and clears on
 workspace exit. It changes no accepted geometry, selection identity or Undo.
 
