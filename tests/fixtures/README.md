@@ -77,3 +77,9 @@ This is user-created Freac geometry.
   22:04:12, 22:07:24 and 22:11:51 UTC respectively. Derived meshes and UI history
   are omitted; exact BReps, topology signatures/IDs, sketches and constraints remain.
   They reproduce a blocked floor lift, pinched arc-loop offset and notched shell.
+
+- `offset-coplanar-contact.json` retains the exact body, sketches and topology
+  from the founder's `2026-09-23T23-19-15-622Z-c5bcb124` capture, with floor/rim
+  IDs and without derived meshes/history. The cavity floor stopped at
+  z23.9990234375 below a z24 rim. Tests require exact contact and wall removal,
+  continued large offsets, intentional small steps, rotation and subsequent edits.
