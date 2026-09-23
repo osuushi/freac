@@ -27,7 +27,8 @@ export class OverlapInput {
       window.addEventListener(
         type,
         (event) => {
-          if (this.suppress !== null && event.target === editor.world.canvas) consume(event);
+          if (this.suppress !== null && event instanceof MouseEvent && event.detail > 0)
+            consume(event);
         },
         options,
       );
@@ -78,7 +79,12 @@ export class OverlapInput {
       return;
     }
     if (this.suppress === event.pointerId) {
-      if (event.type !== "pointermove") consume(event);
+      if (this.chooser.opened) {
+        if (event.type === "pointermove") this.chooser.drag(event);
+        else if (event.type === "pointerup") this.chooser.release(event);
+        else this.chooser.close();
+        consume(event);
+      } else if (event.type !== "pointermove") consume(event);
       return;
     }
     if (this.pending?.pointerId !== event.pointerId) return;
@@ -120,7 +126,10 @@ export class OverlapInput {
     this.cancelPending();
     // Canceling marquee capture can emit lostpointercapture; the chooser owns no capture.
     await this.chooser.open(event);
-    if (this.chooser.opened) this.suppress = event.pointerId;
+    if (this.chooser.opened) {
+      this.suppress = event.pointerId;
+      this.chooser.drag(event);
+    }
   }
   private cancelPending(): void {
     if (this.timer !== null) clearTimeout(this.timer);

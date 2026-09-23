@@ -1,5 +1,6 @@
+import { displayPoints } from "../sketch/curve-geometry.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import type { Point, Vector } from "../sketch/planes.js";
+import { coplanar, type Point, type Vector, worldPoint } from "../sketch/planes.js";
 import type { OverlapCandidate } from "./overlap-candidates.js";
 import { overlapGeometry, type PreviewGeometry } from "./overlap-geometry.js";
 
@@ -10,7 +11,22 @@ export function overlapPreviews(
   candidates: OverlapCandidate[],
 ): SVGSVGElement[] {
   const context = overlapGeometry(editor);
-  const targets = candidates.map((c) => overlapGeometry(editor, c.target));
+  const targets = candidates.map((c) => {
+    const geometry = overlapGeometry(editor, c.target);
+    if (c.target.kind === "plane") {
+      const frame = c.target.frame;
+      for (const sketch of editor.display.sketches) {
+        if (!editor.visibility.visible(sketch.id) || !coplanar(sketch.plane, frame)) continue;
+        for (const curve of sketch.curves)
+          geometry.lines.push(
+            displayPoints(curve, editor.world.height / editor.world.canvas.clientHeight).map((p) =>
+              worldPoint(sketch.plane, p),
+            ),
+          );
+      }
+    }
+    return geometry;
+  });
   const all = [context, ...targets]
     .flatMap((g) => [...g.surfaces, ...g.lines])
     .flat()

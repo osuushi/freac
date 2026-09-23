@@ -65,7 +65,10 @@ certificate installation, home-grown authenticated key exchange or trust claim i
 introduced by this increment.
 
 A stationary 600 ms finger/Pencil hold in Modeling opens the overlap chooser.
-Touch movement cancels the hold and retains navigation; a second contact cancels it
-for pan/pinch. Chooser taps are ordinary UI activation and bypass viewport touch
-suppression. Browser automation covers pointer delivery and Chromium touch events;
+Before the chooser opens, touch movement cancels the hold and retains navigation;
+a second contact cancels it for pan/pinch. Once open, drag the held finger/Pencil
+over a thumbnail and release to select. Release outside or pointer cancellation
+dismisses without selection. Captured touch hit-tests screen coordinates to keep
+hover feedback and release selection on the same item. Browser automation covers
+pointer delivery and Chromium touch events;
 physical iPad/Pencil behavior still requires hardware review.

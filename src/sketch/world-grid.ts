@@ -34,7 +34,7 @@ export function createGrids(scene: THREE.Scene) {
         }
         void main() {
           float fade = exp(-dot(coordinate-center,coordinate-center)/(radius*radius));
-          float lines = max(grid(spacing)*0.45,grid(spacing*10.0));
+          float lines = max(grid(spacing)*0.6,grid(spacing*10.0));
           vec2 axes = 1.0 - min(abs(coordinate)/max(fwidth(coordinate),vec2(0.00001)),1.0);
           vec3 color = vec3(0.46,0.51,0.59);
           if(axes.y > 0.0) color = uColor;
@@ -88,7 +88,7 @@ export function createGrids(scene: THREE.Scene) {
         const facing = Math.abs(direction.dot(grid.normal));
         grid.material.uniforms.spacing.value = spacing;
         grid.material.uniforms.strength.value =
-          (grid.id === "work" ? 0.3 : 0.07) * Math.min(1, facing * 5);
+          (grid.id === "work" ? 0.4 : 0.22) * Math.min(1, facing * 5);
         grid.material.uniforms.radius.value = height * 1.15;
         grid.material.uniforms.center.value.set(
           target.clone().sub(grid.mesh.position).dot(grid.u),

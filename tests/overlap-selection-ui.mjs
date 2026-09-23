@@ -9,6 +9,8 @@ import { project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { overlapCancellation } from "./ui-overlap-cancel.mjs";
 import { overlapEdges } from "./ui-overlap-edges.mjs";
+import { hold, releaseChoice } from "./ui-overlap-gesture.mjs";
+import { planeSketchPreview } from "./ui-overlap-sketches.mjs";
 import { overlapTouch } from "./ui-overlap-touch.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -34,6 +36,8 @@ async function route(page, name) {
   });
   const original = (await inspect(page)).document;
   assert.equal(await page.locator(".plane-label, .construction-plane-labels").count(), 0);
+  await page.mouse.move(30, 35);
+  await page.screenshot({ path: `.cache/sketch-review/${name}-stronger-grid.png` });
   const point = await project(page, [0, 0, 10]);
   await page.mouse.click(point.x, point.y);
   let state = await inspect(page);
@@ -71,12 +75,16 @@ async function route(page, name) {
   assert.equal(await panel.getAttribute("data-highlight"), "XY");
   await page.screenshot({ path: `.cache/sketch-review/${name}-overlap-plane.png` });
   await page.keyboard.press("Escape");
+  await page.mouse.up();
   assert.equal(await panel.isVisible(), false);
   assert.deepEqual((await inspect(page)).document, original);
   await hold(page, point);
-  await panel.getByRole("button", { name: "Body", exact: true }).click();
+  await releaseChoice(page, "Body");
   state = await inspect(page);
   assert.equal(state.modelingSelection[0].kind, "body");
+  const hover = await project(page, [15, 10, 10]);
+  await page.mouse.move(hover.x, hover.y);
+  assert.equal((await inspect(page)).modelingHover, "face", "Hover resumes after release");
   await page.keyboard.press("m");
   await page.getByRole("button", { name: "Move body X", exact: true }).click();
   await page.locator(".body-transform-value").fill("3");
@@ -87,8 +95,15 @@ async function route(page, name) {
   await page.keyboard.press("Escape");
 
   await hold(page, await project(page, [-15, -15, 10]));
-  await panel.getByRole("button", { name: "Plane · XY", exact: true }).click();
+  await releaseChoice(page, "Plane · XY");
   assert.equal((await inspect(page)).activePlane, "XY");
+  await navigationCancellation(page, panel);
+  await adaptiveMargin(page);
+  console.log(
+    `${name}: ordinary precedence, long hold, thumbnails, hover, body/plane choice and cancellation passed`,
+  );
+}
+async function navigationCancellation(page, panel) {
   await chooseTool(page, "return to modeling", "modeling");
   await inspect(page);
   const p = await project(page, [0, 0, 10]);
@@ -100,11 +115,8 @@ async function route(page, name) {
   assert.equal(await panel.isVisible(), false, "Movement remains a normal drag");
   await hold(page, p);
   await page.mouse.wheel(0, 30);
+  await page.mouse.up();
   assert.equal(await panel.isVisible(), false, "Navigation dismisses chooser");
-  await adaptiveMargin(page);
-  console.log(
-    `${name}: ordinary precedence, long hold, thumbnails, hover, body/plane choice and cancellation passed`,
-  );
 }
 async function adaptiveMargin(page) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
@@ -117,12 +129,6 @@ async function adaptiveMargin(page) {
     "Adaptive margin remains clickable outside a body larger than the old patch",
   );
   await chooseTool(page, "return to modeling", "modeling");
-}
-async function hold(page, p) {
-  await page.mouse.move(p.x, p.y);
-  await page.mouse.down();
-  await page.waitForTimeout(720);
-  await page.mouse.up();
 }
 await mkdir(".cache/sketch-review", { recursive: true });
 const server = await createServer({ server: { port: 0 } });
@@ -162,6 +168,7 @@ try {
         await overlapTouch(touch, name);
         await touch.close();
       }
+      await planeSketchPreview(page, name);
     } finally {
       await browser?.close();
       await app?.close();

@@ -44,6 +44,7 @@ export async function overlapEdges(page, hold) {
     if (front) silhouette++;
     else hidden++;
     await page.keyboard.press("Escape");
+    await page.mouse.up();
   }
   assert.ok(
     hidden && silhouette,

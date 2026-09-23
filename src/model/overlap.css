@@ -10,6 +10,8 @@
   border-radius: 14px;
   box-shadow: 0 8px 32px #26374733;
   color: #344657;
+  touch-action: none;
+  user-select: none;
 }
 .selection-overlap-title {
   display: flex;
@@ -43,7 +45,7 @@
   font: inherit;
   font-size: 13px;
 }
-.selection-overlap-items button:hover,
+.selection-overlap-items button.hovered,
 .selection-overlap-items button:focus-visible {
   background: #eef5ff;
   border-color: #287bd1;

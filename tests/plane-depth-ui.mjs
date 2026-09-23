@@ -4,6 +4,7 @@ import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { at, drag, inspect, reset, settled } from "./ui-helpers.mjs";
+import { hold, releaseChoice } from "./ui-overlap-gesture.mjs";
 import { pickPlane, planeTargetsRoute } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -31,10 +32,7 @@ async function route(page, name) {
   await page.mouse.click(point.x, point.y);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await hold(page, point);
-  await page
-    .getByRole("dialog", { name: "Choose overlapping geometry" })
-    .getByRole("button", { name: "Plane · YZ", exact: true })
-    .click();
+  await releaseChoice(page, "Plane · YZ");
   assert.equal((await inspect(page)).activePlane, "YZ");
   await chooseTool(page, "return to modeling", "modeling");
   await page.keyboard.press("Escape");
@@ -47,10 +45,7 @@ async function route(page, name) {
   await page.mouse.move(point.x, point.y);
   assert.equal((await inspect(page)).modelingHover, "face");
   await hold(page, point);
-  await page
-    .getByRole("dialog", { name: "Choose overlapping geometry" })
-    .getByRole("button", { name: "Plane", exact: true })
-    .click();
+  await releaseChoice(page, "Plane");
   assert.equal(
     await page.getByRole("button", { name: "Move plane", exact: true }).isVisible(),
     true,
@@ -67,20 +62,11 @@ async function route(page, name) {
   assert.equal((await inspect(page)).modelingHover, "face");
   await page.getByRole("button", { name: "Show Plane 1", exact: true }).click();
   await hold(page, point);
-  await page
-    .getByRole("dialog", { name: "Choose overlapping geometry" })
-    .getByRole("button", { name: "Plane", exact: true })
-    .click();
+  await releaseChoice(page, "Plane");
   await page.getByRole("button", { name: "Sketch on plane", exact: true }).click();
   assert.ok((await inspect(page)).activePlane);
   console.log(name, "hollow cylinder plane depth passed", path);
   await planeTargetsRoute(page, name);
-}
-async function hold(page, p) {
-  await page.mouse.move(p.x, p.y);
-  await page.mouse.down();
-  await page.waitForTimeout(720);
-  await page.mouse.up();
 }
 const server = await createServer({ server: { port: 0 } });
 await server.listen();

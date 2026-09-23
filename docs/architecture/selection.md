@@ -30,7 +30,8 @@ founder feedback update these contracts before further tools depend on them.
   geometry sizes the patches; active gestures freeze them. Plane widgets do not
   contribute to those bounds. Body silhouettes mask plane fill, retaining the faint
   grid where the plane is in front; geometry occludes planes behind it. Explicit
-  reference picking can show a stronger fill.
+  reference picking can show a stronger fill. World, active-sketch and saved-plane
+  gridlines retain visible contrast over both the background and body silhouettes.
   Ordinary body/sketch geometry always wins over plane interiors, regardless of
   which lies nearer the camera. Among otherwise available reference patches, depth
   decides and saved planes win ties. No floating plane labels. Keyboard and
@@ -45,9 +46,14 @@ founder feedback update these contracts before further tools depend on them.
   by camera distance, including occluded front-facing geometry. Hidden entities
   are excluded.
   Each choice shows the actual target geometry in the current camera orientation,
-  with subdued body context and shared thumbnail framing. Text identifies the type;
+  with subdued body context and shared thumbnail framing. Plane thumbnails include
+  visible coplanar sketches in their actual positions; hidden sketches are omitted.
+  Text identifies the type;
   canonical planes additionally name XY/XZ/YZ. Hover/focus highlights that exact
-  viewport entity, including occluded targets. Click/tap chooses it; Shift adds and
+  viewport entity, including occluded targets. Keep the pointer held, drag over a
+  thumbnail, and release to choose; releasing outside cancels. Captured touch uses
+  screen-coordinate hit testing, so the thumbnail and viewport highlight follow
+  the finger. No second click/tap is needed. Shift adds and
   Command/Ctrl toggles geometry. Canonical planes enter their workspace; saved planes
   become selected with existing Move/Sketch actions. Escape, outside press, navigation,
   view/document changes and window blur dismiss the chooser. The hold's trailing

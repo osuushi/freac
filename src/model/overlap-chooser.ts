@@ -11,6 +11,8 @@ export class OverlapChooser {
   private highlight: OverlapHighlight;
   private snapshot = "";
   private document: unknown;
+  private choices = new Map<HTMLButtonElement, OverlapCandidate>();
+  private hovered: HTMLButtonElement | null = null;
   constructor(
     private editor: SketchEditor,
     private selectPlane: (p: ConstructionPlane) => void,
@@ -49,7 +51,7 @@ export class OverlapChooser {
   private populate(candidates: OverlapCandidate[], event: PointerEvent): void {
     const title = document.createElement("div");
     title.className = "selection-overlap-title";
-    title.textContent = "Choose overlapping geometry";
+    title.textContent = "Drag to choose · release to select";
     const close = document.createElement("button");
     close.textContent = "×";
     close.setAttribute("aria-label", "Close geometry chooser");
@@ -58,6 +60,7 @@ export class OverlapChooser {
     const list = document.createElement("div");
     list.className = "selection-overlap-items";
     const previews = overlapPreviews(this.editor, candidates);
+    this.choices.clear();
     for (const [index, candidate] of candidates.entries()) {
       const button = document.createElement("button");
       button.dataset.kind = candidate.target.kind;
@@ -67,18 +70,38 @@ export class OverlapChooser {
       const label = document.createElement("span");
       label.textContent = candidate.label;
       button.append(previews[index], label);
-      button.onpointerenter = button.onfocus = () => {
-        this.element.dataset.highlight = candidate.key;
-        this.highlight.show(candidate.target);
+      this.choices.set(button, candidate);
+      button.onfocus = () => this.highlightChoice(button);
+      button.onblur = () => this.highlightChoice(null);
+      button.onclick = (click) => {
+        if (this.opened && click.detail === 0) this.choose(candidate, event);
       };
-      button.onpointerleave = button.onblur = () => {
-        delete this.element.dataset.highlight;
-        this.highlight.show(null);
-      };
-      button.onclick = () => this.choose(candidate, event);
       list.append(button);
     }
     this.element.replaceChildren(title, list);
+  }
+  private choiceAt(event: PointerEvent): HTMLButtonElement | null {
+    const button = document.elementFromPoint(event.clientX, event.clientY)?.closest("button");
+    return button instanceof HTMLButtonElement && this.choices.has(button) ? button : null;
+  }
+  drag(event: PointerEvent): void {
+    this.highlightChoice(this.choiceAt(event));
+  }
+  release(event: PointerEvent): void {
+    const button = this.choiceAt(event);
+    const candidate = button && this.choices.get(button);
+    if (candidate) this.choose(candidate, event);
+    else this.close();
+  }
+  private highlightChoice(button: HTMLButtonElement | null): void {
+    if (this.hovered === button) return;
+    this.hovered?.classList.remove("hovered");
+    this.hovered = button;
+    button?.classList.add("hovered");
+    const candidate = button && this.choices.get(button);
+    if (candidate) this.element.dataset.highlight = candidate.key;
+    else delete this.element.dataset.highlight;
+    this.highlight.show(candidate?.target ?? null);
   }
   private choose(candidate: OverlapCandidate, event: PointerEvent): void {
     this.close();
@@ -111,6 +134,8 @@ export class OverlapChooser {
   close(): void {
     if (!this.lease) return;
     this.element.hidden = true;
+    this.hovered = null;
+    this.choices.clear();
     delete this.element.dataset.highlight;
     this.highlight.show(null);
     const lease = this.lease;

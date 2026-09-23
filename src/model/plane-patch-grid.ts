@@ -23,7 +23,7 @@ export function planePatchGrid(
     ),
     new THREE.LineBasicMaterial({
       color: "#7198b8",
-      opacity: 0.15,
+      opacity: 0.3,
       transparent: true,
       depthWrite: false,
     }),
