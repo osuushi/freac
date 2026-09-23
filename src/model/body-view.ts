@@ -11,7 +11,12 @@ import { featureEdges } from "./feature-edges.js";
 export function pickFace(editor: SketchEditor, screen: Point) {
   if (!editor.bodiesVisible) return undefined;
   const bodies = (editor.display.bodies ?? []).filter((b) => editor.visibility.visible(b.id));
-  return faceRayHits(bodies, screenRay(editor, screen), editor.world.camera.position)[0];
+  return faceRayHits(
+    bodies,
+    screenRay(editor, screen),
+    editor.world.camera.position,
+    editor.world.renderer.clippingPlanes,
+  )[0];
 }
 
 function faceGeometry(vertices: number[]): THREE.BufferGeometry {

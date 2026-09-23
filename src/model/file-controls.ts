@@ -95,6 +95,7 @@ async function openBrowserFile(
       accept(archive.files);
       editor.bodiesVisible = true;
       editor.visibility.hidden.clear();
+      editor.world.crossSection = null;
       editor.modeling.targets = [];
       editor.world.exit();
       editor.refresh();

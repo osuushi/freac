@@ -22,7 +22,7 @@ export function pickSavedPlane(editor: SketchEditor, screen: Point, maxDepth = I
       v = new THREE.Vector3(...plane.frame.v);
     const support = new THREE.Plane().setFromNormalAndCoplanarPoint(u.clone().cross(v), origin);
     const hit = ray.ray.intersectPlane(support, new THREE.Vector3());
-    if (!hit) continue;
+    if (!hit || !editor.world.visiblePoint(hit)) continue;
     const local = hit.clone().sub(origin);
     const bounds = editor.world.planeBounds(plane.frame);
     if (

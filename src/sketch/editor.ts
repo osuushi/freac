@@ -258,6 +258,7 @@ export class SketchEditor {
     await this.store.request({ kind: "new" });
     this.bodiesVisible = true;
     this.visibility.hidden.clear();
+    this.world.crossSection = null;
     this.clearSelection();
   }
   escape(): void {

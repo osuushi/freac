@@ -137,6 +137,7 @@ async function runDocumentCommand(
       await editor.store.documentReplaced();
       editor.bodiesVisible = true;
       editor.visibility.hidden.clear();
+      editor.world.crossSection = null;
       editor.selectTargets([]);
       editor.modeling.targets = [];
       editor.world.exit();

@@ -58,6 +58,7 @@ export class PlanePlacement {
         this.current()?.lease.releaseCapture();
         this.gizmo.input.focus();
         this.gizmo.input.select();
+        this.editor.refresh();
       },
       options,
     );

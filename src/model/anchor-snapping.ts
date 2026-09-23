@@ -51,6 +51,7 @@ function candidates(editor: SketchEditor): Vector[] {
 }
 
 function visible(editor: SketchEditor, point: Vector): boolean {
+  if (!editor.world.visiblePoint(new THREE.Vector3(...point))) return false;
   if (!editor.bodiesVisible) return true;
   const camera = editor.world.camera;
   const p = new THREE.Vector3(...point),
@@ -62,15 +63,6 @@ function visible(editor: SketchEditor, point: Vector): boolean {
     b = new THREE.Vector3(),
     c = new THREE.Vector3(),
     hit = new THREE.Vector3();
-  const frame = editor.world.activeFrame;
-  const clipNormal = frame
-    ? new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v))
-    : null;
-  const clipOrigin = frame ? new THREE.Vector3(...frame.origin) : null;
-  const side =
-    clipNormal && clipOrigin
-      ? Math.sign(clipNormal.dot(camera.position.clone().sub(clipOrigin)))
-      : 0;
   for (const body of editor.display.bodies ?? []) {
     if (!editor.visibility.visible(body.id)) continue;
     for (const face of body.faces)
@@ -79,8 +71,7 @@ function visible(editor: SketchEditor, point: Vector): boolean {
         b.fromArray(face.vertices, i + 3);
         c.fromArray(face.vertices, i + 6);
         if (!ray.ray.intersectTriangle(a, b, c, false, hit)) continue;
-        if (clipNormal && clipOrigin && side * clipNormal.dot(hit.clone().sub(clipOrigin)) > 1e-4)
-          continue;
+        if (!editor.world.visiblePoint(hit)) continue;
         if (hit.clone().sub(ray.ray.origin).dot(ray.ray.direction) < distance - 1e-4) return false;
       }
   }

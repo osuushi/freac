@@ -11,6 +11,7 @@ export function inspectionView(editor: SketchEditor, render: boolean): Inspectio
     throw new Error("Finish or cancel the current edit before inspecting accepted geometry.");
   if (world.cameraMoving) throw new Error("Wait for the camera to settle, then inspect again.");
   const sketch = editor.sketch;
+  const clippingFrame = world.activeFrame ?? world.crossSection;
   const selection: InspectionTarget[] = world.active
     ? sketch
       ? editor.selected.targets.map((t) => ({ ...t, sketch: sketch.id }))
@@ -52,10 +53,10 @@ export function inspectionView(editor: SketchEditor, render: boolean): Inspectio
       near: world.camera.near,
       far: world.camera.far,
     },
-    clipping: world.activeFrame
+    clipping: clippingFrame
       ? {
           kind: "visual",
-          plane: world.activeFrame,
+          plane: clippingFrame,
           equations: world.renderer.clippingPlanes.map((p) => [...p.normal.toArray(), p.constant]),
         }
       : null,

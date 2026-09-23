@@ -31,6 +31,7 @@ export function pickBodyEdge(editor: SketchEditor, screen: Point) {
         const distance = Math.hypot(screen.x - p.x, screen.y - p.y);
         if (distance > 7 || (best && distance > best.distance + 0.1)) continue;
         const depth = a.lerp(b, t).distanceTo(camera);
+        if (!editor.world.visiblePoint(a)) continue;
         if (!edgeFacesCamera(body, edge.id, a.toArray() as Vector, ray.direction)) continue;
         const covering = pickFace(editor, p);
         if (covering && depth > covering.depth + 0.06) continue;

@@ -60,7 +60,7 @@ The former panel actions are registered under these homes:
 | Constrain | Existing geometric constraints, Fuse, Unfuse, applicable locks |
 | Reference | Construction plane, Project |
 | Select | Select, existing selection refinements, Clear selection |
-| View | Existing visibility controls, Grid snap, return to Modeling |
+| View | Cross section, existing visibility controls, Grid snap, return to Modeling |
 | Document & Edit | New, Open, Save, Export STL/3MF, Undo, Redo, Delete, Clear sketch |
 
 Capture fixture remains available in production under Development. Its result offers

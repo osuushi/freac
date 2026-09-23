@@ -21,7 +21,7 @@ export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapC
     ? (editor.display.bodies ?? []).filter((b) => editor.visibility.visible(b.id))
     : [];
   const result: OverlapCandidate[] = [];
-  for (const hit of faceRayHits(bodies, ray, camera))
+  for (const hit of faceRayHits(bodies, ray, camera, editor.world.renderer.clippingPlanes))
     result.push({
       target: { kind: "face", body: hit.body, face: hit.face },
       depth: hit.depth,
@@ -62,7 +62,7 @@ export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapC
       origin = new THREE.Vector3(...frame.origin);
     const support = new THREE.Plane().setFromNormalAndCoplanarPoint(u.clone().cross(v), origin);
     const hit = ray.intersectPlane(support, new THREE.Vector3());
-    if (!hit) continue;
+    if (!hit || !editor.world.visiblePoint(hit)) continue;
     const local = hit.clone().sub(origin),
       bounds = editor.world.planeBounds(frame),
       x = local.dot(u),

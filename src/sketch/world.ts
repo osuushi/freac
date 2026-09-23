@@ -15,6 +15,7 @@ import {
   type Vector,
   worldPoint,
 } from "./planes.js";
+import { sectionClip } from "./view-clipping.js";
 import { createGrids } from "./world-grid.js";
 import { installNavigation } from "./world-navigation.js";
 
@@ -33,6 +34,7 @@ export class World {
   get activeFrame(): PlaneFrame | null {
     return this.workspace?.frame ?? null;
   }
+  crossSection: PlaneFrame | null = null;
   height = 80;
   spacing = 1;
   canNavigate = () => true;
@@ -94,14 +96,15 @@ export class World {
       this.activeFrame,
       height,
     );
+    this.updateClipping();
     for (const listener of this.changed) listener();
-    this.updateSketchClipping();
     this.renderer.render(this.scene, this.camera);
   }
-  private updateSketchClipping(): void {
+  private updateClipping(): void {
     const frame = this.activeFrame;
     if (!frame) {
-      this.renderer.clippingPlanes = [];
+      this.renderer.clippingPlanes = this.crossSection ? [sectionClip(this.crossSection)] : [];
+      if (this.renderer.clippingPlanes[0]) this.renderer.clippingPlanes[0].constant += 1e-4;
       return;
     }
     const normal = new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v)).normalize();
@@ -111,6 +114,9 @@ export class World {
     // Retain coplanar curves and faces despite floating-point projection noise.
     this.sketchClip.constant += 1e-4;
     this.renderer.clippingPlanes = [this.sketchClip];
+  }
+  visiblePoint(point: THREE.Vector3): boolean {
+    return this.renderer.clippingPlanes.every((plane) => plane.distanceToPoint(point) >= 0);
   }
   requestDraw(): void {
     // Subsequent input events need the latest basis even before the next paint.

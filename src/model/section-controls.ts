@@ -41,6 +41,12 @@ export class SectionControls {
     canvas.addEventListener("wheel", () => this.highlight(undefined), options);
     this.update();
   }
+  get surfaceCount(): number {
+    return this.regions.length;
+  }
+  get calculating(): boolean {
+    return this.running;
+  }
   private clear(): void {
     this.highlight(undefined);
     for (const region of this.regions) {
@@ -53,7 +59,11 @@ export class SectionControls {
   private update = (): void => {
     const e = this.editor;
     if (!this.eligible() || e.world.cameraMoving) this.highlight(undefined);
-    const frame = e.world.activeFrame ? (e.sketch?.plane ?? e.world.activeFrame) : null;
+    const frame = e.world.activeFrame
+      ? (e.sketch?.plane ?? e.world.activeFrame)
+      : e.interactions.dragging || e.candidate
+        ? null
+        : e.world.crossSection;
     const view = JSON.stringify([frame, e.bodiesVisible, e.visibility.key]);
     if (this.previousBodies === e.store.data.bodies && this.previousView === view) return;
     this.previousBodies = e.store.data.bodies;

@@ -42,7 +42,7 @@ export function pickPlaneInterior(
       v = new THREE.Vector3(...frame.v);
     const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(u.clone().cross(v), origin);
     const hit = ray.ray.intersectPlane(plane, new THREE.Vector3());
-    if (!hit) continue;
+    if (!hit || !editor.world.visiblePoint(hit)) continue;
     const local = hit.clone().sub(origin);
     const bounds = editor.world.planeBounds(frame);
     if (

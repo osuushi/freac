@@ -119,7 +119,7 @@ export class ConstructionPlaneControls {
       { signal: this.abort.signal },
     );
   }
-  private selected(): ConstructionPlane | undefined {
+  selected(): ConstructionPlane | undefined {
     return this.editor.store.data.constructionPlanes?.find((p) => p.id === this.view.selected);
   }
   private selectedKey(event: KeyboardEvent): void {
