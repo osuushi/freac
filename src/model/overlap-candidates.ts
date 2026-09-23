@@ -3,9 +3,10 @@ import type { SketchEditor } from "../sketch/editor.js";
 import type { ModelingTarget } from "../sketch/model-selection.js";
 import { type PlaneFrame, type PlaneId, type Point, planes } from "../sketch/planes.js";
 import { edgeRayHits, faceRayHits, screenRay } from "./body-ray-hits.js";
+import { overlapSketchCandidates } from "./overlap-sketches.js";
 
 export type OverlapTarget =
-  | Extract<ModelingTarget, { kind: "body" | "face" | "edge" }>
+  | Extract<ModelingTarget, { kind: "body" | "face" | "edge" | "sketch" }>
   | { kind: "plane"; frame: PlaneFrame; world?: PlaneId; saved?: string };
 export interface OverlapCandidate {
   target: OverlapTarget;
@@ -35,7 +36,7 @@ export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapC
       label: "Edge",
     });
   for (const body of bodies) {
-    const hits = result.filter((c) => c.target.kind !== "plane" && c.target.body === body.id);
+    const hits = result.filter((c) => "body" in c.target && c.target.body === body.id);
     if (hits.length)
       result.push({
         target: { kind: "body", body: body.id },
@@ -74,6 +75,13 @@ export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapC
       label: target.world ? `Plane · ${target.world}` : "Plane",
     });
   }
+  result.push(
+    ...overlapSketchCandidates(
+      editor,
+      screen,
+      refs.map((r) => r.frame),
+    ),
+  );
   const rank = (c: OverlapCandidate) =>
     c.target.kind === "edge" ? 0 : c.target.kind === "face" ? 1 : c.target.kind === "body" ? 2 : 3;
   return result.sort(

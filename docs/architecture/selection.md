@@ -50,6 +50,10 @@ founder feedback update these contracts before further tools depend on them.
   Each choice shows the actual target geometry in the current camera orientation,
   with subdued body context and shared thumbnail framing. Plane thumbnails include
   visible coplanar sketches in their actual positions; hidden sketches are omitted.
+  Sketches off the visible defined planes get their own Sketch choice when a curve
+  or enclosed region overlaps the press. Coplanar sketches stay represented by the
+  plane thumbnail without a duplicate sketch choice. Sketch choices highlight their
+  curves and select the whole sketch on release. They share camera-distance sorting.
   Text identifies the type;
   canonical planes additionally name XY/XZ/YZ. Hover/focus highlights that exact
   viewport entity, including occluded targets. Keep the pointer held, drag over a

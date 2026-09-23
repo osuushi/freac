@@ -3,6 +3,7 @@ import { planeCorners } from "../sketch/plane-bounds.js";
 import type { Vector } from "../sketch/planes.js";
 import { featureEdges } from "./feature-edges.js";
 import type { OverlapTarget } from "./overlap-candidates.js";
+import { sketchPreviewLines } from "./overlap-sketches.js";
 
 export interface PreviewGeometry {
   surfaces: Vector[][];
@@ -15,6 +16,12 @@ const points = (values: number[]): Vector[] => {
 };
 export function overlapGeometry(editor: SketchEditor, target?: OverlapTarget): PreviewGeometry {
   const result: PreviewGeometry = { surfaces: [], lines: [] };
+  if (target?.kind === "sketch") {
+    const sketch = editor.display.sketches.find((s) => s.id === target.sketch);
+    if (sketch && editor.visibility.visible(sketch.id))
+      result.lines = sketchPreviewLines(editor, sketch);
+    return result;
+  }
   if (target?.kind === "plane") {
     const corners = planeCorners(target.frame, editor.world.planeBounds(target.frame));
     return { surfaces: [corners], lines: [[...corners, corners[0]]] };

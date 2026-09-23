@@ -1,8 +1,8 @@
-import { displayPoints } from "../sketch/curve-geometry.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { coplanar, type Point, type Vector, worldPoint } from "../sketch/planes.js";
+import { coplanar, type Point, type Vector } from "../sketch/planes.js";
 import type { OverlapCandidate } from "./overlap-candidates.js";
 import { overlapGeometry, type PreviewGeometry } from "./overlap-geometry.js";
+import { sketchPreviewLines } from "./overlap-sketches.js";
 
 const ns = "http://www.w3.org/2000/svg";
 /** All thumbnails retain the camera and a shared framing, so targets can be compared. */
@@ -17,12 +17,7 @@ export function overlapPreviews(
       const frame = c.target.frame;
       for (const sketch of editor.display.sketches) {
         if (!editor.visibility.visible(sketch.id) || !coplanar(sketch.plane, frame)) continue;
-        for (const curve of sketch.curves)
-          geometry.lines.push(
-            displayPoints(curve, editor.world.height / editor.world.canvas.clientHeight).map((p) =>
-              worldPoint(sketch.plane, p),
-            ),
-          );
+        geometry.lines.push(...sketchPreviewLines(editor, sketch));
       }
     }
     return geometry;
