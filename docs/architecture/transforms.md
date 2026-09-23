@@ -220,10 +220,9 @@ reconnections remain recoverable errors.
 ### Planar movement shadows (founder trial, 2026-09-23)
 
 In modeling, Command-hover inside a Transform box previews the selected geometry's
-soft, translucent filled shadows on the fixed world XY/XZ/YZ planes. The camera-selected
-movement plane has a slightly stronger blue-gray shadow; the others are neutral.
-Plane labels and thin perpendicular
-anchor-to-projection guides connect the object to these references. During the drag,
+soft, translucent filled shadow on the fixed world plane parallel to the camera-selected
+movement plane. Only this plane's shadow, label and perpendicular anchor-to-projection
+guide are shown. The choice stays fixed throughout the drag. During the drag,
 only the current preview casts shadows; no starting-position footprint is retained.
 Release, cancellation and loss of focus clear the guides. Hovering or dragging
 the anchor shows the same projection context; repositioning the anchor changes its

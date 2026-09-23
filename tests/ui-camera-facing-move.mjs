@@ -20,7 +20,7 @@ export async function cameraFacingMove(page, project, body) {
   const selection = (await inspect(page)).modelingSelection;
   const shadows = page.locator(".movement-shadows:visible");
   assert.equal(await shadows.count(), 1);
-  assert.equal(await shadows.locator("[data-plane]").count(), 3);
+  assert.equal(await shadows.locator("[data-plane]:visible").count(), 1);
   assert.equal(await shadows.locator('[data-active="true"]').getAttribute("data-plane"), "YZ");
   const starting = await shadows
     .locator('[data-plane="YZ"] .shadow-current > path')
@@ -31,6 +31,9 @@ export async function cameraFacingMove(page, project, body) {
   await page.mouse.move(to.x, to.y, { steps: 8 });
   await inspect(page);
   assert.equal(await shadows.getAttribute("data-moving"), "true");
+  assert.equal(await shadows.locator("[data-plane]:visible").getAttribute("data-plane"), "YZ");
+  assert.equal(await shadows.locator("[data-plane]:visible .shadow-label").count(), 1);
+  assert.equal(await shadows.locator("[data-plane]:visible .shadow-tether").count(), 1);
   assert.equal(await shadows.locator(".shadow-start").count(), 0);
   assert.notEqual(
     await shadows.locator('[data-plane="YZ"] .shadow-current > path').first().getAttribute("d"),

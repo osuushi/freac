@@ -19,7 +19,7 @@ export async function shadowSketchRoute(page, name) {
   const shadows = page.locator(".movement-shadows:visible");
   assert.equal(await shadows.count(), 1);
   assert.ok(
-    (await shadows.locator('[data-plane="XY"] .shadow-current > path').last().getAttribute("d"))
+    (await shadows.locator("[data-plane]:visible .shadow-current > path").last().getAttribute("d"))
       .length > 0,
   );
   await page.mouse.down();

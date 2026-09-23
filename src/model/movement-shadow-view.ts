@@ -88,7 +88,6 @@ export class MovementShadowView {
     this.blur.setAttribute("height", String(bounds.height + 24));
     const origin = world.project([0, 0, 0]);
     const occluders = this.occlusion.update(this.editor);
-    const labels: { x: number; y: number }[] = [];
     for (const [index, plane] of this.planes.entries()) {
       for (const node of [plane.mask, plane.background]) {
         node.setAttribute("width", String(bounds.width));
@@ -96,6 +95,7 @@ export class MovementShadowView {
       }
       plane.occluder.setAttribute("d", occluders[index]);
       plane.root.dataset.active = String(plane.normal === normal);
+      plane.root.style.display = plane.normal === normal ? "" : "none";
       const basis = plane.axes.map((axis) => {
         const point: Vector = [0, 0, 0];
         point[axis] = 1;
@@ -116,9 +116,6 @@ export class MovementShadowView {
         `M${a.x - bounds.left},${a.y - bounds.top}L${b.x - bounds.left},${b.y - bounds.top}`,
       );
       const label = { x: b.x - bounds.left + 8, y: b.y - bounds.top - 8 };
-      while (labels.some((p) => Math.abs(p.x - label.x) < 25 && Math.abs(p.y - label.y) < 15))
-        label.y += 16;
-      labels.push(label);
       plane.label.setAttribute("x", String(label.x));
       plane.label.setAttribute("y", String(label.y));
     }

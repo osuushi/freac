@@ -22,12 +22,13 @@ export async function shadowHoleRoute(page, name) {
   await inspect(page);
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await page.keyboard.press("m");
-  await orient(page, [4, 3, 3]);
+  await orient(page, [1, 1, 4]);
   const before = (await inspect(page)).document;
   assert.ok(Math.abs(before.bodies[0].volume - Math.PI * 48 * 6) < 1e-5);
   await page.getByRole("button", { name: "Reposition body pivot", exact: true }).hover();
   const shadows = page.locator(".movement-shadows:visible");
   assert.equal(await shadows.count(), 1);
+  assert.equal(await shadows.locator("[data-plane]:visible").getAttribute("data-plane"), "XY");
   const fill = await shadows
     .locator('[data-plane="XY"] .shadow-surface')
     .last()
