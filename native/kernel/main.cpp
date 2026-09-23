@@ -9,6 +9,10 @@
 #include <BRep_Builder.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepGProp.hxx>
+#include <BRepAdaptor_Surface.hxx>
+#include <BRepBndLib.hxx>
+#include <Bnd_Box.hxx>
+#include <gp_Pln.hxx>
 #include <GProp_GProps.hxx>
 #include <Standard_Failure.hxx>
 #include <TopExp_Explorer.hxx>
@@ -45,7 +49,29 @@ void validate(const TopoDS_Shape& shape) {
 }
 double volume(const TopoDS_Shape& shape) {
     if (shape.IsNull()) return 0;
-    GProp_GProps props; BRepGProp::VolumeProperties(shape, props, 1e-10);
+    GProp_GProps props;
+    bool planar = true;
+    for (TopExp_Explorer e(shape, TopAbs_FACE); e.More(); e.Next())
+        if (BRepAdaptor_Surface(TopoDS::Face(e.Current())).GetType() != GeomAbs_Plane) planar = false;
+    double error;
+    if (planar) error = BRepGProp::VolumeProperties(shape, props, 1e-10);
+    else {
+        Bnd_Box bounds; BRepBndLib::AddOptimal(shape, bounds, false, false);
+        if (bounds.IsVoid()) return 0;
+        double lo[3], hi[3]; bounds.Get(lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]);
+        // Integrate across spline spans. Ordinary adaptive quadrature can converge
+        // to different volumes for the same solid after its faces are repartitioned.
+        // A nearby exterior plane avoids near-zero integrals on trimmed faces,
+        // without amplifying boundary tolerances along the body's longest axis.
+        int axis = 0;
+        for (int i = 1; i < 3; ++i) if (hi[i]-lo[i] < hi[axis]-lo[axis]) axis = i;
+        gp_Pnt origin(lo[0], lo[1], lo[2]);
+        origin.SetCoord(axis+1, lo[axis]-1);
+        gp_Dir normal(axis == 0, axis == 1, axis == 2);
+        error = BRepGProp::VolumePropertiesGK(shape, props,
+            gp_Pln(origin, normal), 1e-10, false, true);
+    }
+    if (!std::isfinite(error) || error < 0) throw std::runtime_error("Solid volume integration failed");
     const double value = std::abs(props.Mass());
     if (!std::isfinite(value)) throw std::runtime_error("Non-finite solid volume");
     return value;

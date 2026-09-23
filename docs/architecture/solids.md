@@ -22,6 +22,13 @@ clears when accepted geometry changes. They are not persistent operation inputs.
 B1 now uses a stateless OCCT 7.9.3 calculator for exact profile sweeps and Booleans.
 The existing TypeScript document owner supplies current BReps and accepts the
 whole candidate, including zero/multiple results, as one snapshot Undo step.
+Reported body volumes use adaptive integration of exact surfaces, with spline-span
+quadrature for curved bodies. A nearby exterior reference plane along the shortest
+bounding-box axis avoids unstable near-zero integrals on cut faces and limits
+amplification of boundary tolerances. Planar bodies retain ordinary adaptive
+integration. Nonfinite or failed integration rejects; tessellation is not a volume
+source. Offset reversal, shell-cap differences, plane-cut conservation and rigid
+placement are regression checks for these measurements.
 Display meshes/outlines and planar frames derive from the exact geometry. Face
 eligibility uses its geometric surface, not how it was generated. Native operation
 history supplies immediate face/edge correspondence; one-to-one continuations

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { openDocument } from "./native-documents.mjs";
+import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { inspect, reset } from "./ui-helpers.mjs";
@@ -17,6 +18,7 @@ export async function shellSweepRoute(page, name) {
     ),
   });
   await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
+  await orient(page, [0, -1, 1]);
   await worldClick(page, [-20, 0, 0]);
   await page.keyboard.down("Shift");
   await worldClick(page, [20, 0, 0]);
@@ -28,15 +30,18 @@ export async function shellSweepRoute(page, name) {
   );
   await page.keyboard.press("s");
   const input = page.getByRole("textbox", { name: "Shell thickness", exact: true });
-  for (const [thickness, volume] of [
-    [-1, 2463.5761444],
-    [1, 2792.0529636],
-    [-2, 4598.6754695],
-  ]) {
+  // The constant-radius tube shares the solid sweep's centerline; its volume
+  // scales by the annular cross-section area, independent of bend length.
+  const wallVolume = (thickness) =>
+    (initial.document.bodies[0].volume * Math.abs(8 ** 2 - (8 + thickness) ** 2)) / 8 ** 2;
+  for (const thickness of [-1, 1, -2]) {
     await input.fill(String(thickness));
     const state = await inspect(page);
     assert.deepEqual(state.document, initial.document);
-    assert.ok(Math.abs((state.preview?.bodies[0].volume ?? 0) - volume) < 1e-5, state.notice);
+    assert.ok(
+      Math.abs((state.preview?.bodies[0].volume ?? 0) - wallVolume(thickness)) < 1e-5,
+      state.notice,
+    );
   }
   await input.fill("-8");
   assert.equal((await inspect(page)).preview, null);
@@ -54,14 +59,15 @@ export async function shellSweepRoute(page, name) {
   await inspect(page);
   await page.keyboard.press("Enter");
   const accepted = (await inspect(page)).document;
-  assert.ok(Math.abs(accepted.bodies[0].volume - 2463.5761444) < 1e-5);
+  assert.ok(Math.abs(accepted.bodies[0].volume - wallVolume(-1)) < 1e-5);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, initial.document);
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, accepted);
   await bodyArchiveRoute(page, `${name}-shell-sweep`);
   // Reselect a retained outer wall, then move its owning body using ordinary controls.
-  await worldClick(page, [-15, 5, 8]);
+  await orient(page, [0, -1, 1]);
+  await worldClick(page, [21, 7, 8 / Math.SQRT2]);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await chooseTool(page, "select owning bodies", "selection-bodies");
   await page.keyboard.press("m");

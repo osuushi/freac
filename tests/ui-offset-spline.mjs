@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { openDocument } from "./native-documents.mjs";
+import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { inspect, reset } from "./ui-helpers.mjs";
@@ -36,7 +37,8 @@ async function limitAndDrag(page, input, original) {
   assert.ok(Number(await input.inputValue()) > 0);
 }
 async function enterOffset(page) {
-  await worldClick(page, [18, 2, -8]);
+  // Pick beyond the origin-plane patches, which otherwise occlude the bore.
+  await worldClick(page, [22, 6, -8 / Math.SQRT2]);
   const state = await inspect(page);
   assert.ok(
     fixture.operation.faces.some((f) => f.face === state.modelingSelection[0]?.face),
@@ -58,6 +60,7 @@ export async function offsetSplineRoute(page, name) {
     ),
   });
   await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
+  await orient(page, [0, -1, 1]);
   const original = (await inspect(page)).document;
   const input = await enterOffset(page);
   for (const distance of [0.5, 1, -1, 7.5]) {
@@ -90,7 +93,7 @@ export async function offsetSplineRoute(page, name) {
   assert.deepEqual((await inspect(page)).document, after);
   await bodyArchiveRoute(page, `${name}-offset-spline`);
   // The new inner radius is seven; reselect its offset support after reopening.
-  await worldClick(page, [18, 2, -7]);
+  await worldClick(page, [21.5, 5.5, -7 / Math.SQRT2]);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await page.keyboard.press("o");
   if (await page.getByRole("textbox", { name: "Face diameter", exact: true }).isVisible())
