@@ -42,6 +42,11 @@ export function installWorkspaceSync(editor: SketchEditor): void {
     const key = world.workspace?.sketchId ?? world.active;
     if (previous === key) return;
     previous = key;
+    if (!world.workspace) {
+      editor.tool = "select";
+      editor.creationArmed = false;
+      editor.notice = "";
+    }
     editor.moveMode = false;
     editor.pivot = null;
     editor.placingPivot = false;

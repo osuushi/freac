@@ -4,6 +4,14 @@ Read for work in this area, not on every resume. [Architecture index](../archite
 Later founder decisions override earlier proposals.
 Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.
 
+### Sketch tool lifetime
+
+Leaving a sketch workspace resets its tool to Select and clears armed creation
+intent. Reentering a sketch or choosing another plane therefore starts in Select,
+without inheriting Circle, Line, Rectangle, Curve or Trim from the previous session.
+Drawing tools continue to take precedence while that session is active. Explicitly
+choosing a drawing tool in Modeling can still arm a new plane-first drawing flow.
+
 ### Sketch-plane visibility
 
 While a planar workspace is active, renderer clipping makes geometry on the

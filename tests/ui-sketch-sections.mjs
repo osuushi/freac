@@ -13,8 +13,10 @@ async function hollowCylinder(page) {
     (await inspect(page)).document.sketches[0].curves.map((c) => c.radius).sort((a, b) => a - b),
     [6, 10],
   );
+  assert.equal((await inspect(page)).tool, "circle", "drawing keeps its tool within the session");
   const ring = await at(page, 7, 0);
   await chooseTool(page, "return to modeling", "modeling");
+  assert.equal((await inspect(page)).tool, "select", "leaving clears the previous drawing tool");
   await page.mouse.click(ring.x, ring.y);
   if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
     await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
@@ -31,8 +33,7 @@ export async function sketchSectionsRoute(page, name) {
   const originalBody = await hollowCylinder(page);
   let state;
   await page.getByRole("button", { name: "Sketch on XZ", exact: true }).click();
-  await page.keyboard.press("v");
-  await inspect(page);
+  assert.equal((await inspect(page)).tool, "select", "plane entry starts in Select");
   const right = await at(page, 7, 10),
     hole = await at(page, 0, 10);
   await page.waitForFunction(
