@@ -7,6 +7,7 @@ import { trimCircleRoute, trimLineRoute } from "./ui-trim.mjs";
 import { trimArcRoute } from "./ui-trim-arcs.mjs";
 import { trimCancellationRoute } from "./ui-trim-cancel.mjs";
 import { trimConstraintRoute } from "./ui-trim-constraints.mjs";
+import { trimCornerLinkRoute } from "./ui-trim-links.mjs";
 import { trimOverlapRoute } from "./ui-trim-overlap.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
@@ -32,6 +33,7 @@ try {
     throw error;
   });
   await trimOverlapRoute(page, name);
+  await trimCornerLinkRoute(page, name);
   await trimLineRoute(page, name);
   await trimCircleRoute(page, name);
   await trimConstraintRoute(page, name);

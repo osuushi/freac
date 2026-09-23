@@ -20,7 +20,12 @@ export async function startArc(page, height) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-4, 0], [4, 0]);
-  const box = await page.locator(".bow-handle").nth(1).boundingBox();
+  await page.keyboard.press("v");
+  await click(page, 0, 0);
+  await inspect(page);
+  const handle = page.locator(".bow-handle").nth(1);
+  await handle.waitFor({ state: "visible" });
+  const box = await handle.evaluate((element) => element.getBoundingClientRect().toJSON());
   const to = await at(page, 0, height);
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
