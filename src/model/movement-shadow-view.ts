@@ -2,6 +2,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import { type ShadowGeometry, shadowPaths, shadowPlanes } from "./movement-shadow-geometry.js";
 import { ShadowOcclusion } from "./shadow-occlusion.js";
+import { shadowSection } from "./shadow-section.js";
 import "./movement-shadows.css";
 
 const ns = "http://www.w3.org/2000/svg";
@@ -38,8 +39,8 @@ export class MovementShadowView {
   private blur = element("filter", {
     id: `movement-shadow-blur-${serial++}`,
     filterUnits: "userSpaceOnUse",
-    x: "-12",
-    y: "-12",
+    x: "-28",
+    y: "-28",
     "color-interpolation-filters": "sRGB",
   });
   private planes = shadowPlanes.map((plane) => {
@@ -84,8 +85,8 @@ export class MovementShadowView {
     this.root.style.display = "";
     this.root.dataset.moving = String(moving);
     this.root.setAttribute("viewBox", `0 0 ${bounds.width} ${bounds.height}`);
-    this.blur.setAttribute("width", String(bounds.width + 24));
-    this.blur.setAttribute("height", String(bounds.height + 24));
+    this.blur.setAttribute("width", String(bounds.width + 56));
+    this.blur.setAttribute("height", String(bounds.height + 56));
     const origin = world.project([0, 0, 0]);
     const occluders = this.occlusion.update(this.editor);
     for (const [index, plane] of this.planes.entries()) {
@@ -106,7 +107,11 @@ export class MovementShadowView {
         "transform",
         `matrix(${basis[0].x} ${basis[0].y} ${basis[1].x} ${basis[1].y} ${origin.x - bounds.left} ${origin.y - bounds.top})`,
       );
-      if (current !== this.previous) setGeometry(plane.current, current, plane.axes);
+      if (current !== this.previous) {
+        const section = shadowSection(current, plane.normal);
+        plane.root.dataset.contact = String(section !== null);
+        setGeometry(plane.current, section ?? current, plane.axes);
+      }
       const foot: Vector = [...anchor];
       foot[plane.normal] = 0;
       const a = world.project(anchor),

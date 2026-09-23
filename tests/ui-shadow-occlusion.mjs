@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-async function screenshotPixels(page, locations) {
+export async function screenshotPixels(page, locations) {
   const png = await page.screenshot({ scale: "css" });
   return page.evaluate(
     async ({ data, locations }) => {

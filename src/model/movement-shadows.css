@@ -34,6 +34,14 @@
   color: #344f68;
   opacity: 0.28;
 }
+.movement-shadows [data-contact="true"] .shadow-soft {
+  color: #168bff;
+  opacity: 0.65;
+}
+.movement-shadows [data-contact="true"] .shadow-lines {
+  stroke-width: 32;
+  stroke-linecap: round;
+}
 .movement-shadows .shadow-tether {
   stroke: currentColor;
   stroke-width: 1;

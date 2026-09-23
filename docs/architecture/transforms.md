@@ -229,6 +229,15 @@ the anchor shows the same projection context; repositioning the anchor changes i
 guides without pretending that the geometry has moved. Active sketch workspaces retain
 their existing planar feedback.
 
+When selected surfaces touch or cross the receiver, the projection is replaced by
+a blue contact glow from their intersection with that plane. Presentation triangles
+provide section segments, coplanar contact faces and tangent edge/point contacts.
+Rounded screen-space strokes dilate the section boundary by 16 pixels before a
+3-pixel Gaussian blur; its size stays constant through zoom. The foreground mask
+also clips this glow after blur, including its portion inside the body. This is a
+visual mesh section, not an exact kernel section; contact uses a 1e-7 world-unit
+tolerance. Curve-only selections retain their projected feedback.
+
 These are display-only silhouettes from presentation triangles, and softened projected
 curves for sketch/edge selections, not exact sections or model geometry. Silhouettes are
 filled as a union, preserving concave boundaries and projected openings, then blurred

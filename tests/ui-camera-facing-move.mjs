@@ -24,8 +24,7 @@ export async function cameraFacingMove(page, project, body) {
   assert.equal(await shadows.locator('[data-active="true"]').getAttribute("data-plane"), "YZ");
   const starting = await shadows
     .locator('[data-plane="YZ"] .shadow-current > path')
-    .first()
-    .getAttribute("d");
+    .evaluateAll((paths) => paths.map((path) => path.getAttribute("d")).join(" "));
   assert.deepEqual((await inspect(page)).document.bodies[0], body);
   await page.mouse.down();
   await page.mouse.move(to.x, to.y, { steps: 8 });
@@ -36,7 +35,9 @@ export async function cameraFacingMove(page, project, body) {
   assert.equal(await shadows.locator("[data-plane]:visible .shadow-tether").count(), 1);
   assert.equal(await shadows.locator(".shadow-start").count(), 0);
   assert.notEqual(
-    await shadows.locator('[data-plane="YZ"] .shadow-current > path').first().getAttribute("d"),
+    await shadows
+      .locator('[data-plane="YZ"] .shadow-current > path')
+      .evaluateAll((paths) => paths.map((path) => path.getAttribute("d")).join(" ")),
     starting,
   );
   await page.screenshot({
