@@ -129,6 +129,9 @@ clickable. Existing sketch handles/curves take picking priority; drawing tools a
 navigation retain their gestures. Fully copied regions no longer intercept clicks.
 The copied curves are independent, editable ordinary sketch curves with joined
 endpoints. Lines/circles/arcs remain analytic; other curves use the existing
-0.001 mm bounded cubic approximation. Bodies are unchanged and no dependency is
+0.001 mm bounded cubic approximation. Section endpoints use shared native vertices
+projected onto the plane, preserving connectivity across independently evaluated
+edge curves. Endpoint corrections consume the existing conversion budget; sketch
+region tolerances remain unchanged. Bodies are unchanged and no dependency is
 created. Hidden bodies contribute no caps or click targets. The cap itself is
 transient view geometry and creates neither a saved object nor an Undo entry.

@@ -56,3 +56,11 @@ omitted; ordinary Open regenerates the body view. Ordinary adaptive volume
 integration falsely rejected the split. Regressions cover all world planes,
 rigid placement, cancellation, history, archive and subsequent movement.
 This is user-created Freac geometry.
+
+`section-filleted-junction.json` retains the exact body and XZ plane from the
+founder's `2026-09-23T11-12-49-403Z-90454deb` capture. Native splitting succeeded,
+but independently evaluated arc/spline endpoints differed by about 2.12e-7 mm,
+leaving the sketch section open. Topology IDs/signatures are retained; meshes,
+source sketches and history are omitted. Tests cover section copying, subsequent
+extrusion, Undo/Redo and the ordinary section pointer route. This is user-created
+Freac geometry.

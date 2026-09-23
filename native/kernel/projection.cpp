@@ -20,6 +20,7 @@
 #include <TColgp_Array1OfPnt.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Edge.hxx>
+#include <TopoDS_Vertex.hxx>
 #include <gp_Pln.hxx>
 #include <gp_Circ.hxx>
 #include <algorithm>
@@ -72,14 +73,19 @@ bool linearImage(Output& output, const Handle(Geom_Curve)& source, const Handle(
     if(a.Distance(b)<1e-7) throw std::runtime_error("Selected edge projects to a point");
     output.begin("segment"); output.point2("a",a); output.point2("b",b); output.out << '}'; return true;
 }
-void projectCurve(Output& output, const Handle(Geom_Curve)& source, const Handle(Geom_Plane)& plane) {
-    if(linearImage(output,source,plane)) return;
+struct Endpoints { gp_Pnt a, b; };
+void projectCurve(Output& output, const Handle(Geom_Curve)& source, const Handle(Geom_Plane)& plane,
+                  const Endpoints* joined = nullptr) {
+    if (!joined && linearImage(output,source,plane)) return;
     const auto projected = GeomProjLib::ProjectOnPlane(source, plane, plane->Pln().Axis().Direction(), true);
     if (projected.IsNull()) throw std::runtime_error("Curve projection failed");
     const double first=projected->FirstParameter(), last=projected->LastParameter();
     GeomAdaptor_Curve curve(projected);
+    const auto a = joined ? joined->a : curve.Value(first);
+    const auto b = joined ? joined->b : curve.Value(last);
+    const double correction = std::max(a.Distance(curve.Value(first)), b.Distance(curve.Value(last)));
+    if (correction > 0.0005) throw std::runtime_error("Cross section endpoint tolerance exceeded");
     if (curve.GetType() == GeomAbs_Line) {
-        const auto a=curve.Value(first), b=curve.Value(last);
         if (a.Distance(b)<1e-7) throw std::runtime_error("Selected edge projects to a point");
         output.begin("segment"); output.point2("a",a); output.point2("b",b); output.out << '}'; return;
     }
@@ -89,13 +95,19 @@ void projectCurve(Output& output, const Handle(Geom_Curve)& source, const Handle
             output.begin("circle"); output.point2("center",circle.Location()); output.out << ",\"radius\":" << circle.Radius() << '}';
         } else {
             const double sign=circle.Axis().Direction().Dot(plane->Pln().Axis().Direction())>0 ? 1 : -1;
-            output.begin("arc"); output.point2("a",curve.Value(first)); output.point2("b",curve.Value(last));
-            output.out << ",\"bulge\":" << std::tan(sign*sweep/4) << '}';
+            const double bulge = std::tan(sign*sweep/4);
+            // Bound the center/radius change caused by joining analytic arc endpoints.
+            const double amplification = 1 + std::abs((1-bulge*bulge)/(2*bulge))
+                + std::abs((1+bulge*bulge)/(2*bulge));
+            if (correction*amplification > 0.001) throw std::runtime_error("Cross section arc tolerance exceeded");
+            output.begin("arc"); output.point2("a",a); output.point2("b",b);
+            output.out << ",\"bulge\":" << bulge << '}';
         }
         return;
     }
     if (curve.GetType() == GeomAbs_BezierCurve && !curve.Bezier()->IsRational() && curve.Bezier()->Degree()<=3) {
-        auto part=Handle(Geom_BezierCurve)::DownCast(curve.Bezier()->Copy()); part->Segment(first,last); output.cubic(part); return;
+        auto part=Handle(Geom_BezierCurve)::DownCast(curve.Bezier()->Copy()); part->Segment(first,last);
+        part->SetPole(1,a); part->SetPole(part->NbPoles(),b); output.cubic(part); return;
     }
     // Half the 0.001 mm budget is reserved for endpoint correction. Failure is explicit.
     GeomConvert_ApproxCurve approximate(projected, 0.0005, GeomAbs_C1, 256, 3);
@@ -105,12 +117,12 @@ void projectCurve(Output& output, const Handle(Geom_Curve)& source, const Handle
     for (int i=1; i<=pieces.NbArcs(); ++i) {
         auto piece=pieces.Arc(i);
         if (i==1) {
-            if (piece->StartPoint().Distance(projected->Value(first))>0.0005) throw std::runtime_error("Projection endpoint tolerance exceeded");
-            piece->SetPole(1,projected->Value(first));
+            if (piece->StartPoint().Distance(a)>0.0005) throw std::runtime_error("Projection endpoint tolerance exceeded");
+            piece->SetPole(1,a);
         }
         if (i==pieces.NbArcs()) {
-            if (piece->EndPoint().Distance(projected->Value(last))>0.0005) throw std::runtime_error("Projection endpoint tolerance exceeded");
-            piece->SetPole(piece->NbPoles(),projected->Value(last));
+            if (piece->EndPoint().Distance(b)>0.0005) throw std::runtime_error("Projection endpoint tolerance exceeded");
+            piece->SetPole(piece->NbPoles(),b);
         }
         output.cubic(piece);
     }
@@ -162,7 +174,13 @@ void sketchSections(std::ostream& out, const Tree& input, const std::vector<Oper
                 double first, last;
                 const auto curve = BRep_Tool::Curve(edge, first, last);
                 if (curve.IsNull()) throw std::runtime_error("Cross section has no spatial boundary");
-                projectCurve(output, new Geom_TrimmedCurve(curve, first, last), plane);
+                // Shared native vertices, not independently evaluated edge curves,
+                // define connectivity. Project the shared points onto the section plane.
+                const auto forward = TopoDS::Edge(edge.Oriented(TopAbs_FORWARD));
+                const Endpoints joined{
+                    onPlane(BRep_Tool::Pnt(TopExp::FirstVertex(forward)), plane),
+                    onPlane(BRep_Tool::Pnt(TopExp::LastVertex(forward)), plane)};
+                projectCurve(output, new Geom_TrimmedCurve(curve, first, last), plane, &joined);
             }
             out << "]}";
         }
