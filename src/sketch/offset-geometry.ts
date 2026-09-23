@@ -1,10 +1,19 @@
 import { arcAt, arcCircle } from "./arc-geometry.js";
+import { bezierAt, bezierDerivative } from "./bezier-geometry.js";
 import type { Curve } from "./document.js";
 import { add, distance, midpoint, scale, subtract } from "./geometry.js";
 import type { Point } from "./planes.js";
 
 export function offsetFrame(curve: Curve): { point: Point; normal: Point } {
-  if (curve.kind === "bezier") throw new Error("Cubic offsets are not available yet");
+  if (curve.kind === "bezier") {
+    const tangent = bezierDerivative(curve, 0.5),
+      length = Math.hypot(tangent.x, tangent.y);
+    if (length < 1e-10) throw new Error("Offset handle requires a regular curve tangent");
+    return {
+      point: bezierAt(curve, 0.5),
+      normal: { x: -tangent.y / length, y: tangent.x / length },
+    };
+  }
   if (curve.kind === "segment") {
     const v = subtract(curve.b, curve.a),
       length = distance(curve.a, curve.b);

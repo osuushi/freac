@@ -18,6 +18,7 @@ export function cancellableCalculation(kind: ModelRequest["kind"]): boolean {
     "edge-finish-selection",
     "boolean-bodies",
     "project",
+    "offset-sketch",
     "cleanup",
     "check-cleanup",
     "delete-topology",

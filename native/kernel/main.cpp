@@ -143,6 +143,10 @@ int main() {
                 std::cout << output.str() << std::endl;
                 continue;
             }
+            if (input.get<std::string>("kind") == "offset-sketch") {
+                std::ostringstream output; offsetSketch(output, input);
+                std::cout << output.str() << std::endl; continue;
+            }
             if (input.get<std::string>("kind") == "sections") {
                 std::ostringstream output; sketchSections(output, input, bodies);
                 std::cout << output.str() << std::endl; continue;

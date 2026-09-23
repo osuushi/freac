@@ -1,3 +1,4 @@
+import { cubicOffsetProfile } from "./cubic-offset-target.js";
 import {
   type Constraint,
   type Curve,
@@ -15,8 +16,19 @@ export interface OffsetTarget {
   curve: Curve;
   direction: number;
   loop?: LoopEdge[];
+  native?: boolean;
 }
 export function prepareOffset(curves: readonly Curve[]): OffsetTarget {
+  if (curves.some((c) => c.kind === "bezier")) {
+    const profile = cubicOffsetProfile(curves);
+    const span = profile.outer[0];
+    const curve = span.curve;
+    const direction =
+      curve.kind === "segment" || curve.kind === "bezier"
+        ? -Math.sign(span.end - span.start)
+        : Math.sign(span.end - span.start);
+    return { curve, direction, native: true };
+  }
   if (curves.length === 1) return { curve: curves[0], direction: 1 };
   const loop = orderedLoop(curves),
     curve = loop[0];

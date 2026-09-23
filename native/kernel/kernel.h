@@ -65,3 +65,6 @@ std::vector<Result> shellBodies(const Tree&, const std::vector<Operand>&, std::v
 std::vector<Result> cutWithPlane(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);
 
 void sketchSections(std::ostream&, const Tree&, const std::vector<Operand>&);
+
+void offsetSketch(std::ostream&, const Tree&);
+void planarSketchCurves(std::ostream&, const TopoDS_Shape&, const Tree&);

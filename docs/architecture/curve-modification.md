@@ -77,3 +77,14 @@ Clicking or dragging the sketch fillet guide accepts on pointer release and sele
 the new arc for ordinary editing. Clicking away or pressing Escape afterward leaves
 the accepted arc intact; Undo restores the corner. Held gestures remain cancellable.
 The explicit Fillet sketch corner menu command retains numeric entry before acceptance.
+
+Sketch offset accepts a single analytic edge or one closed loop, including mixed
+cubic/line/arc loops copied from solid sections. Closed loops containing cubics
+use native planar intersection-join offsets; positive distances expand the loop.
+The result returns independent ordinary curves through the existing 0.001 mm
+bounded cubic conversion and shared-vertex endpoint correction. Source geometry
+and constraints remain unchanged; new joined endpoints receive coincidence links.
+Preview remains temporary, Enter/drag release accepts one Undo step, and Escape
+cancels. Disconnected, crossing, collapsed or split results reject atomically.
+Open cubic offsets remain unavailable and the tool explains the closed-loop
+requirement. No persistent offset dependency or general NURBS editing is introduced.

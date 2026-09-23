@@ -225,6 +225,7 @@ export class DocumentOwner {
       case "mirror":
       case "scale":
       case "plane-cut":
+      case "offset-sketch":
       case "project":
       case "preview":
       case "edit":

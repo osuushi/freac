@@ -1,4 +1,3 @@
-import { directionalOffset, directionalWidget } from "../model/directional-widget.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import type { InteractionLease } from "./active-interaction.js";
@@ -8,9 +7,10 @@ import { distance } from "./geometry.js";
 import { GestureSolve } from "./gesture-solve.js";
 import { hasClosedEndpoints } from "./loop-boundary.js";
 import { onModelKeydown } from "./model-keys.js";
-import { offsetDistance, offsetFrame } from "./offset-geometry.js";
+import { offsetDistance } from "./offset-geometry.js";
 import { type OffsetTarget, offsetLinks, offsetResult, prepareOffset } from "./offset-target.js";
-import type { Point, Vector } from "./planes.js";
+import { placeOffsetWidget } from "./offset-widget.js";
+import type { Point } from "./planes.js";
 import type { SelectionTarget } from "./selected-targets.js";
 
 type Session = {
@@ -48,7 +48,14 @@ export class OffsetControls {
       category: "Sketch",
       aliases: ["offset sketch", "parallel curve"],
       reason: () =>
-        idleReason(editor) ?? (this.selected() ? null : "Select a sketch edge or closed loop"),
+        idleReason(editor) ??
+        (this.selected()
+          ? null
+          : editor.sketch?.curves.some(
+                (c) => c.kind === "bezier" && editor.selectionOwners.has(c.id),
+              )
+            ? "Select one closed loop to offset cubic curves"
+            : "Select a sketch edge or closed loop"),
       run: () => {
         const rect = this.handle.getBoundingClientRect();
         this.begin({ x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 });
@@ -114,8 +121,7 @@ export class OffsetControls {
       return undefined;
     const curves = e.sketch?.curves.filter((c) => e.selectionOwners.has(c.id));
     return curves &&
-      !curves.some((c) => c.kind === "bezier") &&
-      (curves.length === 1 || hasClosedEndpoints(curves))
+      ((curves.length === 1 && curves[0].kind !== "bezier") || hasClosedEndpoints(curves))
       ? curves
       : undefined;
   }
@@ -165,13 +171,22 @@ export class OffsetControls {
     if (!s || this.closing) return;
     s.amount = amount;
     try {
-      const curves = offsetResult(s.target, amount, s.ids);
-      s.valid = true;
-      s.solve.update({
-        ...s.sketch,
-        curves: [...s.sketch.curves, ...curves],
-        constraints: [...s.sketch.constraints, ...s.links],
-      });
+      if (s.target.native) {
+        s.valid = true;
+        s.solve.offset(
+          s.sketch.id,
+          [...new Set(s.selection.flatMap((t) => (t.kind === "curve" ? [t.curve] : [])))],
+          amount,
+        );
+      } else {
+        const curves = offsetResult(s.target, amount, s.ids);
+        s.valid = true;
+        s.solve.update({
+          ...s.sketch,
+          curves: [...s.sketch.curves, ...curves],
+          constraints: [...s.sketch.constraints, ...s.links],
+        });
+      }
       this.editor.message = "";
       this.input.removeAttribute("aria-invalid");
     } catch (error) {
@@ -222,7 +237,14 @@ export class OffsetControls {
       return;
     }
     if (!interaction.close()) return;
-    if (await this.editor.accept()) this.editor.select(s.ids);
+    if (await this.editor.accept())
+      this.editor.select(
+        s.target.native
+          ? (this.editor.sketch?.curves
+              .filter((c) => !s.sketch.curves.some((old) => old.id === c.id))
+              .map((c) => c.id) ?? [])
+          : s.ids,
+      );
     else this.editor.selectTargets(s.selection);
     this.finish();
   }
@@ -254,27 +276,13 @@ export class OffsetControls {
       }
     }
     if (!target) return;
-    const loop = !!s?.target.loop || (curves?.length ?? 0) > 1;
+    const loop = !!s?.target.native || !!s?.target.loop || (curves?.length ?? 0) > 1;
     this.handle.title = `${loop ? "Offset loop" : "Offset edge"} · drag outward or click to type`;
     this.handle.setAttribute("aria-label", loop ? "Offset loop" : "Offset edge");
-    const base = offsetFrame(target.curve);
-    const frame = {
-        point: base.point,
-        normal: { x: base.normal.x * target.direction, y: base.normal.y * target.direction },
-      },
-      p = this.editor.world.projectLocal(sketch.plane, frame.point);
-    const normal = sketch.plane.u.map(
-      (v, i) => v * frame.normal.x + sketch.plane.v[i] * frame.normal.y,
-    ) as Vector;
-    const width = sketch.plane.u.map(
-      (v, i) => -v * frame.normal.y + sketch.plane.v[i] * frame.normal.x,
-    ) as Vector;
-    const offset = directionalOffset(this.editor.world.camera, normal, 48, width);
-    this.handle.innerHTML = directionalWidget(this.editor.world.camera, normal, "offset", width);
-    this.handle.dataset.geometryInvalid = String(!!s && !s.valid);
-    const bounds = this.editor.world.canvas.getBoundingClientRect();
-    this.root.style.left = `${p.x - bounds.left + offset.x}px`;
-    this.root.style.top = `${p.y - bounds.top + offset.y}px`;
+    placeOffsetWidget(this.editor, sketch, target, this.root, this.handle);
+    const invalid = !!s && (!s.valid || (s.target.native && s.solve.settled && !s.solve.valid));
+    this.handle.dataset.geometryInvalid = String(invalid);
+    if (s?.target.native) this.input.setAttribute("aria-invalid", String(invalid));
     this.input.hidden = !s;
     this.handle.disabled = this.closing || (!s && this.editor.blocked);
   };
