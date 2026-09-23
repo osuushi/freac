@@ -18,11 +18,29 @@ npm ci
 freac_main_workspace="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
 if [ "$freac_main_workspace" != "$(pwd -P)" ]; then
   mkdir -p .cache
-  for freac_cache in kernel solver release-inputs; do
+  for freac_cache in solver release-inputs; do
     if [ ! -e ".cache/$freac_cache" ] && [ ! -L ".cache/$freac_cache" ] && [ -d "$freac_main_workspace/.cache/$freac_cache" ]; then
       ln -s "$freac_main_workspace/.cache/$freac_cache" ".cache/$freac_cache"
     fi
   done
+  # Consume the installed SDK, never another checkout's mutable CMake build tree.
+  freac_sdk="$freac_main_workspace/.cache/kernel/sdk"
+  freac_sdk_matches=true
+  for freac_input in scripts/setup-kernel.mjs scripts/native-inputs.mjs scripts/release/cache-key.mjs; do
+    if ! cmp -s "$freac_input" "$freac_main_workspace/$freac_input"; then
+      freac_sdk_matches=false
+    fi
+  done
+  if [ -z "${OCCT_ROOT:-}" ] && [ "$freac_sdk_matches" = true ] && [ -f "$freac_sdk/.freac-sdk" ] && [ -f "$freac_sdk/lib/cmake/opencascade/OpenCASCADEConfig.cmake" ]; then
+    if lipo "$freac_sdk/lib/libTKernel.dylib" -verify_arch $CMAKE_OSX_ARCHITECTURES; then
+      export OCCT_ROOT="$freac_sdk"
+      echo "Using main workspace OCCT SDK: $OCCT_ROOT"
+    fi
+  fi
+  # Migrate links made by the old setup; unlinking preserves the main cache.
+  if [ -L .cache/kernel ]; then
+    unlink .cache/kernel
+  fi
 fi
 npm run setup:native
 npm run setup:kernel'''
