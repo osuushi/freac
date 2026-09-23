@@ -37,6 +37,12 @@ command. The SDK must match the calculator architecture. If CMake selects Intel
 output on Apple Silicon, set `CMAKE_OSX_ARCHITECTURES=arm64` explicitly for
 both `setup:native` and `setup:kernel`.
 The installed-SDK and clean source-build routes are verified on macOS arm64.
+Codex worktree setup links the main checkout's native caches and keeps `.build`
+local. Its macOS defaults use Node's architecture and deployment target `14.0`,
+matching the arm64 release SDK. Explicit environment overrides are preserved.
+Using Node's architecture avoids selecting Intel output under a translated shell.
+SDK reuse requires matching build settings as well as the pinned sources and
+toolchain; sharing the cache directory alone does not guarantee a cache hit.
 The fresh-checkout build used Node 24.15.0, Apple Clang 17, Eigen 5.0.1 and
 Boost 1.90, without copying `node_modules/`, `.build/` or `.cache/` from another
 checkout. This was a configured development Mac, not a fresh operating-system
