@@ -41,6 +41,22 @@ if (!sdk) {
   await mkdir(source, { recursive: true });
   if (!existsSync(resolve(source, "CMakeLists.txt")))
     run("tar", ["-xzf", archive, "-C", source, "--strip-components=1"]);
+  // Freac adaptation (2026-09-23): rounded offset joins must fit their shared
+  // boundaries at modeling precision. The upstream caller otherwise uses the
+  // pipe constructor's independent 1e-4 mm default, regardless of Shell's Tol.
+  // Original implementation remains LGPL-2.1 with the OCCT exception; this
+  // reproducible modification ships in the matching Freac sources archive.
+  const pipeSource = resolve(source, "src/BRepOffset/BRepOffset_MakeOffset.cxx");
+  const originalPipe = "BRepOffset_Offset OF(E, EOn1, EOn2, CurOffset, E1f, E1l);";
+  const precisePipe =
+    "// Freac (2026-09-23): shared-boundary precision for rounded offset joins.\n" +
+    "          BRepOffset_Offset OF(E, EOn1, EOn2, CurOffset, E1f, E1l, false, 1e-7);";
+  const pipeText = await readFile(pipeSource, "utf8");
+  if (!pipeText.includes(precisePipe)) {
+    if (pipeText.split(originalPipe).length !== 2)
+      throw new Error("Pinned OCCT offset-join source does not match the precision adaptation");
+    await writeFile(pipeSource, pipeText.replace(originalPipe, precisePipe));
+  }
   if (!cached) {
     run("cmake", [
       "-S",
@@ -78,6 +94,7 @@ run("cmake", [
   resolve(root, "native/kernel"),
   "-B",
   build,
+  "-UOpenCASCADE_DIR",
   `-DCMAKE_PREFIX_PATH=${resolve(sdk)}`,
   "-DCMAKE_BUILD_TYPE=Release",
   ...flags,

@@ -8,7 +8,7 @@ import { GestureSolve } from "./gesture-solve.js";
 import { hasClosedEndpoints } from "./loop-boundary.js";
 import { onModelKeydown } from "./model-keys.js";
 import { offsetDistance } from "./offset-geometry.js";
-import { type OffsetTarget, offsetLinks, offsetResult, prepareOffset } from "./offset-target.js";
+import { type OffsetTarget, offsetLinks, offsetPreview, prepareOffset } from "./offset-target.js";
 import { placeOffsetWidget } from "./offset-widget.js";
 import type { Point } from "./planes.js";
 import type { SelectionTarget } from "./selected-targets.js";
@@ -171,7 +171,9 @@ export class OffsetControls {
     if (!s || this.closing) return;
     s.amount = amount;
     try {
-      if (s.target.native) {
+      const sketch = offsetPreview(s.sketch, s.target, amount, s.ids, s.links);
+      if (!sketch) {
+        s.target.native = true;
         s.valid = true;
         s.solve.offset(
           s.sketch.id,
@@ -179,13 +181,8 @@ export class OffsetControls {
           amount,
         );
       } else {
-        const curves = offsetResult(s.target, amount, s.ids);
         s.valid = true;
-        s.solve.update({
-          ...s.sketch,
-          curves: [...s.sketch.curves, ...curves],
-          constraints: [...s.sketch.constraints, ...s.links],
-        });
+        s.solve.update(sketch);
       }
       this.editor.message = "";
       this.input.removeAttribute("aria-invalid");

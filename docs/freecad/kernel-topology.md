@@ -997,3 +997,22 @@ errors consume the unchanged conservation allowance; they do not enlarge it.
 Independent point-classification probes compare original material with the
 returned pieces, supplementing the scalar-volume and closed-solid checks.
 These numerical checks are not a general proof of arbitrary split correctness.
+
+## Rounded offset join precision (2026-09-23)
+
+Source observation at pinned OCCT `a016080bf6738d6aeae020badee4e888ad1540a5`:
+[`BRepOffset_MakeOffset` edge-pipe construction](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepOffset/BRepOffset_MakeOffset.cxx#L1995)
+omits the pipe constructor tolerance, so the
+[`BRepOffset_Offset` declaration](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepOffset/BRepOffset_Offset.hxx)
+uses its independent 1e-4 default. The
+[`GeomFill_Pipe::Perform` call](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepOffset/BRepOffset_Offset.cxx#L1104-L1108)
+receives this tolerance, not the outer Shell construction tolerance.
+
+Freac adaptation: the setup script changes this call to pass 1e-7 explicitly;
+the original pinned archive plus this dated script reproduce the modified LGPL
+component. Runtime investigation of the captured notched cylinder measured rounded
+join mismatch up to 4.1e-5 mm with the default. More accurate pipe construction,
+all-parallel intersection fallback, and bounded generated-vertex fitting permit
+both -2/+2 mm Shell results under the existing strict checks. The capture tests
+also run STL and 3MF mesh closure/orientation validation. This is specific runtime
+evidence, not a claim of general constrained-surface repair.

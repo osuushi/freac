@@ -1,0 +1,142 @@
+{
+  "document": {
+    "units": "mm",
+    "sketches": [
+      {
+        "id": "c3366f61-4860-46a8-8cd4-9e9907d8aa1d",
+        "plane": {
+          "origin": [0, 0, 0],
+          "u": [1, 0, 0],
+          "v": [0, 0, 1]
+        },
+        "curves": [
+          {
+            "id": "d881ce0b-710b-4965-983e-6a0a091c6ee1",
+            "kind": "arc",
+            "construction": false,
+            "a": {
+              "x": 11.625,
+              "y": 2.976470224947663
+            },
+            "b": {
+              "x": 11.624999999999998,
+              "y": -2.976470224947671
+            },
+            "bulge": 7.93725393319375
+          },
+          {
+            "id": "de10abce-a9cb-47e4-9a32-02293c6398ac",
+            "kind": "arc",
+            "construction": false,
+            "a": {
+              "x": 11.625,
+              "y": -2.9764702249476644
+            },
+            "b": {
+              "x": 14.312500000000002,
+              "y": -1.9111106064275833
+            },
+            "bulge": 0.2568007140004192
+          },
+          {
+            "id": "7fc79d06-64d0-424f-992d-fe3fd2836da6",
+            "kind": "arc",
+            "construction": false,
+            "a": {
+              "x": 14.3125,
+              "y": 1.9111106064275847
+            },
+            "b": {
+              "x": 11.625000000000005,
+              "y": 2.9764702249476653
+            },
+            "bulge": 0.25680071400041865
+          },
+          {
+            "id": "6a3efb9d-f5e8-4eec-9452-fd871f0facbf",
+            "kind": "arc",
+            "construction": false,
+            "a": {
+              "x": 14.3125,
+              "y": -1.9111106064275822
+            },
+            "b": {
+              "x": 14.312500000000004,
+              "y": 1.9111106064275898
+            },
+            "bulge": 6.115553940568248
+          }
+        ],
+        "constraints": [
+          {
+            "id": "8b41e5d1-5501-41cd-8354-d88adfa11c7d",
+            "kind": "coincident",
+            "a": {
+              "curve": "d881ce0b-710b-4965-983e-6a0a091c6ee1",
+              "end": "b"
+            },
+            "b": {
+              "curve": "de10abce-a9cb-47e4-9a32-02293c6398ac",
+              "end": "a"
+            }
+          },
+          {
+            "id": "dad63b94-d390-4fc7-a863-e45d00f4cd3a",
+            "kind": "coincident",
+            "a": {
+              "curve": "d881ce0b-710b-4965-983e-6a0a091c6ee1",
+              "end": "a"
+            },
+            "b": {
+              "curve": "7fc79d06-64d0-424f-992d-fe3fd2836da6",
+              "end": "b"
+            }
+          },
+          {
+            "id": "f753f2e6-851c-4356-8775-1bf866a27d60",
+            "kind": "coincident",
+            "a": {
+              "curve": "7fc79d06-64d0-424f-992d-fe3fd2836da6",
+              "end": "a"
+            },
+            "b": {
+              "curve": "6a3efb9d-f5e8-4eec-9452-fd871f0facbf",
+              "end": "b"
+            }
+          },
+          {
+            "id": "2372dc9e-3227-4338-801c-11496f7d553c",
+            "kind": "coincident",
+            "a": {
+              "curve": "de10abce-a9cb-47e4-9a32-02293c6398ac",
+              "end": "b"
+            },
+            "b": {
+              "curve": "6a3efb9d-f5e8-4eec-9452-fd871f0facbf",
+              "end": "a"
+            }
+          }
+        ],
+        "groups": []
+      }
+    ]
+  },
+  "selection": [
+    {
+      "kind": "curve",
+      "curve": "d881ce0b-710b-4965-983e-6a0a091c6ee1"
+    },
+    {
+      "kind": "curve",
+      "curve": "de10abce-a9cb-47e4-9a32-02293c6398ac"
+    },
+    {
+      "kind": "curve",
+      "curve": "7fc79d06-64d0-424f-992d-fe3fd2836da6"
+    },
+    {
+      "kind": "curve",
+      "curve": "6a3efb9d-f5e8-4eec-9452-fd871f0facbf"
+    }
+  ]
+}

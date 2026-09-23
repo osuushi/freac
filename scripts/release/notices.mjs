@@ -52,7 +52,7 @@ export async function generateNotices(destination, metadata) {
   entries.sort((a, b) => a.name.localeCompare(b.name));
   const runtime = JSON.parse(await readFile("packaging/runtime-sources.json", "utf8"));
   const runtimeSource = `https://github.com/${process.env.GITHUB_REPOSITORY ?? "osuushi/freac"}/releases/tag/${runtime.releaseTag}`;
-  const intro = `Freac ${metadata.timestamp} (${metadata.commit}). This application uses Open CASCADE Technology and the FreeCAD PlaneGCS solver, covered by the GNU LGPL. Freac is provided without warranty. The matching Freac-${metadata.tag}-sources.tar.gz accompanies this release and contains Freac, adapted PlaneGCS, OCCT, Eigen and Boost sources and rebuild/replacement instructions. Keep that archive available to everyone receiving this app. You may modify and rebuild Freac and replace its LGPL components. Electron/Chromium corresponding sources (including FFmpeg and Blink/WebKit) are in the shared runtime source release: ${runtimeSource}`;
+  const intro = `Freac ${metadata.timestamp} (${metadata.commit}). This application uses Open CASCADE Technology and the FreeCAD PlaneGCS solver, covered by the GNU LGPL. Freac is provided without warranty. The matching Freac-${metadata.tag}-sources.tar.gz accompanies this release and contains Freac, adapted PlaneGCS and OCCT, Eigen and Boost sources and rebuild/replacement instructions. Keep that archive available to everyone receiving this app. You may modify and rebuild Freac and replace its LGPL components. Electron/Chromium corresponding sources (including FFmpeg and Blink/WebKit) are in the shared runtime source release: ${runtimeSource}`;
   await writeFile(
     join(destination, "inventory.json"),
     `${JSON.stringify({ metadata, entries }, null, 2)}\n`,
@@ -71,7 +71,7 @@ ${entries.map((e) => `<details><summary>${htmlEscape(e.name)} — ${htmlEscape(e
 async function upstreamNotices(add, metadata) {
   await add("Freac", metadata.timestamp, "LGPL-2.1-or-later", ["LICENSE", "COPYING.md"]);
   await add(
-    "Open CASCADE Technology",
+    "Open CASCADE Technology (Freac offset-join precision adaptation, 2026-09-23)",
     "7.9.3",
     "LGPL-2.1-only WITH OCCT-exception-1.0",
     [".cache/kernel/source/LICENSE_LGPL_21.txt", ".cache/kernel/source/OCCT_LGPL_EXCEPTION.txt"],

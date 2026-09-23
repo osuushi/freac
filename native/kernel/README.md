@@ -8,6 +8,14 @@ Its upstream distribution includes `LICENSE_LGPL_21.txt` and
 when packaging the runtime. This directory does not introduce an application
 license decision or a binary distribution pipeline.
 
+Freac applies one dated, reproducible adaptation in `scripts/setup-kernel.mjs`:
+rounded offset edge pipes receive an explicit 1e-7 mm approximation tolerance
+instead of OCCT's independent 1e-4 mm default. Re-run `npm run setup:kernel` after
+updating; its SDK cache key includes this script. An external `OCCT_ROOT` must
+contain the same adaptation to reproduce these Shell results. The source bundle
+includes the pinned original archive and the setup script that produces the modified
+source, under the existing OCCT license and exception. No shared SDK is patched.
+
 JSON lines carry exact operands and current-operation inputs. The process retains
 no document or feature history. Results contain exact serialized BRep, derived
 triangles/outlines, geometric planar frames, and immediate operation correspondence.

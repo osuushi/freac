@@ -140,7 +140,10 @@ test("captured sweep checks supported cap choices and rejects invalid inward clo
           selection: [{ body: body.id, faces }],
         },
       });
-      assert.match(reply.error ?? "", /invalid boundaries or surface geometry/);
+      assert.match(
+        reply.error ?? "",
+        /invalid boundaries or surface geometry|boundary does not meet its incident surfaces/,
+      );
       assert.equal(reply.view.candidate, null);
       assert.equal(reply.view.data, before);
       assert.ok((await owner.call({ kind: "accept" })).error);

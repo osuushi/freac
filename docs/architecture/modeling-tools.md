@@ -115,6 +115,13 @@ New offsets reject vertex tolerances above 2e-6 mm. This is bounded boundary
 absorption, not general removal of arbitrary curved faces or permission to cross
 complete body collapse.
 
+For a single planar face that normal offset construction cannot rebuild, Offset
+may use the existing boundary reconnection machinery. The selected support must
+translate by the requested signed normal distance, every unselected support must
+remain fixed, and the strict solid checks still apply. This permits lifting an
+interior cup floor without adopting Move's neighboring-face warping behavior.
+The ordinary offset path runs first to preserve contact merging.
+
 Offset also accepts verified nonanalytic supports, including spline bends and
 existing offset surfaces. It prepares parameter correspondence on a deep copy,
 uses local intersection joins to retain sharp caps, and reconstructs overly coarse
@@ -238,3 +245,8 @@ responsive cancellation does not mean that geometry can be healed.
 Adding 1 mm to the top of the helically cut cylinder in
 `tests/agent-revolve.mjs` rejects with `BRep_API: command not done`, preserving
 accepted geometry. Neither case has a geometry fix established by the earlier checks.
+
+The captured notched cylinder now shells inward/outward, but subsequently offsetting
+its filleted interior floor by +0.2 mm still clamps to zero: the expanded tangent-face
+chain fails the current check against joining distinct boundary endpoints. This remains a face-offset
+limitation, separate from the shell's solid/boundary and export validation.

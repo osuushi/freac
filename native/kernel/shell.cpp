@@ -1,5 +1,6 @@
 #include "shell-validation.h"
 #include "offset-geometry.h"
+#include "offset-repair.h"
 #include "timing.h"
 #include <BRepOffsetAPI_MakeThickSolid.hxx>
 #include <BRepAdaptor_Surface.hxx>
@@ -12,6 +13,7 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
+#include <memory>
 #include <stdexcept>
 
 namespace {
@@ -31,7 +33,32 @@ TopTools_ListOfShape openingFaces(const Operand& body, const Tree& selection, To
     }
     return openings;
 }
-Result shellBody(const Operand& source, const Tree& selection, double thickness) {
+struct ShellGeometry {
+    std::unique_ptr<BRepOffsetAPI_MakeOffsetShape> operation;
+    TopoDS_Shape wall;
+};
+ShellGeometry constructShell(const Operand& body, const TopTools_ListOfShape& openings,
+                             double thickness, bool freeform, bool intersections) {
+    if (!openings.IsEmpty()) {
+        auto hollow = std::make_unique<BRepOffsetAPI_MakeThickSolid>();
+        hollow->MakeThickSolidByJoin(body.shape, openings, thickness, 1e-7,
+            BRepOffset_Skin, intersections, false, GeomAbs_Arc, false);
+        if (!hollow->IsDone()) throw std::runtime_error("Shell is not feasible at this thickness and opening selection");
+        const auto wall = hollow->Shape();
+        return {std::move(hollow), wall};
+    }
+    auto offset = std::make_unique<BRepOffsetAPI_MakeOffsetShape>();
+    offset->PerformByJoin(body.shape, thickness, 1e-7,
+        BRepOffset_Skin, intersections, false, GeomAbs_Arc, false);
+    if (!offset->IsDone()) throw std::runtime_error("Shell could not construct the offset surface");
+    if (freeform) BRepLib::SameParameter(offset->Shape(), 1e-7, true);
+    offset_geometry::tightenGeneratedBoundaries(offset->Shape(), body.shape);
+    offset_geometry::validSolid(offset->Shape(), "Shell");
+    const auto wall = thickness < 0 ? shell_tool::subtract(body.shape, offset->Shape())
+                                   : shell_tool::subtract(offset->Shape(), body.shape);
+    return {std::move(offset), shell_tool::oneSolid(wall)};
+}
+Result shellBody(const Operand& source, const Tree& selection, double thickness, bool intersections) {
     KernelTiming timing("shell-body");
     timing.phase("begin");
     const auto original = offset_geometry::encoding(source.shape);
@@ -55,34 +82,17 @@ Result shellBody(const Operand& source, const Tree& selection, double thickness)
     if (retainedFaces.IsEmpty()) throw std::runtime_error("Shell needs at least one retained face");
     offset_geometry::validSolid(body.shape, "Shell");
     timing.phase("validate-source");
-    BRepOffsetAPI_MakeThickSolid hollow;
-    BRepOffsetAPI_MakeOffsetShape offset;
-    TopoDS_Shape wall;
-    // Arc joins follow the distance envelope at convex corners, without long miters.
-    if (!openings.IsEmpty()) {
-        hollow.MakeThickSolidByJoin(body.shape, openings, thickness, 1e-7,
-            BRepOffset_Skin, false, false, GeomAbs_Arc, false);
-        if (!hollow.IsDone()) throw std::runtime_error("Shell is not feasible at this thickness and opening selection");
-        wall = hollow.Shape();
-        timing.phase("offset");
-    } else {
-        offset.PerformByJoin(body.shape, thickness, 1e-7,
-            BRepOffset_Skin, false, false, GeomAbs_Arc, false);
-        if (!offset.IsDone()) throw std::runtime_error("Shell could not construct the offset surface");
-        timing.phase("offset");
-        if (freeform) BRepLib::SameParameter(offset.Shape(), 1e-7, true);
-        offset_geometry::validSolid(offset.Shape(), "Shell");
-        wall = thickness < 0 ? shell_tool::subtract(body.shape, offset.Shape())
-                             : shell_tool::subtract(offset.Shape(), body.shape);
-        wall = shell_tool::oneSolid(wall);
-    }
+    auto geometry = constructShell(body, openings, thickness, freeform, intersections);
+    auto wall = geometry.wall;
+    auto& operation = *geometry.operation;
+    timing.phase("offset");
     // Generated spline pcurves can inherit the sweep's coarse parameterization.
     // Recompute before validation; input encodings below must remain unchanged.
     if (freeform) BRepLib::SameParameter(wall, 1e-7, true);
     TopTools_IndexedMapOfShape wallFaces;
+    offset_geometry::tightenGeneratedBoundaries(wall, body.shape);
     TopExp::MapShapes(wall, TopAbs_FACE, wallFaces);
     auto parallel = compound();
-    auto& operation = openings.IsEmpty() ? offset : static_cast<BRepOffsetAPI_MakeOffsetShape&>(hollow);
     for (const auto& e : body.entities) {
         if (e.shape.ShapeType() != TopAbs_FACE || removed.Contains(e.shape)) continue;
         bool found = false;
@@ -116,7 +126,13 @@ std::vector<Result> shellBodies(const Tree& input, const std::vector<Operand>& b
         const auto body = std::find_if(bodies.begin(), bodies.end(), [&](const Operand& b) { return b.id == id; });
         if (body == bodies.end() || !seen.insert(id).second)
             throw std::runtime_error("Select existing shell bodies only once");
-        results.push_back(shellBody(*body, item.second, thickness));
+        try {
+            results.push_back(shellBody(*body, item.second, thickness, false));
+        } catch (const std::runtime_error&) {
+            // Nearby offset supports may intersect beyond their original adjacency.
+            // Each attempt owns a fresh copy; neither can modify the accepted body.
+            results.push_back(shellBody(*body, item.second, thickness, true));
+        }
         participants.push_back(id);
     }
     if (results.empty()) throw std::runtime_error("Select bodies or faces to shell");

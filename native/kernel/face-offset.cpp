@@ -5,6 +5,7 @@
 #include "offset-geometry.h"
 #include "offset-result.h"
 #include "timing.h"
+#include "planar-face-offset.h"
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <BRepOffset_MakeOffset.hxx>
 #include <BRepAdaptor_Surface.hxx>
@@ -100,34 +101,43 @@ std::vector<Result> offsetFaces(const Tree& input, const std::vector<Operand>& b
         for (const auto& face : found->second) checkOffsetFace(face, distance);
         participants.push_back(body.id);
         if (std::abs(distance) < 1e-8) { solids(results, body.shape, body.entities, {body.id}); continue; }
-        const bool freeform = offset_geometry::freeform(body.shape);
-        const auto original = body.shape;
-        const auto originalEncoding = freeform ? offset_geometry::encoding(original) : "";
-        body = offset_geometry::prepare(body, "Kernel produced invalid geometry: offset", &found->second);
-        body = prepareOffset(body, found->second, distance);
-        timing.phase("prepare");
-        const auto preparedEncoding = freeform ? offset_geometry::encoding(body.shape) : "";
-        BRepOffset_MakeOffset operation;
-        operation.Initialize(body.shape, 0, 1e-7, BRepOffset_Skin, !freeform, false, GeomAbs_Intersection);
-        const auto offsets = offsetContacts(body.shape, found->second, distance);
-        for (const auto& offset : offsets) operation.SetOffsetOnFace(offset.face, offset.distance);
-        operation.MakeOffsetShape();
-        timing.phase("construct");
-        if (!operation.IsDone()) throw std::runtime_error("Those faces cannot be offset by that distance");
-        if (freeform) offset_geometry::rebuildBoundaries(operation.Shape(), body.shape);
-        timing.phase("boundaries");
-        if (freeform && offset_geometry::encoding(body.shape) != preparedEncoding)
-            throw std::runtime_error("Kernel produced invalid geometry: offset construction altered its operand");
-        validate(operation.Shape());
-        timing.phase("validate");
-        if (freeform) checkFreeformOffset(body, operation, offsets);
-        timing.phase("correspondence");
-        results.push_back(finishOffset(body, operation, offsets, offsets.size() > found->second.size(),
-                                       distance, freeform));
-        timing.phase("result");
-        if (freeform && (offset_geometry::encoding(original) != originalEncoding ||
-                         offset_geometry::encoding(body.shape) != preparedEncoding))
-            throw std::runtime_error("Kernel produced invalid geometry: offset altered input geometry");
+        const auto originalBody = body;
+        const auto requestedFaces = found->second;
+        try {
+            const bool freeform = offset_geometry::freeform(body.shape);
+            const auto original = body.shape;
+            const auto originalEncoding = freeform ? offset_geometry::encoding(original) : "";
+            body = offset_geometry::prepare(body, "Kernel produced invalid geometry: offset", &found->second);
+            body = prepareOffset(body, found->second, distance);
+            timing.phase("prepare");
+            const auto preparedEncoding = freeform ? offset_geometry::encoding(body.shape) : "";
+            BRepOffset_MakeOffset operation;
+            operation.Initialize(body.shape, 0, 1e-7, BRepOffset_Skin, !freeform, false, GeomAbs_Intersection);
+            const auto offsets = offsetContacts(body.shape, found->second, distance);
+            for (const auto& offset : offsets) operation.SetOffsetOnFace(offset.face, offset.distance);
+            operation.MakeOffsetShape();
+            timing.phase("construct");
+            if (!operation.IsDone()) throw std::runtime_error("Those faces cannot be offset by that distance");
+            if (freeform) offset_geometry::rebuildBoundaries(operation.Shape(), body.shape);
+            timing.phase("boundaries");
+            if (freeform && offset_geometry::encoding(body.shape) != preparedEncoding)
+                throw std::runtime_error("Kernel produced invalid geometry: offset construction altered its operand");
+            validate(operation.Shape());
+            timing.phase("validate");
+            if (freeform) checkFreeformOffset(body, operation, offsets);
+            timing.phase("correspondence");
+            auto result = finishOffset(body, operation, offsets, offsets.size() > found->second.size(),
+                                       distance, freeform);
+            timing.phase("result");
+            if (freeform && (offset_geometry::encoding(original) != originalEncoding ||
+                             offset_geometry::encoding(body.shape) != preparedEncoding))
+                throw std::runtime_error("Kernel produced invalid geometry: offset altered input geometry");
+            results.push_back(std::move(result));
+        } catch (const std::runtime_error&) {
+            auto planar = planarFaceOffset(originalBody, requestedFaces, distance);
+            if (!planar) throw;
+            results.push_back(std::move(*planar));
+        }
     }
     return results;
 }

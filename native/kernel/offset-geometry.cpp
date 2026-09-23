@@ -56,8 +56,9 @@ std::string encoding(const TopoDS_Shape& shape) {
     copy.Free(free);
     return result;
 }
-Operand prepare(const Operand& original, const char* context, std::vector<TopoDS_Face>* selected) {
-    if (!freeform(original.shape)) return original;
+Operand prepare(const Operand& original, const char* context, std::vector<TopoDS_Face>* selected,
+                bool forceCopy) {
+    if (!freeform(original.shape) && !forceCopy) return original;
     // Recompute parameter correspondence, retaining the spatial supports/curves.
     // Never mutate the accepted operand or take orientation from local copy history.
     BRepBuilderAPI_Copy copy(original.shape, true, false);

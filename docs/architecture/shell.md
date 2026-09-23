@@ -3,6 +3,24 @@
 Founder request, 2026-09-17: follow the current surface inward or outward, leave
 selected faces open where feasible, and reject rather than publish invalid geometry.
 
+## Geometry priorities (founder decision, 2026-09-23)
+
+For Shell and offsets, model integrity takes priority over exact agreement with
+the initially computed shape. Treat geometric approximation and boundary agreement
+as separate budgets. A controlled adjustment to generated geometry is acceptable
+when it produces a useful result; shared edges, vertices and incident faces must
+still agree tightly and form valid geometry. Increasing a recorded tolerance alone
+does not establish that agreement.
+
+Prefer preserving analytic relationships to the current source: parallel planes,
+concentric spheres and coaxial cylinders. Reconstruct shared boundaries against
+all incident surfaces together; approximate connecting surfaces may be refitted.
+Check deviation from the intended shape separately from boundary consistency,
+solid validity and export-mesh closure. The shape-adjustment ceiling is **0.001 mm**;
+boundary agreement remains 1e-6 mm with topology tolerances at most 2e-6 mm.
+Current repair fits generated shared vertices to independently checked incident
+curve endpoints within that budget; it does not yet refit arbitrary surfaces.
+
 ## Interaction and ownership
 
 Select solid faces or bodies and choose **Shell / S**. A partial face selection
@@ -32,8 +50,17 @@ Save/Open does not replay Shell. Failed inputs and reasons use ordinary history.
 
 Open walls use OCCT `MakeThickSolidByJoin`. Closed hollows use `PerformByJoin`
 and a checked Boolean difference. Both use arc joins, 1e-7 mm construction tolerance,
-and leave the incomplete all-parallel intersection/self-intersection-removal options
-disabled. There is no fallback to meshing, topology repair or a reduced thickness.
+first with local intersections, then with all-parallel intersections if construction
+or validation fails. Each attempt owns a fresh deep copy. Self-intersection removal
+stays disabled; surviving topology must pass the complete checks below. There is
+no mesh fallback or reduced thickness.
+
+The reproducible OCCT setup passes 1e-7 mm to rounded edge-pipe construction,
+replacing its independent 1e-4 mm default. Generated boundaries are measured
+against every incident face before repair. New shared vertices may move at most
+0.001 mm to meet all incident spatial curve endpoints within 1e-6 mm. Preserved
+source vertices cannot move. Conservative edge/vertex metadata is tightened only
+after geometric agreement is established, then the whole solid is validated.
 
 Some cylindrical fillets are stored as rational splines. Before construction, Shell
 can recognize these supports and their line/circle boundaries at 1e-7 mm tolerance.
@@ -46,8 +73,8 @@ solid, not the modifier's local history. The accepted source BRep stays untouche
 This conversion is specific to cylindrical representations. It neither widens the
 wall tolerance nor changes the requested thickness.
 
-Nonanalytic bodies, including spline/Bezier and offset surfaces, are first deep-copied
-using the preparation shared with Face Offset, and their boundary pcurves recomputed
+All bodies are first deep-copied using the preparation shared with Face Offset.
+Nonanalytic bodies, including spline/Bezier and offset surfaces, have their boundary pcurves recomputed
 with `BRepLib::SameParameter` at 1e-7 mm. Spatial curves and surfaces are retained;
 the prepared BRep must pass the ordinary strict solid checks. This handles swept
 faces whose existing parameter correspondence is coarser than their geometry.
@@ -80,7 +107,7 @@ Inputs below or equal to 1e-5 mm absolute thickness reject. Analytic planar,
 cylindrical, conical, spherical and ring-toroidal supports are eligible; collapsed
 radii reject. Freeform supports are attempted with the same geometry, correspondence,
 separation and containment checks; merely completing OCCT's offset does not suffice.
-Splits, missing correspondence, changed preserved faces, excess tolerances,
+Missing correspondence, changed preserved faces, excess tolerances,
 collisions, kernel failure or inability to verify also reject atomically.
 
 These are conservative numerical acceptance checks, not a mathematical certificate
@@ -88,5 +115,6 @@ for every BRep or a claim that all feasible shells can be constructed. Some comp
 surfaces and face subsets will fail. On the captured bent sweep, both open ends
 work inward/outward; one inward single-opening choice and inward closed hollowing
 still fail boundary validation. Outward +2 mm reaches self-interference and rejects.
-No topology-changing repair or reduced-thickness fallback is used. Source observations are recorded in
+The intersection fallback can close narrow regions, but requires verified face
+correspondence and one valid material solid. Source observations are recorded in
 [the kernel reference](../freecad/kernel-topology.md).

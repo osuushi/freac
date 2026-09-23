@@ -85,6 +85,13 @@ The result returns independent ordinary curves through the existing 0.001 mm
 bounded cubic conversion and shared-vertex endpoint correction. Source geometry
 and constraints remain unchanged; new joined endpoints receive coincidence links.
 Preview remains temporary, Enter/drag release accepts one Undo step, and Escape
-cancels. Disconnected, crossing, collapsed or split results reject atomically.
+cancels. Closed analytic loops also use this native route when their direct offset
+cannot join. A narrow neck may disappear, leaving several independent closed
+sections, including complete circles. An omitted circular closing span may be
+reconstructed only from a unique exact offset source support through both ends.
+An entirely omitted convex circular support may survive as an independent island
+when its circumference lies inside the original loop, has the requested boundary
+clearance, and neither intersects nor nests with another surviving section.
+Open, crossing or wholly collapsed results still reject atomically.
 Open cubic offsets remain unavailable and the tool explains the closed-loop
 requirement. No persistent offset dependency or general NURBS editing is introduced.

@@ -44,6 +44,27 @@ export function offsetResult(
     : [offsetCurve(target.curve, amount, ids[0])];
 }
 
+/** Analytic construction keeps existing links; topology changes use the native route. */
+export function offsetPreview(
+  sketch: Sketch,
+  target: OffsetTarget,
+  amount: number,
+  ids: readonly string[],
+  links: readonly Constraint[],
+): Sketch | null {
+  if (target.native) return null;
+  try {
+    return {
+      ...sketch,
+      curves: [...sketch.curves, ...offsetResult(target, amount, ids)],
+      constraints: [...sketch.constraints, ...links],
+    };
+  } catch (error) {
+    if (!target.loop) throw error;
+    return null;
+  }
+}
+
 // The offset normalizes edge traversal, so source endpoint names may be reversed.
 // Copy connectivity between loop neighbours, including links through a source hub.
 export function offsetLinks(

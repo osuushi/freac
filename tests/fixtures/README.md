@@ -71,3 +71,9 @@ cubic Béziers, nine lines and two arcs; the previous offset tool excluded all
 cubics. Bodies and history are omitted. Tests cover signed closed-loop offsets,
 conversion distance, rejection, pointer/numeric editing, Undo and Save/Open.
 This is user-created Freac geometry.
+
+- `offset-cup-floor.json`, `offset-split-arcs.json`, and `shell-notched-cylinder.json`
+  retain the founder's 2026-09-23 Capture fixture geometry and selection from
+  22:04:12, 22:07:24 and 22:11:51 UTC respectively. Derived meshes and UI history
+  are omitted; exact BReps, topology signatures/IDs, sketches and constraints remain.
+  They reproduce a blocked floor lift, pinched arc-loop offset and notched shell.

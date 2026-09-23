@@ -1,5 +1,6 @@
 #include "kernel.h"
 #include "sketch-curve.h"
+#include "sketch-offset-sections.h"
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
@@ -25,11 +26,8 @@ void offsetSketch(std::ostream& out, const Tree& input) {
     BRepOffsetAPI_MakeOffset offset(face, GeomAbs_Intersection);
     offset.Perform(amount);
     if (!offset.IsDone() || offset.Shape().IsNull()) throw std::runtime_error("Offset could not be calculated");
-    int count = 0;
-    for (TopExp_Explorer wires(offset.Shape(), TopAbs_WIRE); wires.More(); wires.Next()) ++count;
-    if (count != 1 || !BRepCheck_Analyzer(offset.Shape()).IsValid())
-        throw std::runtime_error("Offset collapses or splits the loop; try a smaller distance");
+    const auto sections = closedOffsetSections(offset.Shape(), wire.Wire(), amount);
     out << "{\"curves\":";
-    planarSketchCurves(out, offset.Shape(), input.get_child("frame"));
+    planarSketchCurves(out, sections, input.get_child("frame"));
     out << '}';
 }

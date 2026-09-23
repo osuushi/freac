@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import type { Body } from "../src/model/body.js";
+import { exportBodies } from "../src/model/mesh-export.js";
 import type { SketchDocument } from "../src/sketch/document.js";
 import { cap, shell } from "./shell-fixtures.js";
 
@@ -76,7 +77,7 @@ test("capture conversion preserves rejection, Undo, reopen and subsequent face e
     const body = await open(owner);
     const before = owner.view.data;
     await shell(owner, body, -1, [fixture.opening]);
-    for (const thickness of [-16, -30, 11, 12]) {
+    for (const thickness of [-17, -30, 11, 12]) {
       const reply = await owner.call({
         kind: "shell",
         operation: { thickness, selection: [{ body: body.id, faces: [fixture.opening] }] },
@@ -86,6 +87,19 @@ test("capture conversion preserves rejection, Undo, reopen and subsequent face e
       assert.equal(reply.view.data, before);
       assert.ok((await owner.call({ kind: "accept" })).error);
     }
+    // At -16 the 16.155 mm convex radius survives. All-surface intersections
+    // close the pinched cavity; this was formerly rejected despite a valid result.
+    const pinched = await shell(owner, body, -16, [fixture.opening]);
+    assert.ok(pinched.volume > 0 && pinched.volume < body.volume);
+    assert.ok(
+      pinched.faces.some(
+        (f) => f.cylinder && Math.abs(f.cylinder.radius - (16.155494421403514 - 16)) < 1e-6,
+      ),
+    );
+    assert.ok(pinched.faces.some((f) => f.plane && Math.abs(f.plane.origin[2] - 16) < 1e-6));
+    for (const format of ["stl", "3mf"] as const)
+      assert.ok(exportBodies([pinched], format).length > 0);
+    await owner.call({ kind: "discard" });
     const wall = await shell(owner, body, -4, [fixture.opening]);
     assert.equal((await owner.call({ kind: "accept" })).error, undefined);
     const after = owner.view.data;

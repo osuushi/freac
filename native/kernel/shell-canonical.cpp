@@ -170,7 +170,7 @@ public:
 }
 namespace shell_tool {
 Operand canonical(const Operand& original) {
-    const auto source = offset_geometry::prepare(original, "Shell");
+    const auto source = offset_geometry::prepare(original, "Shell", nullptr, true);
     Handle(CylinderSupports) modification = new CylinderSupports(source);
     if (modification->empty()) return source;
     offset_geometry::validSolid(source.shape, "Shell");

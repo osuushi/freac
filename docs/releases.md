@@ -129,7 +129,8 @@ an audit of embedded code.
 
 `node scripts/release/sources.mjs` requires a clean tree at the packaged commit.
 It creates `Freac-<timestamp>-sources.tar.gz` containing the complete Freac tree,
-OCCT's original archive, original/adapted PlaneGCS files, pinned Eigen and Boost
+OCCT's original archive and the dated precision adaptation in `scripts/setup-kernel.mjs`,
+original/adapted PlaneGCS files, pinned Eigen and Boost
 archives, licenses and build instructions. `SHA256SUMS` covers each release asset.
 The scripts verify the native source checksums even on cache hits.
 
