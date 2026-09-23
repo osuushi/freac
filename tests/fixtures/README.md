@@ -89,3 +89,9 @@ This is user-created Freac geometry.
   meshes/history. Four inherited vertices have 1e-4 mm recorded bounds despite
   tight geometry. Tests require inward/outward shells, unchanged source geometry,
   exact cap/radius offsets, closed mesh exports, rotation and document history.
+
+- `offset-decimal-contact.json` retains the body, sketches and topology from the
+  founder's `2026-09-23T23-49-11-406Z-5074dfde` capture. Derived meshes/history
+  are omitted. Its floor-to-rim distance is 9.78 mm; continuing beyond contact
+  reverses a reconstructed cylinder's parameter axis. Tests require full requested
+  travel, exact merging, preserved deliberate tiny shelves and closed exports.

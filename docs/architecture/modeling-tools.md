@@ -126,6 +126,8 @@ fallback can fill a cavity and absorb contacted coplanar caps. It uses the same
 finite-face contact rule, removes consumed walls, and unifies the resulting cap.
 Every result face must lie on an exact target plane or an unchanged analytic
 plane/cylinder support; strict solid, interference and tolerance checks still apply.
+Cylinder support comparison ignores reversal of its parameter axis, while retaining
+the same angular, axis-line distance and radius tolerances.
 Merged faces receive fresh IDs and remain selected. Contact is constructed at the
 requested position, not approximated by the last successful bisection step.
 Intentionally requested sub-contact steps remain exact; the 0.001 mm adjustment

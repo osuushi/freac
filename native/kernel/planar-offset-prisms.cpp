@@ -21,7 +21,10 @@ bool sameSupport(const TopoDS_Face& a, const TopoDS_Face& b) {
         return x.Plane().Axis().IsParallel(y.Plane().Axis(), 1e-10) &&
                x.Plane().Distance(y.Plane().Location()) < 1e-7;
     if (x.GetType() != GeomAbs_Cylinder) return false;
-    return x.Cylinder().Axis().IsCoaxial(y.Cylinder().Axis(), 1e-10, 1e-7) &&
+    // A rebuilt cylinder can reverse its parameter axis without changing its support.
+    auto axis = y.Cylinder().Axis();
+    if (x.Cylinder().Axis().IsOpposite(axis, 1e-10)) axis.Reverse();
+    return x.Cylinder().Axis().IsCoaxial(axis, 1e-10, 1e-7) &&
            std::abs(x.Cylinder().Radius() - y.Cylinder().Radius()) < 1e-7;
 }
 void continueOrigins(std::vector<SourceEntity>& origins, BRepAlgoAPI_Fuse& fuse) {
