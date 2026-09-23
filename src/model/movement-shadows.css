@@ -19,6 +19,10 @@
   fill: currentColor;
   stroke: none;
 }
+.movement-shadows .shadow-occluder {
+  fill: black;
+  stroke: none;
+}
 .movement-shadows .shadow-lines {
   stroke: currentColor;
   stroke-width: 4;

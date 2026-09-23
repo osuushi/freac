@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import * as THREE from "three";
 import { inspect } from "./ui-helpers.mjs";
+import { shadowOcclusionCheck } from "./ui-shadow-occlusion.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function cameraFacingMove(page, project, body) {
@@ -13,6 +14,7 @@ export async function cameraFacingMove(page, project, body) {
   const first = project.ray(from).intersectPlane(plane, new THREE.Vector3());
   const last = project.ray(to).intersectPlane(plane, new THREE.Vector3());
   const expected = new THREE.Vector3(...body.center).add(last.sub(first));
+  await shadowOcclusionCheck(page, project, body, from);
   await page.keyboard.down("Meta");
   await page.mouse.move(from.x, from.y);
   const selection = (await inspect(page)).modelingSelection;

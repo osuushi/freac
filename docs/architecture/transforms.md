@@ -233,6 +233,11 @@ their existing planar feedback.
 These are display-only silhouettes from presentation triangles, and softened projected
 curves for sketch/edge selections, not exact sections or model geometry. Silhouettes are
 filled as a union, preserving concave boundaries and projected openings, then blurred
-in screen space for constant softness through zoom. World
+in screen space for constant softness through zoom. Visible preview solids occlude
+each shadow only where they lie between the camera and its receiving plane.
+Triangles crossing a plane are clipped to their foreground portion; hidden solids
+do not occlude. The depth mask is applied after blur so soft edges cannot spill onto
+foreground surfaces. This uses the same presentation triangles as the solid view;
+labels and anchor guides remain overlay annotations. World
 planes remain fixed at the origin; an offscreen projection can consequently be outside
 the viewport. No extra camera view, persistent object or Undo entry is introduced.

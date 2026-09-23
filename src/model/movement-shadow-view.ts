@@ -1,6 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import { type ShadowGeometry, shadowPaths, shadowPlanes } from "./movement-shadow-geometry.js";
+import { ShadowOcclusion } from "./shadow-occlusion.js";
 import "./movement-shadows.css";
 
 const ns = "http://www.w3.org/2000/svg";
@@ -43,22 +44,36 @@ export class MovementShadowView {
   });
   private planes = shadowPlanes.map((plane) => {
     const root = element("g", { "data-plane": plane.name });
+    const mask = element("mask", {
+      id: `${this.blur.id}-${plane.name}`,
+      maskUnits: "userSpaceOnUse",
+      "mask-type": "luminance",
+      x: "0",
+      y: "0",
+    });
+    const background = element("rect", { fill: "white" });
+    const occluder = element("path", { class: "shadow-occluder" });
+    mask.append(background, occluder);
+    const clipped = element("g", { mask: `url(#${mask.id})` });
     const soft = element("g", { class: "shadow-soft", filter: `url(#${this.blur.id})` });
     const projected = element("g");
     const current = layer(projected);
     soft.append(projected);
+    clipped.append(soft);
     const tether = element("path", { class: "shadow-tether" });
     const label = element("text", { class: "shadow-label" });
     label.textContent = plane.name;
-    root.append(soft, tether, label);
+    root.append(clipped, tether, label);
     this.root.append(root);
-    return { ...plane, root, projected, current, tether, label };
+    return { ...plane, root, projected, current, tether, label, mask, background, occluder };
   });
+  private occlusion = new ShadowOcclusion();
   private previous: ShadowGeometry | null = null;
   constructor(private editor: SketchEditor) {
     this.blur.append(element("feGaussianBlur", { stdDeviation: "3" }));
     const definitions = element("defs");
     definitions.append(this.blur);
+    for (const plane of this.planes) definitions.append(plane.mask);
     this.root.prepend(definitions);
     this.root.style.display = "none";
     editor.world.overlay.prepend(this.root);
@@ -72,8 +87,14 @@ export class MovementShadowView {
     this.blur.setAttribute("width", String(bounds.width + 24));
     this.blur.setAttribute("height", String(bounds.height + 24));
     const origin = world.project([0, 0, 0]);
+    const occluders = this.occlusion.update(this.editor);
     const labels: { x: number; y: number }[] = [];
-    for (const plane of this.planes) {
+    for (const [index, plane] of this.planes.entries()) {
+      for (const node of [plane.mask, plane.background]) {
+        node.setAttribute("width", String(bounds.width));
+        node.setAttribute("height", String(bounds.height));
+      }
+      plane.occluder.setAttribute("d", occluders[index]);
       plane.root.dataset.active = String(plane.normal === normal);
       const basis = plane.axes.map((axis) => {
         const point: Vector = [0, 0, 0];

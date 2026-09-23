@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { orient } from "./ui-blend-edit.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { otherBodyOcclusion } from "./ui-shadow-other-body.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function shadowHoleRoute(page, name) {
@@ -39,6 +40,7 @@ export async function shadowHoleRoute(page, name) {
   await page.mouse.move(30, 740);
   assert.equal(await shadows.count(), 0);
   assert.deepEqual((await inspect(page)).document, before);
+  await otherBodyOcclusion(page, before, name);
   console.log(
     `${name}: curved silhouette preserves its projected opening; anchor hover leaves geometry unchanged`,
   );
