@@ -141,7 +141,10 @@ test("shell rejects invalid boundaries on materialized warped geometry", async (
         thickness: -0.5,
       },
     });
-    assert.match(result.error ?? "", /invalid boundaries or surface geometry/);
+    assert.match(
+      result.error ?? "",
+      /invalid boundaries or surface geometry|boundary does not meet its incident surfaces/,
+    );
     assert.equal(result.view.candidate, null);
     assert.equal(result.view.data, before);
   } finally {

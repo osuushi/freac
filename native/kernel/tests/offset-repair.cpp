@@ -16,7 +16,32 @@
 void require(bool condition, const char* message) {
     if (!condition) throw std::runtime_error(message);
 }
+void checkSourcePreparation() {
+    const auto source = BRepPrimAPI_MakeBox(10, 10, 10).Shape();
+    TopTools_IndexedMapOfShape originalVertices;
+    TopExp::MapShapes(source, TopAbs_VERTEX, originalVertices);
+    const auto original = TopoDS::Vertex(originalVertices(1));
+    BRep_Builder().UpdateVertex(original, 0.0001);
+    for (const double displacement : {0.0, 0.0005}) {
+        BRepBuilderAPI_Copy copy(source, true, false);
+        const auto vertex = TopoDS::Vertex(copy.ModifiedShape(original));
+        const auto position = BRep_Tool::Pnt(original);
+        BRep_Builder().UpdateVertex(vertex, position.Translated(gp_Vec(displacement, 0, 0)), 0.001);
+        bool rejected = false;
+        try { offset_geometry::tightenGeneratedBoundaries(copy.Shape(), source, false); }
+        catch (const std::runtime_error&) { rejected = true; }
+        require(rejected == (displacement != 0), "Source preparation must never move vertices");
+        require(BRep_Tool::Tolerance(original) == 0.0001, "Source metadata must remain unchanged");
+        require(position.Distance(BRep_Tool::Pnt(original)) == 0, "Source geometry must remain unchanged");
+        if (!rejected) {
+            require(BRep_Tool::Tolerance(vertex) <= 2e-6, "Verified copied bounds must tighten");
+            require(position.Distance(BRep_Tool::Pnt(vertex)) == 0, "Preparation cannot fit vertices");
+            require(BRepCheck_Analyzer(copy.Shape(), true, false, true).IsValid(), "Prepared solid must be valid");
+        }
+    }
+}
 int main() {
+    checkSourcePreparation();
     const auto source = BRepPrimAPI_MakeBox(10, 10, 10).Shape();
     for (const double displacement : {0.0005, 0.002}) {
         BRepBuilderAPI_Copy copy(source, true, false);

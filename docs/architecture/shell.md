@@ -62,6 +62,12 @@ against every incident face before repair. New shared vertices may move at most
 source vertices cannot move. Conservative edge/vertex metadata is tightened only
 after geometric agreement is established, then the whole solid is validated.
 
+Before strict input validation, preparation also measures boundaries on its private
+copy. Conservative inherited edge/vertex bounds may be reduced only when the
+existing geometry already meets the same tight checks. Input vertex positions are
+never fitted during preparation, and the accepted source BRep remains unchanged.
+This permits Boolean/fillet inputs with inflated metadata without admitting gaps.
+
 Some cylindrical fillets are stored as rational splines. Before construction, Shell
 can recognize these supports and their line/circle boundaries at 1e-7 mm tolerance.
 It reparameterizes the faces and all affected boundary curves together, checks

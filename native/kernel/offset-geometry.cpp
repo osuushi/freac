@@ -1,4 +1,5 @@
 #include "offset-geometry.h"
+#include "offset-repair.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI_Copy.hxx>
 #include <BRepLib.hxx>
@@ -76,6 +77,9 @@ Operand prepare(const Operand& original, const char* context, std::vector<TopoDS
         face = TopoDS::Face(copied(index));
     }
     BRepLib::SameParameter(result.shape, 1e-7, true);
+    // Boolean/fillet inputs can retain conservative bounds despite tight geometry.
+    // Verify before reducing them on this private copy; no vertex motion is allowed.
+    tightenGeneratedBoundaries(result.shape, original.shape, false);
     validSolid(result.shape, context);
     return result;
 }

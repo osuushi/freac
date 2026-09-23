@@ -83,3 +83,9 @@ This is user-created Freac geometry.
   IDs and without derived meshes/history. The cavity floor stopped at
   z23.9990234375 below a z24 rim. Tests require exact contact and wall removal,
   continued large offsets, intentional small steps, rotation and subsequent edits.
+
+- `shell-conservative-vertices.json` retains the exact body, sketches and topology
+  from the founder's `2026-09-23T23-33-47-358Z-709f4297` capture, without derived
+  meshes/history. Four inherited vertices have 1e-4 mm recorded bounds despite
+  tight geometry. Tests require inward/outward shells, unchanged source geometry,
+  exact cap/radius offsets, closed mesh exports, rotation and document history.

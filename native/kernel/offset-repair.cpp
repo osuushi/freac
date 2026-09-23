@@ -33,7 +33,8 @@ void fitVertex(const TopoDS_Vertex& vertex, const std::vector<gp_Pnt>& points, b
     BRep_Builder().UpdateVertex(vertex, fitted, tolerance);
 }
 }
-void tightenGeneratedBoundaries(const TopoDS_Shape& shape, const TopoDS_Shape& source) {
+void tightenGeneratedBoundaries(const TopoDS_Shape& shape, const TopoDS_Shape& source,
+                                bool allowVertexAdjustment) {
     TopTools_IndexedMapOfShape retained, checked;
     TopExp::MapShapes(source, retained);
     for (TopExp_Explorer f(shape, TopAbs_FACE); f.More(); f.Next()) {
@@ -64,7 +65,8 @@ void tightenGeneratedBoundaries(const TopoDS_Shape& shape, const TopoDS_Shape& s
         }
     }
     for (const auto& [index, points] : endpoints)
-        fitVertex(TopoDS::Vertex(vertices(index)), points, retained.Contains(vertices(index)));
+        fitVertex(TopoDS::Vertex(vertices(index)), points,
+                  !allowVertexAdjustment || retained.Contains(vertices(index)));
     // Do not mutate preserved topology, including when it shares geometry with
     // the accepted input. Reduction follows the measurements above, never vice versa.
     for (int i = 1; i <= vertices.Extent(); ++i) {
