@@ -115,8 +115,10 @@ explicit subsequent operation. No persistent symmetry constraint is introduced.
 
 Move follows the founder-approved [orientable widget design language](../design/orientable-widgets.md):
 white capsule forms, a single black silhouette, a sphere anchor and a smaller curved
-rotation glyph. Its assembly has fixed positions and orientations in the sketch or
-world frame, with constant nominal CSS-pixel scale through zoom. Camera-facing heads,
+rotation glyph. Translation arrows roll around their shafts to face the camera, preserving their edit
+directions. Rotation-marker planes retain their geometric orientation. The assembly
+has fixed positions in the sketch or world frame, with constant nominal CSS-pixel
+scale through zoom. Independently camera-facing heads,
 collision-driven sliding and alternate-diagonal placement are superseded.
 
 Sketch Move has two positive local-axis arrows and a rotation marker at the positive

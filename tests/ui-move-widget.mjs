@@ -207,6 +207,16 @@ async function spatialAnchor(page, name, anchor, root, vertex, original, body) {
   ]) {
     await orient(page, view);
     assert.equal(await root.locator('.body-rotate-handle[data-axis="Z"]').isVisible(), false);
+    for (const arrow of await root.locator(".body-translate-handle:visible").all()) {
+      const head = await arrow.locator("path").nth(1).getAttribute("d");
+      const coordinates = head.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi).map(Number);
+      assert.ok(
+        Math.abs(
+          Math.hypot(coordinates[4] - coordinates[0], coordinates[5] - coordinates[1]) - 20,
+        ) < 1e-6,
+        "translation arrow keeps its full head width while orbiting around its shaft",
+      );
+    }
     const projectionState = await projection(page);
     const anchorScreen = await center(anchor);
     const unit = (projectionState.camera.top * 2) / projectionState.b.height;

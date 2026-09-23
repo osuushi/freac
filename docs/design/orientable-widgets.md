@@ -31,16 +31,17 @@ around each glyph. Ordinary value inputs and accept/cancel controls can stay nea
 
 Treat the assembly as a rigid object in its chosen frame. The tool decides whether
 that frame is the sketch plane, world axes, or a meaningful frame on selected geometry.
-Keep each glyph's position and orientation fixed in that frame during camera orbit.
+Keep each glyph's position and meaningful axes fixed in that frame during camera orbit.
 An intentional tool or selection change can establish a new frame.
 
 **Founder refinement, 2026-09-21:** a tool may roll its whole glyph around an
-operation axis when that roll has no geometric meaning. Extrude, Offset and Shell
-use the perpendicular direction that faces the camera, preserving the actual edit
+operation axis when that roll has no geometric meaning. Move translation arrows
+(body, face, edge and sketch; clarified 2026-09-23), Extrude, Offset and Shell use the perpendicular direction that faces the camera, preserving the actual edit
 axis and the fixed anchor/marker position. Exactly end-on uses camera right as its
-otherwise undefined roll. This is not permission to turn individual parts or Move's
-meaningful axes toward the camera. Offset can still be ambiguous directly along
-its normal; this first pass does not add a different end-on symbol.
+otherwise undefined roll. Move arrows roll around their shafts as the camera moves;
+the shaft direction, placement and rotation-marker planes retain their geometric frame.
+This is not permission to redirect meaningful axes toward the camera. Offset can
+still be ambiguous directly along its normal; this first pass does not add a different end-on symbol.
 
 **Offset follow-up, 2026-09-21:** use two separated curved surface contours instead
 of overlapping rectangular outlines. On cylindrical faces, choose a visible surface
@@ -60,15 +61,16 @@ use their nearest displayed segment. Existing fillet-face resizing uses the near
 boundary's section. Do not substitute an arbitrary world perpendicular for this
 geometry-defined frame or independently turn the contour toward the camera.
 
-Project the assembly through the viewport camera. Do not turn individual arrowheads
+Project the assembly through the viewport camera. Roll a direction-only arrow as a
+whole around its shaft; do not independently turn its head
 toward the camera, slide markers to avoid collisions, or switch a marker to another
 diagonal as the camera moves. Those adjustments caused the rejected drifting effect.
 Foreshortening is expected. Exact diagonal views can make handles overlap; orbiting
 reveals them again. A future overlap treatment must preserve the rigid placement.
 
 Keep the widget's nominal size and outline weight constant in CSS pixels when zooming.
-This means constant scale, not constant projected width: a glyph still gets narrower
-when viewed edge-on. Move uses the viewport's orthographic camera and converts its
+A glyph still foreshortens along its meaningful axes; direction-only arrow widths
+remain camera-facing. Move uses the viewport's orthographic camera and converts its
 pixel offsets to world units with `world.height / canvas.clientHeight`.
 
 Hide a planar rotation marker when its plane becomes nearly edge-on. Hiding must
@@ -134,8 +136,9 @@ is fine if it preserves the same visual and spatial behavior.
 
 - [Glyph construction](../../src/sketch/move-widget/marker.ts): capsule arrow and
   fixture-derived curved arrow, combined outlines and fills.
-- [Camera rules and dimensions](../../src/sketch/move-widget/geometry.ts): fixed
-  arrow planes, alignment, edge-on visibility and upright-axis selection.
+- [Camera rules and dimensions](../../src/sketch/move-widget/geometry.ts): reference
+  planes, alignment, edge-on visibility and upright-axis selection.
+- [Axial roll](../../src/model/widget-frame.ts): camera-facing width around an unchanged shaft.
 - [Modeling assembly](../../src/model/body-gizmo.ts) and
   [styles](../../src/model/body-gizmo.css): world projection, buttons, sphere and state.
 - [Sketch overlay](../../src/sketch/transform-overlay.ts),
