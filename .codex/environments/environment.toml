@@ -7,15 +7,28 @@ script = ""
 
 [setup.darwin]
 script = '''
+set -e
 cd "$CODEX_WORKTREE_PATH"
 . "${NVM_DIR:-$HOME/.nvm}/nvm.sh"
 nvm use
-npm install'''
+npm ci
+freac_main_workspace="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+if [ "$freac_main_workspace" != "$(pwd -P)" ]; then
+  mkdir -p .cache
+  for freac_cache in kernel solver release-inputs; do
+    if [ ! -e ".cache/$freac_cache" ] && [ ! -L ".cache/$freac_cache" ] && [ -d "$freac_main_workspace/.cache/$freac_cache" ]; then
+      ln -s "$freac_main_workspace/.cache/$freac_cache" ".cache/$freac_cache"
+    fi
+  done
+fi
+npm run setup:native
+npm run setup:kernel'''
 
 [[actions]]
 name = "Run Dev"
 icon = "run"
 command = '''
+set -e
 cd "$CODEX_WORKTREE_PATH"
 . "${NVM_DIR:-$HOME/.nvm}/nvm.sh"
 nvm use
