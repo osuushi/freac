@@ -3,6 +3,7 @@ import { cancellableCalculation } from "../sketch/calculation-state.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelReply, ModelRequest, ModelView } from "../sketch/model-api.js";
 import { describeOperation, type HistoryOperation } from "../sketch/operation-history.js";
+import { DecoratorSession } from "./decorator-session.js";
 import { editDocument, isDirectDocumentEdit } from "./document-edits.js";
 import { type PreviewRequest, previewDocument } from "./document-preview.js";
 import { DocumentStore } from "./document-store.js";
@@ -17,6 +18,7 @@ import { SolidEdits } from "./solid-edits.js";
 
 export class DocumentOwner {
   private kernel: SolidCalculator;
+  private decorators = new DecoratorSession();
   private queries: GeometryQueries;
   private solids: SolidEdits;
   private cleanupAvailable = false;
@@ -46,6 +48,7 @@ export class DocumentOwner {
   get view(): ModelView {
     return {
       data: this.store.data,
+      decoratorSources: this.decorators.sources,
       historySelection: this.store.selection,
       planeCutAvailable: this.planeCutAvailable,
       ...this.solids.offsetEdit.view,
@@ -76,7 +79,11 @@ export class DocumentOwner {
     });
     const document = { ...source, bodies: materialize([], result) };
     validateDocument(document);
+    this.replaceDocument(document);
+  }
+  private replaceDocument(document?: SketchDocument): void {
     this.store = new DocumentStore(document);
+    this.decorators.clear();
     this.pendingOperation = null;
     this.candidate = null;
   }
@@ -185,10 +192,13 @@ export class DocumentOwner {
   }
   private async dispatch(request: ModelRequest, operation: HistoryOperation): Promise<void> {
     this.cleanupAvailable = false;
-    if (isDirectDocumentEdit(request)) {
+    const direct =
+      (await this.decorators.edit(this.store.data, request)) ??
+      (isDirectDocumentEdit(request) ? editDocument(this.store.data, request) : null);
+    if (direct) {
       this.pendingOperation = null;
       this.candidate = null;
-      this.store.accept(editDocument(this.store.data, request), operation);
+      this.store.accept(direct, operation);
       return;
     }
     switch (request.kind) {
@@ -252,9 +262,7 @@ export class DocumentOwner {
         this.store[request.kind]();
         break;
       case "new":
-        this.candidate = null;
-        this.store = new DocumentStore();
-        this.pendingOperation = null;
+        this.replaceDocument();
         break;
       case "delete-entities":
         await this.deleteEntities(request, operation);

@@ -22,6 +22,7 @@ export type ModelRequest =
   | { kind: "export-geometry" }
   | { kind: "decorator"; edit: import("../decorators/types.js").DecoratorEdit }
   | { kind: "decorator-definition"; edit: import("../decorators/definition.js").DefinitionEdit }
+  | { kind: "decorator-enable"; id: string; version: number; enabled: boolean }
   | { kind: "offset-sketch"; sketchId: string; curves: string[]; amount: number }
   | { kind: "sections"; frame: PlaneFrame; bodies: string[] }
   | { kind: "selection"; changes: import("./history-selection.js").SelectionChanges }
@@ -73,6 +74,7 @@ export type ModelRequest =
   | { kind: "preview" | "edit"; sketch: Sketch; intent?: EditIntent }
   | { kind: "remove" | "clear"; sketchId: string; ids?: string[] };
 export interface ModelView {
+  decoratorSources?: readonly import("../decorators/javascript-hooks.js").EnabledDefinition[];
   historySelection?: import("./history-selection.js").HistorySelection;
   planeCutAvailable?: boolean;
   data: SketchDocument;

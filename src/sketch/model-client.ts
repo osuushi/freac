@@ -87,6 +87,9 @@ export class ModelClient {
   get data() {
     return this.view.data;
   }
+  get decoratorSources() {
+    return this.view.decoratorSources ?? [];
+  }
   get canUndo() {
     return this.selectionInFlight || !!this.selectionHistory?.pending || this.view.canUndo;
   }

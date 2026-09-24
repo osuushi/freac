@@ -6,6 +6,7 @@ import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
+import { customDecoratorRoute } from "./ui-decorator-custom.mjs";
 import { decoratorInformationRoute } from "./ui-decorator-information.mjs";
 import { decoratorMembershipRoute } from "./ui-decorator-membership.mjs";
 import { decoratorPresetRoute } from "./ui-decorator-presets.mjs";
@@ -100,6 +101,8 @@ try {
       await exportDecorated(page, `${name}-split`, app);
       await page.screenshot({ path: `.cache/sketch-review/${name}-decorator-membership.png` });
       await decoratorInformationRoute(page);
+      await customDecoratorRoute(page);
+      await exportDecorated(page, `${name}-custom`, app);
       assert.deepEqual(errors, []);
       console.log(
         `${name}: real cylinder, selection, threads, draft/cancel, edits, Undo/Redo, export, Save/Open and removal passed`,

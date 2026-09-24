@@ -272,8 +272,16 @@ These limits constrain execution; they do not validate returned geometry.
 once per ID/version. The ordinary `decorator-definition` owner edit installs,
 replaces or removes this bundle with snapshot Undo. Installation and opening do
 not execute source. Replacement must preserve valid settings on existing instances;
-removal is rejected while instances reference that version. Runtime enablement,
-hook dispatch and the user/agent authoring path are still being integrated.
+removal is rejected while instances reference that version. Source-specific
+enablement is owner-session state, cleared on new/open and excluded from archive
+and Undo snapshots. Custom apply/settings/continue edits pass through the owner;
+partition and diagnostic outputs are validated before acceptance. Export applies
+validated closed modifier meshes to the original body mesh. Optional previews
+can return open meshes and remain non-pickable. The library imports JSON bundles,
+offers enable/disable/apply controls, and uses the manifest's settings fields.
+The [raised-pad example](../../examples/decorators/README.md) exercises this path.
+Generic topology continuation, eligibility queries, diagnostic highlighting and
+the agent authoring path are still being integrated.
 
 ## Mesh export and preview
 

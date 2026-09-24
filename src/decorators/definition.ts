@@ -7,6 +7,7 @@ export interface DecoratorDefinition {
   name: string;
   source: string;
   fields: readonly DecoratorField[];
+  preview?: boolean;
 }
 export type DefinitionEdit =
   | { action: "install"; definition: DecoratorDefinition }
@@ -47,6 +48,7 @@ export function validateDefinition(definition: DecoratorDefinition): void {
     typeof definition.source !== "string" ||
     !definition.source.trim() ||
     definition.source.length > maxDecoratorSource ||
+    (definition.preview !== undefined && typeof definition.preview !== "boolean") ||
     !Array.isArray(definition.fields) ||
     definition.fields.length > 32
   )

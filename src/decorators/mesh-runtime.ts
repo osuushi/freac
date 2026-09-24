@@ -3,6 +3,7 @@ import { type ExportMesh, exportMesh } from "../model/export-mesh.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { resolveFaces } from "./cylinder.js";
 import { validateThread } from "./edits.js";
+import type { JavaScriptDecorators } from "./javascript-hooks.js";
 import { MeshScope } from "./mesh-scope.js";
 import { exportTolerance } from "./precision.js";
 import { threadDomain } from "./thread-domain.js";
@@ -42,7 +43,11 @@ function threadOperands(
   return { mask, generated, geometry };
 }
 
-export function decoratedMeshes(runtime: ManifoldToplevel, document: SketchDocument): ExportMesh[] {
+export function decoratedMeshes(
+  runtime: ManifoldToplevel,
+  document: SketchDocument,
+  javascript?: JavaScriptDecorators,
+): ExportMesh[] {
   return (document.bodies ?? []).map((body) => {
     const instances = (document.decorators ?? []).filter((d) =>
       d.faces.some((f) => f.body === body.id),
@@ -52,6 +57,18 @@ export function decoratedMeshes(runtime: ManifoldToplevel, document: SketchDocum
     try {
       let solid = scope.from(exportMesh(body));
       for (const instance of instances) {
+        if (instance.definition !== threadDefinition) {
+          if (instance.problem) throw new Error(instance.problem);
+          if (!javascript)
+            throw new Error(`Enable bundled code for ${instance.definition} before export`);
+          for (const modification of javascript.modifications(document, instance)) {
+            const operand = scope.from(modification.mesh);
+            solid = scope.keep(
+              modification.operation === "add" ? solid.add(operand) : solid.subtract(operand),
+            );
+          }
+          continue;
+        }
         const operands = threadOperands(scope, document, instance, "export");
         if (!operands) continue;
         const { mask, generated, geometry } = operands;

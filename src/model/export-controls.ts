@@ -23,6 +23,7 @@ export function exportControls(editor: SketchEditor): () => void {
     editor.notice = "Preparing export…";
     editor.refresh();
     try {
+      const sources = editor.store.decoratorSources;
       const snapshot = await editor.store.exportGeometry();
       if (job !== current) return;
       const worker = new Worker(new URL("./export-worker.ts", import.meta.url), { type: "module" });
@@ -42,7 +43,7 @@ export function exportControls(editor: SketchEditor): () => void {
         finish(event.data.error);
       };
       worker.onerror = () => finish("Could not export the solid mesh");
-      worker.postMessage({ document: snapshot, format: extension });
+      worker.postMessage({ document: snapshot, format: extension, sources });
       editor.notice = "Generating export mesh…";
       editor.refresh();
     } catch (error) {

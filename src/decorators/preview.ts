@@ -46,7 +46,12 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
     for (const child of group.children)
       child.visible = editor.visibility.visible(child.userData.body);
     const document = editor.display;
-    const next = JSON.stringify([document.decorators, document.bodies?.map((b) => b.brep)]);
+    const next = JSON.stringify([
+      document.decorators,
+      document.decoratorDefinitions,
+      editor.store.decoratorSources,
+      document.bodies?.map((b) => b.brep),
+    ]);
     if (next === key) return;
     key = next;
     clearTimeout(timer);
@@ -81,7 +86,7 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
         editor.notice = "Thread preview unavailable";
         editor.refresh();
       };
-      worker.postMessage(document);
+      worker.postMessage({ document, sources: editor.store.decoratorSources });
     }, 100);
   };
   editor.world.changed.add(update);

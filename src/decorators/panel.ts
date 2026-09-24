@@ -1,8 +1,10 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { appendCustomDecorators } from "./custom-panel.js";
 import { resolveFaces } from "./cylinder.js";
 import { editDecorators, faceKey } from "./edits.js";
+import { decoratorLibrary } from "./library.js";
 import { appendThreadInformation } from "./panel-information.js";
 import { threadDefinition, threadFields } from "./thread-settings.js";
 import type { DecoratorEdit, DecoratorInstance, FaceReference, Settings } from "./types.js";
@@ -11,6 +13,7 @@ import "./panel.css";
 export class DecoratorPanel {
   private root = document.createElement("section");
   private unregister: () => void;
+  private disposeLibrary: () => void;
   private key = "";
   private shownDocument: SketchEditor["store"]["data"] | null = null;
   private last: string | null = null;
@@ -22,6 +25,7 @@ export class DecoratorPanel {
     this.root.className = "decorator-panel";
     this.root.setAttribute("aria-label", "Decorators");
     parent.append(this.root);
+    this.disposeLibrary = decoratorLibrary(editor, parent);
     this.unregister = toolCatalog(editor).register({
       id: "threads",
       label: "Threads",
@@ -184,7 +188,13 @@ export class DecoratorPanel {
         this.editor.store.busy ||
         (!!this.editor.interactions.current && !this.draft);
     if (this.draft) return;
-    const key = JSON.stringify([instances, problems, canContinue, this.selected()]);
+    const key = JSON.stringify([
+      instances,
+      problems,
+      canContinue,
+      this.selected(),
+      this.editor.store.decoratorSources,
+    ]);
     if (key === this.key && this.shownDocument === this.editor.store.data) return;
     this.key = key;
     this.shownDocument = this.editor.store.data;
@@ -200,6 +210,10 @@ export class DecoratorPanel {
       return;
     }
     if (!instances.length) return;
+    if (instances.some((d) => d.definition !== threadDefinition)) {
+      appendCustomDecorators(this.root, this.editor, instances);
+      return;
+    }
     if (instances.length === 1) this.last = instances[0].id;
     this.button(`Threads · ${instances.reduce((n, d) => n + d.faces.length, 0)} faces`, () => {
       this.expand(instances);
@@ -251,6 +265,7 @@ export class DecoratorPanel {
     }
   }
   dispose(): void {
+    this.disposeLibrary();
     this.cancel();
     this.unregister();
     this.editor.world.changed.delete(this.update);

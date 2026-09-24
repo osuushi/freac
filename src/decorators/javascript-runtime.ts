@@ -9,7 +9,11 @@ import { maxDecoratorSource } from "./definition.js";
 const maxJson = 32 * 1024 * 1024;
 
 export function initializeDecoratorRuntime(wasmLocation?: string): Promise<QuickJSWASMModule> {
-  const variant = "default" in RELEASE_SYNC ? RELEASE_SYNC.default : RELEASE_SYNC;
+  // The package exposes differing CJS/ESM declaration shapes for the same sync variant.
+  const variant = ("default" in RELEASE_SYNC ? RELEASE_SYNC.default : RELEASE_SYNC) as Extract<
+    Parameters<typeof newVariant>[0],
+    { type: "sync" }
+  >;
   return newQuickJSWASMModuleFromVariant(
     wasmLocation ? newVariant(variant, { wasmLocation }) : variant,
   );

@@ -17,6 +17,7 @@ export interface DecoratorInstance {
   /** Original axial reference retained when coverage is split or partially removed. */
   readonly axialReference?: [number, number];
   readonly problem?: string;
+  readonly state?: unknown;
 }
 export interface DecoratorField {
   key: string;
@@ -34,7 +35,13 @@ export interface MeshModification {
   mesh: ExportMesh;
 }
 export type DecoratorEdit =
-  | { action: "apply"; definition: string; faces: FaceReference[]; settings?: Settings }
+  | {
+      action: "apply";
+      definition: string;
+      version?: number;
+      faces: FaceReference[];
+      settings?: Settings;
+    }
   | { action: "settings"; ids: string[]; patch: Settings }
   | { action: "continue"; id: string; faces: FaceReference[] }
   | { action: "reassign"; id: string; faces: FaceReference[] }
