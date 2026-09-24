@@ -1,3 +1,4 @@
+import { editDefinitions } from "../decorators/definition-edits.js";
 import { editDecorators } from "../decorators/edits.js";
 import { withConstructionPlane } from "../model/construction-plane.js";
 import { editEntityPresentation } from "../model/entity-presentation.js";
@@ -12,6 +13,7 @@ export function isDirectDocumentEdit(
 ): request is Exclude<Parameters<typeof editDocument>[1], { kind: "delete-entities" }> {
   return [
     "decorator",
+    "decorator-definition",
     "rename-entity",
     "reorder-entity",
     "construction-plane",
@@ -31,6 +33,7 @@ export function editDocument(
     {
       kind:
         | "decorator"
+        | "decorator-definition"
         | "rename-entity"
         | "reorder-entity"
         | "construction-plane"
@@ -47,6 +50,8 @@ export function editDocument(
   switch (request.kind) {
     case "decorator":
       return editDecorators(document, request.edit);
+    case "decorator-definition":
+      return editDefinitions(document, request.edit);
     case "rename-entity":
     case "reorder-entity":
       return editEntityPresentation(document, request);

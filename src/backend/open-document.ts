@@ -1,3 +1,4 @@
+import { validateDefinitions } from "../decorators/definition-edits.js";
 import { validateDecorators } from "../decorators/edits.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { validateSketch } from "../sketch/document.js";
@@ -5,6 +6,7 @@ import { validateFrame } from "../sketch/planes.js";
 
 export function validateDocument(document: SketchDocument): void {
   validateDecorators(document);
+  validateDefinitions(document);
   if (
     document.units !== "mm" ||
     !Array.isArray(document.sketches) ||

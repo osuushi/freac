@@ -258,6 +258,23 @@ A Worker alone is not a security sandbox. Missing definitions
 retain data, identify the missing dependency and block affected export rather
 than silently omit a decoration. No marketplace or general plugin platform needed.
 
+The interpreter is QuickJS through pinned `quickjs-emscripten-core` and
+`@jitl/quickjs-wasmfile-release-sync` 0.32.0 (MIT; the WASM package includes the
+QuickJS license). The wrapper creates a fresh VM for each synchronous hook,
+installs no host callbacks, denies external imports, and exchanges only JSON.
+Current bounds are 256 KiB source, 32 MiB input/output JSON, 128 MiB VM memory,
+512 KiB stack and a 10-second hook deadline. Worker termination remains the
+outer cancellation mechanism. Upstream runtime APIs are documented in the
+[pinned runtime source](https://github.com/justjake/quickjs-emscripten/blob/df4efb9ef2cb25c417ecb57986da462d11b244ed/packages/quickjs-emscripten-core/src/runtime.ts).
+These limits constrain execution; they do not validate returned geometry.
+
+`decoratorDefinitions` stores a manifest, bounded settings schema and exact source
+once per ID/version. The ordinary `decorator-definition` owner edit installs,
+replaces or removes this bundle with snapshot Undo. Installation and opening do
+not execute source. Replacement must preserve valid settings on existing instances;
+removal is rejected while instances reference that version. Runtime enablement,
+hook dispatch and the user/agent authoring path are still being integrated.
+
 ## Mesh export and preview
 
 Proposed export path: capture accepted geometry/settings; prepare geometry context

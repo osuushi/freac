@@ -21,6 +21,7 @@ import type { PlaneFrame } from "./planes.js";
 export type ModelRequest =
   | { kind: "export-geometry" }
   | { kind: "decorator"; edit: import("../decorators/types.js").DecoratorEdit }
+  | { kind: "decorator-definition"; edit: import("../decorators/definition.js").DefinitionEdit }
   | { kind: "offset-sketch"; sketchId: string; curves: string[]; amount: number }
   | { kind: "sections"; frame: PlaneFrame; bodies: string[] }
   | { kind: "selection"; changes: import("./history-selection.js").SelectionChanges }
