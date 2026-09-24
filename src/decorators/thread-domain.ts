@@ -1,6 +1,7 @@
 import type { Manifold } from "manifold-3d";
 import type { Body, Face } from "../model/body.js";
 import type { Vector } from "../sketch/planes.js";
+import { trimAdjacentCylinders } from "./curved-domain.js";
 import { cross, dot, subtract } from "./cylinder.js";
 import type { MeshScope } from "./mesh-scope.js";
 import type { threadMeshes } from "./thread-mesh.js";
@@ -42,7 +43,13 @@ export function threadDomain(
   const band = scope.from(geometry.band);
   if (!geometry.masks) return band;
   const patches = geometry.masks.map((mesh, i) =>
-    trimAdjacentPlanes(scope, scope.keep(scope.from(mesh).intersect(band)), faces[i], body),
+    trimAdjacentCylinders(
+      scope,
+      trimAdjacentPlanes(scope, scope.keep(scope.from(mesh).intersect(band)), faces[i], body),
+      faces[i],
+      body,
+      geometry.tolerance,
+    ),
   );
   return patches.slice(1).reduce((all, patch) => scope.keep(all.add(patch)), patches[0]);
 }

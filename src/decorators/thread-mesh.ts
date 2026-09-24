@@ -229,6 +229,7 @@ export function threadMeshes(
   };
   return {
     ...threadToolMeshes(frame, bandGrid, cylinder, settings, low, high, tolerance),
+    tolerance,
     masks: complete ? null : faces.map((face) => faceMask(frame, [face], low, high)),
     fill: radialShell(
       frame,

@@ -1,18 +1,8 @@
+import { facetArea, retriangulateCollinear } from "./collinear-facets.js";
 import type { ExportMesh } from "./export-mesh.js";
 
-function area(mesh: ExportMesh, triangle: number[]): number {
-  const [a, b, c] = triangle.map((i) => mesh.vertices[i]);
-  const u = b.map((v, i) => v - a[i]),
-    v = c.map((n, i) => n - a[i]);
-  return Math.hypot(
-    u[1] * v[2] - u[2] * v[1],
-    u[2] * v[0] - u[0] * v[2],
-    u[0] * v[1] - u[1] * v[0],
-  );
-}
-
-/** Float packing can collapse Boolean slivers. Collapse only their short edges,
- * within the Boolean result's existing rounding bound; never increase a weld tolerance. */
+/** Float packing can collapse Boolean slivers. Join short edges within the existing
+ * rounding bound, then re-triangulate exact collinearity without moving vertices. */
 export function packedMesh(mesh: ExportMesh, rounding: number): ExportMesh {
   const parents = mesh.vertices.map((_, i) => i);
   const root = (i: number): number => {
@@ -28,7 +18,7 @@ export function packedMesh(mesh: ExportMesh, rounding: number): ExportMesh {
   const distance = (a: number, b: number) =>
     Math.hypot(...mesh.vertices[a].map((v, i) => v - mesh.vertices[b][i]));
   for (const triangle of mesh.triangles) {
-    if (area(mesh, triangle) !== 0) continue;
+    if (facetArea(mesh, triangle) !== 0) continue;
     const edges = [
       [triangle[0], triangle[1]],
       [triangle[1], triangle[2]],
@@ -36,8 +26,7 @@ export function packedMesh(mesh: ExportMesh, rounding: number): ExportMesh {
     ];
     edges.sort((a, b) => distance(a[0], a[1]) - distance(b[0], b[1]));
     const [a, b] = edges[0];
-    if (distance(a, b) > rounding)
-      throw new Error("A collapsed mesh facet exceeds numerical precision");
+    if (distance(a, b) > rounding) continue;
     parents[root(b)] = root(a);
   }
   for (let i = 0; i < parents.length; i++)
@@ -46,5 +35,8 @@ export function packedMesh(mesh: ExportMesh, rounding: number): ExportMesh {
   const triangles = mesh.triangles
     .map((triangle) => triangle.map(root))
     .filter((ids) => new Set(ids).size === 3);
-  return { vertices: mesh.vertices, triangles };
+  const result = retriangulateCollinear({ vertices: mesh.vertices, triangles }, rounding);
+  if (result.triangles.some((triangle) => facetArea(result, triangle) === 0))
+    throw new Error("A collapsed mesh facet exceeds numerical precision");
+  return result;
 }

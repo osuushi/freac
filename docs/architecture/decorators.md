@@ -352,12 +352,23 @@ are checked against the analytic envelope with a separate allowance of twice the
 sampling target. This is measured numerical accuracy, not a general certification
 of arbitrary curved neighboring surfaces or physical fit.
 
+Trimmed thread domains also respect directly adjacent analytic cylindrical
+boundaries when the entire selected patch lies on their material side. Hole
+boundaries use a circumscribed polygon and exterior limits an inscribed polygon,
+with radial deviation below half the sampling target. Coincident supporting
+cylinders do not constrain each other's threads. This preserves transverse bores
+in both external and internal threaded faces. Nonconvex patches straddling an
+adjacent boundary retain their tessellated domain mask; this is not a general
+extension/intersection treatment for arbitrary BRep surface classes.
+
 Mesh Booleans run in body-local coordinates so world placement does not consume
 float precision. Their recorded numerical rounding must fit within one quarter
 of the sampling target. Float packing can collapse very small Boolean facets;
-only short edges of actually collapsed facets are normalized, within the existing
-rounding bound, and the result must still pass closure/orientation/nondegeneracy
-checks. STL conversion gets a separate bounded packing check. If world coordinates
+short edges of actually collapsed facets are normalized within the existing
+rounding bound. An exactly collinear facet with distinct vertices is re-triangulated
+against its adjacent face at the existing middle vertex, without moving vertices
+or changing the represented surface. Duplicate packed vertices are resolved first.
+The result must still pass closure/orientation/nondegeneracy checks. STL conversion gets a separate bounded packing check. If world coordinates
 exceed that format's float precision, STL rejects with a 3MF alternative; 3MF keeps
 the restored world positions. No larger general-purpose weld tolerance is used.
 
@@ -392,6 +403,17 @@ Each increment includes real geometry and ordinary pointer/keyboard routes.
 First-slice review is an intermediate checkpoint, not completion of V1.
 Measure preview and export on short/long threads and batches; do not promise
 near-instant generation before measuring cold and warm worker runs.
+
+The reproducible worker benchmark is `node tests/decorator-performance.mjs` after
+`npm run build` and `npx tsc -p tsconfig.test.json`. It creates real native cylinders,
+prepares read-only export tessellations, and measures first/repeated preview and
+3MF generation in fresh headless Chromium/WebKit contexts. The 2026-09-24 macOS
+arm64 baseline for Ø10 mm, 1.5 mm metric pitch was about 1.4–1.5 s for a 10 mm
+thread, 10–12 s for an 80 mm thread, and 15–17 s for six 20 mm threads. Repeated
+previews were about 0.1 s, 0.53–0.54 s and 0.67–0.74 s respectively; native export
+preparation was 31–63 ms. These are local measurements, not cross-device targets.
+Long and batch export still need optimization; near-instant generation is not yet
+achieved for those cases. The cache JSON retains each measured first/repeat run.
 
 Acceptance includes mating cross-sections and screw-motion checks over specified
 travel; both hands and modes; different lengths; multi-rod selection; reversed
