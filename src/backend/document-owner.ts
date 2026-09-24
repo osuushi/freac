@@ -83,10 +83,10 @@ export class DocumentOwner {
     this.candidate = null;
   }
   async call(request: ModelRequest): Promise<ModelReply> {
-    if (request.kind === "decorator-inspect")
+    if (request.kind === "decorator-inspect" || request.kind === "decorator-draft")
       return {
         view: this.view,
-        decoratorInspection: await this.decorators.inspect(this.store.data, request.query),
+        ...(await this.decorators.query(this.store.data, request)),
       };
     if (this.scripts.busy && request.kind !== "read" && request.kind !== "read-history")
       return { view: this.view, error: "Finish or cancel the running script first" };

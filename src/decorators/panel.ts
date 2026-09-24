@@ -1,13 +1,13 @@
-import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { appendCustomContinue } from "./custom-continue.js";
 import { appendCustomDecorators } from "./custom-panel.js";
 import { resolveFaces } from "./cylinder.js";
-import { editDecorators, faceKey } from "./edits.js";
+import { faceKey } from "./edits.js";
 import { decoratorLibrary } from "./library.js";
 import { appendThreadInformation } from "./panel-information.js";
 import { appendDecoratorRepairs } from "./repair-panel.js";
+import { DecoratorSettingsDraft } from "./settings-draft.js";
 import { threadDefinition, threadFields } from "./thread-settings.js";
 import type { DecoratorEdit, DecoratorInstance, FaceReference, Settings } from "./types.js";
 import "./panel.css";
@@ -19,11 +19,14 @@ export class DecoratorPanel {
   private key = "";
   private shownDocument: SketchEditor["store"]["data"] | null = null;
   private last: string | null = null;
-  private draft: { lease: InteractionLease; edit: DecoratorEdit; valid: boolean } | null = null;
+  private draft: DecoratorSettingsDraft;
   constructor(
     private editor: SketchEditor,
     parent: HTMLElement,
   ) {
+    this.draft = new DecoratorSettingsDraft(editor, () => {
+      this.key = "";
+    });
     this.root.className = "decorator-panel";
     this.root.setAttribute("aria-label", "Decorators");
     parent.append(this.root);
@@ -87,51 +90,11 @@ export class DecoratorPanel {
     this.root.append(button);
     return button;
   }
-  private patch(patch: Settings, preview: boolean): void {
-    const instances = this.instances();
+  private patch(patch: Settings, preview: boolean, instances = this.instances()): void {
     this.expand(instances);
-    const edit: DecoratorEdit = { action: "settings", ids: instances.map((d) => d.id), patch };
-    if (!preview) {
-      void this.edit(edit);
-      return;
-    }
-    if (!this.draft) {
-      const lease = this.editor.interactions.acquire(
-        "numeric",
-        () => this.cancel(),
-        () => this.commit(),
-      );
-      if (!lease) return;
-      this.draft = { lease, edit, valid: false };
-    }
-    this.draft.edit = edit;
-    try {
-      this.draft.lease.show(editDecorators(this.editor.store.data, edit));
-      this.draft.valid = true;
-      this.editor.message = "";
-    } catch (error) {
-      this.draft.valid = false;
-      this.editor.message = error instanceof Error ? error.message : String(error);
-    }
-    this.editor.refresh();
-  }
-  private cancel(): void {
-    const draft = this.draft;
-    this.draft = null;
-    draft?.lease.release();
-    this.key = "";
-    this.editor.refresh();
-  }
-  private async commit(): Promise<boolean> {
-    const draft = this.draft;
-    if (!draft) return true;
-    if (!draft.valid || !draft.lease.wait()) return false;
-    const accepted = await this.edit(draft.edit);
-    this.draft = null;
-    draft.lease.release();
-    this.key = "";
-    this.editor.refresh();
-    return accepted;
+    const edit = { action: "settings" as const, ids: instances.map((d) => d.id), patch };
+    if (preview) this.draft.preview(edit);
+    else void this.edit(edit);
   }
   private field(field: (typeof threadFields)[number], instances: DecoratorInstance[]): void {
     const values = instances.map((d) => d.settings[field.key] ?? field.default);
@@ -159,18 +122,17 @@ export class DecoratorPanel {
       if (field.max !== undefined) input.max = String(field.max);
       input.oninput = () => this.patch({ [field.key]: input.valueAsNumber }, true);
       input.onblur = () => {
-        if (this.draft?.valid) void this.commit();
-        else this.cancel();
+        void this.draft.blur();
       };
       input.onkeydown = (event) => {
         event.stopPropagation();
         if (event.key === "Enter") {
           event.preventDefault();
-          void this.commit();
+          void this.draft.commit();
         }
         if (event.key === "Escape") {
           event.preventDefault();
-          this.cancel();
+          this.draft.cancel();
         }
       };
       label.append(input);
@@ -195,8 +157,9 @@ export class DecoratorPanel {
       input.disabled =
         input.dataset.unavailable === "true" ||
         this.editor.store.busy ||
-        (!!this.editor.interactions.current && !this.draft);
-    if (this.draft) return;
+        this.draft.waiting ||
+        (!!this.editor.interactions.current && !this.draft.active);
+    if (this.draft.active) return;
     const key = JSON.stringify([
       instances,
       problems,
@@ -225,7 +188,13 @@ export class DecoratorPanel {
     if (!instances.length) return;
     if (instances.length === 1) this.last = instances[0].id;
     if (instances.some((d) => d.definition !== threadDefinition)) {
-      appendCustomDecorators(this.root, this.editor, instances);
+      appendCustomDecorators(
+        this.root,
+        this.editor,
+        instances,
+        this.draft,
+        (group, patch, preview) => this.patch(patch, preview, group),
+      );
       return;
     }
     this.button(`Threads · ${instances.reduce((n, d) => n + d.faces.length, 0)} faces`, () => {
@@ -253,7 +222,7 @@ export class DecoratorPanel {
   };
   dispose(): void {
     this.disposeLibrary();
-    this.cancel();
+    this.draft.cancel();
     this.unregister();
     this.editor.world.changed.delete(this.update);
     this.root.remove();

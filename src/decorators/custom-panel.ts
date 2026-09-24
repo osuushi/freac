@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { appendCustomDiagnostics } from "./custom-diagnostics.js";
+import type { DecoratorSettingsDraft } from "./settings-draft.js";
 import { threadDefinition } from "./thread-settings.js";
 import type { DecoratorField, DecoratorInstance, Settings } from "./types.js";
 
@@ -16,7 +17,8 @@ function field(
   root: HTMLElement,
   schema: DecoratorField,
   instances: DecoratorInstance[],
-  patch: (patch: Settings) => void,
+  patch: (patch: Settings, preview: boolean) => void,
+  draft: DecoratorSettingsDraft,
 ) {
   const values = instances.map((d) => d.settings[schema.key] ?? schema.default);
   const mixed = values.some((v) => v !== values[0]);
@@ -37,15 +39,22 @@ function field(
   }
   const original = mixed ? "" : String(values[0]);
   input.value = original;
-  input.onchange = () =>
-    patch({ [schema.key]: input instanceof HTMLInputElement ? input.valueAsNumber : input.value });
+  if (input instanceof HTMLInputElement) {
+    input.oninput = () => patch({ [schema.key]: input.valueAsNumber }, true);
+    input.onblur = () => {
+      void draft.blur();
+    };
+  } else input.onchange = () => patch({ [schema.key]: input.value }, false);
   input.onkeydown = (event) => {
     event.stopPropagation();
     if (event.key === "Escape") {
-      input.value = original;
-      input.blur();
+      event.preventDefault();
+      draft.cancel();
     }
-    if (event.key === "Enter") input.blur();
+    if (event.key === "Enter") {
+      event.preventDefault();
+      void draft.commit();
+    }
   };
   label.append(input);
   root.append(label);
@@ -55,6 +64,8 @@ export function appendCustomDecorators(
   root: HTMLElement,
   editor: SketchEditor,
   instances: DecoratorInstance[],
+  draft: DecoratorSettingsDraft,
+  patch: (instances: DecoratorInstance[], settings: Settings, preview: boolean) => void,
 ) {
   const groups = new Map<string, DecoratorInstance[]>();
   for (const instance of instances) {
@@ -106,13 +117,7 @@ export function appendCustomDecorators(
           )
         )
           continue;
-        field(root, schema, group, (patch) => {
-          expand();
-          void editor.store.request({
-            kind: "decorator",
-            edit: { action: "settings", ids: group.map((d) => d.id), patch },
-          });
-        });
+        field(root, schema, group, (settings, preview) => patch(group, settings, preview), draft);
       }
     }
     button(root, `Remove ${definition?.name ?? first.definition} from selected faces`, () => {

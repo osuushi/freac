@@ -2,6 +2,7 @@ import {
   pendingCustomContinuation,
   resolveCustomContinuation,
 } from "../decorators/custom-continuation.js";
+import { editDecorators } from "../decorators/edits.js";
 import { type DecoratorInspectionRequest, inspectDecorator } from "../decorators/inspection.js";
 import { editJavaScriptDecorators, needsJavaScript } from "../decorators/javascript-edits.js";
 import { type EnabledDefinition, JavaScriptDecorators } from "../decorators/javascript-hooks.js";
@@ -13,6 +14,23 @@ import type { ModelRequest } from "../sketch/model-api.js";
 
 /** Local enablement is intentionally absent from archives and Undo snapshots. */
 export class DecoratorSession {
+  async query(
+    document: SketchDocument,
+    request: Extract<ModelRequest, { kind: "decorator-inspect" | "decorator-draft" }>,
+  ) {
+    try {
+      if (request.kind === "decorator-inspect")
+        return { decoratorInspection: await this.inspect(document, request.query) };
+      if (request.edit.action !== "settings")
+        throw new Error("Only decorator settings can be drafted");
+      const candidate =
+        (await this.edit(document, { kind: "decorator", edit: request.edit })) ??
+        editDecorators(document, request.edit);
+      return { decoratorDraft: candidate.decorators ?? [] };
+    } catch (error) {
+      return { error: error instanceof Error ? error.message : String(error) };
+    }
+  }
   async continue(document: SketchDocument): Promise<SketchDocument> {
     if (!document.decorators?.some((d) => pendingCustomContinuation.has(d))) return document;
     return resolveCustomContinuation(document, await this.hooks());

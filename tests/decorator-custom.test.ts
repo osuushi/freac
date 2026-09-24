@@ -89,6 +89,7 @@ async function assertReadOnlyInspection(
   current: import("../src/decorators/types.js").DecoratorInstance,
 ): Promise<void> {
   const unchanged = documentArchive(owner.view.data);
+  const history = (await owner.call({ kind: "read-history" })).history;
   const cylinder = body.faces.find((f) => f.cylinder);
   assert.ok(cylinder);
   const rejected = await owner.call({
@@ -110,6 +111,20 @@ async function assertReadOnlyInspection(
     },
   });
   assert.equal(eligible.decoratorInspection?.reason, null);
+  const draft = await owner.call({
+    kind: "decorator-draft",
+    edit: { action: "settings", ids: [current.id], patch: { height: 4 } },
+  });
+  assert.equal(draft.error, undefined);
+  assert.equal(draft.decoratorDraft?.[0].settings.height, 4);
+  assert.equal(owner.view.candidate, null);
+  const invalid = await owner.call({
+    kind: "decorator-draft",
+    edit: { action: "settings", ids: [current.id], patch: { height: -1 } },
+  });
+  assert.match(invalid.error ?? "", /Invalid/);
+  assert.equal(invalid.decoratorDraft, undefined);
+  assert.deepEqual((await owner.call({ kind: "read-history" })).history, history);
   assert.equal(
     documentArchive(owner.view.data),
     unchanged,

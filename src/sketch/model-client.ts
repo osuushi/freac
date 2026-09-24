@@ -147,6 +147,14 @@ export class ModelClient {
     if (!reply.exportDocument) throw new Error("Export geometry unavailable");
     return reply.exportDocument;
   }
+  async draftDecorator(
+    edit: Extract<import("../decorators/types.js").DecoratorEdit, { action: "settings" }>,
+  ) {
+    const reply = await call({ kind: "decorator-draft", edit });
+    if (reply.error || !reply.decoratorDraft)
+      throw new Error(reply.error ?? "Decorator draft unavailable");
+    return reply.decoratorDraft;
+  }
   async inspectDecorator(query: import("../decorators/inspection.js").DecoratorInspectionRequest) {
     const reply = await call({ kind: "decorator-inspect", query });
     if (reply.error || !reply.decoratorInspection)

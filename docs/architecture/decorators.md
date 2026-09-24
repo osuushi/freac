@@ -285,6 +285,13 @@ offers enable/disable/apply controls, and uses the manifest's settings fields.
 The [raised-pad example](../../examples/decorators/README.md) exercises this path.
 The read-only `decorator-inspect` query resolves eligibility/partition and
 diagnostics through enabled code without changing the document or Undo. The
+read-only `decorator-draft` query validates custom numeric settings through the
+same enabled hooks. Built-in and custom numeric controls share a temporary
+interaction: typing previews, Enter or blur accepts one edit, and Escape cancels.
+Pending custom validation coalesces to the latest input; cancelled or obsolete
+results cannot replace the current preview. Draft queries do not alter owner
+candidates, accepted data or Undo.
+The
 library disables Apply while checking, displays rejection reasons, and discards
 results for replaced selections/documents. Selected custom instances show their
 diagnostics with ordinary affected-face selection. Custom topology continuation

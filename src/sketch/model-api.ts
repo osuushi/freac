@@ -20,6 +20,10 @@ import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
   | { kind: "export-geometry" }
+  | {
+      kind: "decorator-draft";
+      edit: Extract<import("../decorators/types.js").DecoratorEdit, { action: "settings" }>;
+    }
   | { kind: "decorator"; edit: import("../decorators/types.js").DecoratorEdit }
   | { kind: "decorator-definition"; edit: import("../decorators/definition.js").DefinitionEdit }
   | { kind: "decorator-enable"; id: string; version: number; enabled: boolean }
@@ -96,6 +100,7 @@ export interface ModelView {
   solveMs: number;
 }
 export type ModelReply = {
+  decoratorDraft?: readonly import("../decorators/types.js").DecoratorInstance[];
   decoratorInspection?: import("../decorators/inspection.js").DecoratorInspection;
   exportDocument?: SketchDocument;
   sections?: import("../model/sketch-section.js").SketchSection[];

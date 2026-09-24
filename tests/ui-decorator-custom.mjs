@@ -48,6 +48,19 @@ export async function customDecoratorRoute(page) {
   await inspect(page);
   await page.getByRole("button", { name: "Close decorator library", exact: true }).click();
   const height = page.getByRole("spinbutton", { name: "Height", exact: true });
+  const beforeDraft = (await inspect(page)).document;
+  await height.fill("4");
+  await page.waitForFunction(
+    () => window.freacInspect().preview?.decorators?.[0]?.settings.height === 4,
+  );
+  assert.deepEqual((await inspect(page)).document, beforeDraft);
+  await height.press("Escape");
+  assert.equal((await inspect(page)).preview, null);
+  assert.deepEqual((await inspect(page)).document, beforeDraft);
+  await height.fill("-1");
+  await height.press("Enter");
+  assert.deepEqual((await inspect(page)).document, beforeDraft);
+  await page.keyboard.press("Escape");
   await height.fill("2");
   await height.press("Enter");
   assert.equal((await inspect(page)).document.decorators[0].settings.height, 2);
