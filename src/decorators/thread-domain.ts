@@ -37,7 +37,7 @@ export function threadDomain(
   scope: MeshScope,
   body: Body,
   faces: readonly Face[],
-  geometry: ReturnType<typeof threadMeshes>,
+  geometry: NonNullable<ReturnType<typeof threadMeshes>>,
 ): Manifold {
   const band = scope.from(geometry.band);
   if (!geometry.masks) return band;

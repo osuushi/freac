@@ -103,3 +103,19 @@ export function transformedThreadFrame(
   // Rebuild a right-handed frame after reflection; the configured thread hand stays fixed.
   return { origin, u, v: cross(axis, u) };
 }
+
+export function transformedAxialReference(
+  instance: DecoratorInstance,
+  request?: ModelRequest,
+): [number, number] | undefined {
+  if (!instance.axialReference) return undefined;
+  const matrix = matrixFor(instance, request);
+  if (!matrix) return instance.axialReference;
+  const axis = cross(instance.frame.u, instance.frame.v);
+  const origin = new Vector3(...instance.frame.origin).applyMatrix4(matrix);
+  const endpoint = new Vector3(...instance.frame.origin.map((n, i) => n + axis[i])).applyMatrix4(
+    matrix,
+  );
+  const factor = endpoint.distanceTo(origin);
+  return instance.axialReference.map((z) => z * factor) as [number, number];
+}

@@ -14,6 +14,8 @@ export interface DecoratorInstance {
   readonly settings: Settings;
   /** Persistent local coordinates keep a helix continuous across face changes. */
   readonly frame: PlaneFrame;
+  /** Original axial reference retained when coverage is split or partially removed. */
+  readonly axialReference?: [number, number];
   readonly problem?: string;
 }
 export interface DecoratorField {

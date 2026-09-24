@@ -4,8 +4,9 @@ import { newId, type SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { cross, sameCylinder, subtract } from "./cylinder.js";
 import { validateThread } from "./edits.js";
+import { threadReference } from "./thread-extent.js";
 import { threadDefinition } from "./thread-settings.js";
-import { transformedThreadFrame } from "./transform-frame.js";
+import { transformedAxialReference, transformedThreadFrame } from "./transform-frame.js";
 import type { DecoratorInstance } from "./types.js";
 
 function descendants(
@@ -42,7 +43,15 @@ function descendants(
     )
       problem = "The thread support moved independently. Reassign these threads.";
   }
-  return { ...instance, frame, problem, faces: faces.map((f) => ({ body: body.id, face: f.id })) };
+  return {
+    ...instance,
+    frame,
+    problem,
+    axialReference: unchanged
+      ? instance.axialReference
+      : transformedAxialReference(instance, request),
+    faces: faces.map((f) => ({ body: body.id, face: f.id })),
+  };
 }
 
 /** Consume immediate topology correspondence during the geometry edit, never replay old operations. */
@@ -54,9 +63,22 @@ export function continueDecorators(
   if (!source.decorators?.length || source.bodies === candidate.bodies) return candidate;
   const decorators: DecoratorInstance[] = [];
   for (const instance of source.decorators) {
+    const split =
+      (candidate.bodies ?? []).filter((b) => {
+        const origins = topologyOrigins.get(b);
+        return (
+          !origins?.copy &&
+          source.bodies?.every((old) => old !== b) &&
+          origins?.bodies.includes(instance.faces[0].body)
+        );
+      }).length > 1;
+    const reference =
+      split && !instance.problem && instance.definition === threadDefinition
+        ? { ...instance, axialReference: threadReference(source.bodies ?? [], instance) }
+        : instance;
     let count = 0;
     for (const body of candidate.bodies ?? []) {
-      const next = descendants(instance, source, body, request);
+      const next = descendants(reference, source, body, request);
       if (!next) continue;
       let updated = { ...next, id: count++ === 0 ? instance.id : newId() };
       if (instance.definition === threadDefinition && !updated.problem) {

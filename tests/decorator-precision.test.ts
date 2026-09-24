@@ -91,7 +91,9 @@ test("sampled thread facets preserve the analytic crest/root profile within the 
           startTaper: 0.2,
           endTaper: 0.7,
         };
-        const mesh = threadMeshes(frame, [face], settings).fill;
+        const geometry = threadMeshes(frame, [face], settings);
+        assert.ok(geometry);
+        const mesh = geometry.fill;
         validateMesh(mesh);
         const half = mesh.vertices.length / 2;
         let deviation = 0;

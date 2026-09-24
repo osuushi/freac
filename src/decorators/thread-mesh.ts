@@ -181,12 +181,19 @@ export function threadMeshes(
   faces: readonly Face[],
   settings: ThreadSettings,
   quality: "preview" | "export" = "export",
+  reference?: [number, number],
 ) {
   const cylinder = faces[0].cylinder;
   if (!cylinder) throw new Error("Threads require cylindrical faces");
   const extent = cylinderExtent(frame, faces);
-  const bounds: [number, number] = [extent[0] + settings.start, extent[1] - settings.end];
-  if (bounds[1] <= bounds[0]) throw new Error("Thread insets leave no threaded length");
+  const axial = reference ?? extent;
+  const taperBounds: [number, number] = [axial[0] + settings.start, axial[1] - settings.end];
+  if (taperBounds[1] <= taperBounds[0]) throw new Error("Thread insets leave no threaded length");
+  const bounds: [number, number] = [
+    Math.max(extent[0], taperBounds[0]),
+    Math.min(extent[1], taperBounds[1]),
+  ];
+  if (bounds[1] <= bounds[0] + 1e-7) return null;
   const depth = settings.pitch * 0.62;
   const low = cylinder.radius - depth - 0.02,
     high = cylinder.radius + depth + settings.clearance + 0.02;
@@ -207,12 +214,12 @@ export function threadMeshes(
   );
   if (steps * segments > 1_000_000)
     throw new Error("Threads exceed the mesh budget; increase pitch or reduce length");
-  const { coords, triangles } = threadGrid(segments, steps, bounds, settings);
+  const { coords, triangles } = threadGrid(segments, steps, bounds, settings, taperBounds);
   const bandGrid = cylinderGrid(segments, 1, bounds);
   const area = faces.reduce((sum, face) => sum + face.signature[2], 0);
   const complete = Math.abs(area - 2 * Math.PI * cylinder.radius * (extent[1] - extent[0])) < 1e-6;
   const target = (angle: number, z: number) =>
-    threadRadius(cylinder.radius, angle, z, settings, cylinder.outward, bounds);
+    threadRadius(cylinder.radius, angle, z, settings, cylinder.outward, taperBounds);
   // Auxiliary skins must share the band's polygon, including inserted profile vertices.
   // Otherwise differing circle tessellations leave remote slivers in a difference.
   const polygonRadius = (radius: number, angle: number) => {

@@ -138,6 +138,14 @@ do not fill flats or gaps. Apply optional tapers at its axial ends and preserve
 helix phase when changing extent. Exact behavior at separated axial patches must
 remain consistent with one continuous helix and the requested face coverage.
 
+Body splitting and partial decorator removal retain the previous axial reference
+in the saved thread frame. Insets and tapers use that reference, while generated
+coverage is clipped to surviving faces; a split outside the band can have empty
+coverage without becoming unresolved. Continuing onto additional faces expands
+the reference when necessary. Reassigning starts from the replacement geometry.
+Rigid transforms transport the frame; scaling scales the inherited reference,
+while pitch, relief, inset and taper settings retain their physical values.
+
 Founder decision: defer print-in-place support, including user-facing phase
 alignment controls and captive-pair acceptance. V1 promises compatible thread
 forms, not clearance between independently decorated parts in their current

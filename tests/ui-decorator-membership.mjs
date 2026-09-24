@@ -20,6 +20,16 @@ async function imprintThreadedCylinder(page) {
   await orient(page, [0, -1, 0.3]);
   await worldClick(page, [0, -8, 2]);
   await chooseTool(page, "threads", "threads");
+  for (const [name, value] of [
+    ["Start inset", "1"],
+    ["End inset", "2"],
+    ["Start taper", "2"],
+  ]) {
+    const input = page.getByRole("spinbutton", { name, exact: true });
+    await input.fill(value);
+    await input.press("Enter");
+    await inspect(page);
+  }
   const before = (await inspect(page)).document.decorators[0];
   await chooseTool(page, "imprint", "imprint");
   await page.getByRole("button", { name: "Use Plane 1", exact: true }).first().click();
@@ -38,6 +48,24 @@ export async function decoratorMembershipRoute(page) {
   await worldClick(page, [0, -8, 2]);
   await page.getByRole("button", { name: "Threads · 2 faces", exact: true }).click();
   assert.equal((await inspect(page)).modelingSelection.length, 2);
+  await page.getByRole("button", { name: "Show Plane 1", exact: true }).click();
+  await chooseTool(page, "split body", "split");
+  await page.getByRole("button", { name: "Use Plane 1", exact: true }).first().click();
+  await inspect(page);
+  await page.keyboard.press("Enter");
+  const split = await inspect(page);
+  assert.equal(split.document.bodies.length, 2);
+  assert.ok(
+    split.document.decorators.every(
+      (d) => !d.problem && d.settings.start === 1 && d.settings.startTaper === 2,
+    ),
+  );
+  assert.ok(
+    split.document.decorators.every((d) => d.axialReference[0] === 0 && d.axialReference[1] === 10),
+  );
+  await chooseTool(page, "undo", "undo");
+  await inspect(page);
+  await page.getByRole("button", { name: "Hide Plane 1", exact: true }).click();
   await clearSelection(page);
   await worldClick(page, [0, -8, 2]);
   await page

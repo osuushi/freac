@@ -29,7 +29,14 @@ function threadOperands(
   const faces = resolveFaces(document.bodies ?? [], instance.faces);
   const body = document.bodies?.find((b) => b.id === instance.faces[0].body);
   if (!body) throw new Error("Thread body is missing");
-  const geometry = threadMeshes(instance.frame, faces, threadSettings(instance.settings), quality);
+  const geometry = threadMeshes(
+    instance.frame,
+    faces,
+    threadSettings(instance.settings),
+    quality,
+    instance.axialReference,
+  );
+  if (!geometry) return null;
   const mask = geometry.masks ? threadDomain(scope, body, faces, geometry) : null;
   const generated = scope.from(geometry.fill);
   return { mask, generated, geometry };
@@ -45,7 +52,9 @@ export function decoratedMeshes(runtime: ManifoldToplevel, document: SketchDocum
     try {
       let solid = scope.from(exportMesh(body));
       for (const instance of instances) {
-        const { mask, generated, geometry } = threadOperands(scope, document, instance, "export");
+        const operands = threadOperands(scope, document, instance, "export");
+        if (!operands) continue;
+        const { mask, generated, geometry } = operands;
         if (geometry.hasRemove) {
           let remove = scope.keep(scope.from(geometry.referenceRemove).subtract(generated));
           remove = scope.keep(remove.intersect(scope.from(geometry.removeBand)));
@@ -79,7 +88,9 @@ export function decoratorPreview(
   if (!body) throw new Error("Thread body is missing");
   const scope = new MeshScope(runtime, body.center);
   try {
-    const { mask, generated } = threadOperands(scope, document, instance, "preview");
+    const operands = threadOperands(scope, document, instance, "preview");
+    if (!operands) return { vertices: [], triangles: [] };
+    const { mask, generated } = operands;
     return scope.mesh(mask ? scope.keep(generated.intersect(mask)) : generated);
   } finally {
     scope.close();

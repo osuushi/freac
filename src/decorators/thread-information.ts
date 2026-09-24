@@ -1,5 +1,6 @@
 import type { Body } from "../model/body.js";
 import { cross, cylinderExtent, dot, resolveFaces, subtract } from "./cylinder.js";
+import { threadReference } from "./thread-extent.js";
 import { coarseMetric, threadSettings } from "./thread-settings.js";
 import type { DecoratorInstance, FaceReference } from "./types.js";
 
@@ -18,7 +19,7 @@ export function threadInformation(bodies: readonly Body[], instance: DecoratorIn
   const warnings: ThreadWarning[] = [];
   if (!body) return { description, warnings };
   const depth = (settings.pitch * Math.sqrt(3) * 5) / 16;
-  const extent = cylinderExtent(instance.frame, faces);
+  const extent = threadReference(bodies, instance);
   const low = extent[0] + settings.start,
     high = extent[1] - settings.end;
   for (const adjacent of body.faces) {

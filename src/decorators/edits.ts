@@ -1,6 +1,7 @@
 import { newId, type SketchDocument } from "../sketch/document.js";
 import { validateFrame } from "../sketch/planes.js";
 import { cylinderExtent, cylinderFrame, resolveFaces, sameCylinder } from "./cylinder.js";
+import { threadReference, validateAxialReference } from "./thread-extent.js";
 import {
   patchThreadSettings,
   threadDefaults,
@@ -33,7 +34,7 @@ export function validateThread(document: SketchDocument, instance: DecoratorInst
   const faces = resolveFaces(document.bodies ?? [], instance.faces);
   if (partitionThreads(document, instance.faces).length !== 1)
     throw new Error("These faces cannot continue the same threads");
-  const [low, high] = cylinderExtent(instance.frame, faces);
+  const [low, high] = threadReference(document.bodies ?? [], instance);
   if (settings.start + settings.end >= high - low - 1e-7)
     throw new Error("Thread insets leave no threaded length");
   if (settings.pitch * 0.62 >= faces[0].cylinder.radius)
@@ -72,6 +73,7 @@ export function validateDecorators(document: SketchDocument): void {
     ids.add(instance.id);
     validateReferences(instance.faces);
     validateFrame(instance.frame);
+    validateAxialReference(instance);
     for (const ref of instance.faces) {
       const key = faceKey(ref);
       if (!instance.problem) {
@@ -159,10 +161,22 @@ export function editDecorators(document: SketchDocument, edit: DecoratorEdit): S
             ...edit.faces.filter((f) => !original.faces.some((old) => faceKey(old) === faceKey(f))),
           ];
     const cylinder = resolveFaces(document.bodies ?? [], faces)[0].cylinder;
+    const reference = original.axialReference;
+    const extent =
+      edit.action === "continue" && reference
+        ? cylinderExtent(original.frame, resolveFaces(document.bodies ?? [], faces))
+        : [0, 0];
     const updated = {
       ...original,
       faces,
       problem: undefined,
+      axialReference:
+        edit.action === "reassign" || !reference
+          ? undefined
+          : ([Math.min(reference[0], extent[0]), Math.max(reference[1], extent[1])] as [
+              number,
+              number,
+            ]),
       frame: edit.action === "reassign" ? cylinderFrame(cylinder) : original.frame,
     };
     validateThread(document, updated);
@@ -174,7 +188,16 @@ export function editDecorators(document: SketchDocument, edit: DecoratorEdit): S
     validateReferences(edit.faces);
     const keys = new Set(edit.faces.map(faceKey));
     next = previous
-      .map((d) => ({ ...d, faces: d.faces.filter((f) => !keys.has(faceKey(f))) }))
+      .map((d) => ({
+        ...d,
+        axialReference:
+          !d.problem &&
+          d.definition === threadDefinition &&
+          d.faces.some((f) => keys.has(faceKey(f)))
+            ? threadReference(document.bodies ?? [], d)
+            : d.axialReference,
+        faces: d.faces.filter((f) => !keys.has(faceKey(f))),
+      }))
       .filter((d) => d.faces.length);
   } else throw new Error("Unknown decorator edit");
   const candidate = { ...document, decorators: next };

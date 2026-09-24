@@ -46,6 +46,7 @@ export function threadGrid(
   steps: number,
   bounds: [number, number],
   settings: ThreadSettings,
+  taperBounds: [number, number] = bounds,
 ) {
   const coords: Point[] = [],
     triangles: number[][] = [];
@@ -65,7 +66,7 @@ export function threadGrid(
     { length: steps + 1 },
     (_, i) => bounds[0] + ((bounds[1] - bounds[0]) * i) / steps,
   );
-  for (const z of [bounds[0] + settings.startTaper, bounds[1] - settings.endTaper])
+  for (const z of [taperBounds[0] + settings.startTaper, taperBounds[1] - settings.endTaper])
     if (z > bounds[0] && z < bounds[1] && !rows.some((value) => Math.abs(value - z) < 1e-10))
       rows.push(z);
   rows.sort((a, b) => a - b);
