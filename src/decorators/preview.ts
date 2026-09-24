@@ -66,7 +66,6 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
         if (event.data.error) {
           editor.notice = `Thread preview: ${event.data.error}`;
           editor.refresh();
-          return;
         }
         for (const { body, mesh } of event.data.meshes ?? []) {
           const overlay = overlayMesh(body, mesh);

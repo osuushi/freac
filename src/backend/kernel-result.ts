@@ -10,6 +10,7 @@ export interface KernelResult {
   mode: BooleanMode;
   participants: string[];
   results: (Omit<Body, "id" | "faces" | "edges"> & {
+    copy?: boolean;
     predecessorBodies: string[];
     faces: (Descendant<Omit<Face, "edges" | "blend" | "offsetFaces">> & {
       edgeIndexes: number[];
@@ -20,8 +21,22 @@ export interface KernelResult {
     edges: Descendant<Edge>[];
   })[];
 }
+/** Immediate calculation correspondence, consumed by attached metadata; never serialized. */
+export const topologyOrigins = new WeakMap<
+  Body,
+  {
+    bodies: readonly string[];
+    copy: boolean;
+    faces: ReadonlyMap<string, readonly string[]>;
+  }
+>();
 /** Preserve IDs only for one-to-one continuations. A split/merge gets new identities. */
 export function materialize(previous: readonly Body[], result: KernelResult): Body[] {
+  const retained = new Set(
+    previous
+      .filter((body) => !result.participants.includes(body.id))
+      .flatMap((body) => [body.id, ...body.faces.map((f) => f.id), ...body.edges.map((e) => e.id)]),
+  );
   const counts = new Map<string, number>();
   for (const body of result.results) {
     for (const ids of [
@@ -32,56 +47,65 @@ export function materialize(previous: readonly Body[], result: KernelResult): Bo
       for (const id of ids) counts.set(id, (counts.get(id) ?? 0) + 1);
   }
   const identity = (ids: string[]) =>
-    ids.length === 1 && counts.get(ids[0]) === 1 ? ids[0] : newId();
-  const bodies = result.results.map(({ predecessorBodies, faces, edges, ...body }) => {
-    const mappedEdges = edges.map(({ predecessors, ...edge }) => ({
-      ...edge,
-      id: identity(predecessors),
-    }));
-    const faceIds = faces.map(({ predecessors }) => identity(predecessors));
-    return {
-      ...body,
-      id: identity(predecessorBodies),
-      faces: faces.map(
-        (
-          {
-            predecessors: _predecessors,
-            edgeIndexes,
-            offsetFaceIndexes,
-            offsetSelected: _offsetSelected,
-            blend,
-            ...face
-          },
-          index,
-        ) => ({
-          ...face,
-          id: faceIds[index],
-          offsetFaces: offsetFaceIndexes?.map((i) => {
-            if (!Number.isInteger(i) || !faceIds[i])
-              throw new Error("Kernel offset references an invalid face");
-            return faceIds[i];
+    ids.length === 1 && counts.get(ids[0]) === 1 && !retained.has(ids[0]) ? ids[0] : newId();
+  const bodies = result.results.map(
+    ({ predecessorBodies, faces, edges, copy = false, ...body }) => {
+      const identify = (ids: string[]) => (copy ? newId() : identity(ids));
+      const mappedEdges = edges.map(({ predecessors, ...edge }) => ({
+        ...edge,
+        id: identify(predecessors),
+      }));
+      const faceIds = faces.map(({ predecessors }) => identify(predecessors));
+      const materialized: Body = {
+        ...body,
+        id: identify(predecessorBodies),
+        faces: faces.map(
+          (
+            {
+              predecessors: _predecessors,
+              edgeIndexes,
+              offsetFaceIndexes,
+              offsetSelected: _offsetSelected,
+              blend,
+              ...face
+            },
+            index,
+          ) => ({
+            ...face,
+            id: faceIds[index],
+            offsetFaces: offsetFaceIndexes?.map((i) => {
+              if (!Number.isInteger(i) || !faceIds[i])
+                throw new Error("Kernel offset references an invalid face");
+              return faceIds[i];
+            }),
+            blend: blend
+              ? {
+                  radius: blend.radius,
+                  outward: blend.outward,
+                  faces: blend.faceIndexes.map((i) => {
+                    if (!Number.isInteger(i) || !faceIds[i])
+                      throw new Error("Kernel blend references an invalid face");
+                    return faceIds[i];
+                  }),
+                }
+              : null,
+            edges: edgeIndexes.map((index) => {
+              if (!Number.isInteger(index) || !mappedEdges[index])
+                throw new Error("Kernel face references an invalid edge");
+              return mappedEdges[index].id;
+            }),
           }),
-          blend: blend
-            ? {
-                radius: blend.radius,
-                outward: blend.outward,
-                faces: blend.faceIndexes.map((i) => {
-                  if (!Number.isInteger(i) || !faceIds[i])
-                    throw new Error("Kernel blend references an invalid face");
-                  return faceIds[i];
-                }),
-              }
-            : null,
-          edges: edgeIndexes.map((index) => {
-            if (!Number.isInteger(index) || !mappedEdges[index])
-              throw new Error("Kernel face references an invalid edge");
-            return mappedEdges[index].id;
-          }),
-        }),
-      ),
-      edges: mappedEdges,
-    };
-  });
+        ),
+        edges: mappedEdges,
+      };
+      topologyOrigins.set(materialized, {
+        bodies: predecessorBodies,
+        copy,
+        faces: new Map(faces.map((face, index) => [faceIds[index], face.predecessors])),
+      });
+      return materialized;
+    },
+  );
   return [...previous.filter((body) => !result.participants.includes(body.id)), ...bodies];
 }
 

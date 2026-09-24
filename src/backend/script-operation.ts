@@ -1,4 +1,5 @@
 import type { ScriptOperation, ScriptResult } from "../agent-script/api.js";
+import { continueDecorators } from "../decorators/continuation.js";
 import { emptySketch, newId, type SketchDocument, withSketch } from "../sketch/document.js";
 import { planes, validateFrame } from "../sketch/planes.js";
 import { profilesFor } from "../sketch/profiles.js";
@@ -68,7 +69,7 @@ async function calculateScriptSolid(
   if (operation.kind === "sweep") {
     const bodies = document.bodies ?? [];
     const result = await kernel.calculate(pathSweepInput(document, operation.input, bodies));
-    next = { ...document, bodies: materialize(bodies, result) };
+    next = continueDecorators(document, { ...document, bodies: materialize(bodies, result) });
   } else if (operation.kind === "extrude") {
     const e = operation.input;
     next = await solids.calculate(document, { kind: "extrude", extrusion: e });

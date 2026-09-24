@@ -69,47 +69,57 @@ export function validateDecorators(document: SketchDocument): void {
     validateFrame(instance.frame);
     for (const ref of instance.faces) {
       const key = faceKey(ref);
-      if (members.has(key)) throw new Error("A face can have only one decorator");
-      members.add(key);
+      if (!instance.problem) {
+        if (members.has(key)) throw new Error("A face can have only one decorator");
+        members.add(key);
+      }
     }
     if (instance.definition === threadDefinition) threadSettings(instance.settings);
   }
 }
 
+function applyDecorator(
+  document: SketchDocument,
+  edit: Extract<DecoratorEdit, { action: "apply" }>,
+): readonly DecoratorInstance[] {
+  const previous = document.decorators ?? [];
+  if (edit.definition !== threadDefinition) throw new Error("Decorator definition is unavailable");
+  validateReferences(edit.faces);
+  resolveFaces(document.bodies ?? [], edit.faces);
+  const occupied = new Map(
+    previous.filter((d) => !d.problem).flatMap((d) => d.faces.map((f) => [faceKey(f), d] as const)),
+  );
+  if (
+    edit.faces.some(
+      (f) => occupied.has(faceKey(f)) && occupied.get(faceKey(f))?.definition !== edit.definition,
+    )
+  )
+    throw new Error("Remove the existing decorator before applying another");
+  const fresh = edit.faces.filter((f) => !occupied.has(faceKey(f)));
+  if (!fresh.length) return previous;
+  const added = partitionThreads(document, fresh).map((faces): DecoratorInstance => {
+    const cylinder = resolveFaces(document.bodies ?? [], faces)[0].cylinder;
+    return {
+      id: newId(),
+      definition: threadDefinition,
+      version: 1,
+      faces,
+      frame: cylinderFrame(cylinder),
+      settings: {
+        ...threadDefaults(cylinder.radius * 2, String(edit.settings?.preset ?? "metric")),
+        ...edit.settings,
+      },
+    };
+  });
+  for (const instance of added) validateThread(document, instance);
+  return [...previous, ...added];
+}
+
 export function editDecorators(document: SketchDocument, edit: DecoratorEdit): SketchDocument {
   const previous = document.decorators ?? [];
   let next: readonly DecoratorInstance[] = previous;
-  if (edit.action === "apply") {
-    if (edit.definition !== threadDefinition)
-      throw new Error("Decorator definition is unavailable");
-    validateReferences(edit.faces);
-    resolveFaces(document.bodies ?? [], edit.faces);
-    const occupied = new Map(previous.flatMap((d) => d.faces.map((f) => [faceKey(f), d] as const)));
-    if (
-      edit.faces.some(
-        (f) => occupied.has(faceKey(f)) && occupied.get(faceKey(f))?.definition !== edit.definition,
-      )
-    )
-      throw new Error("Remove the existing decorator before applying another");
-    const fresh = edit.faces.filter((f) => !occupied.has(faceKey(f)));
-    if (!fresh.length) return document;
-    const added = partitionThreads(document, fresh).map((faces): DecoratorInstance => {
-      const cylinder = resolveFaces(document.bodies ?? [], faces)[0].cylinder;
-      return {
-        id: newId(),
-        definition: threadDefinition,
-        version: 1,
-        faces,
-        frame: cylinderFrame(cylinder),
-        settings: {
-          ...threadDefaults(cylinder.radius * 2, String(edit.settings?.preset ?? "metric")),
-          ...edit.settings,
-        },
-      };
-    });
-    for (const instance of added) validateThread(document, instance);
-    next = [...previous, ...added];
-  } else if (edit.action === "settings") {
+  if (edit.action === "apply") next = applyDecorator(document, edit);
+  else if (edit.action === "settings") {
     if (!edit.ids.length || edit.ids.some((id) => !previous.some((d) => d.id === id)))
       throw new Error("Select existing decorators");
     next = previous.map((instance) => {
@@ -126,20 +136,36 @@ export function editDecorators(document: SketchDocument, edit: DecoratorEdit): S
       validateThread(document, updated);
       return updated;
     });
-  } else if (edit.action === "continue") {
+  } else if (edit.action === "continue" || edit.action === "reassign") {
     validateReferences(edit.faces);
     const original = previous.find((d) => d.id === edit.id);
     if (!original) throw new Error("Select the threads to continue");
     const keys = new Set(edit.faces.map(faceKey));
-    if (previous.some((d) => d.id !== edit.id && d.faces.some((f) => keys.has(faceKey(f)))))
+    if (
+      previous.some(
+        (d) => !d.problem && d.id !== edit.id && d.faces.some((f) => keys.has(faceKey(f))),
+      )
+    )
       throw new Error("A selected face already has another decoration");
-    const faces = [
-      ...original.faces,
-      ...edit.faces.filter((f) => !original.faces.some((old) => faceKey(old) === faceKey(f))),
-    ];
-    const updated = { ...original, faces };
+    const faces =
+      edit.action === "reassign"
+        ? edit.faces
+        : [
+            ...original.faces,
+            ...edit.faces.filter((f) => !original.faces.some((old) => faceKey(old) === faceKey(f))),
+          ];
+    const cylinder = resolveFaces(document.bodies ?? [], faces)[0].cylinder;
+    const updated = {
+      ...original,
+      faces,
+      problem: undefined,
+      frame: edit.action === "reassign" ? cylinderFrame(cylinder) : original.frame,
+    };
     validateThread(document, updated);
     next = previous.map((d) => (d.id === edit.id ? updated : d));
+  } else if (edit.action === "discard") {
+    if (!previous.some((d) => d.id === edit.id)) throw new Error("Select an existing decorator");
+    next = previous.filter((d) => d.id !== edit.id);
   } else if (edit.action === "remove") {
     validateReferences(edit.faces);
     const keys = new Set(edit.faces.map(faceKey));

@@ -142,7 +142,7 @@ void present(std::ostream& out, const Result& result) {
     out << "{\"brep\":" << quoted(encode(result.shape)) << ",\"volume\":" << volume(result.shape);
     GProp_GProps properties; BRepGProp::VolumeProperties(result.shape, properties, 1e-10);
     out << ",\"center\":"; xyz(out, properties.CentreOfMass().XYZ());
-    out << ",\"predecessorBodies\":[";
+    out << ",\"copy\":" << (result.copy ? "true" : "false") << ",\"predecessorBodies\":[";
     for (size_t i = 0; i < result.bodies.size(); ++i) { if (i) out << ','; out << quoted(result.bodies[i]); }
     // Transform handles need surface extrema, not rational spline control-hull bounds.
     Bnd_Box box; BRepBndLib::AddOptimal(result.shape, box, false, false);

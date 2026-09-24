@@ -162,6 +162,14 @@ Consume immediate operation correspondence when accepting the geometry edit;
 do not add a persistent operation-history graph. Undo restores geometry and
 decorator assignments together. Body deletion removes its decorations.
 
+Unresolved attachments remain in the document with their repair reason, even when
+their original faces no longer exist. The panel can select surviving affected
+geometry, reassign an attachment to selected compatible faces, or remove that
+individual attachment. Unresolved attachments reserve no active face assignment.
+They block export until repaired or removed, but do not hide valid previews on
+other faces. Kept Boolean originals retain their own attachments; resulting bodies
+receive independent identities through the same correspondence rules.
+
 Confirmed V1 transform behavior: reflection preserves the configured handedness;
 uniform scaling preserves physical pitch and clearance while the decoration follows
 the changed cylinder diameter and face extent. The final decorated object therefore
@@ -179,7 +187,9 @@ remain distinct operations.
 
 Persist instance ID, definition ID/version, target references, validated settings,
 and only the decorator-specific continuity data needed (thread frame/phase).
-Preview meshes, kernel handles and diagnostics are derived, never authoritative.
+Preview meshes, kernel handles and geometric diagnostics are derived, never
+authoritative. An unresolved attachment and its repair reason are persisted model
+state so a later save/open cannot silently restore an ambiguous assignment.
 
 Definition responsibilities:
 

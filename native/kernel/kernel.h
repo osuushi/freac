@@ -12,7 +12,7 @@
 using Tree = boost::property_tree::ptree;
 struct SourceEntity { std::string id; TopoDS_Shape shape; };
 struct Operand { std::string id; TopoDS_Shape shape; std::vector<SourceEntity> entities; };
-struct Result { TopoDS_Shape shape; std::vector<SourceEntity> predecessors; std::vector<std::string> bodies; std::vector<TopoDS_Face> selectedFaces; };
+struct Result { TopoDS_Shape shape; std::vector<SourceEntity> predecessors; std::vector<std::string> bodies; std::vector<TopoDS_Face> selectedFaces; bool copy = false; };
 gp_Pnt point(const Tree& tree);
 std::string quoted(const std::string& value);
 std::string encode(const TopoDS_Shape& shape);

@@ -171,20 +171,25 @@ export class DecoratorPanel {
   }
   private update = (): void => {
     const instances = this.instances();
+    const problems = (this.editor.store.data.decorators ?? []).filter((d) => d.problem);
     const last = this.editor.store.data.decorators?.find((d) => d.id === this.last);
     const canContinue = !!last && !instances.length && !this.eligibility();
-    this.root.hidden = !!this.editor.world.active || (!instances.length && !canContinue);
+    this.root.hidden =
+      !!this.editor.world.active || (!instances.length && !canContinue && !problems.length);
     for (const input of this.root.querySelectorAll<HTMLInputElement>("input, select, button"))
       input.disabled =
-        this.editor.store.busy || (!!this.editor.interactions.current && !this.draft);
+        input.dataset.unavailable === "true" ||
+        this.editor.store.busy ||
+        (!!this.editor.interactions.current && !this.draft);
     if (this.draft) return;
-    const key = JSON.stringify([instances, canContinue, this.selected()]);
+    const key = JSON.stringify([instances, problems, canContinue, this.selected()]);
     if (key === this.key) return;
     this.key = key;
     this.root.replaceChildren();
     const heading = document.createElement("h2");
     heading.textContent = "Decorators";
     this.root.append(heading);
+    this.diagnostics(problems);
     if (canContinue && last) {
       this.button("Continue threads onto selection", () => {
         void this.edit({ action: "continue", id: last.id, faces: this.selected() });
@@ -197,7 +202,8 @@ export class DecoratorPanel {
       this.expand(instances);
       this.editor.refresh();
     });
-    for (const field of threadFields) this.field(field, instances);
+    if (!instances.some((d) => d.problem))
+      for (const field of threadFields) this.field(field, instances);
     const note = document.createElement("p");
     note.textContent =
       instances.find((d) => d.problem)?.problem ??
@@ -207,6 +213,32 @@ export class DecoratorPanel {
       void this.edit({ action: "remove", faces: this.selected() });
     });
   };
+  private diagnostics(instances: DecoratorInstance[]): void {
+    for (const instance of instances) {
+      const text = document.createElement("p");
+      text.textContent = instance.problem ?? "Threads need attention";
+      this.root.append(text);
+      this.button("Select affected geometry", () => {
+        const faces = instance.faces.filter((f) =>
+          this.editor.store.data.bodies?.some(
+            (b) => b.id === f.body && b.faces.some((face) => face.id === f.face),
+          ),
+        );
+        this.editor.modeling.targets = faces.length
+          ? faces.map((f) => ({ kind: "face", ...f }))
+          : [...new Set(instance.faces.map((f) => f.body))].map((body) => ({ kind: "body", body }));
+        this.editor.refresh();
+      });
+      const reassign = this.button("Use selected faces for these threads", () => {
+        void this.edit({ action: "reassign", id: instance.id, faces: this.selected() });
+      });
+      reassign.disabled = !!this.eligibility();
+      reassign.dataset.unavailable = String(reassign.disabled);
+      this.button("Remove unresolved threads", () => {
+        void this.edit({ action: "discard", id: instance.id });
+      });
+    }
+  }
   dispose(): void {
     this.cancel();
     this.unregister();

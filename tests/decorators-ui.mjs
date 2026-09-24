@@ -6,6 +6,7 @@ import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
+import { decoratorTransformRoute } from "./ui-decorator-transforms.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool, toolEnabled } from "./ui-tools.mjs";
@@ -72,6 +73,7 @@ try {
       await page.screenshot({ path: `.cache/sketch-review/${name}-decorators.png` });
       await bodyArchiveRoute(page, `${name}-decorators`);
       assert.equal((await inspect(page)).document.decorators[0].settings.pitch, 2.5);
+      await decoratorTransformRoute(page);
       await orient(page, [0, -1, 0.3]);
       await worldClick(page, [0, -8, 5]);
       await page

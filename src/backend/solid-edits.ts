@@ -1,3 +1,4 @@
+import { continueDecorators } from "../decorators/continuation.js";
 import type { BodyEdgeFinish, BooleanMode, EdgeMovement, FaceMovement } from "../model/body.js";
 import { type CleanupSelection, operationCleanup } from "../model/cleanup.js";
 import type { SketchDocument } from "../sketch/document.js";
@@ -47,7 +48,10 @@ export class SolidEdits {
     const bodies = document.bodies ?? [];
     const result = await this.kernel.calculate({ kind, selection, bodies });
     return result.participants.length
-      ? { ...document, bodies: continuingBodies(bodies, materialize(bodies, result)) }
+      ? continueDecorators(document, {
+          ...document,
+          bodies: continuingBodies(bodies, materialize(bodies, result)),
+        })
       : document;
   }
   private async move(
@@ -156,6 +160,6 @@ export class SolidEdits {
         bodies: next,
       };
     }
-    return candidate;
+    return continueDecorators(document, candidate, request);
   }
 }

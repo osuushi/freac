@@ -1,3 +1,4 @@
+import { continueDecorators } from "../decorators/continuation.js";
 import { identityScale, type ScaleOperation, validateScale } from "../model/scale.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
@@ -82,5 +83,5 @@ export async function scaleDocument(
       }),
     );
   }
-  return { ...document, bodies: next };
+  return continueDecorators(document, { ...document, bodies: next }, { kind: "scale", operation });
 }

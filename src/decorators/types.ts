@@ -33,4 +33,6 @@ export type DecoratorEdit =
   | { action: "apply"; definition: string; faces: FaceReference[]; settings?: Settings }
   | { action: "settings"; ids: string[]; patch: Settings }
   | { action: "continue"; id: string; faces: FaceReference[] }
+  | { action: "reassign"; id: string; faces: FaceReference[] }
+  | { action: "discard"; id: string }
   | { action: "remove"; faces: FaceReference[] };
