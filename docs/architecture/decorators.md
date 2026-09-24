@@ -383,10 +383,17 @@ Export preparation and mesh generation show status. Cancel export discards a
 pending preparation result or terminates the mesh worker and publishes no file.
 It does not undo accepted edits or replace the document with the export snapshot.
 
-A translucent overlay can communicate grooves, but cannot accurately reveal
-subtracted surfaces hidden behind the original opaque solid. Accept this as an
-illustrative preview, or later add an explicit export-result inspection view.
-Do not replace the selectable original. Mechanical interference warnings can be
+A preview compositor reveals recessed surfaces through their own attached faces.
+Each visible decorator gets an occlusion-depth pass with only its source faces
+hidden; caps, unrelated faces and other bodies remain occluders. Its opaque preview
+is tested against that depth and rendered into a shared color/depth target. All
+previews compete for nearest depth before one alpha blend over the ordinary scene,
+so overlap does not accumulate transparency or depend on decorator order.
+Two reusable full-viewport targets bound buffer memory; draw work grows with visible
+decorators. The passes preserve clipping, visibility and renderer state. Preview
+meshes remain non-pickable, and neither accepted geometry nor Undo changes.
+The original surface color remains under the translucent result: this is an
+illustrative preview, not an export-result replacement. Mechanical interference warnings can be
 nonblocking; invalid output remains an export error. General assembly/motion proof
 is outside V1; warnings must describe what was actually checked.
 

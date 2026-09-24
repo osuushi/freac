@@ -23,11 +23,12 @@ self.onmessage = async (
       try {
         if (instance.definition !== threadDefinition) {
           const mesh = javascript?.preview(document, instance);
-          if (mesh) meshes.push({ body: instance.faces[0].body, mesh });
+          if (mesh) meshes.push({ body: instance.faces[0].body, faces: instance.faces, mesh });
           continue;
         }
         meshes.push({
           body: instance.faces[0].body,
+          faces: instance.faces,
           mesh: decoratorPreview(module, document, instance),
         });
       } catch (error) {

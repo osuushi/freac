@@ -1,39 +1,46 @@
 import * as THREE from "three";
 import type { ExportMesh } from "../model/export-mesh.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { stableClipping } from "../sketch/stable-clipping.js";
+import {
+  DecoratorPreviewCompositor,
+  decoratorPreviewLayer,
+  type PreviewSurface,
+  previewFaceKey,
+} from "./preview-compositor.js";
+import type { FaceReference } from "./types.js";
 
-function overlayMesh(body: string, mesh: ExportMesh): THREE.Mesh {
+function overlayMesh(
+  body: string,
+  mesh: ExportMesh,
+  compositor: DecoratorPreviewCompositor,
+): THREE.Mesh {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(mesh.vertices.flat(), 3));
   geometry.setIndex(mesh.triangles.flat());
   geometry.computeVertexNormals();
-  const material = stableClipping(
-    new THREE.MeshStandardMaterial({
-      color: "#258c96",
-      transparent: true,
-      opacity: 0.45,
-      depthWrite: false,
-      polygonOffset: true,
-      polygonOffsetFactor: -2,
-      polygonOffsetUnits: -2,
-      side: THREE.DoubleSide,
-    }),
-  );
+  const material = compositor.previewMaterial();
   const overlay = new THREE.Mesh(geometry, material);
   overlay.userData.body = body;
   overlay.raycast = () => {};
-  overlay.renderOrder = 3;
+  overlay.layers.set(decoratorPreviewLayer);
   return overlay;
 }
 
 export function decoratorOverlay(editor: SketchEditor): () => void {
   const group = new THREE.Group();
+  const compositor = new DecoratorPreviewCompositor();
+  const surfaces: PreviewSurface[] = [];
+  const render = () => {
+    if (group.visible)
+      compositor.render(editor.world.renderer, editor.world.scene, editor.world.camera, surfaces);
+  };
+  editor.world.renderOverlays.add(render);
   editor.world.scene.add(group);
   let worker: Worker | null = null,
     key = "",
     timer: ReturnType<typeof setTimeout> | undefined;
   const clear = () => {
+    surfaces.length = 0;
     for (const child of [...group.children]) {
       const mesh = child as THREE.Mesh<THREE.BufferGeometry, THREE.Material>;
       mesh.geometry.dispose();
@@ -63,7 +70,10 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
       worker = new Worker(new URL("./preview-worker.ts", import.meta.url), { type: "module" });
       const current = worker;
       worker.onmessage = (
-        event: MessageEvent<{ meshes?: { body: string; mesh: ExportMesh }[]; error?: string }>,
+        event: MessageEvent<{
+          meshes?: { body: string; faces: FaceReference[]; mesh: ExportMesh }[];
+          error?: string;
+        }>,
       ) => {
         if (worker !== current) return;
         worker.terminate();
@@ -72,10 +82,14 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
           editor.notice = `Decorator preview: ${event.data.error}`;
           editor.refresh();
         }
-        for (const { body, mesh } of event.data.meshes ?? []) {
-          const overlay = overlayMesh(body, mesh);
+        for (const { body, faces, mesh } of event.data.meshes ?? []) {
+          const overlay = overlayMesh(body, mesh, compositor);
           overlay.visible = editor.visibility.visible(body);
           group.add(overlay);
+          surfaces.push({
+            mesh: overlay,
+            faces: new Set(faces.map((f) => previewFaceKey(f.body, f.face))),
+          });
         }
         editor.world.draw();
       };
@@ -94,6 +108,8 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
     clearTimeout(timer);
     worker?.terminate();
     clear();
+    editor.world.renderOverlays.delete(render);
+    compositor.dispose();
     editor.world.changed.delete(update);
     editor.world.scene.remove(group);
   };

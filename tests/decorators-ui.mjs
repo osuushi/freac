@@ -12,6 +12,7 @@ import { decoratorInformationRoute } from "./ui-decorator-information.mjs";
 import { decoratorMembershipRoute } from "./ui-decorator-membership.mjs";
 import { mixedDecoratorTypesRoute } from "./ui-decorator-mixed-types.mjs";
 import { decoratorPresetRoute } from "./ui-decorator-presets.mjs";
+import { recessedPreviewRoute } from "./ui-decorator-preview.mjs";
 import { decoratorTransformRoute } from "./ui-decorator-transforms.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
@@ -60,6 +61,7 @@ try {
       assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
       await chooseTool(page, "threads", "threads");
       assert.equal((await inspect(page)).document.decorators.length, 1);
+      await recessedPreviewRoute(page, name);
       await decoratorPresetRoute(page);
       const pitch = page.getByRole("spinbutton", { name: "Pitch", exact: true });
       await pitch.fill("2.5");
