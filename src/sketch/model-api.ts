@@ -23,6 +23,10 @@ export type ModelRequest =
   | { kind: "decorator"; edit: import("../decorators/types.js").DecoratorEdit }
   | { kind: "decorator-definition"; edit: import("../decorators/definition.js").DefinitionEdit }
   | { kind: "decorator-enable"; id: string; version: number; enabled: boolean }
+  | {
+      kind: "decorator-inspect";
+      query: import("../decorators/inspection.js").DecoratorInspectionRequest;
+    }
   | { kind: "offset-sketch"; sketchId: string; curves: string[]; amount: number }
   | { kind: "sections"; frame: PlaneFrame; bodies: string[] }
   | { kind: "selection"; changes: import("./history-selection.js").SelectionChanges }
@@ -92,6 +96,7 @@ export interface ModelView {
   solveMs: number;
 }
 export type ModelReply = {
+  decoratorInspection?: import("../decorators/inspection.js").DecoratorInspection;
   exportDocument?: SketchDocument;
   sections?: import("../model/sketch-section.js").SketchSection[];
   documentChanged?: boolean;

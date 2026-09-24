@@ -55,6 +55,7 @@ test("bundled custom decorator applies, edits, previews and exports through the 
     const hooks = new JavaScriptDecorators(javascript, owner.view.decoratorSources);
     const current = owner.view.data.decorators?.[0];
     assert.ok(current);
+    await assertReadOnlyInspection(owner, body, current);
     assert.equal(hooks.preview(owner.view.data, current)?.triangles.length, 12);
     const prepared = (await owner.call({ kind: "export-geometry" })).exportDocument;
     assert.ok(prepared);
@@ -81,3 +82,37 @@ test("bundled custom decorator applies, edits, previews and exports through the 
     owner.close();
   }
 });
+
+async function assertReadOnlyInspection(
+  owner: DocumentOwner,
+  body: import("../src/model/body.js").Body,
+  current: import("../src/decorators/types.js").DecoratorInstance,
+): Promise<void> {
+  const unchanged = documentArchive(owner.view.data);
+  const cylinder = body.faces.find((f) => f.cylinder);
+  assert.ok(cylinder);
+  const rejected = await owner.call({
+    kind: "decorator-inspect",
+    query: {
+      definition: current.definition,
+      version: 1,
+      faces: [{ body: body.id, face: cylinder.id }],
+    },
+  });
+  assert.match(rejected.decoratorInspection?.reason ?? "", /planar faces/);
+  const eligible = await owner.call({
+    kind: "decorator-inspect",
+    query: {
+      definition: current.definition,
+      version: 1,
+      faces: [...current.faces],
+      instanceId: current.id,
+    },
+  });
+  assert.equal(eligible.decoratorInspection?.reason, null);
+  assert.equal(
+    documentArchive(owner.view.data),
+    unchanged,
+    "inspection must not edit the document",
+  );
+}

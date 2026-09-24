@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { orient } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { clearSelection } from "./ui-reconnection-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function customDecoratorRoute(page) {
@@ -32,6 +33,17 @@ export async function customDecoratorRoute(page) {
   );
   await page.getByRole("button", { name: "Enable Raised pad code", exact: true }).click();
   await inspect(page);
+  await clearSelection(page);
+  await orient(page, [0, -1, 0.3]);
+  await worldClick(page, [0, -8, 5]);
+  await page.getByText("Raised pads require planar faces", { exact: true }).waitFor();
+  assert.equal(
+    await page.getByRole("button", { name: "Apply Raised pad", exact: true }).isDisabled(),
+    true,
+  );
+  await clearSelection(page);
+  await orient(page, [1, -1, 1]);
+  await worldClick(page, [2, -2, 10]);
   await page.getByRole("button", { name: "Apply Raised pad", exact: true }).click();
   await inspect(page);
   await page.getByRole("button", { name: "Close decorator library", exact: true }).click();
@@ -43,4 +55,13 @@ export async function customDecoratorRoute(page) {
   assert.equal((await inspect(page)).document.decorators[0].settings.height, 1);
   await chooseTool(page, "redo", "redo");
   assert.equal((await inspect(page)).document.decorators[0].settings.height, 2);
+  const width = page.getByRole("spinbutton", { name: "Width", exact: true });
+  await width.fill("20");
+  await width.press("Enter");
+  await page.getByText("Pad width may extend beyond this face", { exact: true }).waitFor();
+  await page.getByRole("button", { name: "Show affected faces", exact: true }).click();
+  assert.equal((await inspect(page)).modelingSelection.length, 2);
+  await width.fill("2");
+  await width.press("Enter");
+  await inspect(page);
 }

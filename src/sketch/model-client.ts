@@ -147,6 +147,12 @@ export class ModelClient {
     if (!reply.exportDocument) throw new Error("Export geometry unavailable");
     return reply.exportDocument;
   }
+  async inspectDecorator(query: import("../decorators/inspection.js").DecoratorInspectionRequest) {
+    const reply = await call({ kind: "decorator-inspect", query });
+    if (reply.error || !reply.decoratorInspection)
+      throw new Error(reply.error ?? "Decorator inspection unavailable");
+    return reply.decoratorInspection;
+  }
   async measure(targets: import("../model/measurement.js").MeasurementTarget[]) {
     const reply = await call({ kind: "measure", targets });
     if (reply.error) throw new Error(reply.error);

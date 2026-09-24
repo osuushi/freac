@@ -1,3 +1,4 @@
+import { type DecoratorInspectionRequest, inspectDecorator } from "../decorators/inspection.js";
 import { editJavaScriptDecorators, needsJavaScript } from "../decorators/javascript-edits.js";
 import { type EnabledDefinition, JavaScriptDecorators } from "../decorators/javascript-hooks.js";
 import { initializeDecoratorRuntime } from "../decorators/javascript-runtime.js";
@@ -6,6 +7,9 @@ import type { ModelRequest } from "../sketch/model-api.js";
 
 /** Local enablement is intentionally absent from archives and Undo snapshots. */
 export class DecoratorSession {
+  async inspect(document: SketchDocument, query: DecoratorInspectionRequest) {
+    return inspectDecorator(document, query, await this.hooks());
+  }
   async edit(document: SketchDocument, request: ModelRequest): Promise<SketchDocument | null> {
     if (request.kind === "decorator-enable") {
       this.enable(document, request.id, request.version, request.enabled);

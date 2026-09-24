@@ -33,7 +33,12 @@ and export additionally provide `quality` and a suggested `tolerance` in mm.
 No hook receives another decorator's result. JavaScript has no host, DOM, file,
 network, timer or module-import APIs; bundle any helpers into the source itself.
 
+The library checks eligibility before enabling Apply and displays the hook's
+reason for an unsupported selection. Diagnostic face references become a
+**Show affected faces** action in the settings panel. The example warns when
+the pad's footprint area exceeds the supporting face's area; this is a simple
+size check, not a general containment or collision test.
+
 This interface is under active implementation. Generic topology continuation,
-disabled-reason queries, diagnostic highlighting, and agent authoring integration
-are not complete yet. The built-in thread decorator currently has the fuller
-interaction and continuation support.
+repair/Continue controls and agent authoring integration are not complete yet.
+The built-in thread decorator currently has the fuller continuation support.

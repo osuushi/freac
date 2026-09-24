@@ -280,8 +280,12 @@ validated closed modifier meshes to the original body mesh. Optional previews
 can return open meshes and remain non-pickable. The library imports JSON bundles,
 offers enable/disable/apply controls, and uses the manifest's settings fields.
 The [raised-pad example](../../examples/decorators/README.md) exercises this path.
-Generic topology continuation, eligibility queries, diagnostic highlighting and
-the agent authoring path are still being integrated.
+The read-only `decorator-inspect` query resolves eligibility/partition and
+diagnostics through enabled code without changing the document or Undo. The
+library disables Apply while checking, displays rejection reasons, and discards
+results for replaced selections/documents. Selected custom instances show their
+diagnostics with ordinary affected-face selection. Generic topology continuation,
+repair/Continue controls and the agent authoring path are still being integrated.
 
 ## Mesh export and preview
 

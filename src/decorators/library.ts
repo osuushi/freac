@@ -75,6 +75,26 @@ function libraryEntry(
     : !faces.length
       ? "Select faces to decorate"
       : "";
+  if (!apply.disabled) {
+    apply.disabled = true;
+    apply.title = "Checking selected geometry…";
+    const note = document.createElement("p");
+    note.textContent = apply.title;
+    root.append(note);
+    const snapshot = editor.store.data;
+    void editor.store
+      .inspectDecorator({ definition: definition.id, version: definition.version, faces })
+      .then((result) => {
+        if (!apply.isConnected || editor.store.data !== snapshot || editor.store.busy) return;
+        apply.disabled = !!result.reason;
+        apply.title = result.reason ?? "";
+        note.textContent = result.reason ?? "";
+        note.hidden = !result.reason;
+      })
+      .catch((error) => {
+        if (apply.isConnected) note.textContent = String(error);
+      });
+  }
 }
 
 export function decoratorLibrary(editor: SketchEditor, parent: HTMLElement): () => void {
@@ -85,6 +105,7 @@ export function decoratorLibrary(editor: SketchEditor, parent: HTMLElement): () 
   parent.append(root);
   let visible = false,
     key = "";
+  let shownDocument = editor.store.data;
   const button = (label: string, action: () => void) => {
     const element = document.createElement("button");
     element.type = "button";
@@ -110,8 +131,9 @@ export function decoratorLibrary(editor: SketchEditor, parent: HTMLElement): () 
       faces,
       editor.store.busy,
     ]);
-    if (next === key) return;
+    if (next === key && shownDocument === editor.store.data) return;
     key = next;
+    shownDocument = editor.store.data;
     root.replaceChildren();
     const title = document.createElement("h2");
     title.textContent = "Decorator library";

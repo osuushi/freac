@@ -1,4 +1,5 @@
 import type { SketchEditor } from "../sketch/editor.js";
+import { appendCustomDiagnostics } from "./custom-diagnostics.js";
 import { threadDefinition } from "./thread-settings.js";
 import type { DecoratorField, DecoratorInstance, Settings } from "./types.js";
 
@@ -96,6 +97,7 @@ export function appendCustomDecorators(
         });
       });
     } else if (!group.some((d) => d.problem)) {
+      for (const instance of group) appendCustomDiagnostics(root, editor, instance);
       for (const schema of definition.fields) {
         if (
           schema.visibleWhen &&
