@@ -163,6 +163,14 @@ Thread-specific diagnostics can inspect adjacent original geometry and report
 implicated face IDs. This is distinct from cross-decorator overlap handling below;
 V1 does not require detecting or diagnosing overlaps between decorator outputs.
 
+The panel reports the exact reference diameter and its rod-major/rod-minor meaning
+for the selected cut mode, identifying diameters absent from the coarse table as
+nonstandard. Current nonblocking geometry warnings check opposite coaxial walls
+with overlapping axial coverage against maximum removal depth, and adjacent flats
+parallel to an internal thread axis against the circular mating envelope. These
+are conservative local checks, not collision or assembly certification. Each
+warning selects both decorated and implicated faces through ordinary selection.
+
 The built-in constructs separate radial masks for selected trimmed patches and
 unions them after clipping each against its adjacent planar boundaries. A plane
 clips only when the selected patch lies on one side; a nonconvex patch crossing

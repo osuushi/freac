@@ -3,6 +3,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { resolveFaces } from "./cylinder.js";
 import { editDecorators, faceKey } from "./edits.js";
+import { appendThreadInformation } from "./panel-information.js";
 import { threadDefinition, threadFields } from "./thread-settings.js";
 import type { DecoratorEdit, DecoratorInstance, FaceReference, Settings } from "./types.js";
 import "./panel.css";
@@ -11,6 +12,7 @@ export class DecoratorPanel {
   private root = document.createElement("section");
   private unregister: () => void;
   private key = "";
+  private shownDocument: SketchEditor["store"]["data"] | null = null;
   private last: string | null = null;
   private draft: { lease: InteractionLease; edit: DecoratorEdit; valid: boolean } | null = null;
   constructor(
@@ -183,8 +185,9 @@ export class DecoratorPanel {
         (!!this.editor.interactions.current && !this.draft);
     if (this.draft) return;
     const key = JSON.stringify([instances, problems, canContinue, this.selected()]);
-    if (key === this.key) return;
+    if (key === this.key && this.shownDocument === this.editor.store.data) return;
     this.key = key;
+    this.shownDocument = this.editor.store.data;
     this.root.replaceChildren();
     const heading = document.createElement("h2");
     heading.textContent = "Decorators";
@@ -202,6 +205,7 @@ export class DecoratorPanel {
       this.expand(instances);
       this.editor.refresh();
     });
+    appendThreadInformation(this.root, this.editor, instances);
     if (!instances.some((d) => d.problem))
       for (const field of threadFields)
         if (
