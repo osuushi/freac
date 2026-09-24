@@ -3,6 +3,8 @@ import type { Body } from "./body.js";
 export interface ExportMesh {
   vertices: number[][];
   triangles: number[][];
+  /** Optional bound on additional numeric error when packing a Boolean result for export. */
+  precision?: number;
 }
 
 // Below kernel modeling tolerance; spatial neighbors avoid rounding-bin seams.

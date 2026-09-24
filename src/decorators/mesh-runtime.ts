@@ -1,8 +1,11 @@
-import Module, { type Manifold, type ManifoldToplevel } from "manifold-3d";
-import { type ExportMesh, exportMesh, validateMesh } from "../model/export-mesh.js";
+import Module, { type ManifoldToplevel } from "manifold-3d";
+import { type ExportMesh, exportMesh } from "../model/export-mesh.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { resolveFaces } from "./cylinder.js";
 import { validateThread } from "./edits.js";
+import { MeshScope } from "./mesh-scope.js";
+import { exportTolerance } from "./precision.js";
+import { threadDomain } from "./thread-domain.js";
 import { threadMeshes } from "./thread-mesh.js";
 import { threadDefinition, threadSettings } from "./thread-settings.js";
 import type { DecoratorInstance } from "./types.js";
@@ -11,42 +14,6 @@ export async function initializeMeshRuntime(wasmUrl?: string): Promise<ManifoldT
   const runtime = await Module(wasmUrl ? { locateFile: () => wasmUrl } : undefined);
   runtime.setup();
   return runtime;
-}
-
-class MeshScope {
-  private handles: Manifold[] = [];
-  constructor(readonly runtime: ManifoldToplevel) {}
-  keep(solid: Manifold): Manifold {
-    this.handles.push(solid);
-    return solid;
-  }
-  from(mesh: ExportMesh): Manifold {
-    validateMesh(mesh);
-    return this.keep(
-      new this.runtime.Manifold(
-        new this.runtime.Mesh({
-          numProp: 3,
-          vertProperties: new Float32Array(mesh.vertices.flat()),
-          triVerts: new Uint32Array(mesh.triangles.flat()),
-        }),
-      ),
-    );
-  }
-  mesh(solid: Manifold): ExportMesh {
-    const status = solid.status();
-    if (status !== "NoError") throw new Error(`Mesh generation failed: ${status}`);
-    const result = solid.getMesh();
-    const mesh: ExportMesh = { vertices: [], triangles: [] };
-    for (let i = 0; i < result.vertProperties.length; i += result.numProp)
-      mesh.vertices.push(Array.from(result.vertProperties.slice(i, i + 3)));
-    for (let i = 0; i < result.triVerts.length; i += 3)
-      mesh.triangles.push(Array.from(result.triVerts.slice(i, i + 3)));
-    validateMesh(mesh);
-    return mesh;
-  }
-  close(): void {
-    for (const handle of this.handles.reverse()) handle.delete();
-  }
 }
 
 function threadOperands(
@@ -59,17 +26,13 @@ function threadOperands(
   if (instance.definition !== threadDefinition || instance.version !== 1)
     throw new Error(`Unavailable decorator: ${instance.definition} v${instance.version}`);
   validateThread(document, instance);
-  const geometry = threadMeshes(
-    instance.frame,
-    resolveFaces(document.bodies ?? [], instance.faces),
-    threadSettings(instance.settings),
-    quality,
-  );
-  const band = scope.from(geometry.band);
-  const mask = geometry.mask ? scope.keep(scope.from(geometry.mask).intersect(band)) : band;
+  const faces = resolveFaces(document.bodies ?? [], instance.faces);
+  const body = document.bodies?.find((b) => b.id === instance.faces[0].body);
+  if (!body) throw new Error("Thread body is missing");
+  const geometry = threadMeshes(instance.frame, faces, threadSettings(instance.settings), quality);
+  const mask = geometry.masks ? threadDomain(scope, body, faces, geometry) : null;
   const generated = scope.from(geometry.fill);
-  const fill = geometry.mask ? scope.keep(generated.intersect(mask)) : generated;
-  return { mask, fill };
+  return { mask, generated, geometry };
 }
 
 export function decoratedMeshes(runtime: ManifoldToplevel, document: SketchDocument): ExportMesh[] {
@@ -78,12 +41,23 @@ export function decoratedMeshes(runtime: ManifoldToplevel, document: SketchDocum
       d.faces.some((f) => f.body === body.id),
     );
     if (!instances.length) return exportMesh(body);
-    const scope = new MeshScope(runtime);
+    const scope = new MeshScope(runtime, body.center, exportTolerance(instances) / 4);
     try {
       let solid = scope.from(exportMesh(body));
       for (const instance of instances) {
-        const { mask, fill } = threadOperands(scope, document, instance, "export");
-        solid = scope.keep(scope.keep(solid.subtract(mask)).add(fill));
+        const { mask, generated, geometry } = threadOperands(scope, document, instance, "export");
+        if (geometry.hasRemove) {
+          let remove = scope.keep(scope.from(geometry.referenceRemove).subtract(generated));
+          remove = scope.keep(remove.intersect(scope.from(geometry.removeBand)));
+          if (mask) remove = scope.keep(remove.intersect(mask));
+          if (!remove.isEmpty()) solid = scope.keep(solid.subtract(remove));
+        }
+        if (geometry.hasAdd) {
+          let add = scope.keep(generated.subtract(scope.from(geometry.referenceAdd)));
+          add = scope.keep(add.intersect(scope.from(geometry.addBand)));
+          if (mask) add = scope.keep(add.intersect(mask));
+          if (!add.isEmpty()) solid = scope.keep(solid.add(add));
+        }
       }
       return scope.mesh(solid);
     } catch (error) {
@@ -101,9 +75,12 @@ export function decoratorPreview(
   document: SketchDocument,
   instance: DecoratorInstance,
 ): ExportMesh {
-  const scope = new MeshScope(runtime);
+  const body = document.bodies?.find((b) => b.id === instance.faces[0].body);
+  if (!body) throw new Error("Thread body is missing");
+  const scope = new MeshScope(runtime, body.center);
   try {
-    return scope.mesh(threadOperands(scope, document, instance, "preview").fill);
+    const { mask, generated } = threadOperands(scope, document, instance, "preview");
+    return scope.mesh(mask ? scope.keep(generated.intersect(mask)) : generated);
   } finally {
     scope.close();
   }

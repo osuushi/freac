@@ -154,6 +154,18 @@ Thread-specific diagnostics can inspect adjacent original geometry and report
 implicated face IDs. This is distinct from cross-decorator overlap handling below;
 V1 does not require detecting or diagnosing overlaps between decorator outputs.
 
+The built-in constructs separate radial masks for selected trimmed patches and
+unions them after clipping each against its adjacent planar boundaries. A plane
+clips only when the selected patch lies on one side; a nonconvex patch crossing
+that plane keeps its trimmed mask. Disconnected axial patches therefore cannot
+clip each other or bridge their unselected gap. Export adds/removes the difference
+from the nominal cylinder, bounded to the thread's radial envelope; it does not
+replace a whole radial band that might contain an opposite wall. Small auxiliary
+reference overlap covers base tessellation error without changing the requested
+profile or hole allowance. Thread cuts can still pierce a wall when the requested
+depth exceeds its thickness; that needs an explicit diagnostic, not a silent
+change to thread dimensions.
+
 Confirmed topology policy: follow compatible split
 descendants, preserve phase and exclude newly generated unrelated faces. For
 merges with unselected regions or conflicting settings, retain an unresolved
@@ -262,8 +274,16 @@ numerical tolerance. Requests below 0.00001 mm fail explicitly. Metric mesh edge
 follow crest/root transitions; axial rows include taper transitions. Facet samples
 are checked against the analytic envelope with a separate allowance of twice the
 sampling target. This is measured numerical accuracy, not a general certification
-of arbitrary trimmed domains or physical fit. The selected-domain and large-world-
-coordinate error checks remain part of the unfinished geometry acceptance.
+of arbitrary curved neighboring surfaces or physical fit.
+
+Mesh Booleans run in body-local coordinates so world placement does not consume
+float precision. Their recorded numerical rounding must fit within one quarter
+of the sampling target. Float packing can collapse very small Boolean facets;
+only short edges of actually collapsed facets are normalized, within the existing
+rounding bound, and the result must still pass closure/orientation/nondegeneracy
+checks. STL conversion gets a separate bounded packing check. If world coordinates
+exceed that format's float precision, STL rejects with a 3MF alternative; 3MF keeps
+the restored world positions. No larger general-purpose weld tolerance is used.
 
 Export preparation and mesh generation show status. Cancel export discards a
 pending preparation result or terminates the mesh worker and publishes no file.

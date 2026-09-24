@@ -2,6 +2,7 @@ import type { Face } from "../model/body.js";
 import type { ExportMesh } from "../model/export-mesh.js";
 import type { PlaneFrame, Vector } from "../sketch/planes.js";
 import {
+  type Cylinder,
   cross,
   cylinderCoordinates,
   cylinderExtent,
@@ -131,6 +132,50 @@ function cylinderGrid(segments: number, steps: number, bounds: [number, number])
   return { coords, triangles };
 }
 
+function threadToolMeshes(
+  frame: PlaneFrame,
+  grid: ReturnType<typeof cylinderGrid>,
+  cylinder: Cylinder,
+  settings: ThreadSettings,
+  low: number,
+  high: number,
+  tolerance: number,
+) {
+  const { radius, outward } = cylinder;
+  const depth = (settings.pitch * Math.sqrt(3) * 5) / 16;
+  const overlap = Math.min(2 * tolerance, low / 2);
+  const relief = outward < 0 ? settings.clearance : 0;
+  const minimum = radius + (settings.cut === "rod" ? -depth : 0) + relief;
+  const maximum = radius + (settings.cut === "hole" ? depth : 0) + relief;
+  const ring = (a: number, b: number) =>
+    radialShell(
+      frame,
+      grid.coords,
+      grid.triangles,
+      () => a,
+      () => b,
+    );
+  const reference = (offset: number) =>
+    ring(outward > 0 ? low : radius - offset, outward > 0 ? radius + offset : high);
+  return {
+    hasAdd: outward > 0 ? maximum > radius : minimum < radius,
+    hasRemove: outward > 0 ? minimum < radius : maximum > radius,
+    band: ring(low, high),
+    // Reference overlap compensates base tessellation, without changing the target profile.
+    referenceRemove: reference(overlap),
+    referenceAdd: reference(-overlap),
+    // The physical envelope excludes numerical slivers on the auxiliary radial skins.
+    removeBand:
+      outward > 0
+        ? ring(Math.min(radius, minimum) - overlap, radius + overlap)
+        : ring(radius - overlap, Math.max(radius, maximum) + overlap),
+    addBand:
+      outward > 0
+        ? ring(radius - overlap, Math.max(radius, maximum) + overlap)
+        : ring(Math.min(radius, minimum) - overlap, radius + overlap),
+  };
+}
+
 export function threadMeshes(
   frame: PlaneFrame,
   faces: readonly Face[],
@@ -168,21 +213,22 @@ export function threadMeshes(
   const complete = Math.abs(area - 2 * Math.PI * cylinder.radius * (extent[1] - extent[0])) < 1e-6;
   const target = (angle: number, z: number) =>
     threadRadius(cylinder.radius, angle, z, settings, cylinder.outward, bounds);
+  // Auxiliary skins must share the band's polygon, including inserted profile vertices.
+  // Otherwise differing circle tessellations leave remote slivers in a difference.
+  const polygonRadius = (radius: number, angle: number) => {
+    const step = (2 * Math.PI) / segments;
+    const middle = (Math.floor(angle / step) + 0.5) * step;
+    return (radius * Math.cos(step / 2)) / Math.cos(angle - middle);
+  };
   return {
-    mask: complete ? null : faceMask(frame, faces, low, high),
-    band: radialShell(
-      frame,
-      bandGrid.coords,
-      bandGrid.triangles,
-      () => low,
-      () => high,
-    ),
+    ...threadToolMeshes(frame, bandGrid, cylinder, settings, low, high, tolerance),
+    masks: complete ? null : faces.map((face) => faceMask(frame, [face], low, high)),
     fill: radialShell(
       frame,
       coords,
       triangles,
-      cylinder.outward > 0 ? () => low : target,
-      cylinder.outward > 0 ? target : () => high,
+      cylinder.outward > 0 ? (angle) => polygonRadius(low, angle) : target,
+      cylinder.outward > 0 ? target : (angle) => polygonRadius(high, angle),
     ),
   };
 }

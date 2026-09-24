@@ -1,0 +1,77 @@
+import assert from "node:assert/strict";
+import { orient } from "./ui-blend-edit.mjs";
+import { worldClick } from "./ui-face-offset.mjs";
+import { inspect } from "./ui-helpers.mjs";
+import { clearSelection } from "./ui-reconnection-helpers.mjs";
+import { chooseTool } from "./ui-tools.mjs";
+
+async function imprintThreadedCylinder(page) {
+  await clearSelection(page);
+  await orient(page, [1, -1, 1]);
+  await worldClick(page, [2, -2, 10]);
+  await chooseTool(page, "construction plane", "construction-plane");
+  assert.equal((await inspect(page)).document.constructionPlanes.length, 1);
+  await page.getByRole("button", { name: "Move plane", exact: true }).click();
+  await page.getByRole("button", { name: "Move plane Z", exact: true }).click();
+  await page.getByRole("textbox", { name: "Plane translation Z", exact: true }).fill("-5");
+  await page.keyboard.press("Enter");
+  await inspect(page);
+  await clearSelection(page);
+  await orient(page, [0, -1, 0.3]);
+  await worldClick(page, [0, -8, 2]);
+  await chooseTool(page, "threads", "threads");
+  const before = (await inspect(page)).document.decorators[0];
+  await chooseTool(page, "imprint", "imprint");
+  await page.getByRole("button", { name: "Use Plane 1", exact: true }).first().click();
+  await inspect(page);
+  await page.keyboard.press("Enter");
+  const state = await inspect(page);
+  assert.equal(state.document.decorators[0].faces.length, 2);
+  assert.deepEqual(state.document.decorators[0].frame, before.frame);
+  await page.getByRole("button", { name: "Hide Plane 1", exact: true }).click();
+  await clearSelection(page);
+  return before;
+}
+
+export async function decoratorMembershipRoute(page) {
+  const original = await imprintThreadedCylinder(page);
+  await worldClick(page, [0, -8, 2]);
+  await page.getByRole("button", { name: "Threads · 2 faces", exact: true }).click();
+  assert.equal((await inspect(page)).modelingSelection.length, 2);
+  await clearSelection(page);
+  await worldClick(page, [0, -8, 2]);
+  await page
+    .getByRole("button", { name: "Remove threads from selected faces", exact: true })
+    .click();
+  let state = await inspect(page);
+  assert.equal(state.document.decorators.length, 1);
+  assert.equal(state.document.decorators[0].faces.length, 1);
+  assert.deepEqual(state.document.decorators[0].frame, original.frame);
+  await page.getByRole("button", { name: "Continue threads onto selection", exact: true }).click();
+  state = await inspect(page);
+  assert.equal(state.document.decorators[0].faces.length, 2);
+  const pitch = page.getByRole("spinbutton", { name: "Pitch", exact: true });
+  await pitch.fill("3");
+  await pitch.press("Enter");
+  state = await inspect(page);
+  assert.equal(state.modelingSelection.length, 2, "Editing expands to all affected faces");
+  assert.equal(state.document.decorators[0].settings.pitch, 3);
+  await clearSelection(page);
+  await worldClick(page, [0, -8, 2]);
+  await page
+    .getByRole("button", { name: "Remove threads from selected faces", exact: true })
+    .click();
+  await inspect(page);
+  await chooseTool(page, "threads", "threads");
+  await worldClick(page, [0, -8, 8], true);
+  state = await inspect(page);
+  assert.equal(state.modelingSelection.length, 2);
+  assert.equal(state.document.decorators.length, 2);
+  assert.equal(await pitch.getAttribute("placeholder"), "Mixed");
+  const relief = page.getByRole("spinbutton", { name: "Hole radial relief", exact: true });
+  await relief.fill("0.15");
+  await relief.press("Enter");
+  state = await inspect(page);
+  assert.deepEqual(state.document.decorators.map((d) => d.settings.pitch).sort(), [2, 3]);
+  assert.ok(state.document.decorators.every((d) => d.settings.clearance === 0.15));
+}

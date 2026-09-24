@@ -1,6 +1,7 @@
 import { strToU8, zipSync } from "three/addons/libs/fflate.module.js";
 import type { Body } from "./body.js";
-import { type ExportMesh, exportMesh, triangleNormal } from "./export-mesh.js";
+import { type ExportMesh, exportMesh, triangleNormal, validateMesh } from "./export-mesh.js";
+import { packedMesh } from "./packed-mesh.js";
 
 export type ExportFormat = "stl" | "3mf";
 export function exportBodies(
@@ -16,7 +17,24 @@ export function encodeMeshes(meshes: ExportMesh[], format: ExportFormat): Uint8A
   return format === "stl" ? stl(meshes) : threeMF(meshes);
 }
 
-function stl(meshes: ExportMesh[]): Uint8Array<ArrayBuffer> {
+function stlMesh(mesh: ExportMesh): ExportMesh {
+  if (mesh.precision === undefined) return mesh;
+  const vertices = mesh.vertices.map((p) => p.map(Math.fround));
+  let rounding = 0;
+  for (let i = 0; i < vertices.length; i++)
+    rounding = Math.max(
+      rounding,
+      Math.hypot(...vertices[i].map((v, axis) => v - mesh.vertices[i][axis])),
+    );
+  if (!Number.isFinite(rounding) || rounding >= mesh.precision)
+    throw new Error("Coordinates exceed STL precision; export 3MF to retain this placement");
+  const result = packedMesh({ vertices, triangles: mesh.triangles }, mesh.precision - rounding);
+  validateMesh(result);
+  return result;
+}
+
+function stl(source: ExportMesh[]): Uint8Array<ArrayBuffer> {
+  const meshes = source.map(stlMesh);
   const count = meshes.reduce((sum, mesh) => sum + mesh.triangles.length, 0);
   const bytes = new Uint8Array(84 + 50 * count),
     view = new DataView(bytes.buffer);

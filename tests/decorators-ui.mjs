@@ -6,6 +6,7 @@ import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
+import { decoratorMembershipRoute } from "./ui-decorator-membership.mjs";
 import { decoratorTransformRoute } from "./ui-decorator-transforms.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
@@ -92,6 +93,9 @@ try {
         .getByRole("button", { name: "Remove threads from selected faces", exact: true })
         .click();
       assert.equal((await inspect(page)).document.decorators.length, 0);
+      await decoratorMembershipRoute(page);
+      await exportDecorated(page, `${name}-split`, app);
+      await page.screenshot({ path: `.cache/sketch-review/${name}-decorator-membership.png` });
       assert.deepEqual(errors, []);
       console.log(
         `${name}: real cylinder, selection, threads, draft/cancel, edits, Undo/Redo, export, Save/Open and removal passed`,
