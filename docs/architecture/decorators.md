@@ -292,8 +292,11 @@ Merges with unrelated faces remain unresolved. Disabled code never runs during
 continuation: the attachment remains repairable through enablement and reassign.
 The work pending between native calculation and hook validation is ephemeral,
 not serialized history. Manual and scripted geometry acceptance resolve it before
-accepting a document. Custom Continue controls and agent authoring are still
-being integrated.
+accepting a document. Continue offers the last selected custom instance on a new
+face selection and enables only when inspection resolves one compatible group.
+Acceptance expands selection to all members. Partial removal preserves remaining
+members. The library exposes exact source, portable bundle export and Undoable
+removal of unused bundles. Agent authoring is still being integrated.
 
 ## Mesh export and preview
 

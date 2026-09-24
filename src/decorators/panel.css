@@ -21,6 +21,12 @@
 .decorator-library {
   right: 290px;
 }
+.decorator-library pre {
+  max-height: 200px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .decorator-panel h2 {
   font-size: 14px;
   margin: 0 0 8px;

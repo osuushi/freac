@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { appendBundleControls } from "./bundle-controls.js";
 import type { DecoratorDefinition } from "./definition.js";
 
 function bundleInput(
@@ -47,6 +48,7 @@ function libraryEntry(
   const title = document.createElement("p");
   title.textContent = `${definition.name} · v${definition.version}`;
   root.append(title);
+  appendBundleControls(root, editor, definition);
   const enabled = editor.store.decoratorSources.some(
     (s) =>
       s.id === definition.id && s.version === definition.version && s.source === definition.source,

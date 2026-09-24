@@ -1,11 +1,13 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { appendCustomContinue } from "./custom-continue.js";
 import { appendCustomDecorators } from "./custom-panel.js";
 import { resolveFaces } from "./cylinder.js";
 import { editDecorators, faceKey } from "./edits.js";
 import { decoratorLibrary } from "./library.js";
 import { appendThreadInformation } from "./panel-information.js";
+import { appendDecoratorRepairs } from "./repair-panel.js";
 import { threadDefinition, threadFields } from "./thread-settings.js";
 import type { DecoratorEdit, DecoratorInstance, FaceReference, Settings } from "./types.js";
 import "./panel.css";
@@ -179,7 +181,14 @@ export class DecoratorPanel {
     const instances = this.instances();
     const problems = (this.editor.store.data.decorators ?? []).filter((d) => d.problem);
     const last = this.editor.store.data.decorators?.find((d) => d.id === this.last);
-    const canContinue = !!last && !instances.length && !this.eligibility();
+    const canContinue =
+      !!last &&
+      !last.problem &&
+      !instances.length &&
+      (last.definition === threadDefinition
+        ? !this.eligibility()
+        : this.selected().length > 0 &&
+          this.selected().length === this.editor.modeling.targets.length);
     this.root.hidden =
       !!this.editor.world.active || (!instances.length && !canContinue && !problems.length);
     for (const input of this.root.querySelectorAll<HTMLInputElement>("input, select, button"))
@@ -202,19 +211,23 @@ export class DecoratorPanel {
     const heading = document.createElement("h2");
     heading.textContent = "Decorators";
     this.root.append(heading);
-    this.diagnostics(problems);
+    appendDecoratorRepairs(this.root, this.editor, problems);
     if (canContinue && last) {
+      if (last.definition !== threadDefinition) {
+        appendCustomContinue(this.root, this.editor, last, this.selected());
+        return;
+      }
       this.button("Continue threads onto selection", () => {
         void this.edit({ action: "continue", id: last.id, faces: this.selected() });
       });
       return;
     }
     if (!instances.length) return;
+    if (instances.length === 1) this.last = instances[0].id;
     if (instances.some((d) => d.definition !== threadDefinition)) {
       appendCustomDecorators(this.root, this.editor, instances);
       return;
     }
-    if (instances.length === 1) this.last = instances[0].id;
     this.button(`Threads · ${instances.reduce((n, d) => n + d.faces.length, 0)} faces`, () => {
       this.expand(instances);
       this.editor.refresh();
@@ -238,51 +251,6 @@ export class DecoratorPanel {
       void this.edit({ action: "remove", faces: this.selected() });
     });
   };
-  private diagnostics(instances: DecoratorInstance[]): void {
-    for (const instance of instances) {
-      const text = document.createElement("p");
-      text.textContent = instance.problem ?? "Threads need attention";
-      this.root.append(text);
-      this.button("Select affected geometry", () => {
-        const faces = instance.faces.filter((f) =>
-          this.editor.store.data.bodies?.some(
-            (b) => b.id === f.body && b.faces.some((face) => face.id === f.face),
-          ),
-        );
-        this.editor.modeling.targets = faces.length
-          ? faces.map((f) => ({ kind: "face", ...f }))
-          : [...new Set(instance.faces.map((f) => f.body))].map((body) => ({ kind: "body", body }));
-        this.editor.refresh();
-      });
-      const custom = instance.definition !== threadDefinition;
-      const reassign = this.button(
-        custom ? "Use selected faces for this decorator" : "Use selected faces for these threads",
-        () => {
-          void this.edit({ action: "reassign", id: instance.id, faces: this.selected() });
-        },
-      );
-      reassign.disabled = custom || !!this.eligibility();
-      reassign.dataset.unavailable = String(reassign.disabled);
-      if (custom)
-        void this.editor.store
-          .inspectDecorator({
-            definition: instance.definition,
-            version: instance.version,
-            faces: this.selected(),
-            instanceId: instance.id,
-          })
-          .then((result) => {
-            if (!reassign.isConnected) return;
-            reassign.disabled = !!result.reason;
-            reassign.dataset.unavailable = String(reassign.disabled);
-            reassign.title = result.reason ?? "";
-          })
-          .catch(() => {});
-      this.button(custom ? "Remove unresolved decorator" : "Remove unresolved threads", () => {
-        void this.edit({ action: "discard", id: instance.id });
-      });
-    }
-  }
   dispose(): void {
     this.disposeLibrary();
     this.cancel();

@@ -6,6 +6,7 @@ import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
+import { customContinueRoute } from "./ui-decorator-continue.mjs";
 import { customDecoratorRoute } from "./ui-decorator-custom.mjs";
 import { decoratorInformationRoute } from "./ui-decorator-information.mjs";
 import { decoratorMembershipRoute } from "./ui-decorator-membership.mjs";
@@ -102,6 +103,7 @@ try {
       await page.screenshot({ path: `.cache/sketch-review/${name}-decorator-membership.png` });
       await decoratorInformationRoute(page);
       await customDecoratorRoute(page);
+      await customContinueRoute(page, app);
       await exportDecorated(page, `${name}-custom`, app);
       assert.deepEqual(errors, []);
       console.log(

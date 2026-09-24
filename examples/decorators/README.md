@@ -6,6 +6,17 @@ and height appear in the decorator panel. Export STL or 3MF to generate the pad;
 the original face remains editable. The example is deliberately simple: place it
 on a face large enough for the pad, with its plane normal pointing outward.
 
+`linked-pads.json` groups selected planar faces within each body. Select one of its
+decorated faces, then select an undecorated planar face and use **Continue decorator
+onto selection**. Removing decoration from one selected face leaves the other
+members intact. This example uses each face's outward offset normal and generates
+a pad on every group member.
+
+The library's source disclosure displays the exact bundled module. **Export bundle**
+saves a portable JSON copy. Unused bundles can be removed with Undo; bundles still
+referenced by decorations must have those decorations removed first. Importing the
+same ID/version replaces its source and schema as one Undoable edit.
+
 The JSON bundle contains `id`, positive integer `version`, `name`, `fields`,
 optional `preview: true`, and a self-contained ES module in `source`. Installation
 and document opening do not run source. Enablement applies to the exact source
@@ -45,5 +56,5 @@ can produce independent groups; ambiguous merges remain unresolved. Enable code
 and use **Use selected faces for this decorator** to repair an unresolved attachment.
 Disabled code is never executed merely because geometry changed.
 
-This interface is under active implementation. Custom Continue controls and agent
-authoring integration are not complete yet.
+This interface is under active implementation. Agent authoring integration is not
+complete yet.
