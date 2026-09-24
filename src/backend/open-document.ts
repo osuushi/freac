@@ -3,6 +3,19 @@ import { validateDecorators } from "../decorators/edits.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { validateSketch } from "../sketch/document.js";
 import { validateFrame } from "../sketch/planes.js";
+import { materialize } from "./kernel-result.js";
+import type { SolidCalculator } from "./solid-calculator.js";
+
+export async function openDocument(
+  source: SketchDocument,
+  kernel: SolidCalculator,
+): Promise<SketchDocument> {
+  validateDocument(source);
+  const result = await kernel.calculate({ kind: "inspect", bodies: source.bodies ?? [] });
+  const document = { ...source, bodies: materialize([], result) };
+  validateDocument(document);
+  return document;
+}
 
 export function validateDocument(document: SketchDocument): void {
   validateDecorators(document);

@@ -8,9 +8,8 @@ import { editDocument, isDirectDocumentEdit } from "./document-edits.js";
 import { type PreviewRequest, previewDocument } from "./document-preview.js";
 import { DocumentStore } from "./document-store.js";
 import { GeometryQueries } from "./geometry-queries.js";
-import { materialize } from "./kernel-result.js";
 import { NativeSolver } from "./native-solver.js";
-import { validateDocument } from "./open-document.js";
+import { openDocument } from "./open-document.js";
 import { planeCutAvailable } from "./plane-cut.js";
 import { ScriptEdits } from "./script-edits.js";
 import { SolidCalculator } from "./solid-calculator.js";
@@ -38,7 +37,13 @@ export class DocumentOwner {
     this.kernel = new SolidCalculator(kernelExecutable);
     this.queries = new GeometryQueries(kernelExecutable);
     this.solids = new SolidEdits(this.kernel);
-    this.scripts = new ScriptEdits(() => this.store, this.solids, this.kernel, solver);
+    this.scripts = new ScriptEdits(
+      () => this.store,
+      this.solids,
+      this.kernel,
+      solver,
+      (document) => this.decorators.continue(document),
+    );
   }
   beginScript(name: string): void {
     if (this.active || this.cancelling || this.candidate)
@@ -70,16 +75,6 @@ export class DocumentOwner {
     if (result.count) this.solveMs = result.ms;
     this.candidate = result.document;
     if (request.kind === "edit") await this.accept();
-  }
-  private async open(source: SketchDocument): Promise<void> {
-    validateDocument(source);
-    const result = await this.kernel.calculate({
-      kind: "inspect",
-      bodies: source.bodies ?? [],
-    });
-    const document = { ...source, bodies: materialize([], result) };
-    validateDocument(document);
-    this.replaceDocument(document);
   }
   private replaceDocument(document?: SketchDocument): void {
     this.store = new DocumentStore(document);
@@ -156,6 +151,7 @@ export class DocumentOwner {
         this.candidate,
         operationCleanup(this.store.data.bodies ?? [], this.candidate.bodies ?? []),
       );
+    this.candidate = await this.decorators.continue(this.candidate);
     this.store.accept(this.candidate, {
       ...(this.pendingOperation ?? describeOperation({ kind: "accept" })),
       ...(cleanup ? { parameters: { ...this.pendingOperation?.parameters, cleanup: true } } : {}),
@@ -179,6 +175,7 @@ export class DocumentOwner {
           this.kernel,
         );
       else await this.dispatch(request, operation);
+      if (this.candidate) this.candidate = await this.decorators.continue(this.candidate);
       return { view: this.view, documentChanged: before !== this.store.data };
     } catch (error) {
       const message = this.kernel.wasSuperseded
@@ -222,7 +219,7 @@ export class DocumentOwner {
         if (request.kind === "delete-topology") await this.accept();
         break;
       case "open":
-        await this.open(request.document);
+        this.replaceDocument(await openDocument(request.document, this.kernel));
         break;
       case "edge-finish-selection":
         await this.solids.selectFinishEdges(this.store.data, request.operation);
@@ -288,7 +285,7 @@ export class DocumentOwner {
     const candidate = request.topology?.length
       ? await this.solids.removeTopology(reduced, request.topology, "delete-topology")
       : reduced;
-    this.store.accept(candidate, operation);
+    this.store.accept(await this.decorators.continue(candidate), operation);
   }
   close(): void {
     this.queries.close();

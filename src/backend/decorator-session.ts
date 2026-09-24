@@ -1,3 +1,7 @@
+import {
+  pendingCustomContinuation,
+  resolveCustomContinuation,
+} from "../decorators/custom-continuation.js";
 import { type DecoratorInspectionRequest, inspectDecorator } from "../decorators/inspection.js";
 import { editJavaScriptDecorators, needsJavaScript } from "../decorators/javascript-edits.js";
 import { type EnabledDefinition, JavaScriptDecorators } from "../decorators/javascript-hooks.js";
@@ -7,6 +11,10 @@ import type { ModelRequest } from "../sketch/model-api.js";
 
 /** Local enablement is intentionally absent from archives and Undo snapshots. */
 export class DecoratorSession {
+  async continue(document: SketchDocument): Promise<SketchDocument> {
+    if (!document.decorators?.some((d) => pendingCustomContinuation.has(d))) return document;
+    return resolveCustomContinuation(document, await this.hooks());
+  }
   async inspect(document: SketchDocument, query: DecoratorInspectionRequest) {
     return inspectDecorator(document, query, await this.hooks());
   }

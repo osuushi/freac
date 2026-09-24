@@ -254,12 +254,31 @@ export class DecoratorPanel {
           : [...new Set(instance.faces.map((f) => f.body))].map((body) => ({ kind: "body", body }));
         this.editor.refresh();
       });
-      const reassign = this.button("Use selected faces for these threads", () => {
-        void this.edit({ action: "reassign", id: instance.id, faces: this.selected() });
-      });
-      reassign.disabled = !!this.eligibility();
+      const custom = instance.definition !== threadDefinition;
+      const reassign = this.button(
+        custom ? "Use selected faces for this decorator" : "Use selected faces for these threads",
+        () => {
+          void this.edit({ action: "reassign", id: instance.id, faces: this.selected() });
+        },
+      );
+      reassign.disabled = custom || !!this.eligibility();
       reassign.dataset.unavailable = String(reassign.disabled);
-      this.button("Remove unresolved threads", () => {
+      if (custom)
+        void this.editor.store
+          .inspectDecorator({
+            definition: instance.definition,
+            version: instance.version,
+            faces: this.selected(),
+            instanceId: instance.id,
+          })
+          .then((result) => {
+            if (!reassign.isConnected) return;
+            reassign.disabled = !!result.reason;
+            reassign.dataset.unavailable = String(reassign.disabled);
+            reassign.title = result.reason ?? "";
+          })
+          .catch(() => {});
+      this.button(custom ? "Remove unresolved decorator" : "Remove unresolved threads", () => {
         void this.edit({ action: "discard", id: instance.id });
       });
     }

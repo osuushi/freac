@@ -284,8 +284,16 @@ The read-only `decorator-inspect` query resolves eligibility/partition and
 diagnostics through enabled code without changing the document or Undo. The
 library disables Apply while checking, displays rejection reasons, and discards
 results for replaced selections/documents. Selected custom instances show their
-diagnostics with ordinary affected-face selection. Generic topology continuation,
-repair/Continue controls and the agent authoring path are still being integrated.
+diagnostics with ordinary affected-face selection. Custom topology continuation
+uses the same immediate predecessor mapping as threads. Compatible descendants
+are passed to partition/validation with the previous instance settings/state and
+transported frame; returned groups receive independent IDs where necessary.
+Merges with unrelated faces remain unresolved. Disabled code never runs during
+continuation: the attachment remains repairable through enablement and reassign.
+The work pending between native calculation and hook validation is ephemeral,
+not serialized history. Manual and scripted geometry acceptance resolve it before
+accepting a document. Custom Continue controls and agent authoring are still
+being integrated.
 
 ## Mesh export and preview
 

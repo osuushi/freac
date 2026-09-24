@@ -64,4 +64,36 @@ export async function customDecoratorRoute(page) {
   await width.fill("2");
   await width.press("Enter");
   await inspect(page);
+  await customContinuationRoute(page);
+}
+
+async function customContinuationRoute(page) {
+  const settings = (await inspect(page)).document.decorators[0].settings;
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await chooseTool(page, "transform", "transform");
+  await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
+  await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("1.5");
+  assert.equal((await inspect(page)).preview.decorators[0].problem, undefined);
+  await page.getByRole("button", { name: "Accept transform scale", exact: true }).click();
+  assert.deepEqual((await inspect(page)).document.decorators[0].settings, settings);
+  await chooseTool(page, "undo", "undo");
+  await clearSelection(page);
+  await chooseTool(page, "decorator library", "decorator-library");
+  await page.getByRole("button", { name: "Disable Raised pad code", exact: true }).click();
+  await inspect(page);
+  await page.getByRole("button", { name: "Close decorator library", exact: true }).click();
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await chooseTool(page, "transform", "transform");
+  await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("1.5");
+  await inspect(page);
+  await page.getByRole("button", { name: "Accept transform scale", exact: true }).click();
+  assert.match((await inspect(page)).document.decorators[0].problem, /Enable bundled code/);
+  await clearSelection(page);
+  await page.getByRole("button", { name: "Select affected geometry", exact: true }).click();
+  await page.getByRole("button", { name: "Enable Raised pad code", exact: true }).click();
+  await inspect(page);
+  await page
+    .getByRole("button", { name: "Use selected faces for this decorator", exact: true })
+    .click();
+  assert.equal((await inspect(page)).document.decorators[0].problem, undefined);
 }

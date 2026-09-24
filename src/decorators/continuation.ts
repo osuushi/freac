@@ -2,6 +2,7 @@ import { topologyOrigins } from "../backend/kernel-result.js";
 import type { Body } from "../model/body.js";
 import { newId, type SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
+import { pendingCustomContinuation } from "./custom-continuation.js";
 import { cross, sameCylinder, subtract } from "./cylinder.js";
 import { validateThread } from "./edits.js";
 import { threadReference } from "./thread-extent.js";
@@ -26,7 +27,15 @@ function descendants(
   const frame = unchanged ? instance.frame : transformedThreadFrame(instance, request);
   let problem = instance.problem;
   if (faces.some((face) => origins?.faces.get(face.id)?.some((id) => !oldFaces.has(id))))
-    problem = "A face merged with other geometry. Reassign these threads to the intended faces.";
+    problem = "A face merged with other geometry. Reassign the decoration to the intended faces.";
+  if (instance.definition !== threadDefinition) {
+    return {
+      ...instance,
+      frame,
+      problem,
+      faces: faces.map((f) => ({ body: body.id, face: f.id })),
+    };
+  }
   const cylinder = faces[0].cylinder;
   const originalSide = source.bodies?.flatMap((b) => b.faces).find((f) => oldFaces.has(f.id))
     ?.cylinder?.outward;
@@ -81,6 +90,12 @@ export function continueDecorators(
       const next = descendants(reference, source, body, request);
       if (!next) continue;
       let updated = { ...next, id: count++ === 0 ? instance.id : newId() };
+      if (
+        instance.definition !== threadDefinition &&
+        !updated.problem &&
+        !source.bodies?.some((original) => original === body)
+      )
+        pendingCustomContinuation.add(updated);
       if (instance.definition === threadDefinition && !updated.problem) {
         try {
           validateThread(candidate, updated);
@@ -100,7 +115,7 @@ export function continueDecorators(
         decorators.push({
           ...instance,
           faces: instance.faces.map((f) => ({ ...f, body: survivor.id })),
-          problem: "The threaded faces were removed. Reassign or remove these threads.",
+          problem: "The decorated faces were removed. Reassign or remove the decoration.",
         });
     }
   }

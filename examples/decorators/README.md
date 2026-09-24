@@ -39,6 +39,11 @@ reason for an unsupported selection. Diagnostic face references become a
 the pad's footprint area exceeds the supporting face's area; this is a simple
 size check, not a general containment or collision test.
 
-This interface is under active implementation. Generic topology continuation,
-repair/Continue controls and agent authoring integration are not complete yet.
-The built-in thread decorator currently has the fuller continuation support.
+Geometry edits carry attachments to compatible descendants and run partition and
+validation again with their prior settings/state and transported frame. A split
+can produce independent groups; ambiguous merges remain unresolved. Enable code
+and use **Use selected faces for this decorator** to repair an unresolved attachment.
+Disabled code is never executed merely because geometry changed.
+
+This interface is under active implementation. Custom Continue controls and agent
+authoring integration are not complete yet.

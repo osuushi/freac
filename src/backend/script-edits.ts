@@ -20,6 +20,9 @@ export class ScriptEdits {
     private solids: SolidEdits,
     private kernel: SolidCalculator,
     private solver: NativeSolver,
+    private continueDecorators: (document: SketchDocument) => Promise<SketchDocument> = async (
+      document,
+    ) => document,
   ) {}
   get busy(): boolean {
     return this.candidate !== null;
@@ -47,6 +50,8 @@ export class ScriptEdits {
     this.pending = pending;
     try {
       const result = await pending;
+      if (this.cancelled) throw new Error("Script cancelled");
+      result.document = await this.continueDecorators(result.document);
       if (this.cancelled) throw new Error("Script cancelled");
       validateDocument(result.document);
       this.candidate = result.document;
