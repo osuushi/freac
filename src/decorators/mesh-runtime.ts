@@ -53,9 +53,11 @@ export function decoratedMeshes(
     );
     if (!instances.length) return exportMesh(body);
     const scope = new MeshScope(runtime, body.center, exportTolerance(instances) / 4);
+    let active: DecoratorInstance | undefined;
     try {
       let solid = scope.from(exportMesh(body));
       for (const instance of instances) {
+        active = instance;
         if (instance.definition !== threadDefinition) {
           if (instance.problem) throw new Error(instance.problem);
           if (!javascript)
@@ -95,7 +97,7 @@ export function decoratedMeshes(
       return scope.mesh(solid);
     } catch (error) {
       throw new Error(
-        `Decorated body ${body.id}: ${error instanceof Error ? error.message : error}`,
+        `Decorated body ${body.id}${active ? `, ${active.definition} (${active.id})` : ""}: ${error instanceof Error ? error.message : error}`,
       );
     } finally {
       scope.close();

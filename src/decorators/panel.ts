@@ -109,7 +109,7 @@ export class DecoratorPanel {
       if (mixed) input.add(new Option("Mixed", ""));
       for (const option of field.options ?? []) input.add(new Option(option.label, option.value));
       input.value = mixed ? "" : String(values[0]);
-      input.onchange = () => this.patch({ [field.key]: input.value }, false);
+      input.onchange = () => this.patch({ [field.key]: input.value }, false, instances);
       label.append(input);
     } else {
       const input = document.createElement("input");
@@ -120,7 +120,7 @@ export class DecoratorPanel {
       input.placeholder = mixed ? "Mixed" : "";
       if (field.min !== undefined) input.min = String(field.min);
       if (field.max !== undefined) input.max = String(field.max);
-      input.oninput = () => this.patch({ [field.key]: input.valueAsNumber }, true);
+      input.oninput = () => this.patch({ [field.key]: input.valueAsNumber }, true, instances);
       input.onblur = () => {
         void this.draft.blur();
       };
@@ -187,16 +187,16 @@ export class DecoratorPanel {
     }
     if (!instances.length) return;
     if (instances.length === 1) this.last = instances[0].id;
-    if (instances.some((d) => d.definition !== threadDefinition)) {
-      appendCustomDecorators(
-        this.root,
-        this.editor,
-        instances,
-        this.draft,
-        (group, patch, preview) => this.patch(patch, preview, group),
+    const custom = instances.filter((d) => d.definition !== threadDefinition);
+    if (custom.length) {
+      appendCustomDecorators(this.root, this.editor, custom, this.draft, (group, patch, preview) =>
+        this.patch(patch, preview, group),
       );
-      return;
     }
+    const threads = instances.filter((d) => d.definition === threadDefinition);
+    if (threads.length) this.appendThreads(threads);
+  };
+  private appendThreads(instances: DecoratorInstance[]): void {
     this.button(`Threads · ${instances.reduce((n, d) => n + d.faces.length, 0)} faces`, () => {
       this.expand(instances);
       this.editor.refresh();
@@ -217,9 +217,13 @@ export class DecoratorPanel {
       "Export-time threads. Original faces remain editable. Hole relief is radial; printing presets are starting points.";
     this.root.append(note);
     this.button("Remove threads from selected faces", () => {
-      void this.edit({ action: "remove", faces: this.selected() });
+      const keys = new Set(instances.flatMap((d) => d.faces.map(faceKey)));
+      void this.edit({
+        action: "remove",
+        faces: this.selected().filter((f) => keys.has(faceKey(f))),
+      });
     });
-  };
+  }
   dispose(): void {
     this.disposeLibrary();
     this.draft.cancel();

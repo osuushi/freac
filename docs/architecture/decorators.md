@@ -1,8 +1,7 @@
-# Decorators — proposal for discussion
+# Decorators V1
 
-2026-09-24. Implementation authorized by the active decorators V1 goal.
-Recommendations below guide implementation; confirmed founder decisions take
-precedence. Confirmed: Metric is a diameter-driven family;
+2026-09-24. Current implementation contract and founder-approved scope.
+Metric is a diameter-driven family;
 compatible split descendants inherit threads; decorator composition is outside V1;
 off-table diameters remain exact/nonstandard; decorator code travels in the file.
 Mirroring preserves configured handedness; scaling preserves pitch and clearance;
@@ -28,33 +27,25 @@ compatible faces into individual continuous thread instances; applying to severa
 rods creates several instances in one edit. Users normally see threads and their
 settings, not the internal grouping noun.
 
-## Current foundation and gaps
+## Ownership and geometry
 
-Inspected Freac commit: `3bacee0b187b9c0a4b6075a222cf0899f971be84`.
-These are source observations, not new runtime verification.
+DocumentOwner owns accepted attachments, settings and bundled source through
+ordinary edits and snapshot Undo. Numeric candidates and generated preview meshes
+are temporary. The native kernel supplies analytic face descriptors, tessellated
+trimmed domains and immediate topology correspondence. Correspondence is consumed
+during acceptance; it is not a persistent operation-history graph. Export refines
+a read-only copy and performs mesh operations in a worker. There is no second
+document, BRep mutation at export or executable feature history.
 
-- [Face metadata](https://github.com/osuushi/freac/blob/3bacee0b187b9c0a4b6075a222cf0899f971be84/src/model/body.ts)
-  includes cylinder origin, axis, radius and inward/outward sign. It does not
-  expose an exact trimmed cylindrical parameter domain.
-- [materialize](https://github.com/osuushi/freac/blob/3bacee0b187b9c0a4b6075a222cf0899f971be84/src/backend/kernel-result.ts)
-  preserves IDs for one-to-one continuations. Splits/merges get new IDs; immediate
-  predecessor relationships are consumed here and not retained in the body model.
-- [exportBodies](https://github.com/osuushi/freac/blob/3bacee0b187b9c0a4b6075a222cf0899f971be84/src/model/mesh-export.ts)
-  converts accepted body tessellations into STL/3MF. Its worker is the natural
-  location for mesh modification. Export currently has no quality setting.
-- [exportMesh](https://github.com/osuushi/freac/blob/3bacee0b187b9c0a4b6075a222cf0899f971be84/src/model/export-mesh.ts)
-  welds vertices and rejects open/inconsistently oriented edges; this alone does
-  not certify manifold vertex neighborhoods, absence of self-intersection or fit.
-- Existing document ownership, candidate edits, snapshot Undo and agent script
-  routes should be extended. No second document or executable feature history.
-
-## Proposed interaction
+## Interaction
 
 1. Select faces and invoke Threads; show eligibility reasons in tool discovery.
 2. Create all inferred instances atomically with resolved settings and a preview.
 3. A right-side decorator panel shows instances touching the selection, aggregated
    by type. Equal fields show values; unequal fields show Mixed. A change patches
    only that field across affected instances, preserving every other setting.
+   Mixed selections show both built-in and custom controls. Editing or removing
+   one type affects only that type's instances and selected members.
 4. Editing a setting first selects all faces of the affected instances, then
    updates them in one Undo step. Numeric drafts preview; confirmation accepts;
    Escape cancels. Merely focusing a field should not change the document.
@@ -86,10 +77,10 @@ allowance consistently; independent defaults per face must not break mating.
 | Cut into rod | Remove material inward from the reference cylinder | Add complementary ridges inward into the hole |
 | Cut into hole | Add ridges outward from the reference cylinder | Remove complementary grooves outward into the wall |
 
-This describes the zero-clearance reference construction. Fit clearance must have
-an explicit total-gap definition and allocation, rather than accidentally being
-applied twice. Confirmed: one allowance provides female-side relief, displayed with units and
-whether radial or diametral; exact flank/root treatment remains to design.
+This describes the zero-clearance reference construction. Hole radial relief is
+one outward radial offset applied to the entire female profile, including roots,
+crests and flanks; it is not a normal-to-flank offset or an ISO fit class. The rod
+receives no second allowance. The control displays millimeters.
 Thread-form compatibility does not promise assembly through shoulders, flats,
 unthreaded portions or blind-hole bottoms.
 
@@ -131,7 +122,7 @@ Middle-of-rod threads remain a V1 case; a thread need not reach the rod end.
 This does not guarantee that mating parts can be assembled in every surrounding
 geometry configuration.
 
-Proposed controls to make this work on an unsplit cylindrical face: start/end
+The controls for an unsplit cylindrical face are start/end
 insets along the saved thread axis, initially zero, bounding the threaded band
 within the selected geometry. Intersect that band with actual selected face domains;
 do not fill flats or gaps. Apply optional tapers at its axial ends and preserve
@@ -251,12 +242,13 @@ give JavaScript authors a usable geometric API. No BRep mutation in this pipelin
 Run geometry work outside the UI thread, with bounded inputs and cancellation.
 Use a single sequential export pipeline from one accepted snapshot. Opening a
 saved file must not automatically execute unknown embedded JavaScript. Confirmed:
-bundle decorator code with the document. Proposed packaging: a self-contained
+bundle decorator code with the document. Packaging uses a self-contained
 module and declarative manifest, stored once per definition/version, with no
 network dependency resolution at export. Pin source bytes; updating code is an
 explicit document change, not an installed plugin silently changing old exports.
-Design code/settings replacement as an atomic owner edit with Undo, rather than
-treating executable definitions like independently watched agent workspace files.
+Code replacement and settings edits are atomic owner edits with Undo. A script
+can combine them in one accepted transaction; executable definitions are not
+independently watched agent workspace files.
 A Worker alone is not a security sandbox. Missing definitions
 retain data, identify the missing dependency and block affected export rather
 than silently omit a decoration. No marketplace or general plugin platform needed.
@@ -323,10 +315,10 @@ the same cylinder partition, settings resolution and highlighted local warnings.
 
 ## Mesh export and preview
 
-Proposed export path: capture accepted geometry/settings; prepare geometry context
-and sufficiently accurate base tessellation; validate inputs; generate independent
-modifications from the original geometry; apply those modifications to
-each body mesh; validate results; encode through existing STL/3MF paths.
+The export path captures accepted geometry/settings; prepares geometry context
+and sufficiently accurate base tessellation; validates inputs; generates independent
+modifications from the original geometry; applies those modifications to
+each body mesh; validates results; and encodes through existing STL/3MF paths.
 Bodies remain separate export objects. Failure identifies the body/decorator and
 produces no partial file. Export changes neither the document nor Undo.
 
@@ -398,12 +390,9 @@ Do not replace the selectable original. Mechanical interference warnings can be
 nonblocking; invalid output remains an export error. General assembly/motion proof
 is outside V1; warnings must describe what was actually checked.
 
-## Delivery and acceptance proposal
+## Acceptance scope
 
-Multiple reviewed increments, not a single two-hour change. Estimate after the
-open contracts are settled and the geometry integration is measured.
-
-1. Complete first vertical slice: one external and one internal full cylinder,
+1. One external and one internal full cylinder,
    shared procedural definition, both reference modes, panel editing/removal,
    preview, save/open, Undo/Redo and validated STL/3MF. Benchmark final generation.
 2. Multi-selection, continuation/removal, interrupted/sloping domains, phase
@@ -414,8 +403,7 @@ open contracts are settled and the geometry integration is measured.
 4. JavaScript module loading/portability, agent parity and a small independent
    example decorator proving the contract without special-casing Threads.
 
-Each increment includes real geometry and ordinary pointer/keyboard routes.
-First-slice review is an intermediate checkpoint, not completion of V1.
+Acceptance uses real geometry and ordinary pointer/keyboard routes.
 Measure preview and export on short/long threads and batches; do not promise
 near-instant generation before measuring cold and warm worker runs.
 

@@ -48,7 +48,7 @@ is a later operation on current geometry, through ordinary Undo.
 | Shell | [Shell interaction and validation](architecture/shell.md) |
 | Selection measurements | [Distances, gaps and relationships](architecture/measurements.md) |
 | Draft and cleanup | [Extrusion draft](architecture/extrusion-draft.md), [solid cleanup](architecture/solid-cleanup.md) |
-| Decorators (proposal) | [Export-time mesh modifiers, threads and open design choices](architecture/decorators.md) |
+| Decorators | [Export-time mesh modifiers, threads and JavaScript extensions](architecture/decorators.md) |
 
 ## Maintaining this index
 

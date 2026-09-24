@@ -69,7 +69,7 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
         worker.terminate();
         worker = null;
         if (event.data.error) {
-          editor.notice = `Thread preview: ${event.data.error}`;
+          editor.notice = `Decorator preview: ${event.data.error}`;
           editor.refresh();
         }
         for (const { body, mesh } of event.data.meshes ?? []) {
@@ -83,7 +83,7 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
         if (worker !== current) return;
         worker.terminate();
         worker = null;
-        editor.notice = "Thread preview unavailable";
+        editor.notice = "Decorator preview unavailable";
         editor.refresh();
       };
       worker.postMessage({ document, sources: editor.store.decoratorSources });

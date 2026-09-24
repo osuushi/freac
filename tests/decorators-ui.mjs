@@ -10,6 +10,7 @@ import { customContinueRoute } from "./ui-decorator-continue.mjs";
 import { customDecoratorRoute } from "./ui-decorator-custom.mjs";
 import { decoratorInformationRoute } from "./ui-decorator-information.mjs";
 import { decoratorMembershipRoute } from "./ui-decorator-membership.mjs";
+import { mixedDecoratorTypesRoute } from "./ui-decorator-mixed-types.mjs";
 import { decoratorPresetRoute } from "./ui-decorator-presets.mjs";
 import { decoratorTransformRoute } from "./ui-decorator-transforms.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
@@ -105,6 +106,7 @@ try {
       await customDecoratorRoute(page);
       await customContinueRoute(page, app);
       await exportDecorated(page, `${name}-custom`, app);
+      await mixedDecoratorTypesRoute(page);
       assert.deepEqual(errors, []);
       console.log(
         `${name}: real cylinder, selection, threads, draft/cancel, edits, Undo/Redo, export, Save/Open and removal passed`,

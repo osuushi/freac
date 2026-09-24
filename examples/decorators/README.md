@@ -46,8 +46,8 @@ No hook receives another decorator's result. JavaScript has no host, DOM, file,
 network, timer or module-import APIs; bundle any helpers into the source itself.
 
 The library checks eligibility before enabling Apply and displays the hook's
-reason for an unsupported selection. Diagnostic face references become a
-**Show affected faces** action in the settings panel. The example warns when
+reason for an unsupported selection. Diagnostic face and edge references become a
+**Show affected geometry** action in the settings panel. The example warns when
 the pad's footprint area exceeds the supporting face's area; this is a simple
 size check, not a general containment or collision test.
 

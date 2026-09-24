@@ -33,7 +33,9 @@ export function appendCustomContinue(
       if (!button.isConnected || editor.store.data !== snapshot) return;
       const reason =
         result.reason ??
-        (result.groups.length === 1 ? null : "These faces belong to separate decorator groups");
+        (result.groups.length === 1
+          ? null
+          : "These faces cannot continue this decoration. Apply it separately.");
       button.disabled = !!reason || editor.store.busy;
       button.dataset.unavailable = String(!!reason);
       button.title = reason ?? "";
