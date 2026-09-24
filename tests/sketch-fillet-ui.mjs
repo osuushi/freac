@@ -10,6 +10,7 @@ import { filletLossRoute, filletRoute } from "./ui-fillet.mjs";
 import { filletConsumptionRoute } from "./ui-fillet-consumption.mjs";
 import { filletCursorRoute } from "./ui-fillet-cursor.mjs";
 import { filletGuideRoute } from "./ui-fillet-guide.mjs";
+import { secondCornerFilletRoute } from "./ui-second-corner-fillet.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
 const name = process.env.FREAC_TEST_BROWSER ?? "chromium";
@@ -43,6 +44,7 @@ try {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   for (const route of [
+    secondCornerFilletRoute,
     filletGuideRoute,
     filletCursorRoute,
     filletRoute,
@@ -52,6 +54,11 @@ try {
     filletConsumptionRoute,
     tangentBowRoute,
   ]) {
+    if (
+      process.env.FREAC_TEST_ROUTE &&
+      !process.env.FREAC_TEST_ROUTE.split(",").includes(route.name)
+    )
+      continue;
     console.log(`${name}: starting ${route.name}`);
     await route(page, name);
   }

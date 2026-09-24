@@ -19,32 +19,7 @@ export function relationalTargets(
   handled: ReadonlySet<string>,
 ): SolverInput {
   const { curves } = solverLayout(target);
-  const { changed, moved, freeCenters, exact } = intentTargets(target, previous, intent);
-  const subject = intent.kind === "pair" ? intent.subject : null;
-  const reference = intent.kind === "pair" ? intent.reference : null;
-  if (subject) changed.add(subject);
-  const related = connectedSelection(target, changed);
-  const fixed = new Set<number>();
-  const targets: Equation[] = [];
-  for (const curve of curves) {
-    if (handled.has(curve.id)) continue;
-    const a = index(curve.id);
-    for (const offset of curvePoints(curve).keys()) {
-      const i = a + offset;
-      if (
-        !related.has(curve.id) ||
-        curve.id === reference ||
-        (changed.has(curve.id) && !moved.has(i) && !freeCenters.has(i))
-      ) {
-        fixed.add(i);
-      } else if (moved.has(i) || subject === curve.id) {
-        targets.push(
-          { kind: "x", a: i, value: input.points[i].x, temporary: true },
-          { kind: "y", a: i, value: input.points[i].y, temporary: true },
-        );
-      }
-    }
-  }
+  const { fixed, targets, exact } = coordinateTargets(target, previous, input, intent, handled);
   for (const lock of numericConstraints(target)) {
     if (lock.kind !== "length" || handled.has(lock.curve)) continue;
     const a = index(lock.curve);
@@ -96,6 +71,48 @@ export function relationalTargets(
   input.constraints.push(...targets.filter((c) => !fixed.has(c.a)));
   return input;
 }
+function coordinateTargets(
+  target: Sketch,
+  previous: Sketch | undefined,
+  input: SolverInput,
+  intent: EditIntent,
+  handled: ReadonlySet<string>,
+) {
+  const { curves, index } = solverLayout(target);
+  const { changed, moved, freeCenters, exact } = intentTargets(target, previous, intent);
+  const subject = intent.kind === "pair" ? intent.subject : null;
+  const reference = intent.kind === "pair" ? intent.reference : null;
+  if (subject) changed.add(subject);
+  const related = connectedSelection(target, changed);
+  const fixed = new Set<number>();
+  const targets: Equation[] = [];
+  for (const curve of curves) {
+    if (handled.has(curve.id)) continue;
+    const a = index(curve.id);
+    for (const offset of curvePoints(curve).keys()) {
+      const i = a + offset;
+      const anchor = changed.has(curve.id) && !moved.has(i) && !freeCenters.has(i);
+      if (
+        !related.has(curve.id) ||
+        curve.id === reference ||
+        (anchor && (intent.kind === "point" || intent.kind === "pair"))
+      ) {
+        fixed.add(i);
+      } else if (moved.has(i) || subject === curve.id || anchor) {
+        // Exact edit anchors belong with the temporary targets. Removing them
+        // from the unknowns can make valid persistent tangencies redundant.
+        // Acceptance still requires every anchor to attain its requested value.
+        if (anchor) exact.push(i);
+        targets.push(
+          { kind: "x", a: i, value: input.points[i].x, temporary: true },
+          { kind: "y", a: i, value: input.points[i].y, temporary: true },
+        );
+      }
+    }
+  }
+  return { fixed, targets, exact };
+}
+
 function equationPoints(e: Equation): number[] {
   if (e.kind === "tangent-normal") return [e.a, e.b ?? 0, e.c ?? 0, e.d ?? 0];
   if (e.kind === "on-line") return [e.a, e.b ?? 0, (e.b ?? 0) + 1];

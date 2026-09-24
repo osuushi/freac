@@ -138,6 +138,13 @@ Point drags explicitly identify their intent in preview requests, allowing
 constraint projection even when a target accidentally preserves a curve's length.
 Numeric edits and rigid transforms still require the requested geometry.
 
+Exact edits submit unchanged anchors of the edited curves as temporary coordinate
+targets too, and verify those anchors before acceptance. Treating them as constants
+can make valid persistent relationships appear redundant (for example, the first
+fillet when rounding the other corner of two joined arcs). Point projection and
+ordered pair application retain their fixed anchors/reference geometry. Persistent
+constraints remain in the driving system; an unattainable exact target still rejects.
+
 The host checks solver status, diagnosis and all independent equation residuals
 (1e-7 mm or normalized/angular residual). Contradictions and redundant driving
 constraints reject the candidate. Unconstrained line edits use existing finite/
