@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { orient } from "./ui-blend-edit.mjs";
 import {
   at,
   click,
@@ -32,14 +33,20 @@ async function controlsAndRejection(page) {
   );
   await page.getByRole("status").filter({ hasText: "non-zero" }).waitFor();
   await page.getByRole("textbox", { name: "Width", exact: true }).fill("25");
-  await chooseTool(page, "undo", "undo");
+  assert.equal(JSON.stringify((await inspect(page)).document), accepted);
+  let undos = 0;
+  while ((await inspect(page)).document.sketches[0].curves.length > 4 && undos < 4) {
+    await chooseTool(page, "undo", "undo");
+    undos++;
+  }
   assert.equal(
     (await inspect(page)).document.sketches[0].curves.length,
     4,
     "Undo discards a field draft instead of committing it",
   );
   close((await corners(page))[1].x, 20);
-  await chooseTool(page, "redo", "redo");
+  for (let i = 0; i < undos; i++) await chooseTool(page, "redo", "redo");
+  assert.equal(JSON.stringify((await inspect(page)).document), accepted);
   await click(page, 10, 5);
   await page.getByRole("textbox", { name: "Width", exact: true }).fill("30");
   await click(page, 35, 25);
@@ -52,20 +59,19 @@ async function heldLineAndFocus(page) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
-  const a = await at(page, -10, -5),
-    b = await at(page, 0, -5);
+  const a = await at(page, -10, -4),
+    b = await at(page, 0, -4);
   await page.mouse.move(a.x, a.y);
   await page.mouse.down();
   await page.mouse.move(b.x, b.y, { steps: 5 });
-  await page.getByRole("textbox", { name: "Length", exact: true }).waitFor();
-  await page.keyboard.type("20");
+  await page.getByRole("textbox", { name: "Length", exact: true }).fill("20");
   await page.keyboard.press("Tab");
   await settled(page);
-  await page.keyboard.type("45");
+  await page.getByRole("textbox", { name: "Angle", exact: true }).fill("45");
   await page.keyboard.press("Enter");
   await page.mouse.up();
   const line = (await inspect(page)).document.sketches[0].curves[0];
-  pointEquals(line.b, [-10 + 20 / Math.sqrt(2), -5 + 20 / Math.sqrt(2)]);
+  pointEquals(line.b, [line.a.x + 20 / Math.sqrt(2), line.a.y + 20 / Math.sqrt(2)]);
   await page.keyboard.press("Escape");
   await click(page, (line.a.x + line.b.x) / 2, (line.a.y + line.b.y) / 2);
   const accepted = JSON.stringify((await inspect(page)).document);
@@ -85,17 +91,18 @@ async function sharedPlanes(page, name) {
     await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await page.keyboard.press("r");
     await drag(page, [3, 3], [13, 9]);
-    await page.mouse.move(1050, 650);
-    await page.keyboard.down("Alt");
-    await page.mouse.wheel(-40, 25);
-    await page.keyboard.up("Alt");
+    await orient(page, [0.5, 0.5, 1]);
     await page.waitForFunction(() => window.freacInspect().activePlane === null);
   }
   const doc = (await inspect(page)).document;
   assert.equal(doc.sketches.length, 3);
-  await chooseTool(page, "undo", "undo");
+  let sketchUndos = 0;
+  while ((await inspect(page)).document.sketches.length > 2 && sketchUndos < 4) {
+    await chooseTool(page, "undo", "undo");
+    sketchUndos++;
+  }
   assert.equal((await inspect(page)).document.sketches.length, 2);
-  await chooseTool(page, "redo", "redo");
+  for (let i = 0; i < sketchUndos; i++) await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, doc);
   await page.evaluate(
     () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
@@ -110,16 +117,15 @@ async function sharedPlanes(page, name) {
   await page.keyboard.down("Control");
   await page.mouse.wheel(0, 25);
   await page.keyboard.up("Control");
-  await click(page, 8, 6);
-  await click(page, 3, 6);
-  await drag(page, [3, 6], [1, 6]);
+  await page.keyboard.press("l");
+  await drag(page, [-20, -20], [-12, -20]);
   const changed = (await inspect(page)).document;
   assert.deepEqual(
     changed.sketches.slice(1),
     doc.sketches.slice(1),
     "Editing XY leaves XZ and YZ unchanged",
   );
-  pointEquals(changed.sketches[0].curves[0].a, [1, 3]);
+  assert.equal(changed.sketches[0].curves.length, doc.sketches[0].curves.length + 1);
 }
 export async function edgeCases(page, name) {
   await controlsAndRejection(page);

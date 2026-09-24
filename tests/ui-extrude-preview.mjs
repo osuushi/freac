@@ -36,8 +36,10 @@ export async function extrusionPreviewRoute(page) {
     await page.mouse.down();
     await page.mouse.move(x, y - 50);
     await gates[0].reached.promise;
-    await page.mouse.move(x, y - 100);
     gates[0].release.resolve();
+    await settled(page);
+    close((await inspect(page)).preview.bodies[0].volume, requests[0].distance * 600);
+    await page.mouse.move(x, y - 100);
     await gates[1].reached.promise;
     const intermediate = await page.evaluate(() => window.freacInspect());
     assert.ok(

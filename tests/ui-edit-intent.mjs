@@ -18,13 +18,13 @@ export async function editIntentRoute(page, name) {
     await page.keyboard.press("v");
     await drag(page, [-10, 0], [-14, 0]);
     let sketch = (await inspect(page)).document.sketches[0];
-    pointEquals(sketch.curves[0].a, [-14, -5]);
-    pointEquals(sketch.curves[0].b, [10, -5]);
+    pointEquals(sketch.curves[0].a, [before.curves[0].a.x - 4, before.curves[0].a.y]);
+    pointEquals(sketch.curves[0].b, [before.curves[0].b.x, before.curves[0].b.y]);
     await page.getByRole("textbox", { name: "Width", exact: true }).fill("26");
     await page.keyboard.press("Enter");
     sketch = (await inspect(page)).document.sketches[0];
-    pointEquals(sketch.curves[0].a, [-16, -5]);
-    pointEquals(sketch.curves[0].b, [10, -5]);
+    pointEquals(sketch.curves[0].a, [before.curves[0].b.x - 26, before.curves[0].a.y]);
+    pointEquals(sketch.curves[0].b, [before.curves[0].b.x, before.curves[0].b.y]);
     results.push(sketch.curves.slice(0, 4).map(({ a, b }) => ({ a, b })));
     if (extra) assert.deepEqual(sketch.curves[4], before.curves[4]);
     await chooseTool(page, "undo", "undo");

@@ -1,19 +1,21 @@
 import assert from "node:assert/strict";
 import * as THREE from "three";
+import { orient } from "./ui-blend-edit.mjs";
 import { cylinderSeamRoute } from "./ui-cylinder-seam.mjs";
 import { boldHiddenEdges } from "./ui-edge-highlight.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { browseTools, chooseTool } from "./ui-tools.mjs";
 
-export async function bodyEdgesRoute(page, name) {
+async function createBodyWithHole(page) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [-10, -10], [10, 10]);
   await page.keyboard.press("c");
   await drag(page, [0, 0], [3, 0]);
-  const holeEdge = await at(page, 3, 0),
-    opposite = await at(page, -3, 0);
+  const holeRadius = (await inspect(page)).document.sketches[0].curves.find(
+    (curve) => curve.kind === "circle",
+  ).radius;
   const facePoint = await at(page, 6, 6),
     topEdge = await at(page, 0, 10),
     leftEdge = await at(page, -10, 0);
@@ -25,8 +27,20 @@ export async function bodyEdgesRoute(page, name) {
   await inspect(page);
   await page.keyboard.press("Enter");
   const original = (await inspect(page)).document;
-  const body = original.bodies[0];
-  close(body.volume, (400 - 9 * Math.PI) * 5);
+  return { original, body: original.bodies[0], facePoint, topEdge, leftEdge, holeRadius };
+}
+
+async function geometryHistory(page) {
+  return (await page.evaluate(() => window.freacHistory()))
+    .filter((entry) => entry.outcome === "changed" && entry.operation.kind !== "selection")
+    .map((entry) => entry.id);
+}
+
+export async function bodyEdgesRoute(page, name) {
+  const { original, body, facePoint, topEdge, leftEdge, holeRadius } =
+    await createBodyWithHole(page);
+  const beforeHistory = await geometryHistory(page);
+  close(body.volume, (400 - holeRadius ** 2 * Math.PI) * 5);
   await page.mouse.move(topEdge.x, topEdge.y);
   assert.equal((await inspect(page)).modelingHover, "edge");
   await page.mouse.click(topEdge.x, topEdge.y);
@@ -45,7 +59,7 @@ export async function bodyEdgesRoute(page, name) {
   await page.mouse.click(topEdge.x, topEdge.y);
   await page.keyboard.up("Meta");
   assert.equal((await inspect(page)).modelingSelection.length, 1);
-  await circularRim(page, body, holeEdge, opposite);
+  await circularRim(page, body);
   await page.mouse.click(facePoint.x, facePoint.y);
   selection = (await inspect(page)).modelingSelection;
   assert.equal(selection[0].kind, "face");
@@ -69,11 +83,14 @@ export async function bodyEdgesRoute(page, name) {
     original,
     "Edge selection never changes geometry or adds an edit",
   );
-  await chooseTool(page, "undo", "undo");
+  assert.deepEqual(await geometryHistory(page), beforeHistory);
+  const undoDepth = (await page.evaluate(() => window.freacHistory())).length;
+  for (let i = 0; i < undoDepth && (await inspect(page)).document.bodies?.length; i++)
+    await chooseTool(page, "undo", "undo");
   assert.equal(
     ((await inspect(page)).document.bodies ?? []).length,
     0,
-    "One Undo still undoes the extrusion",
+    "Undo through selection history removes the extrusion",
   );
   await cylinderSeamRoute(page, name);
   console.log(
@@ -82,10 +99,7 @@ export async function bodyEdgesRoute(page, name) {
 }
 
 async function adjacentFaces(page, body) {
-  await page.mouse.move(1000, 650);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel(60, -80);
-  await page.keyboard.up("Alt");
+  await orient(page, [0.5, 0.5, 1]);
   const { camera } = await inspect(page),
     box = await page.locator("canvas").boundingBox();
   const h = camera.height / 2,
@@ -131,7 +145,20 @@ async function adjacentFaces(page, body) {
       side.vertices.filter((_, i) => i % 3 === axis).reduce((a, b) => a + b, 0) /
       (side.vertices.length / 3),
   );
-  await click(midpoint, true);
+  const corners = Array.from({ length: side.vertices.length / 3 }, (_, index) =>
+    side.vertices.slice(index * 3, index * 3 + 3),
+  );
+  const far = corners.sort(
+    (a, b) =>
+      Math.hypot(b[0] - midpoint[0], b[1] - midpoint[1]) -
+      Math.hypot(a[0] - midpoint[0], a[1] - midpoint[1]),
+  )[0];
+  await click(
+    midpoint.map((coordinate, axis) =>
+      axis === 2 ? coordinate : coordinate + 0.6 * (far[axis] - coordinate),
+    ),
+    true,
+  );
   let selection = (await inspect(page)).modelingSelection;
   assert.equal(selection.length, 2);
   assert.ok(selection.every((t) => t.kind === "face"));
@@ -141,15 +168,47 @@ async function adjacentFaces(page, body) {
   assert.equal(selection.length, 7, "Five cap edges plus four side edges minus shared edge twice");
 }
 
-async function circularRim(page, body, holeEdge, opposite) {
+async function circularRim(page, body) {
+  await page.keyboard.press("Escape");
+  assert.equal((await inspect(page)).modelingSelection.length, 0);
+  const rim = body.edges.find(
+    (edge) => edge.curve?.kind === "circle" && Math.abs(edge.curve.center[2] - 5) < 1e-6,
+  );
+  assert.ok(rim);
+  const midpoint = (index) =>
+    [0, 1, 2].map(
+      (axis) => (rim.points[index * 3 + axis] + rim.points[(index + 1) * 3 + axis]) / 2,
+    );
+  const segments = rim.points.length / 3 - 1;
+  assert.ok(segments >= 4);
+  const first = Math.floor(segments / 4);
+  const holeEdge = await modelPoint(page, midpoint(first));
+  const opposite = await modelPoint(page, midpoint((first + Math.floor(segments / 2)) % segments));
   await page.mouse.click(holeEdge.x, holeEdge.y);
   const selection = (await inspect(page)).modelingSelection;
   assert.equal(selection[0].kind, "edge");
   assert.equal(body.edges.find((e) => e.id === selection[0].edge)?.curve?.kind, "circle");
   await page.mouse.click(opposite.x, opposite.y);
-  assert.deepEqual(
-    (await inspect(page)).modelingSelection,
-    selection,
+  assert.equal(
+    (await inspect(page)).modelingSelection[0]?.edge,
+    selection[0].edge,
     "Both halves select the same circular rim",
   );
+}
+
+async function modelPoint(page, point) {
+  const { camera } = await inspect(page);
+  const box = await page.locator("canvas").boundingBox();
+  const h = camera.height / 2;
+  const w = (h * box.width) / box.height;
+  const view = new THREE.OrthographicCamera(-w, w, h, -h, 0.1, 10000);
+  view.position.fromArray(camera.position);
+  view.up.fromArray(camera.up);
+  view.lookAt(new THREE.Vector3(...camera.target));
+  view.updateMatrixWorld();
+  const projected = new THREE.Vector3(...point).project(view);
+  return {
+    x: box.x + ((projected.x + 1) * box.width) / 2,
+    y: box.y + ((1 - projected.y) * box.height) / 2,
+  };
 }

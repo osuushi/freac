@@ -18,11 +18,14 @@ export async function tangentBowRoute(page, name) {
   assert.equal(sketch.constraints.filter((c) => c.kind === "tangent").length, 2);
   for (const numeric of [false, true]) {
     await click(page, 25, 20);
-    await click(page, 11, 0);
+    await click(page, (line.a.x + line.b.x) / 2, (line.a.y + line.b.y) / 2);
+    await page.locator(".bow-handle").first().waitFor({ state: "visible" });
     const handle = await page.locator(".bow-handle").first().boundingBox();
-    await page.mouse.move(handle.x, handle.y);
+    const hx = handle.x + handle.width / 2;
+    const hy = handle.y + handle.height / 2;
+    await page.mouse.move(hx, hy);
     if (numeric) {
-      await page.mouse.click(handle.x + handle.width / 2, handle.y + handle.height / 2);
+      await page.mouse.click(hx, hy);
       await page.getByRole("textbox", { name: "Radius", exact: true }).fill("12");
       await page.keyboard.press("Enter");
     } else {

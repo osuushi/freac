@@ -88,6 +88,7 @@ async function smallArcLayout(page, name) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-4, 0], [4, 0]);
+  await page.locator(".bow-handle").nth(1).waitFor({ state: "visible" });
   const guide = await page.locator(".bow-handle").nth(1).boundingBox();
   const target = await at(page, 0, 2);
   await page.mouse.move(guide.x + guide.width / 2, guide.y + guide.height / 2);

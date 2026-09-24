@@ -52,11 +52,13 @@ export async function screwUnionRoute(page, name, electron) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [20, 0], [27, 0]);
+  const radius = (await inspect(page)).document.sketches[0].curves[0].radius;
   await revolve(page, [20, 0], [0, -10]);
   await quantity(page, "height", 10);
   await quantity(page, "angle", 720);
-  const lens = 98 * Math.acos(5 / 14) - 2.5 * Math.sqrt(171);
-  await volume(page, 40 * Math.PI * (98 * Math.PI - lens));
+  const lens =
+    2 * radius ** 2 * Math.acos(5 / (2 * radius)) - 2.5 * Math.sqrt(4 * radius ** 2 - 25);
+  await volume(page, 40 * Math.PI * (2 * radius ** 2 * Math.PI - lens));
   const before = (await inspect(page)).document;
   await page.getByRole("button", { name: "Accept revolution", exact: true }).click();
   const accepted = (await inspect(page)).document;
@@ -68,13 +70,24 @@ export async function screwUnionRoute(page, name, electron) {
   await bodyArchiveRoute(page, `${name}-screw-union`, electron);
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
+  await chooseTool(page, "grid snap", "grid");
   await page.keyboard.press("r");
   await drag(page, [-2, 0], [3, 4]);
+  const vertices = (await inspect(page)).document.sketches[0].curves.flatMap((curve) => [
+    curve.a,
+    curve.b,
+  ]);
+  const xMin = Math.min(...vertices.map((vertex) => vertex.x));
+  const xMax = Math.max(...vertices.map((vertex) => vertex.x));
+  const height =
+    Math.max(...vertices.map((vertex) => vertex.y)) -
+    Math.min(...vertices.map((vertex) => vertex.y));
+  assert.ok(xMin < 0 && xMax > 0);
   await revolve(page, [1, 2], [0, -5]);
-  await volume(page, 36 * Math.PI);
+  await volume(page, xMax ** 2 * height * Math.PI);
   await quantity(page, "height", 4);
   await quantity(page, "angle", 90);
-  await volume(page, 13 * Math.PI);
+  await volume(page, ((xMax ** 2 + xMin ** 2) * height * Math.PI) / 4);
   await page.getByRole("button", { name: "Accept revolution", exact: true }).click();
   assert.ok((await inspect(page)).document.bodies.length);
   console.log(

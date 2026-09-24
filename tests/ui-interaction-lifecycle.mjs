@@ -10,9 +10,15 @@ export async function interactionLifecycleRoute(page, name) {
     await page.keyboard.press("r");
     await drag(page, [-10, -5], [10, 5]);
     await page.keyboard.press("v");
-    if (kind === "bow") await click(page, -5, -5);
-    if (kind === "fillet") await click(page, -10, -5);
     const original = (await inspect(page)).document;
+    const edge = original.sketches[0].curves[0];
+    if (kind === "bow") await click(page, edge.a.x + (edge.b.x - edge.a.x) * 0.25, edge.a.y);
+    if (kind === "fillet") await click(page, edge.a.x, edge.a.y);
+    const geometryHistory = async () =>
+      (await page.evaluate(() => window.freacHistory()))
+        .filter((entry) => entry.outcome === "changed" && entry.operation.kind !== "selection")
+        .map((entry) => entry.id);
+    const beforeHistory = await geometryHistory();
     for (const interruption of ["capture", "blur", "Escape"]) {
       const start = await startPoint(page, kind);
       const end = kind === "pointer" ? await at(page, 3, 1) : { x: start.x + 8, y: start.y - 8 };
@@ -46,10 +52,16 @@ export async function interactionLifecycleRoute(page, name) {
       assert.deepEqual(after.document, original, `${kind}: ${interruption} preserves geometry`);
       assert.equal(after.preview, null);
       assert.equal(await toolEnabled(page, "redo", "redo"), false);
+      assert.deepEqual(
+        await geometryHistory(),
+        beforeHistory,
+        "Cancelled edit adds no geometry Undo",
+      );
     }
     await chooseTool(page, "circle", "circle");
     assert.equal((await inspect(page)).tool, "circle", "Tool change works after cleanup");
-    await chooseTool(page, "undo", "undo");
+    for (let i = 0; i < 8 && (await inspect(page)).document.sketches.length; i++)
+      await chooseTool(page, "undo", "undo");
     assert.equal((await inspect(page)).document.sketches.length, 0, "Cancelled edits add no Undo");
   }
   await numericOwnership(page);
@@ -74,9 +86,10 @@ async function numericOwnership(page) {
   await page.keyboard.press("r");
   await drag(page, [-10, -5], [10, 5]);
   const original = (await inspect(page)).document;
+  const corner = original.sketches[0].curves[0].a;
   const width = page.getByRole("textbox", { name: "Width", exact: true });
   await width.focus();
-  await click(page, -10, -5);
+  await click(page, corner.x, corner.y);
   const clicked = await inspect(page);
   assert.ok(clicked.selectedPoint, "Unchanged field does not swallow the next point click");
   await click(page, 0, 0);

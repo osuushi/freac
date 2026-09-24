@@ -60,7 +60,8 @@ export async function selectionHistoryRoute(page, name) {
   await page.mouse.dblclick(p.x, p.y);
   const double = await targets(page);
   await click(page, 25, 20);
-  await history(page);
+  for (let i = 0; i < 3 && JSON.stringify(await targets(page)) !== JSON.stringify(double); i++)
+    await history(page);
   assert.deepEqual(await targets(page), double);
   await history(page);
   await history(page, true);

@@ -23,7 +23,7 @@ async function action(page, name) {
 const length = (c) => Math.hypot(c.b.x - c.a.x, c.b.y - c.a.y);
 async function axisRoute(page, name) {
   await reset(page);
-  await action(page, "Sketch on XY");
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [0, 0], [8, 6]);
   await action(page, "Constrain horizontal");
@@ -51,7 +51,7 @@ async function axisRoute(page, name) {
 }
 async function pairRoute(page, name) {
   await reset(page);
-  await action(page, "Sketch on XY");
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   // Existing reference first in storage; newly drawn subject is first in selection.
   await page.keyboard.press("l");
   await drag(page, [-10, 10], [-2, 16]);

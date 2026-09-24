@@ -26,10 +26,10 @@ export async function lineRoute(page, name) {
   await click(page, -5, 0);
   assert.deepEqual((await inspect(page)).selection, [sketch.curves[0].id]);
   await click(page, 0, 0);
-  await drag(page, [0, 0], [0, 5]);
+  await drag(page, [0, 0], [0, 6]);
   sketch = (await inspect(page)).document.sketches[0];
   assert.equal(sketch.curves.length, 2);
-  pointEquals(sketch.curves[0].b, [0, 5]);
+  pointEquals(sketch.curves[0].b, [0, 6]);
   pointEquals(sketch.curves[1].a, [10, 10]);
   await page.getByRole("textbox", { name: "Length", exact: true }).fill("20");
   await page.keyboard.press("Tab");

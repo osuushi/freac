@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import * as THREE from "three";
+import { orient } from "./ui-blend-edit.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -22,15 +23,8 @@ export async function cylinderSeamRoute(page, name) {
   const seam = body.edges.find((e) => e.curve?.kind === "line");
   assert.ok(seam);
   const midpoint = [0, 1, 2].map((i) => (seam.points[i] + seam.points[i + 3]) / 2);
-  const before = (await inspect(page)).camera;
-  const offset = new THREE.Vector3(...before.position).sub(new THREE.Vector3(...before.target));
-  const azimuth = Math.atan2(-before.up[1], -before.up[0]);
   const yaw = Math.atan2(midpoint[1], midpoint[0]);
-  const polar = Math.acos(offset.z / offset.length());
-  await page.mouse.move(1000, 650);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel((yaw - azimuth) / 0.007, (polar - 1.2) / 0.007);
-  await page.keyboard.up("Alt");
+  await orient(page, [Math.cos(yaw) * Math.sin(1.2), Math.sin(yaw) * Math.sin(1.2), Math.cos(1.2)]);
   const { camera } = await inspect(page);
   const box = await page.locator("canvas").boundingBox();
   const h = camera.height / 2,

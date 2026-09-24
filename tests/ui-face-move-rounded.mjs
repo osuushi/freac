@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import * as THREE from "three";
 import { openDocument } from "./native-documents.mjs";
+import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { close, inspect, reset } from "./ui-helpers.mjs";
@@ -22,20 +23,13 @@ async function selectRounded(page, ids) {
       normal = new THREE.Vector3(...face.plane.u).cross(new THREE.Vector3(...face.plane.v));
     }
     if (Math.abs(normal.z) < 0.1) center.z = face.signature[5];
-    const { camera } = await inspect(page);
-    const offset = new THREE.Vector3(...camera.position).sub(new THREE.Vector3(...camera.target));
-    const polar = Math.acos(offset.z / offset.length());
-    const azimuth =
-      Math.hypot(offset.x, offset.y) < offset.length() * 1e-6
-        ? Math.atan2(-camera.up[1], -camera.up[0])
-        : Math.atan2(offset.y, offset.x);
     const yaw = Math.atan2(normal.y, normal.x),
       pitch = Math.min(Math.acos(normal.z), 0.6);
-    await page.mouse.move(1000, 650);
-    await page.keyboard.down("Alt");
-    await page.mouse.wheel((yaw - azimuth) / 0.007, (polar - pitch) / 0.007);
-    await page.keyboard.up("Alt");
-    await inspect(page);
+    await orient(page, [
+      Math.cos(yaw) * Math.sin(pitch),
+      Math.sin(yaw) * Math.sin(pitch),
+      Math.cos(pitch),
+    ]);
     await worldClick(page, center.toArray(), i > 0);
     const state = await inspect(page);
     if (!state.modelingSelection.some((s) => s.face === ids[i]))

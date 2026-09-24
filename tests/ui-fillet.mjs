@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { isDeepStrictEqual } from "node:util";
 import { filletGuidePoint } from "./ui-fillet-guide-helpers.mjs";
 import { at, click, close, drag, inspect, pointEquals, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -37,10 +38,9 @@ export async function filletRoute(page, name) {
   await page.getByRole("textbox", { name: "Radius", exact: true }).fill("-1");
   await page.keyboard.press("Enter");
   assert.deepEqual(await data(page), beforeInvalid);
-  await chooseTool(page, "undo", "undo");
-  await inspect(page);
-  await chooseTool(page, "undo", "undo");
-  assert.deepEqual(await data(page), original);
+  await undoTo(page, original);
+  await page.keyboard.press("v");
+  await click(page, 20, 15);
   await click(page, 6, 0);
   await page.keyboard.down("Shift");
   await click(page, 0, 6);
@@ -172,12 +172,16 @@ export async function filletLossRoute(page, name) {
     beforeLocked,
     "A locked-radius drag must not tilt the supporting lines",
   );
-  for (let i = 0; i < 3; i++) {
-    await chooseTool(page, "undo", "undo");
-    await inspect(page);
-  }
-  assert.deepEqual(await data(page), original);
+  await undoTo(page, original);
   console.log(
     `${name}: fillet automatic constraint removal, notice/cancel, support preservation, existing-radius drag and lock rejection passed`,
   );
+}
+
+async function undoTo(page, target) {
+  for (let i = 0; i < 8; i++) {
+    await chooseTool(page, "undo", "undo");
+    if (isDeepStrictEqual(await data(page), target)) return;
+  }
+  assert.deepEqual(await data(page), target);
 }

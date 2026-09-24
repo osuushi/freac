@@ -14,9 +14,10 @@ export async function curvedRegionRoute(page, name) {
   const blank = await pixels(page, samples);
   await page.keyboard.press("c");
   await drag(page, [0, 0], [13, 0]);
+  const radius = (await inspect(page)).document.sketches[0].curves[0].radius;
   await page.keyboard.press("l");
-  await drag(page, [0, 13], [20, 20]);
-  await drag(page, [20, 20], [13, 0]);
+  await drag(page, [0, radius], [20, 20]);
+  await drag(page, [20, 20], [radius, 0]);
   await page.keyboard.press("Escape");
   let filled = await pixels(page, samples);
   tinted(blank[0], filled[0]);

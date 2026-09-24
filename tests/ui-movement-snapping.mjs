@@ -48,33 +48,33 @@ export async function rectangleEdgeRoute(page, name) {
     await reset(page);
     await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await page.keyboard.press("r");
-    await drag(page, [-10, -5], [10, 5]);
+    await drag(page, [-10, -6], [10, 6]);
     await page.keyboard.press("v");
     const original = (await inspect(page)).document;
     for (const [from, to, a, c] of [
       [
-        [-5, -5],
-        [-5, -8],
-        [-10, -8],
-        [10, 5],
+        [-4, -6],
+        [-4, -10],
+        [-10, -10],
+        [10, 6],
       ],
       [
-        [10, -2.5],
-        [13, -2.5],
-        [-10, -5],
-        [13, 5],
+        [10, -2],
+        [14, -2],
+        [-10, -6],
+        [14, 6],
       ],
       [
-        [5, 5],
-        [5, 8],
-        [-10, -5],
-        [10, 8],
+        [4, 6],
+        [4, 10],
+        [-10, -6],
+        [10, 10],
       ],
       [
-        [-10, 2.5],
-        [-13, 2.5],
-        [-13, -5],
-        [10, 5],
+        [-10, 2],
+        [-14, 2],
+        [-14, -6],
+        [10, 6],
       ],
     ]) {
       await click(page, 25, 20);

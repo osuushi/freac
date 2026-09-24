@@ -5,9 +5,14 @@ export async function constrainedBowRoute(page, name) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
-  await drag(page, [-10, -5], [10, 5]);
+  await drag(page, [-10, -6], [10, 6]);
+  const bottom = (await inspect(page)).document.sketches[0].curves.find(
+    (curve) => Math.abs(curve.a.y - curve.b.y) < 1e-6 && curve.a.y < 0,
+  );
+  assert.ok(bottom);
   await chooseTool(page, "select", "select");
-  await click(page, -5, -5);
+  await click(page, bottom.a.x + 0.3 * (bottom.b.x - bottom.a.x), bottom.a.y);
+  await page.locator(".bow-handle").first().waitFor({ state: "visible" });
   let handle = await page.locator(".bow-handle").first().boundingBox();
   await page.mouse.click(handle.x + handle.width / 2, handle.y + handle.height / 2);
   await page.getByRole("textbox", { name: "Bow radius" }).fill("15");

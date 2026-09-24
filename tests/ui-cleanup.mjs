@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { isDeepStrictEqual } from "node:util";
 import { openDocument } from "./native-documents.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
@@ -18,6 +19,17 @@ async function clean(page) {
 async function undo(page) {
   await chooseTool(page, "undo", "undo");
   return inspect(page);
+}
+async function undoTo(page, target) {
+  const depth = (await page.evaluate(() => window.freacHistory())).length;
+  for (let i = 0; i < depth; i++) {
+    if (isDeepStrictEqual((await inspect(page)).document, target)) return;
+    await undo(page);
+  }
+  assert.ok(
+    isDeepStrictEqual((await inspect(page)).document, target),
+    "Undo reaches target geometry",
+  );
 }
 export async function createStack(page) {
   await reset(page);
@@ -50,6 +62,28 @@ export async function createStack(page) {
     }
     assert.equal((await inspect(page)).document.bodies.length, i + 1);
   }
+}
+async function cleanupSeamRoutes(page, joined, original, fixturePath) {
+  // Actual edge and face clicks: each cleans just one upper side seam.
+  await orient(page, [0.3, -1, 0.5]);
+  const body = joined.bodies[0];
+  const seamZ = fixturePath ? 25 : 20;
+  const edgePoint = await project(page, [0, -10, seamZ]);
+  await page.mouse.click(edgePoint.x, edgePoint.y);
+  assert.equal((await inspect(page)).modelingSelection[0]?.kind, "edge");
+  let state = await clean(page);
+  assert.equal(state.preview.bodies[0].faces.length, 13);
+  await page.getByRole("button", { name: "Accept cleanup", exact: true }).click();
+  assert.equal((await inspect(page)).document.bodies[0].faces.length, 13);
+  await undoTo(page, joined);
+  const facePoint = await project(page, [0, -10, (seamZ + body.bounds[5]) / 2]);
+  await page.mouse.click(facePoint.x, facePoint.y);
+  assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
+  state = await clean(page);
+  assert.equal(state.preview.bodies[0].faces.length, 13);
+  await page.keyboard.press("Escape");
+  // Undo through selection history to the pre-Boolean geometry.
+  await undoTo(page, original);
 }
 export async function cleanupRoute(page, name, electron, fixturePath) {
   if (fixturePath) {
@@ -84,26 +118,7 @@ export async function cleanupRoute(page, name, electron, fixturePath) {
   state = await inspect(page);
   assert.deepEqual(state.document, joined);
   assert.deepEqual(state.modelingSelection, joinedSelection, "Escape keeps the selection");
-  // Actual edge and face clicks: each cleans just one upper side seam.
-  await orient(page, [0.3, -1, 0.5]);
-  const body = joined.bodies[0];
-  const seamZ = fixturePath ? 25 : 20;
-  const edgePoint = await project(page, [0, -10, seamZ]);
-  await page.mouse.click(edgePoint.x, edgePoint.y);
-  assert.equal((await inspect(page)).modelingSelection[0]?.kind, "edge");
-  state = await clean(page);
-  assert.equal(state.preview.bodies[0].faces.length, 13);
-  await page.getByRole("button", { name: "Accept cleanup", exact: true }).click();
-  assert.equal((await inspect(page)).document.bodies[0].faces.length, 13);
-  assert.deepEqual((await undo(page)).document, joined);
-  const facePoint = await project(page, [0, -10, (seamZ + body.bounds[5]) / 2]);
-  await page.mouse.click(facePoint.x, facePoint.y);
-  assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
-  state = await clean(page);
-  assert.equal(state.preview.bodies[0].faces.length, 13);
-  await page.keyboard.press("Escape");
-  // One Undo reverts Boolean + cleanup together.
-  assert.deepEqual((await undo(page)).document, original);
+  await cleanupSeamRoutes(page, joined, original, fixturePath);
   await selectBodies(page, 3);
   await chooseTool(page, "union", "union");
   await inspect(page);
@@ -114,14 +129,20 @@ export async function cleanupRoute(page, name, electron, fixturePath) {
   assert.equal(state.document.bodies[0].edges.length, 12);
   assert.ok(Math.abs(state.document.bodies[0].volume - volume) < 1e-6);
   const saved = state.document;
-  assert.deepEqual((await undo(page)).document, original);
+  await undoTo(page, original);
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, saved);
   await selectBodies(page, 1);
+  const geometryHistory = async () =>
+    (await page.evaluate(() => window.freacHistory()))
+      .filter((entry) => entry.outcome === "changed" && entry.operation.kind !== "selection")
+      .map((entry) => entry.id);
+  const beforeNoOp = await geometryHistory();
   state = await clean(page);
   assert.deepEqual(state.preview, saved);
   await page.keyboard.press("Enter");
-  assert.deepEqual((await undo(page)).document, original, "No-op cleanup adds no history");
+  assert.deepEqual(await geometryHistory(), beforeNoOp, "No-op cleanup adds no geometry history");
+  await undoTo(page, original);
   await chooseTool(page, "redo", "redo");
   await inspect(page);
   await page.screenshot({ path: `.cache/sketch-review/${name}-cleanup.png` });

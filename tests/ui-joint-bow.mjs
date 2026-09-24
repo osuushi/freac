@@ -3,7 +3,9 @@ import { at, click, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function clickGuide(page, index = 0) {
-  const box = await page.locator(".bow-handle").nth(index).boundingBox();
+  const guide = page.locator(".bow-handle").nth(index);
+  await guide.waitFor({ state: "visible" });
+  const box = await guide.boundingBox();
   assert.ok(box);
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 }

@@ -13,6 +13,7 @@ export async function cornerAngleRoute(page, name) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [0, 0], [10, 0]);
+  await page.keyboard.press("l");
   await drag(page, [0, 10], [0, 0], ["Shift"]); // Angle edits must not create links.
   await page.keyboard.press("v");
   await click(page, 0, 7);

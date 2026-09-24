@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { cleanupAvailabilityRoute, settledBroom } from "./ui-cleanup-availability.mjs";
 import { directionalWidgetRoute } from "./ui-directional-widget.mjs";
@@ -141,10 +142,6 @@ export async function circularFinish(page, name, mode = "fillet") {
   await inspect(page);
   assert.equal((await inspect(page)).preview.bodies[0].faces.length, 4);
   await page.getByRole("button", { name: `Accept ${mode}`, exact: true }).click();
-  await page.mouse.move(1050, 700);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel(40, -90);
-  await page.keyboard.up("Alt");
-  await inspect(page);
+  await orient(page, [0.5, 0.5, 1]);
   await page.screenshot({ path: `.cache/sketch-review/${name}-circular-${mode}.png` });
 }

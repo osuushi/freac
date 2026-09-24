@@ -22,9 +22,7 @@ async function navigation(page) {
     initial.target,
   );
   const panned = await page.evaluate(() => window.freacInspect().camera);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel(35, -20);
-  await page.keyboard.up("Alt");
+  await orient(page, [0.5, 0.5, 1]);
   await page.waitForFunction(
     (position) => window.freacInspect().camera.position.some((v, i) => v !== position[i]),
     panned.position,

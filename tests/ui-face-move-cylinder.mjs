@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { openDocument } from "./native-documents.mjs";
+import { orient } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { close, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -21,12 +22,8 @@ export async function cylinderFaceMoveRoute(page, name) {
   });
   await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
   const original = (await inspect(page)).document;
-  await page.mouse.move(1000, 650);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel(0, -50);
-  await page.keyboard.up("Alt");
-  await inspect(page);
-  await worldClick(page, [9, 10, 40]);
+  await orient(page, [0, 0.3, 1]);
+  await worldClick(page, [9, 0, 40]);
   assert.equal((await inspect(page)).modelingSelection[0]?.face, fixture.operation.faces[0].face);
   await page.keyboard.press("m");
   await page.getByRole("button", { name: "Move faces Y", exact: true }).click();

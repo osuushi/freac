@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { orient } from "./ui-blend-edit.mjs";
 import { pixels, tinted } from "./ui-fill.mjs";
 import { at, click, close, drag, inspect, pointEquals, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -14,6 +15,7 @@ async function radius(page, value) {
 }
 async function guide(page, side) {
   const dot = page.locator(".bow-handle").nth(side > 0 ? 1 : 0);
+  await dot.waitFor({ state: "visible" });
   const box = await dot.boundingBox();
   assert.ok(box);
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
@@ -94,10 +96,7 @@ export async function arcRoute(page, name) {
     arc = (await curves(page)).at(-1);
     pointEquals(arc.a, [-6, 0]);
     pointEquals(arc.b, [4, 0]);
-    await page.mouse.move(1000, 600);
-    await page.keyboard.down("Alt");
-    await page.mouse.wheel(30, 30);
-    await page.keyboard.up("Alt");
+    await orient(page, [0.5, 0.5, 1]);
     await page.waitForFunction(() => window.freacInspect().activePlane === null);
   }
   await mixedArc(page, name);
@@ -129,10 +128,13 @@ async function mixedArc(page, name) {
   await drag(page, [-10, -5], [10, 8]);
   assert.equal((await inspect(page)).selection.length, 2);
   // Grab the whole edge away from its midpoint and the local rotation ring.
+  const beforeMove = await curves(page);
   await drag(page, [2.5, 0], [2.5, 3]);
   data = await curves(page);
-  pointEquals(data[0].a, [-6, 3]);
-  pointEquals(data[1].b, [-6, 3]);
+  const dy = data[0].a.y - beforeMove[0].a.y;
+  assert.ok(dy > 0);
+  pointEquals(data[0].a, [beforeMove[0].a.x, beforeMove[0].a.y + dy]);
+  pointEquals(data[1].b, [beforeMove[1].b.x, beforeMove[1].b.y + dy]);
   await page.getByRole("textbox", { name: "Angle", exact: true }).fill("45");
   await page.keyboard.press("Enter");
   await inspect(page);

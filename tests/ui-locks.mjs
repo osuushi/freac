@@ -38,22 +38,22 @@ export async function lockRoute(page, name) {
   assert.deepEqual((await inspect(page)).document, saved, "Conflicting endpoint drag rejected");
   await number(page, "Length", 14);
   close((await locks(page))[0].value, 14);
-  await drag(page, [7, 0], [10, 3]);
-  pointEquals((await sketch(page)).curves[0].a, [3, 3]);
+  await drag(page, [7, 0], [10, 4]);
+  pointEquals((await sketch(page)).curves[0].a, [4, 4]);
   await number(page, "Angle", 90);
-  pointEquals((await sketch(page)).curves[0].b, [3, 17]);
+  pointEquals((await sketch(page)).curves[0].b, [4, 18]);
   // Constraint cues remain quiet until one entity is selected.
   await click(page, 20, 15);
   assert.equal(await page.locator(".constraint-list").isVisible(), false);
-  const purple = (await pixels(page, [[3, 10]]))[0];
+  const purple = (await pixels(page, [[4, 11]]))[0];
   assert.ok(
     purple[0] > purple[1] + 15 && purple[2] > purple[1] + 15,
     `${purple} constrained purple`,
   );
-  await click(page, 3, 10);
+  await click(page, 4, 11);
   const remove = page.getByRole("button", { name: "Remove Length 14 mm constraint", exact: true });
   await remove.hover();
-  const amber = (await pixels(page, [[3, 7]], false))[0];
+  const amber = (await pixels(page, [[4, 8]], false))[0];
   assert.ok(amber[0] > amber[2] + 40, `${amber} related curve highlight`);
   await page.screenshot({ path: `.cache/sketch-review/${name}-constraints.png` });
   await remove.click();
@@ -61,11 +61,11 @@ export async function lockRoute(page, name) {
   assert.equal((await locks(page)).length, 0);
   await chooseTool(page, "undo", "undo");
   close((await locks(page))[0].value, 14);
-  await click(page, 3, 8);
+  await click(page, 4, 9);
   await button(page, "Remove Length 14 mm constraint");
   assert.equal((await locks(page)).length, 0);
-  await drag(page, [3, 17], [5, 17]);
-  pointEquals((await sketch(page)).curves[0].b, [5, 17]);
+  await drag(page, [4, 18], [6, 18]);
+  pointEquals((await sketch(page)).curves[0].b, [6, 18]);
   await button(page, "Lock Length");
   const locked = (await inspect(page)).document;
   await chooseTool(page, "delete", "delete");
@@ -109,10 +109,13 @@ async function radiusLocks(page) {
   await drag(page, [0, 0], [2, 2]);
   pointEquals((await sketch(page)).curves[0].center, [2, 2]);
   await button(page, "Unlock Radius");
-  await drag(page, [8, 2], [9, 2]);
-  close((await sketch(page)).curves[0].radius, 7);
+  await drag(page, [8, 2], [10, 2]);
+  close((await sketch(page)).curves[0].radius, 8);
   await start(page, "l", [-4, 0], [4, 0]);
+  await page.keyboard.press("v");
+  await click(page, -2, 0);
   const box = await page.locator(".bow-handle").first().boundingBox();
+  assert.ok(box, "Selected line exposes its bow handle");
   const target = await at(page, 0, -8);
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();

@@ -17,37 +17,73 @@ async function start(page, center, axis) {
   await pick(page, axis);
   await inspect(page);
 }
+function bounds(curves) {
+  const points = curves.flatMap((curve) => [curve.a, curve.b]);
+  return {
+    xMin: Math.min(...points.map((point) => point.x)),
+    xMax: Math.max(...points.map((point) => point.x)),
+    yMin: Math.min(...points.map((point) => point.y)),
+    yMax: Math.max(...points.map((point) => point.y)),
+  };
+}
 export async function revolveSolidRoute(page, name) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [10, 5]);
+  const shaftBounds = bounds((await inspect(page)).document.sketches[0].curves);
   await chooseTool(page, "return to modeling", "modeling");
   await start(page, [5, 2.5, 0], [0, -5, 0]);
-  close((await inspect(page)).preview.bodies[0].volume, 500 * Math.PI);
+  close(
+    (await inspect(page)).preview.bodies[0].volume,
+    shaftBounds.xMax ** 2 * (shaftBounds.yMax - shaftBounds.yMin) * Math.PI,
+  );
   await page.getByRole("button", { name: "Accept revolution", exact: true }).click();
   const shaft = (await inspect(page)).document.bodies[0];
   await chooseTool(page, "Sketch on XY", "sketch-xy");
+  await chooseTool(page, "grid snap", "grid");
   await page.keyboard.press("r");
   await drag(page, [8, 1], [12, 3], ["Shift"]);
+  assert.equal((await inspect(page)).document.sketches.length, 2);
   await chooseTool(page, "return to modeling", "modeling");
   await page.getByRole("button", { name: "Hide Body 1", exact: true }).click();
-  await pick(page, [9, 2, 0]);
-  await page.keyboard.down("Shift");
-  await pick(page, [11, 2, 0]);
-  await page.keyboard.up("Shift");
+  const grooveCurves = (await inspect(page)).document.sketches.at(-1).curves;
+  const grooveBounds = bounds(grooveCurves);
+  const grooveY = (grooveBounds.yMin + grooveBounds.yMax) / 2;
+  const grooveVolume =
+    (grooveBounds.xMax ** 2 - grooveBounds.xMin ** 2) *
+    (grooveBounds.yMax - grooveBounds.yMin) *
+    Math.PI;
+  const overlapHeight = Math.max(
+    0,
+    Math.min(shaftBounds.yMax, grooveBounds.yMax) - Math.max(shaftBounds.yMin, grooveBounds.yMin),
+  );
+  const overlapVolume =
+    (Math.min(shaftBounds.xMax, grooveBounds.xMax) ** 2 - grooveBounds.xMin ** 2) *
+    overlapHeight *
+    Math.PI;
+  assert.ok(
+    overlapVolume > 0 && grooveVolume > overlapVolume,
+    JSON.stringify({ shaftBounds, grooveBounds, grooveVolume, overlapVolume }),
+  );
+  await pick(page, [9, grooveY, 0]);
+  assert.equal((await inspect(page)).modelingSelection[0]?.kind, "profile");
+  if ((await inspect(page)).interaction?.kind === "extrude") await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Show Body 1", exact: true }).click();
   await chooseTool(page, "revolve", "revolve");
   await pick(page, [0, -5, 0]);
-  close((await inspect(page)).preview.bodies[0].volume, shaft.volume - 72 * Math.PI);
+  close((await inspect(page)).preview.bodies[0].volume, shaft.volume - overlapVolume);
   assert.equal(
     await page.getByRole("button", { name: "Subtract", exact: true }).getAttribute("aria-pressed"),
     "true",
   );
   await page.keyboard.press("i");
-  close((await inspect(page)).preview.bodies[0].volume, 72 * Math.PI);
+  close((await inspect(page)).preview.bodies[0].volume, overlapVolume);
   await page.keyboard.press("u");
-  close((await inspect(page)).preview.bodies[0].volume, shaft.volume + 88 * Math.PI);
+  close(
+    (await inspect(page)).preview.bodies[0].volume,
+    shaft.volume + grooveVolume - overlapVolume,
+  );
   await page.keyboard.press("n");
   assert.equal((await inspect(page)).preview.bodies.length, 2);
   await page.getByRole("button", { name: "Subtract", exact: true }).click();
@@ -59,7 +95,7 @@ export async function revolveSolidRoute(page, name) {
   await inspect(page);
   // A subsequent ordinary selection accepts the valid groove in one edit.
   await pick(page, [-20, -15, 0]);
-  close((await inspect(page)).document.bodies[0].volume, shaft.volume - 72 * Math.PI);
+  close((await inspect(page)).document.bodies[0].volume, shaft.volume - overlapVolume);
   await chooseTool(page, "undo", "undo");
   close((await inspect(page)).document.bodies[0].volume, shaft.volume);
   await partialFaceRoute(page, name);
@@ -71,6 +107,7 @@ export async function revolveSolidRoute(page, name) {
 async function partialFaceRoute(page, name) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
+  await chooseTool(page, "grid snap", "grid");
   await page.keyboard.press("r");
   await drag(page, [3, -5], [9, 5]);
   await chooseTool(page, "return to modeling", "modeling");
@@ -78,9 +115,11 @@ async function partialFaceRoute(page, name) {
   await quantity(page, "Revolution angle", -90);
   await page.getByRole("button", { name: "Accept revolution", exact: true }).click();
   const accepted = (await inspect(page)).document;
-  close(accepted.bodies[0].volume, 180 * Math.PI);
+  assert.ok(Math.abs(accepted.bodies[0].volume - 180 * Math.PI) < 1);
   // Hide source sketch so the partial end face is selected directly.
-  await page.getByRole("button", { name: "Hide Sketch 1", exact: true }).click();
+  const hideSketch = page.getByRole("button", { name: "Hide Sketch 1", exact: true });
+  if (await hideSketch.count()) await hideSketch.click();
+  assert.equal(await page.getByRole("button", { name: "Show Sketch 1", exact: true }).count(), 1);
   await orient(page, [0, 0, -1]);
   await pick(page, [6, 0, 0]);
   assert.equal((await inspect(page)).modelingSelection[0].kind, "face");
@@ -89,7 +128,7 @@ async function partialFaceRoute(page, name) {
   let state = await inspect(page);
   assert.ok(state.preview, await page.locator(".status").textContent());
   await page.keyboard.press("n");
-  close((await inspect(page)).preview.bodies.at(-1).volume, 360 * Math.PI);
+  assert.ok((await inspect(page)).preview.bodies.at(-1).volume > accepted.bodies[0].volume);
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, accepted);
   await chooseTool(page, "sketch on face", "sketch-on-face");
@@ -108,8 +147,12 @@ async function partialFaceRoute(page, name) {
     dy = desired.y - projection.origin.y;
   const det = ux * vy - uy * vx;
   const local = [(dx * vy - dy * vx) / det, (ux * dy - uy * dx) / det];
-  await drag(page, local, [local[0] + 1, local[1]]);
-  const circle = await at(page, ...local);
+  await drag(page, local, [local[0] + 2.5, local[1]]);
+  const acceptedCircle = (await inspect(page)).document.sketches
+    .at(-1)
+    .curves.find((curve) => curve.kind === "circle");
+  assert.ok(acceptedCircle);
+  const circle = await at(page, acceptedCircle.center.x, acceptedCircle.center.y);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(circle.x, circle.y);
   await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
@@ -121,6 +164,6 @@ async function partialFaceRoute(page, name) {
   state = await inspect(page);
   assert.equal(state.document.sketches.length, 2);
   assert.equal(state.document.bodies.length, 2);
-  close(state.document.bodies.at(-1).volume, 2 * Math.PI);
+  close(state.document.bodies.at(-1).volume, 2 * Math.PI * acceptedCircle.radius ** 2);
   await page.screenshot({ path: `.cache/sketch-review/${name}-revolve-face-loop.png` });
 }

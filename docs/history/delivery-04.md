@@ -108,7 +108,7 @@ are not authorization. Current user requests determine active work. Do not appen
   The batch includes lightweight fused-point/Unfuse controls, automatic bow/trim conversion,
   bowing through incompatible line constraints, explicit constraint icons on the
   other participant, mixed point/edge selection and coincidence, Cmd/Ctrl+A,
-  an explicit Move tool (M), scroll-pan/Alt-scroll-orbit, and fillets directly on
+  an explicit Move tool (M), scroll-pan, and fillets directly on
   selected corners including rectangles, midpoint bow controls, edge-only rectangle
   dragging, and displacement-based grid snapping for movement. All 70 native/model
   tests, strict TypeScript/Biome, build, complete headless Chromium/WebKit and built

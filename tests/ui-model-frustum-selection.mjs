@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import * as THREE from "three";
+import { orient } from "./ui-blend-edit.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -37,10 +38,7 @@ export async function modelFrustumSelectionRoute(page, name) {
   await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).fill("5");
   await page.keyboard.press("Enter");
   await page.keyboard.press("Enter");
-  await page.mouse.move(1000, 650);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel(60, -80);
-  await page.keyboard.up("Alt");
+  await orient(page, [0.5, 0.5, 1]);
   const before = await inspect(page),
     box = await page.locator("canvas").boundingBox();
   assert.ok(box);

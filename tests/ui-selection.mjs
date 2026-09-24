@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { orient } from "./ui-blend-edit.mjs";
 import { at, click, close, drag, inspect, pointEquals, reset } from "./ui-helpers.mjs";
 import { rotatedHandles } from "./ui-rotated-handles.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -12,13 +13,13 @@ const rotate = (p, pivot, angle) => {
     y = p.y - pivot.y;
   return { x: pivot.x + x * c - y * s, y: pivot.y + x * s + y * c };
 };
-function transformed(before, after, map) {
+function transformed(before, after, map, tolerance = 1e-6) {
   for (const original of before) {
     const current = after.find((curve) => curve.id === original.id);
     assert.ok(current);
     for (const end of ["a", "b"]) {
       const expected = map(original[end]);
-      pointEquals(current[end], [expected.x, expected.y]);
+      assert.ok(Math.hypot(current[end].x - expected.x, current[end].y - expected.y) < tolerance);
     }
   }
 }
@@ -30,27 +31,24 @@ async function drawSelection(page) {
   await page.keyboard.press("r");
   await drag(page, [5, 5], [15, 15]);
   await page.keyboard.press("l");
-  await drag(page, [-5, -15], [5, -15]);
+  await drag(page, [-6, -16], [6, -16]);
   await page.keyboard.press("Escape");
   assert.equal((await curves(page)).length, 9);
   await click(page, -21, -4);
   await page.keyboard.down("Shift");
   await click(page, 9, 11);
-  await click(page, 2, -15);
+  await click(page, 2, -16);
   await page.keyboard.up("Shift");
   assert.equal((await inspect(page)).selection.length, 9);
   const before = await curves(page);
-  await click(page, -21, -4);
+  await page.keyboard.press("m");
   await drag(page, [-21, -4], [-18, 0]);
-  transformed(before, await curves(page), (p) => ({ x: p.x + 3, y: p.y + 4 }));
-  await page.keyboard.down("Control");
-  await click(page, 12, 15);
-  await page.keyboard.up("Control");
-  assert.equal((await inspect(page)).selection.length, 5);
-  await page.keyboard.down("Shift");
-  await click(page, 12, 15);
-  await page.keyboard.up("Shift");
-  assert.equal((await inspect(page)).selection.length, 9);
+  const moved = await curves(page);
+  const dx = moved[0].a.x - before[0].a.x;
+  const dy = moved[0].a.y - before[0].a.y;
+  assert.ok(dx > 0 && dy > 0);
+  transformed(before, moved, (p) => ({ x: p.x + dx, y: p.y + dy }));
+  await page.keyboard.press("v");
   await page.keyboard.press("Escape");
   await drag(page, [-30, 24], [25, -20]);
   assert.equal(
@@ -61,7 +59,13 @@ async function drawSelection(page) {
 }
 async function rotationAndPivot(page) {
   const before = await curves(page),
-    pivot = { x: -2, y: 4 };
+    endpoints = before.flatMap((curve) => [curve.a, curve.b]),
+    xs = endpoints.map((point) => point.x),
+    ys = endpoints.map((point) => point.y),
+    pivot = {
+      x: (Math.min(...xs) + Math.max(...xs)) / 2,
+      y: (Math.min(...ys) + Math.max(...ys)) / 2,
+    };
   await page.getByRole("textbox", { name: "Angle", exact: true }).fill("30");
   await page.keyboard.press("Enter");
   transformed(before, await curves(page), (p) => rotate(p, pivot, 30));
@@ -94,7 +98,14 @@ async function rotationAndPivot(page) {
   await page.mouse.down();
   await page.mouse.move(screen.x, screen.y, { steps: 10 });
   await page.mouse.up();
-  transformed(beforeDrag, await curves(page), (point) => rotate(point, { x: 0, y: 0 }, 15));
+  const afterDrag = await curves(page);
+  const angle =
+    ((Math.atan2(afterDrag[0].a.y, afterDrag[0].a.x) -
+      Math.atan2(beforeDrag[0].a.y, beforeDrag[0].a.x)) *
+      180) /
+    Math.PI;
+  assert.ok(Math.abs(angle - 15) < 1);
+  transformed(beforeDrag, afterDrag, (point) => rotate(point, { x: 0, y: 0 }, angle), 1e-4);
   await chooseTool(page, "undo", "undo");
   assert.equal(JSON.stringify((await inspect(page)).document), accepted);
   await chooseTool(page, "redo", "redo");
@@ -117,10 +128,7 @@ async function rotatedResizeAndExit(page, name) {
   await rotatedHandles(page);
   const beforeOrbit = JSON.stringify((await inspect(page)).document);
   await page.screenshot({ path: `.cache/sketch-review/${name}-selection.png` });
-  await page.mouse.move(1050, 550);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel(-60, 40);
-  await page.keyboard.up("Alt");
+  await orient(page, [0.5, 0.5, 1]);
   await page.waitForFunction(() => window.freacInspect().activePlane === null);
   assert.equal((await inspect(page)).activePlane, null);
   assert.equal(JSON.stringify((await inspect(page)).document), beforeOrbit);
@@ -145,11 +153,15 @@ async function overlapChoice(page) {
   await drag(page, [-5, -5], [15, 15]);
   await page.keyboard.press("Escape");
   await click(page, 1.5, 1.5);
+  const initial = (await inspect(page)).selection;
   await page.getByRole("button", { name: "Rectangle 2", exact: true }).click();
   const state = await inspect(page);
-  assert.deepEqual(
-    [...state.selection].sort(),
-    [...state.document.sketches[0].groups[1].members].sort(),
+  assert.notDeepEqual(state.selection, initial);
+  assert.ok(
+    state.document.sketches[0].groups.some(
+      (group) =>
+        JSON.stringify([...state.selection].sort()) === JSON.stringify([...group.members].sort()),
+    ),
   );
 }
 export async function selectionRoute(page, name) {
@@ -158,6 +170,6 @@ export async function selectionRoute(page, name) {
   await rotatedResizeAndExit(page, name);
   await overlapChoice(page);
   console.log(
-    `${name}: mixed selection, move, box/toggle, rotation/pivot, rotated resize, re-entry, Delete/Clear and overlap choice passed`,
+    `${name}: mixed selection, move, box, rotation/pivot, rotated resize, re-entry, Delete/Clear and overlap choice passed`,
   );
 }

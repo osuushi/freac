@@ -1,15 +1,13 @@
 import assert from "node:assert/strict";
 import * as THREE from "three";
+import { orient } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 
 export async function boldHiddenEdges(page, name) {
   const before = (await inspect(page)).camera;
   const offset = new THREE.Vector3(...before.position).sub(new THREE.Vector3(...before.target));
-  const polar = Math.acos(offset.z / offset.length());
-  await page.mouse.move(1000, 650);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel(0, (polar - 2.4) / 0.007);
-  await page.keyboard.up("Alt");
+  const yaw = Math.atan2(offset.y, offset.x);
+  await orient(page, [Math.cos(yaw) * Math.sin(2.4), Math.sin(yaw) * Math.sin(2.4), Math.cos(2.4)]);
   const { camera } = await inspect(page),
     bounds = await page.locator("canvas").boundingBox();
   const half = camera.height / 2,

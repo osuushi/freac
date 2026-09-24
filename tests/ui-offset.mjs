@@ -61,15 +61,15 @@ export async function offsetRoute(page, name) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
-  await drag(page, [0, 0], [5, 0]);
+  await drag(page, [0, 0], [6, 0]);
   await page.getByRole("button", { name: "Lock Radius", exact: true }).click();
   const original = await sketch(page);
   await number(page, -2);
   let result = await sketch(page);
   assert.equal(result.curves.length, 2);
-  close(result.curves[1].radius, 3);
+  close(result.curves[1].radius, 4);
   assert.deepEqual(result.curves[0], original.curves[0]);
-  await number(page, -3);
+  await number(page, -4);
   assert.deepEqual(await sketch(page), result);
   assert.equal(
     await page.getByRole("textbox", { name: "Offset distance" }).getAttribute("aria-invalid"),
@@ -82,7 +82,7 @@ export async function offsetRoute(page, name) {
   await offsetDrag(page, 2, 0);
   result = await sketch(page);
   assert.equal(result.curves.length, 3);
-  close(result.curves[2].radius, 5);
+  close(result.curves[2].radius, 6);
   await page.getByRole("textbox", { name: "Radius", exact: true }).fill("6");
   await page.keyboard.press("Enter");
   close((await sketch(page)).curves[2].radius, 6);
@@ -104,6 +104,7 @@ async function arcOffsets(page) {
     await chooseTool(page, "Sketch on XY", "sketch-xy");
     await page.keyboard.press("l");
     await drag(page, [-4, 0], [4, 0]);
+    await page.locator(".bow-handle").nth(1).waitFor({ state: "visible" });
     const guide = await page.locator(".bow-handle").nth(1).boundingBox();
     const target = await at(page, 0, height);
     await page.mouse.move(guide.x + guide.width / 2, guide.y + guide.height / 2);

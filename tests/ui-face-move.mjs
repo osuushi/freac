@@ -47,6 +47,7 @@ export async function faceMoveRoute(page, name, electron) {
   assert.deepEqual((await inspect(page)).document, original);
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, accepted);
+  await orient(page, [0.5, 0.5, 1]);
   await quantity(page, "Move faces Y", 1);
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, accepted);
@@ -84,6 +85,7 @@ export async function planarFaceMoveRoute(page, name, pocket = false, sides = 4,
   close(state.preview.bodies[0].volume, body.volume);
   await page.getByRole("button", { name: "Accept face movement", exact: true }).click();
   await inspect(page);
+  await orient(page, [0.5, 0.5, 1]);
   await quantity(page, "Rotate faces Z", 15);
   state = await inspect(page);
   assert.ok(state.preview, await page.getByRole("status").textContent());

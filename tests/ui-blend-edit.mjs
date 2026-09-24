@@ -95,7 +95,8 @@ export async function orient(page, normal) {
 
 async function selectSurface(page, face) {
   const { center, normal } = face.offsetHandle;
-  // Oblique view leaves the normal with a measurable screen projection.
+  // A selected body owns a transform box that can cover a narrow blend face.
+  await page.keyboard.press("Escape");
   await orient(page, [normal[0] - normal[1] * 0.6, normal[1] + normal[0] * 0.6, normal[2] + 0.3]);
   const p = await project(page, center);
   await page.mouse.click(p.x, p.y);
@@ -180,7 +181,7 @@ async function flatChamferDrag(page, name) {
   const normal = b.clone().sub(a).cross(c.clone().sub(a)).normalize().toArray();
   const target = { ...face, offsetHandle: { center: [-8, -8, 5], normal } };
   await selectSurface(page, target);
-  const state = await outwardDrag(page, "Offset faces", target);
+  const state = await outwardDrag(page, "Offset faces", target, 2);
   assert.ok(state.preview.bodies[0].volume > original.bodies[0].volume);
   assert.ok(
     Number(await page.getByRole("textbox", { name: "Face offset distance" }).inputValue()) > 0,

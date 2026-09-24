@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { close, inspect } from "./ui-helpers.mjs";
+import { orient } from "./ui-blend-edit.mjs";
+import { inspect } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function center(locator) {
@@ -53,15 +54,14 @@ export async function bodyAnchorRoute(page, name) {
   await page.keyboard.press("Enter");
   const rotated = (await inspect(page)).document.bodies[0];
   const body = before.document.bodies[0];
-  close(rotated.center[0], body.center[0] - 7);
-  close(rotated.center[1], body.center[1] + 1);
+  const pivotX = before.camera.target[0] + (moved.x - canvas.x - canvas.width / 2) / scale;
+  const pivotY = before.camera.target[1] - (moved.y - canvas.y - canvas.height / 2) / scale;
+  assert.ok(Math.abs(rotated.center[0] - (pivotX - (body.center[1] - pivotY))) < 1e-3);
+  assert.ok(Math.abs(rotated.center[1] - (pivotY + body.center[0] - pivotX)) < 1e-3);
   // One Undo restores the rotation: moving the anchor added no history entry.
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before.document);
-  await page.mouse.move(1000, 650);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel(60, -80);
-  await page.keyboard.up("Alt");
+  await orient(page, [0.5, 0.5, 1]);
   await assertHandleSpacing(page);
   await page.screenshot({ path: `.cache/sketch-review/${name}-body-anchor.png` });
   await page.keyboard.press("Escape");

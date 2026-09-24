@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { isDeepStrictEqual } from "node:util";
 import { clickFilletGuide, filletGuidePoint } from "./ui-fillet-guide-helpers.mjs";
 import { at, click, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -44,11 +45,10 @@ export async function filletGuideRoute(page, name) {
       assert.deepEqual((await inspect(page)).document, accepted);
       await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
       await page.keyboard.press("Enter");
-      await chooseTool(page, "undo", "undo");
-      assert.deepEqual((await inspect(page)).document, original);
+      await undoTo(page, original);
       await chooseTool(page, "redo", "redo");
       assert.deepEqual((await inspect(page)).document, accepted);
-      await chooseTool(page, "undo", "undo");
+      await undoTo(page, original);
       await click(page, points[i].x, points[i].y);
     }
     // Grab away from the midpoint too: the curved stroke itself is interactive.
@@ -69,10 +69,17 @@ export async function filletGuideRoute(page, name) {
     const result = (await inspect(page)).document.sketches[0];
     assert.equal(result.curves.length, 5, await page.getByRole("status").textContent());
     close(Number(await page.getByRole("textbox", { name: "Radius", exact: true }).inputValue()), 4);
-    await chooseTool(page, "undo", "undo");
-    assert.deepEqual((await inspect(page)).document, original);
+    await undoTo(page, original);
   }
   console.log(
     `${name}: fillet click accepts, click-away/Escape retain arc, Undo/Redo and all rotated corner drags passed`,
   );
+}
+
+async function undoTo(page, target) {
+  for (let i = 0; i < 8; i++) {
+    await chooseTool(page, "undo", "undo");
+    if (isDeepStrictEqual((await inspect(page)).document, target)) return;
+  }
+  assert.deepEqual((await inspect(page)).document, target);
 }

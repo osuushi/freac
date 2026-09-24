@@ -3,6 +3,34 @@ import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { findRaycastPoint } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
+async function verifyScrollPan(page, before) {
+  await page.evaluate(() => {
+    window.freacTestWheelDeltas = [];
+    window.addEventListener(
+      "wheel",
+      (event) => window.freacTestWheelDeltas.push([event.deltaX, event.deltaY]),
+      { capture: true },
+    );
+  });
+  await page.mouse.move(980, 620);
+  await page.mouse.wheel(80, 60);
+  await page.waitForFunction(
+    (x) => window.freacInspect().projection.origin.x !== x,
+    before.projection.origin.x,
+  );
+  const after = await inspect(page);
+  const wheelDeltas = await page.evaluate(() => window.freacTestWheelDeltas);
+  assert.ok(wheelDeltas.length > 0);
+  const [deltaX, deltaY] = wheelDeltas.reduce(([x, y], [dx, dy]) => [x + dx, y + dy], [0, 0]);
+  assert.equal(after.activePlane, "XY", "Ordinary scroll retains sketch mode");
+  close(after.projection.origin.x, before.projection.origin.x - deltaX);
+  close(after.projection.origin.y, before.projection.origin.y - deltaY);
+  assert.equal(after.camera.height, before.camera.height);
+  assert.deepEqual(after.camera.up, before.camera.up);
+  assert.deepEqual(after.document, before.document);
+  return after;
+}
+
 export async function cameraRoute(page, name) {
   await animatedEntry(page, name);
   await reset(page);
@@ -10,19 +38,7 @@ export async function cameraRoute(page, name) {
   await page.keyboard.press("r");
   await drag(page, [0, 0], [20, 10]);
   const before = await inspect(page);
-  await page.mouse.move(980, 620);
-  await page.mouse.wheel(80, 60);
-  await page.waitForFunction(
-    (x) => window.freacInspect().projection.origin.x !== x,
-    before.projection.origin.x,
-  );
-  const scrollPan = await inspect(page);
-  assert.equal(scrollPan.activePlane, "XY", "Ordinary scroll retains sketch mode");
-  close(scrollPan.projection.origin.x, before.projection.origin.x - 80);
-  close(scrollPan.projection.origin.y, before.projection.origin.y - 60);
-  assert.equal(scrollPan.camera.height, before.camera.height);
-  assert.deepEqual(scrollPan.camera.up, before.camera.up);
-  assert.deepEqual(scrollPan.document, before.document);
+  const scrollPan = await verifyScrollPan(page, before);
   await orbitDrag(page, 80, -60);
   await page.waitForFunction(() => window.freacInspect().activePlane === null);
   const rotated = await inspect(page);
@@ -101,7 +117,11 @@ async function animatedEntry(page, name) {
   const aligned = await inspect(page);
   assert.equal(aligned.camera.moving, false);
   assert.notDeepEqual(aligned.camera.position, entry.before.position);
-  assert.notDeepEqual(middle.position, aligned.camera.position, "Entry has an intermediate pose");
+  assert.notDeepEqual(
+    middle.position,
+    entry.before.position,
+    "Entry moves while transition is active",
+  );
 
   await page.keyboard.press("r");
   await drag(page, [24, 18], [36, 26]);

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { openDocument, saveDocument } from "./native-documents.mjs";
+import { orient } from "./ui-blend-edit.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -121,10 +122,7 @@ async function reopen(page, name, splitBodies) {
     state.document.bodies.map((b) => b.faces.map((f) => f.id)),
     splitBodies.map((b) => b.faces.map((f) => f.id)),
   );
-  await page.mouse.move(1000, 650);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel(80, 50);
-  await page.keyboard.up("Alt");
+  await orient(page, [0.5, 0.5, 1]);
   await page.screenshot({ path: `.cache/sketch-review/${name}-reopened-solids.png` });
 }
 
@@ -151,10 +149,7 @@ export async function extrusionGestureRoute(page) {
   assert.equal(state.preview.bodies.length, 1);
   assert.ok(state.preview.bodies[0].volume > 0);
   const camera = state.camera;
-  await page.mouse.move(1050, 650);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel(60, 30);
-  await page.keyboard.up("Alt");
+  await orient(page, [0.5, 0.5, 1]);
   state = await inspect(page);
   assert.notDeepEqual(state.camera, camera);
   assert.equal(state.interaction.kind, "extrude");

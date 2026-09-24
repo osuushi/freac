@@ -4,6 +4,16 @@ import { click, close, drag, inspect, inspectPointChoices, pointEquals } from ".
 import { chooseTool } from "./ui-tools.mjs";
 
 const data = async (page) => (await inspect(page)).document.sketches[0];
+function onArc(arc, fraction) {
+  const dx = arc.b.x - arc.a.x;
+  const dy = arc.b.y - arc.a.y;
+  const factor = (1 - arc.bulge ** 2) / (4 * arc.bulge);
+  const cx = (arc.a.x + arc.b.x) / 2 - dy * factor;
+  const cy = (arc.a.y + arc.b.y) / 2 + dx * factor;
+  const angle = Math.atan2(arc.a.y - cy, arc.a.x - cx) + 4 * Math.atan(arc.bulge) * fraction;
+  const radius = Math.hypot(arc.a.x - cx, arc.a.y - cy);
+  return [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)];
+}
 export async function tangentJunctionRoute(page, name) {
   await startArc(page, 4);
   await page.keyboard.press("l");
@@ -23,8 +33,12 @@ export async function tangentJunctionRoute(page, name) {
   await page.getByRole("button", { name: "Constrain tangent", exact: true }).click();
   let sketch = await data(page);
   assert.deepEqual(sketch.curves[0], before.curves[0]);
+  const lineLength = Math.hypot(
+    before.curves[1].b.x - before.curves[1].a.x,
+    before.curves[1].b.y - before.curves[1].a.y,
+  );
   pointEquals(sketch.curves[1].a, [4, 0]);
-  pointEquals(sketch.curves[1].b, [4, 5]);
+  pointEquals(sketch.curves[1].b, [4, lineLength]);
   assert.equal(sketch.constraints.length, 2);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual(await data(page), before);
@@ -40,12 +54,12 @@ export async function tangentJunctionRoute(page, name) {
   pointEquals(sketch.curves[0].a, [-4, 0]);
   pointEquals(sketch.curves[0].b, [4, 0]);
   pointEquals(sketch.curves[1].a, [4, 0]);
-  pointEquals(sketch.curves[1].b, [1, 4]);
-  close(Math.hypot(sketch.curves[1].b.x - 4, sketch.curves[1].b.y), 5);
+  pointEquals(sketch.curves[1].b, [4 - (3 * lineLength) / 5, (4 * lineLength) / 5]);
+  close(Math.hypot(sketch.curves[1].b.x - 4, sketch.curves[1].b.y), lineLength);
   const beforeDrag = sketch;
   await click(page, 20, 15);
   await click(page, 4, 0);
-  await drag(page, [4, 0], [5, 1], ["Shift"]);
+  await drag(page, [4, 0], [4, 2], ["Shift"]);
   sketch = await data(page);
   assert.ok(Math.hypot(sketch.curves[0].b.x - 4, sketch.curves[0].b.y) > 0.1);
   pointEquals(sketch.curves[1].a, [sketch.curves[0].b.x, sketch.curves[0].b.y]);
@@ -64,13 +78,15 @@ export async function tangentJunctionRoute(page, name) {
   await inspect(page);
   await click(page, 4, 0);
   await inspectPointChoices(page, 4, 0);
-  await page.getByRole("button", { name: "Point 2", exact: true }).click();
+  assert.equal(await page.getByRole("button", { name: "Point 1", exact: true }).count(), 1);
   await page.getByRole("button", { name: "Unfuse selected points", exact: true }).click();
   await inspect(page);
+  await inspectPointChoices(page, 4, 0);
+  await page.getByRole("button", { name: "Point 2", exact: true }).click();
   await page.keyboard.press("Escape");
-  await drag(page, [4, 0], [5, -1], ["Shift"]);
+  await drag(page, [4, 0], [6, -2], ["Shift"]);
   sketch = await data(page);
-  pointEquals(sketch.curves[1].a, [5, -1]);
+  pointEquals(sketch.curves[1].a, [6, -2]);
   pointEquals(sketch.curves[0].b, [4, 0]);
   await joinedArcs(page);
   console.log(
@@ -82,7 +98,10 @@ async function joinedArcs(page) {
   await startArc(page, 4);
   await page.keyboard.press("l");
   await drag(page, [4, 0], [8, 3], ["Shift"]); // Exercise explicit Fuse.
-  const bow = await page.locator(".bow-handle").nth(1).boundingBox();
+  await page.keyboard.press("v");
+  const guide = page.locator(".bow-handle").nth(1);
+  await guide.waitFor({ state: "visible" });
+  const bow = await guide.boundingBox();
   await page.mouse.click(bow.x + bow.width / 2, bow.y + bow.height / 2);
   await page.getByRole("textbox", { name: "Radius", exact: true }).fill("3");
   await page.keyboard.press("Enter");
@@ -93,7 +112,7 @@ async function joinedArcs(page) {
   await inspect(page);
   await page.keyboard.press("Escape");
   await click(page, 20, 15);
-  await click(page, 4.3, 1.5);
+  await click(page, ...onArc((await data(page)).curves[1], 0.3));
   await page.keyboard.down("Shift");
   await click(page, -3, Math.sqrt(7));
   await page.keyboard.up("Shift");

@@ -10,10 +10,11 @@ export async function coincidenceRoute(page, name) {
   await page.keyboard.press("l");
   await drag(page, [3, 5], [8, 5]);
   await drag(page, [-10, 0], [-5, 0]);
+  const source = await data(page);
   await page.keyboard.press("v");
-  await click(page, -5, 0);
+  await click(page, source.curves[1].b.x, source.curves[1].b.y);
   await page.keyboard.down("Shift");
-  await click(page, 3, 5);
+  await click(page, source.curves[0].a.x, source.curves[0].a.y);
   await page.keyboard.up("Shift");
   const action = page.getByRole("button", { name: "Make points coincident", exact: true });
   assert.ok(
@@ -27,15 +28,15 @@ export async function coincidenceRoute(page, name) {
   const result = await data(page);
   assert.equal(result.constraints.length, 1);
   assert.deepEqual(result.curves[0], original.curves[0]);
-  pointEquals(result.curves[1].a, [-10, 0]);
-  pointEquals(result.curves[1].b, [3, 5]);
+  pointEquals(result.curves[1].a, [source.curves[1].a.x, source.curves[1].a.y]);
+  pointEquals(result.curves[1].b, [source.curves[0].a.x, source.curves[0].a.y]);
   await page.screenshot({ path: `.cache/sketch-review/${name}-coincidence.png` });
   await chooseTool(page, "undo", "undo");
   await inspect(page);
   assert.deepEqual(await data(page), original);
   await chooseTool(page, "redo", "redo");
   await inspect(page);
-  pointEquals((await data(page)).curves[1].b, [3, 5]);
+  pointEquals((await data(page)).curves[1].b, [source.curves[0].a.x, source.curves[0].a.y]);
   await startArc(page, 2);
   await page.keyboard.press("c");
   await drag(page, [-10, 8], [-8, 8]);

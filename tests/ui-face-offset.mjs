@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import * as THREE from "three";
+import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -41,6 +42,13 @@ export async function makePlate(page) {
   close(state.document.bodies[0].volume, (400 - Math.PI * 1.5 ** 2) * 5);
   return state.document;
 }
+async function verifiedOffsetReady(page) {
+  await page.waitForFunction(
+    () =>
+      !window.freacInspect().busy &&
+      !document.querySelector('.face-offset-widget [aria-label="Accept face offset"]')?.disabled,
+  );
+}
 async function planarOffset(page, name) {
   const original = await makePlate(page);
   await worldClick(page, [6, 6, 5]);
@@ -53,7 +61,7 @@ async function planarOffset(page, name) {
   close(state.preview.bodies[0].volume, (400 - Math.PI * 1.5 ** 2) * 7);
   await page.screenshot({ path: `.cache/sketch-review/${name}-planar-offset.png` });
   await input.fill("-10");
-  await inspect(page);
+  await verifiedOffsetReady(page);
   assert.equal(await page.getByRole("button", { name: "Accept face offset" }).isEnabled(), true);
   assert.ok(Number(await input.inputValue()) > -5);
   assert.equal(
@@ -96,11 +104,7 @@ async function planarOffset(page, name) {
 }
 async function holeOffset(page, name, electron, cleanup = false) {
   const original = await makePlate(page);
-  await page.mouse.move(1000, 650);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel(0, -50);
-  await page.keyboard.up("Alt");
-  await inspect(page);
+  await orient(page, [0, -Math.sin(0.35), Math.cos(0.35)]);
   await worldClick(page, [0, 1.5, 2.5]);
   let state = await inspect(page);
   const hole = original.bodies[0].faces.find((f) => f.cylinder);
@@ -115,7 +119,7 @@ async function holeOffset(page, name, electron, cleanup = false) {
   assert.deepEqual(state.document, original);
   await page.screenshot({ path: `.cache/sketch-review/${name}-hole-diameter.png` });
   await diameter.fill("0");
-  await inspect(page);
+  await verifiedOffsetReady(page);
   assert.equal(await page.getByRole("button", { name: "Accept face offset" }).isEnabled(), true);
   assert.ok(Number(await diameter.inputValue()) > 0);
   await diameter.fill("5");
@@ -162,11 +166,7 @@ async function holeOffset(page, name, electron, cleanup = false) {
 }
 async function sharedOffset(page, name) {
   const original = await makePlate(page);
-  await page.mouse.move(1000, 650);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel(0, -100);
-  await page.keyboard.up("Alt");
-  await inspect(page);
+  await orient(page, [0, -0.4, 1]);
   await worldClick(page, [6, 6, 5]);
   await worldClick(page, [6, -10, 2.5], true);
   assert.equal((await inspect(page)).modelingSelection.filter((t) => t.kind === "face").length, 2);

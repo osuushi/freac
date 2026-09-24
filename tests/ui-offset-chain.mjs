@@ -8,11 +8,14 @@ export async function offsetChainRoute(page, name) {
   for (const chamfer of [false, true]) {
     await roundedPlate(page);
     if (chamfer) {
+      await page.keyboard.press("Shift+F");
       await page.getByRole("button", { name: "Chamfer edges", exact: true }).click();
       await page.getByRole("textbox", { name: "Chamfer distance" }).fill("2");
       await inspect(page);
       await page.getByRole("button", { name: "Accept chamfer" }).click();
       await inspect(page);
+      await page.keyboard.press("Escape");
+      assert.equal((await inspect(page)).modelingSelection.length, 0);
     }
     const original = (await inspect(page)).document;
     await orient(page, [0.3, 1, 0.6]);
@@ -45,6 +48,8 @@ export async function offsetChainRoute(page, name) {
     await page.keyboard.press("Escape");
     assert.deepEqual((await inspect(page)).document, original);
     assert.equal((await inspect(page)).modelingSelection.length, 3);
+    await page.keyboard.press("Escape");
+    assert.equal((await inspect(page)).modelingSelection.length, 0);
     await page.mouse.click(point.x, point.y);
     assert.equal((await inspect(page)).modelingSelection.length, 1);
     const u = seed.plane.u,

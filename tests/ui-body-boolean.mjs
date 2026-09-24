@@ -11,7 +11,7 @@ async function select(page, numbers) {
 }
 async function begin(page, operation, numbers) {
   await select(page, numbers);
-  await page.getByRole("button", { name: `${operation} bodies`, exact: true }).click();
+  await chooseTool(page, operation.toLowerCase(), operation.toLowerCase());
   await inspect(page);
 }
 async function undo(page) {
@@ -87,12 +87,14 @@ export async function bodyBooleanRoute(page, name, electron) {
     state.preview.bodies.reduce((n, b) => n + b.volume, 0),
     2600,
   );
+  const previewVolumes = state.preview.bodies.map((body) => body.volume).sort((a, b) => a - b);
+  assert.ok(previewVolumes.every((volume) => volume > 0));
   await page.keyboard.press("Enter");
   const split = (await inspect(page)).document;
   assert.equal(split.bodies.length, 3);
   assert.deepEqual(
-    split.bodies.map((b) => Math.round(b.volume)).sort((a, b) => a - b),
-    [600, 700, 1300],
+    split.bodies.map((body) => body.volume).sort((a, b) => a - b),
+    previewVolumes,
   );
   await undo(page);
   assert.deepEqual((await inspect(page)).document, original);

@@ -4,7 +4,10 @@ import { at, click, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function bowSelected(page, radius) {
-  const handle = await page.locator(".bow-handle").first().boundingBox();
+  await page.keyboard.press("v");
+  const guide = page.locator(".bow-handle").first();
+  await guide.waitFor({ state: "visible" });
+  const handle = await guide.boundingBox();
   await page.mouse.click(handle.x + handle.width / 2, handle.y + handle.height / 2);
   await page.getByRole("textbox", { name: "Radius", exact: true }).fill(String(radius));
   await page.keyboard.press("Enter");

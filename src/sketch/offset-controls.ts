@@ -171,6 +171,9 @@ export class OffsetControls {
     if (!s || this.closing) return;
     s.amount = amount;
     try {
+      // A failed loop amount may need the native topology route, but a later
+      // amount can still have an analytic join. Recheck it on each preview.
+      if (s.target.loop) s.target.native = false;
       const sketch = offsetPreview(s.sketch, s.target, amount, s.ids, s.links);
       if (!sketch) {
         s.target.native = true;

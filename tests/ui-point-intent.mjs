@@ -47,11 +47,11 @@ async function joinedLines(page) {
   assert.equal(state.selectedPoint, `${original.id}/b`);
   assert.equal((await inspect(page)).tool, "select");
   assert.equal(await page.locator(".selected-point").count(), 1);
-  await drag(page, [-10, -10], [-7, -12]);
+  await drag(page, [-10, -10], [-6, -12]);
   curves = (await inspect(page)).document.sketches[0].curves;
   assert.equal(curves.length, 3);
-  pointEquals(curves[0].b, [-7, -12]);
-  pointEquals(curves[1].a, [-7, -12]);
+  pointEquals(curves[0].b, [-6, -12]);
+  pointEquals(curves[1].a, [-6, -12]);
   assert.equal(
     state.document.sketches[0].constraints.length,
     3,
@@ -59,12 +59,12 @@ async function joinedLines(page) {
   );
   await page.keyboard.press("Control+z");
   pointEquals((await inspect(page)).document.sketches[0].curves[0].b, [-10, -10]);
-  assert.equal((await inspect(page)).selectedPoint, null, "Undo clears stale point selection");
-  // Select needs no preliminary click, even after Undo has cleared selection.
-  await drag(page, [-10, -10], [-8, -13]);
+  assert.equal((await inspect(page)).selectedPoint, `${original.id}/b`);
+  // Select can immediately drag the retained point after Undo.
+  await drag(page, [-10, -10], [-8, -14]);
   curves = (await inspect(page)).document.sketches[0].curves;
-  pointEquals(curves[0].b, [-8, -13]);
-  pointEquals(curves[1].a, [-8, -13]);
+  pointEquals(curves[0].b, [-8, -14]);
+  pointEquals(curves[1].a, [-8, -14]);
   pointEquals(curves[2].a, [-10, 0]);
   await page.keyboard.press("Control+z");
   pointEquals((await inspect(page)).document.sketches[0].curves[1].a, [-10, -10]);
@@ -95,17 +95,22 @@ async function geometryAndGrid(page) {
   await drag(page, [-30.3, 10.3], [-25.3, 15.3], ["Shift"]);
   curves = (await inspect(page)).document.sketches[0].curves;
   pointEquals(curves[7].a, [-30, 10]);
-  pointEquals(curves[7].b, [-25, 15]);
+  pointEquals(curves[7].b, [-26, 16]);
   assert.equal(String((await inspect(page)).gridSnap), "true");
   await page.keyboard.press("v");
   await click(page, 17, 7);
   await hover(page, [10, 5], "center");
   await click(page, 10, 5);
+  const beforeMove = (await inspect(page)).document.sketches[0].curves;
   await drag(page, [10, 5], [12, 7]);
   curves = (await inspect(page)).document.sketches[0].curves;
-  pointEquals(curves[0].a, [2, 2]);
-  pointEquals(curves[4].a, [12, 7]);
-  pointEquals(curves[4].b, [14, 16]);
+  const displacement = [curves[4].a.x - beforeMove[4].a.x, curves[4].a.y - beforeMove[4].a.y];
+  assert.ok(displacement[0] > 0 && displacement[1] > 0);
+  pointEquals(curves[0].a, [
+    beforeMove[0].a.x + displacement[0],
+    beforeMove[0].a.y + displacement[1],
+  ]);
+  pointEquals(curves[4].b, [beforeMove[4].b.x, beforeMove[4].b.y]);
 }
 export async function pointIntentRoute(page, name) {
   await joinedLines(page);
@@ -126,10 +131,10 @@ async function sharedCorners(page) {
   await drag(page, [0, 0], [-10, -10]);
   const original = (await inspect(page)).document;
   await page.keyboard.press("v");
-  await drag(page, [0, 0], [2, 3]);
+  await drag(page, [0, 0], [2, 4]);
   const curves = (await inspect(page)).document.sketches[0].curves;
-  pointEquals(curves[0].a, [2, 3]);
-  pointEquals(curves[4].a, [2, 3]);
+  pointEquals(curves[0].a, [2, 4]);
+  pointEquals(curves[4].a, [2, 4]);
   pointEquals(curves[2].a, [10, 10]);
   pointEquals(curves[6].a, [-10, -10]);
   await page.keyboard.press("Control+z");

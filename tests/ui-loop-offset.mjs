@@ -8,7 +8,7 @@ export async function loopOffsetRoute(page, name) {
     await reset(page);
     await chooseTool(page, `Sketch on ${plane}`, `sketch-${plane.toLowerCase()}`);
     await page.keyboard.press("r");
-    await drag(page, plane === "XZ" ? [-10, 5] : [-10, -5], plane === "XZ" ? [10, -5] : [10, 5]);
+    await drag(page, plane === "XZ" ? [-10, 6] : [-10, -6], plane === "XZ" ? [10, -6] : [10, 6]);
     const before = (await inspect(page)).document.sketches[0];
     await page.getByRole("button", { name: "Offset loop", exact: true }).click();
     const input = page.getByRole("textbox", { name: "Offset distance", exact: true });
@@ -36,9 +36,9 @@ export async function loopOffsetRoute(page, name) {
     assert.deepEqual(result.groups, before.groups);
     for (const curve of result.curves.slice(4)) {
       close(Math.abs(curve.a.x), 12);
-      close(Math.abs(curve.a.y), 7);
+      close(Math.abs(curve.a.y), 8);
       close(Math.abs(curve.b.x), 12);
-      close(Math.abs(curve.b.y), 7);
+      close(Math.abs(curve.b.y), 8);
     }
     await chooseTool(page, "undo", "undo");
     assert.deepEqual((await inspect(page)).document.sketches[0], before);
@@ -53,11 +53,11 @@ export async function loopOffsetRoute(page, name) {
     const inward = (await inspect(page)).document.sketches[0];
     for (const curve of inward.curves.slice(8)) {
       close(Math.abs(curve.a.x), 8);
-      close(Math.abs(curve.a.y), 3);
+      close(Math.abs(curve.a.y), 4);
     }
     assert.equal(inward.curves.length, 12);
     await page.getByRole("button", { name: "Offset loop", exact: true }).click();
-    await page.getByRole("textbox", { name: "Offset distance" }).fill("-3");
+    await page.getByRole("textbox", { name: "Offset distance" }).fill("-4");
     await page.keyboard.press("Enter");
     assert.deepEqual((await inspect(page)).document.sketches[0], inward);
     assert.equal(
@@ -107,6 +107,7 @@ async function offsetArcRadius(page) {
 async function concaveArcCorner(page) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
+  await chooseTool(page, "grid snap", "grid");
   for (const [a, b, target] of [
     [
       [0, 0],
@@ -133,13 +134,14 @@ async function concaveArcCorner(page) {
   await page.keyboard.press("v");
   await drag(page, [-8, 18], [18, -8]);
   const before = (await inspect(page)).document;
+  assert.ok(Math.abs(before.sketches[0].curves[2].bulge + 0.6) < 0.01);
   await page.getByRole("button", { name: "Offset loop", exact: true }).click();
   const input = page.getByRole("textbox", { name: "Offset distance" });
   await input.fill("1");
   await page.keyboard.press("Enter");
   await page
     .getByRole("status")
-    .filter({ hasText: /no sharp intersection/ })
+    .filter({ hasText: /could not close a surviving section/ })
     .waitFor();
   assert.deepEqual((await inspect(page)).document, before);
   await input.fill("0.1");
@@ -166,22 +168,22 @@ async function curvedLoop(page, name) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   for (const [a, b, target] of [
     [
-      [-5, -3],
-      [5, -3],
+      [-6, -4],
+      [6, -4],
     ],
     [
-      [5, -3],
-      [5, 3],
-      [8, 0],
+      [6, -4],
+      [6, 4],
+      [10, 0],
     ],
     [
-      [5, 3],
-      [-5, 3],
+      [6, 4],
+      [-6, 4],
     ],
     [
-      [-5, 3],
-      [-5, -3],
-      [-8, 0],
+      [-6, 4],
+      [-6, -4],
+      [-10, 0],
     ],
   ]) {
     await page.keyboard.press("l");
@@ -189,10 +191,11 @@ async function curvedLoop(page, name) {
     if (target) await bow(page, target);
   }
   await page.keyboard.press("v");
-  await drag(page, [-12, 8], [12, -8]);
+  await page.keyboard.press("Control+a");
   const source = (await inspect(page)).document.sketches[0];
+  assert.equal((await inspect(page)).selection.length, 4);
   assert.equal(source.curves.filter((c) => c.kind === "arc").length, 2);
-  const blank = await pixels(page, [[-9.3, 0.4]]);
+  const blank = await pixels(page, [[-11, 0]]);
   const control = await page
     .getByRole("button", { name: "Offset loop", exact: true })
     .boundingBox();
@@ -212,25 +215,25 @@ async function curvedLoop(page, name) {
   assert.deepEqual(result.curves.slice(0, 4), source.curves);
   for (const arc of result.curves.slice(4).filter((c) => c.kind === "arc")) {
     close(arc.bulge, 1);
-    close(Math.hypot(arc.a.x - arc.b.x, arc.a.y - arc.b.y) / 2, 5);
+    close(Math.hypot(arc.a.x - arc.b.x, arc.a.y - arc.b.y) / 2, 6);
   }
-  tinted(blank[0], (await pixels(page, [[-9.3, 0.4]]))[0]);
+  tinted(blank[0], (await pixels(page, [[-11, 0]]))[0]);
   await page.screenshot({ path: `.cache/sketch-review/${name}-loop-offset.png` });
   const accepted = result;
   // Move the accepted loop as one selection, leaving the original profile intact.
-  await drag(page, [1, -5], [3, -6], ["Shift"]);
+  await drag(page, [1, -6], [3, -8], ["Shift"]);
   result = (await inspect(page)).document.sketches[0];
   assert.deepEqual(result.curves.slice(0, 4), source.curves);
   const bottom = result.curves[4],
-    dx = bottom.a.x + 5,
-    dy = bottom.a.y + 5;
+    dx = bottom.a.x + 6,
+    dy = bottom.a.y + 6;
   const state = await inspect(page),
     viewport = await page.getByLabel("Modeling viewport").boundingBox();
   // Pointer-down quantization in WebKit can shift the grabbed point by a pixel.
   // Check actual pointer accuracy separately from exact rigid geometry.
   assert.ok(Math.abs(dx - 2) < state.camera.height / viewport.height);
-  assert.ok(Math.abs(dy + 1) < state.camera.height / viewport.height);
-  pointEquals(bottom.b, [5 + dx, -5 + dy]);
+  assert.ok(Math.abs(dy + 2) < state.camera.height / viewport.height);
+  pointEquals(bottom.b, [6 + dx, -6 + dy]);
   for (const curve of result.curves.slice(4)) {
     const old = accepted.curves.find((c) => c.id === curve.id);
     pointEquals(curve.a, [old.a.x + dx, old.a.y + dy]);

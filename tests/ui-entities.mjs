@@ -13,7 +13,8 @@ export async function entitiesRoute(page, name) {
   await page.keyboard.press("l");
   await drag(page, [-8, 3], [8, 3]);
   const pick = await at(page, 5, -3);
-  const line = await at(page, 5, 3);
+  const lineY = (await inspect(page)).document.sketches[0].curves.at(-1).a.y;
+  const line = await at(page, 5, lineY);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(pick.x, pick.y);
   if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))

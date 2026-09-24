@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { openDocument, saveDocument } from "./native-documents.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
-import { at, click, drag, inspect, reset } from "./ui-helpers.mjs";
+import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 export async function projectionRoute(page, name) {
   await reset(page);
@@ -57,7 +57,7 @@ export async function projectionRoute(page, name) {
   assert.ok(!state.document.sketches.some((s) => s.curves.some((c) => c.kind === "bezier")));
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, accepted);
-  await projectActiveEdge(page, accepted, projected.id);
+  await projectActiveEdge(page, projected.id);
   await page.screenshot({ path: `.cache/sketch-review/${name}-projection.png` });
   await archive(page, name);
   console.log(
@@ -65,21 +65,45 @@ export async function projectionRoute(page, name) {
   );
 }
 
-async function projectActiveEdge(page, accepted, sketchId) {
+async function projectActiveEdge(page, sketchId) {
   let state = await inspect(page);
-  await page.keyboard.press("v");
-  await click(page, 15, 10);
+  const source = state.document.sketches.find((sketch) => sketch.id !== sketchId);
+  assert.ok(source);
+  const sourceIndex = state.document.sketches.indexOf(source) + 1;
+  const targetIndex = state.document.sketches.findIndex((sketch) => sketch.id === sketchId) + 1;
+  await chooseTool(page, "return to modeling", "modeling");
+  await page.getByRole("button", { name: `Select Sketch ${sourceIndex}`, exact: true }).click();
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("l");
+  // The rotated source line must lie below the active XY plane to remain pickable through clipping.
+  await drag(page, [10, -10], [16, -10]);
+  const editedSource = (await inspect(page)).document.sketches.find(
+    (sketch) => sketch.id === source.id,
+  );
+  const line = editedSource?.curves.find((curve) => curve.kind === "segment");
+  assert.ok(line);
+  const midpoint = [(line.a.x + line.b.x) / 2, (line.a.y + line.b.y) / 2];
+  const world = [0, 1, 2].map(
+    (axis) =>
+      editedSource.plane.origin[axis] +
+      editedSource.plane.u[axis] * midpoint[0] +
+      editedSource.plane.v[axis] * midpoint[1],
+  );
+  await chooseTool(page, "return to modeling", "modeling");
+  await page.getByRole("button", { name: `Select Sketch ${targetIndex}`, exact: true }).click();
+  await page.keyboard.press("Enter");
+  const beforeProjection = (await inspect(page)).document;
+  const beforeSegments = beforeProjection.sketches
+    .find((sketch) => sketch.id === sketchId)
+    .curves.filter((curve) => curve.kind === "segment").length;
   await chooseTool(page, "project", "project");
   await inspect(page);
-  const bottom = Math.min(
-    ...state.document.sketches[0].curves.flatMap((curve) => [curve.a.y, curve.b.y]),
-  );
-  const edge = await project(page, [0, bottom, 5]);
+  const edge = await project(page, world);
   await page.mouse.click(edge.x, edge.y);
   state = await inspect(page);
   assert.ok(state.preview, "active sketch edge projection preview");
   await page.getByRole("button", { name: "Cancel projection", exact: true }).click();
-  assert.deepEqual((await inspect(page)).document, accepted);
+  assert.deepEqual((await inspect(page)).document, beforeProjection);
   await chooseTool(page, "project", "project");
   await inspect(page);
   await page.mouse.click(edge.x, edge.y);
@@ -87,7 +111,9 @@ async function projectActiveEdge(page, accepted, sketchId) {
   await page.getByRole("button", { name: "Accept projection", exact: true }).click();
   state = await inspect(page);
   assert.ok(
-    state.document.sketches.find((s) => s.id === sketchId).curves.some((c) => c.kind === "segment"),
+    state.document.sketches
+      .find((sketch) => sketch.id === sketchId)
+      .curves.filter((curve) => curve.kind === "segment").length > beforeSegments,
   );
 }
 
@@ -97,9 +123,15 @@ async function archive(page, name) {
   await saveDocument(page, file);
   await reset(page);
   await openDocument(page, file);
-  await page.waitForFunction(() => window.freacInspect().document.sketches.length === 3);
+  await page.waitForFunction(
+    (count) => window.freacInspect().document.sketches.length === count,
+    before.sketches.length,
+  );
   assert.deepEqual((await inspect(page)).document.sketches, before.sketches);
-  await page.getByRole("button", { name: "Select Sketch 3", exact: true }).click();
+  const projectedIndex =
+    before.sketches.findIndex((sketch) => sketch.curves.some((curve) => curve.kind === "bezier")) +
+    1;
+  await page.getByRole("button", { name: `Select Sketch ${projectedIndex}`, exact: true }).click();
   await page.keyboard.press("Enter");
   await inspect(page);
   await page.keyboard.press(process.platform === "darwin" ? "Meta+a" : "Control+a");

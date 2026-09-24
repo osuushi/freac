@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import * as THREE from "three";
+import { orient } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -55,8 +56,14 @@ export async function makeFeature(page, pocket = false, sides = 4, through = fal
   );
   await page.getByRole("button", { name: "Accept extrusion", exact: true }).click();
   await inspect(page);
-  for (const index of [1, 2])
-    await page.getByRole("button", { name: `Hide Sketch ${index}`, exact: true }).click();
+  for (const index of [1, 2]) {
+    const hide = page.getByRole("button", { name: `Hide Sketch ${index}`, exact: true });
+    if (await hide.count()) await hide.click();
+    assert.equal(
+      await page.getByRole("button", { name: `Show Sketch ${index}`, exact: true }).count(),
+      1,
+    );
+  }
   const body = (await inspect(page)).document.bodies[0];
   const faces = body.faces.filter(
     (face) =>
@@ -109,23 +116,16 @@ async function drawFeatureProfile(page, local, sides) {
   }
 }
 export async function pickFeatureFace(page, face, add = false, pocket = false, round = false) {
-  const { camera } = await inspect(page);
-  const offset = new THREE.Vector3(...camera.position).sub(new THREE.Vector3(...camera.target));
-  const polar = Math.acos(offset.z / offset.length());
-  const azimuth =
-    Math.hypot(offset.x, offset.y) < offset.length() * 1e-6
-      ? Math.atan2(-camera.up[1], -camera.up[0])
-      : Math.atan2(offset.y, offset.x);
   const normal = face.cylinder
     ? new THREE.Vector3(1, 0, 0)
     : new THREE.Vector3(...face.plane.u).cross(new THREE.Vector3(...face.plane.v));
   const yaw = Math.atan2(normal.y, normal.x),
     pitch = Math.min(Math.acos(normal.z), pocket ? 0.6 : Math.PI);
-  await page.mouse.move(1100, 700);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel((yaw - azimuth) / 0.007, (polar - pitch) / 0.007);
-  await page.keyboard.up("Alt");
-  await inspect(page);
+  await orient(page, [
+    Math.cos(yaw) * Math.sin(pitch),
+    Math.sin(yaw) * Math.sin(pitch),
+    Math.cos(pitch),
+  ]);
   // Pick the exposed half of a horizontal face, away from the existing local card.
   const offsetIndex = normal.z > 0.9 && add ? face.vertices.length - 9 : 0;
   const center = new THREE.Vector3()

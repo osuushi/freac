@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { makeFeature, pickFeatureFace } from "./ui-face-move-fixtures.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
@@ -19,6 +20,7 @@ export async function featureReconnection(page, name, electron, kind) {
     assert.ok(state.preview.bodies[0].faces.find((f) => f.id === face.id).plane);
   }
   await accept(page, "face");
+  await orient(page, [0.5, 0.5, 1]);
   await page.getByRole("button", { name: "Rotate faces Z", exact: true }).click();
   await page.getByRole("textbox", { name: "Face rotation Z", exact: true }).fill("15");
   const rotated = await inspect(page);

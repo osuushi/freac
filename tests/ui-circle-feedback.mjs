@@ -18,8 +18,8 @@ export async function circleFeedback(page) {
   tinted(blank[0], filled[0]);
   assert.deepEqual(filled[1], blank[1], "Outside the analytic circle remains unfilled");
   await page.keyboard.press("v");
-  await drag(page, [2, 3], [6, 6]); // Interior movement, without hitting the center or edge.
-  pointEquals((await inspect(page)).document.sketches[0].curves[0].center, [4, 3]);
+  await drag(page, [2, 2], [6, 6]); // Interior movement, without hitting the center or edge.
+  pointEquals((await inspect(page)).document.sketches[0].curves[0].center, [4, 4]);
   await chooseTool(page, "undo", "undo");
   await click(page, 0, 0);
   const before = (await inspect(page)).document;

@@ -34,11 +34,16 @@ export async function axialCleanupRoute(page) {
   await page.keyboard.press("Tab");
   assert.ok(await distance.evaluate((el) => document.activeElement === el));
   await page.keyboard.press("Tab");
+  const twist = page.getByRole("textbox", { name: "Extrusion twist", exact: true });
+  assert.ok(await twist.evaluate((el) => document.activeElement === el));
+  await page.keyboard.press("Tab");
   assert.ok(
     await page
       .getByRole("textbox", { name: "Draft value", exact: true })
       .evaluate((el) => document.activeElement === el),
   );
+  await page.keyboard.press("Shift+Tab");
+  assert.ok(await twist.evaluate((el) => document.activeElement === el));
   await page.keyboard.press("Shift+Tab");
   assert.ok(await distance.evaluate((el) => document.activeElement === el));
   await distance.fill("10");

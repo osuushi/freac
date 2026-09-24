@@ -15,6 +15,20 @@ async function handle(page, key, to, curve) {
   await page.mouse.up();
   await inspect(page);
 }
+function cubicEnclosedArea(curve) {
+  const coefficients = (start, first, second, end) => [
+    start,
+    3 * (first - start),
+    3 * (start - 2 * first + second),
+    end - start + 3 * (first - second),
+  ];
+  const x = coefficients(curve.a.x, curve.c1.x, curve.c2.x, curve.b.x);
+  const y = coefficients(curve.a.y, curve.c1.y, curve.c2.y, curve.b.y);
+  let integral = 0;
+  for (let i = 0; i < 4; i++)
+    for (let j = 0; j < 4; j++) if (i + j) integral += ((j - i) * x[i] * y[j]) / (i + j);
+  return Math.abs((integral + curve.b.x * curve.a.y - curve.b.y * curve.a.x) / 2);
+}
 export async function bezierRoute(page, name) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
@@ -28,14 +42,15 @@ export async function bezierRoute(page, name) {
   close(curve.c1.y, 10);
   close(curve.c2.y, 10);
   await page.keyboard.press("v");
-  await drag(page, [-15, 0], [-20, 0]);
+  await drag(page, [curve.a.x, curve.a.y], [-20, 0]);
   const moved = (await inspect(page)).document.sketches[0].curves[0];
   close(moved.a.x, -20);
-  close(moved.c1.x, -10);
+  close(moved.c1.x, curve.c1.x - 20 - curve.a.x);
   await chooseTool(page, "undo", "undo");
   await inspect(page);
+  const restored = (await inspect(page)).document.sketches[0].curves[0];
   await page.keyboard.press("l");
-  await drag(page, [15, 0], [-15, 0]);
+  await drag(page, [restored.b.x, restored.b.y], [restored.a.x, restored.a.y]);
   let s = await inspect(page);
   assert.equal(s.document.sketches[0].constraints.filter((c) => c.kind === "coincident").length, 2);
   await page.keyboard.press("l");
@@ -57,12 +72,13 @@ export async function bezierRoute(page, name) {
   await page.mouse.click(p.x, p.y);
   s = await inspect(page);
   assert.equal(s.modelingSelection[0].kind, "profile");
-  close(s.modelingSelection[0].area, 150);
+  const area = cubicEnclosedArea(restored);
+  close(s.modelingSelection[0].area, area);
   await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
   await page.getByRole("textbox", { name: "Extrusion distance", exact: true }).fill("3");
   await page.keyboard.press("Enter");
   s = await inspect(page);
-  close(s.preview.bodies[0].volume, 450);
+  close(s.preview.bodies[0].volume, 3 * area);
   await page.keyboard.press("Enter");
   await inspect(page);
   console.log(
@@ -75,8 +91,9 @@ export async function bezierFusionRoute(page, name) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-15, 0], [15, 0]);
+  const acceptedLine = (await inspect(page)).document.sketches[0].curves[0];
   await page.keyboard.press("b");
-  await drag(page, [-15, 0], [15, 0]);
+  await drag(page, [acceptedLine.a.x, acceptedLine.a.y], [acceptedLine.b.x, acceptedLine.b.y]);
   let sketch = (await inspect(page)).document.sketches[0];
   const [line, curve] = sketch.curves;
   assert.equal(curve.kind, "bezier");
@@ -86,7 +103,7 @@ export async function bezierFusionRoute(page, name) {
     "the cubic curve fuses both snapped endpoints",
   );
   await page.keyboard.press("v");
-  await drag(page, [-15, 0], [-20, 0]);
+  await drag(page, [line.a.x, line.a.y], [-20, 0]);
   sketch = (await inspect(page)).document.sketches[0];
   close(sketch.curves.find((item) => item.id === line.id).a.x, -20);
   close(sketch.curves.find((item) => item.id === curve.id).a.x, -20);
@@ -150,15 +167,15 @@ export async function cubicTangentCouplingRoute(page, name) {
   close(updatedSecond.c1.y, 4);
   assert.notDeepEqual(updatedFirst.c2, first.c2);
   const priorSecondHandle = updatedSecond.c1;
-  await handle(page, "c2", [-3, -4], first.id);
+  await handle(page, "c2", [-4, -6], first.id);
   const changedAgain = (await inspect(page)).document.sketches[0].curves;
   const updatedAgainFirst = changedAgain.find((curve) => curve.id === first.id);
   const updatedAgainSecond = changedAgain.find((curve) => curve.id === second.id);
   assert.equal(updatedAgainFirst?.kind, "bezier");
   assert.equal(updatedAgainSecond?.kind, "bezier");
   if (updatedAgainFirst?.kind !== "bezier" || updatedAgainSecond?.kind !== "bezier") return;
-  close(updatedAgainFirst.c2.x, -3);
-  close(updatedAgainFirst.c2.y, -4);
+  close(updatedAgainFirst.c2.x, -4);
+  close(updatedAgainFirst.c2.y, -6);
   assert.notDeepEqual(updatedAgainSecond.c1, priorSecondHandle);
   console.log(`${name}: cubic tangent handle coupling passed`);
 }
