@@ -106,4 +106,10 @@ export async function decoratorMembershipRoute(page) {
   state = await inspect(page);
   assert.deepEqual(state.document.decorators.map((d) => d.settings.pitch).sort(), [0.5, 3]);
   assert.ok(state.document.decorators.every((d) => d.settings.clearance === 0.15));
+  const beforeCleanup = state.document;
+  await chooseTool(page, "clean up", "cleanup");
+  state = await inspect(page);
+  assert.deepEqual(state.preview, beforeCleanup, "Cleanup keeps the boundary between instances");
+  await page.getByRole("button", { name: "Accept cleanup", exact: true }).click();
+  assert.deepEqual((await inspect(page)).document, beforeCleanup);
 }

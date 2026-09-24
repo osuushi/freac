@@ -58,7 +58,8 @@ TopoDS_Shape extrudeDraft(const TopoDS_Face&, const gp_Vec&, const Tree&);
 double extrusionDraftOffset(const gp_Vec&, const Tree&);
 TopoDS_Shape extrudeTwist(const TopoDS_Face&, const gp_Vec&, const Tree&);
 
-Result cleanupEdges(const Operand&, const TopTools_MapOfShape&);
+Result cleanupEdges(const Operand&, const TopTools_MapOfShape&,
+                    const TopTools_MapOfShape& protectedEdges = TopTools_MapOfShape());
 std::vector<Result> deleteTopology(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);
 
 std::vector<Result> shellBodies(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);

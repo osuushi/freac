@@ -205,6 +205,12 @@ Confirmed topology policy: follow compatible split
 descendants, preserve phase and exclude newly generated unrelated faces. For
 merges with unselected regions or conflicting settings, retain an unresolved
 instance and identify the repair needed rather than expand coverage silently.
+
+Explicit solid Cleanup protects boundaries between different active decorator
+instances and between decorated and undecorated faces, while it may merge faces
+belonging to the same instance. Other modeling operations still use the unresolved
+repair policy when their topology merges incompatible regions.
+
 Consume immediate operation correspondence when accepting the geometry edit;
 do not add a persistent operation-history graph. Undo restores geometry and
 decorator assignments together. Body deletion removes its decorations.
