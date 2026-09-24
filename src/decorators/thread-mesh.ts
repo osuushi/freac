@@ -176,6 +176,29 @@ function threadToolMeshes(
   };
 }
 
+/** Pure addition/removal modes can emit their differential shell directly. */
+function directOperand(
+  frame: PlaneFrame,
+  grid: ReturnType<typeof cylinderGrid>,
+  cylinder: Cylinder,
+  settings: ThreadSettings,
+  overlap: number,
+  target: (angle: number, z: number) => number,
+) {
+  if (cylinder.outward < 0 && settings.cut === "rod") return null;
+  const remove = settings.cut === "rod" || cylinder.outward < 0;
+  return {
+    operation: remove ? ("subtract" as const) : ("add" as const),
+    mesh: radialShell(
+      frame,
+      grid.coords,
+      grid.triangles,
+      settings.cut === "rod" ? target : () => cylinder.radius - overlap,
+      settings.cut === "rod" ? () => cylinder.radius + overlap : target,
+    ),
+  };
+}
+
 export function threadMeshes(
   frame: PlaneFrame,
   faces: readonly Face[],
@@ -203,15 +226,16 @@ export function threadMeshes(
     32,
     Math.ceil(Math.PI / Math.acos(1 - Math.min(0.1, tolerance / (2 * high)))),
   );
-  const steps = Math.max(
-    1,
-    Math.ceil(
-      ((bounds[1] - bounds[0]) / settings.pitch) *
-        (quality === "preview"
-          ? 12
-          : Math.max(32, Math.ceil(Math.PI * Math.sqrt(depth / tolerance)))),
-    ),
-  );
+  // Corner-aligned metric cells are linear in phase. Bound the mixed radial/angular
+  // interpolation term instead of using the rounded profile's axial curvature rate.
+  const linearMetric = settings.profile === "metric" && !settings.startTaper && !settings.endTaper;
+  const samples =
+    quality === "preview"
+      ? 12
+      : linearMetric
+        ? Math.max(8, Math.ceil((Math.sqrt(3) * settings.pitch * Math.PI) / (segments * tolerance)))
+        : Math.max(32, Math.ceil(Math.PI * Math.sqrt(depth / tolerance)));
+  const steps = Math.max(1, Math.ceil(((bounds[1] - bounds[0]) / settings.pitch) * samples));
   if (steps * segments > 1_000_000)
     throw new Error("Threads exceed the mesh budget; increase pitch or reduce length");
   const { coords, triangles } = threadGrid(segments, steps, bounds, settings, taperBounds);
@@ -231,12 +255,24 @@ export function threadMeshes(
     ...threadToolMeshes(frame, bandGrid, cylinder, settings, low, high, tolerance),
     tolerance,
     masks: complete ? null : faces.map((face) => faceMask(frame, [face], low, high)),
-    fill: radialShell(
-      frame,
-      coords,
-      triangles,
-      cylinder.outward > 0 ? (angle) => polygonRadius(low, angle) : target,
-      cylinder.outward > 0 ? target : (angle) => polygonRadius(high, angle),
-    ),
+    get direct() {
+      return directOperand(
+        frame,
+        { coords, triangles },
+        cylinder,
+        settings,
+        Math.min(2 * tolerance, low / 2),
+        target,
+      );
+    },
+    get fill() {
+      return radialShell(
+        frame,
+        coords,
+        triangles,
+        cylinder.outward > 0 ? (angle) => polygonRadius(low, angle) : target,
+        cylinder.outward > 0 ? target : (angle) => polygonRadius(high, angle),
+      );
+    },
   };
 }

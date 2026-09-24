@@ -187,7 +187,10 @@ clip each other or bridge their unselected gap. Export adds/removes the differen
 from the nominal cylinder, bounded to the thread's radial envelope; it does not
 replace a whole radial band that might contain an opposite wall. Small auxiliary
 reference overlap covers base tessellation error without changing the requested
-profile or hole allowance. Thread cuts can still pierce a wall when the requested
+profile or hole allowance. Pure addition/removal cases emit their closed differential shell directly, avoiding
+intermediate reference-volume Booleans. The internal Cut-into-rod case can require
+both addition and removal after hole relief and retains the general difference
+path. Both use the same analytic target and trimmed domains. Thread cuts can still pierce a wall when the requested
 depth exceeds its thickness; that needs an explicit diagnostic, not a silent
 change to thread dimensions.
 
@@ -347,7 +350,10 @@ query worker. Only decorated bodies are retessellated; the original BRep, IDs,
 settings and Undo history stay unchanged. The linear sampling target is the minimum
 of 0.004 mm, pitch/200 and positive hole relief/8; zero relief does not imply zero
 numerical tolerance. Requests below 0.00001 mm fail explicitly. Metric mesh edges
-follow crest/root transitions; axial rows include taper transitions. Facet samples
+follow crest/root transitions; axial rows include taper transitions. Untapered
+metric threads bound the mixed radial/angular interpolation error to choose axial
+samples; rounded profiles and tapered metric threads retain their curvature-based
+sampling. The sampling target and fit allowance are unchanged. Facet samples
 are checked against the analytic envelope with a separate allowance of twice the
 sampling target. This is measured numerical accuracy, not a general certification
 of arbitrary curved neighboring surfaces or physical fit.
@@ -408,12 +414,13 @@ The reproducible worker benchmark is `node tests/decorator-performance.mjs` afte
 `npm run build` and `npx tsc -p tsconfig.test.json`. It creates real native cylinders,
 prepares read-only export tessellations, and measures first/repeated preview and
 3MF generation in fresh headless Chromium/WebKit contexts. The 2026-09-24 macOS
-arm64 baseline for Ø10 mm, 1.5 mm metric pitch was about 1.4–1.5 s for a 10 mm
-thread, 10–12 s for an 80 mm thread, and 15–17 s for six 20 mm threads. Repeated
-previews were about 0.1 s, 0.53–0.54 s and 0.67–0.74 s respectively; native export
-preparation was 31–63 ms. These are local measurements, not cross-device targets.
-Long and batch export still need optimization; near-instant generation is not yet
-achieved for those cases. The cache JSON retains each measured first/repeat run.
+arm64 measurements for Ø10 mm, 1.5 mm metric pitch were about 0.57–0.62 s for a
+10 mm thread, 3.8–4.5 s for an 80 mm thread, and 5.4–6.1 s for six 20 mm threads.
+These are approximately 2.5–3× faster than the initial export implementation.
+Repeated previews were about 0.1 s, 0.53–0.54 s and 0.66–0.74 s respectively;
+native export preparation was 33–61 ms. These are local measurements, not
+cross-device guarantees. Large exports still take seconds; status/cancellation
+keep that work explicit. The cache JSON retains each measured first/repeat run.
 
 Acceptance includes mating cross-sections and screw-motion checks over specified
 travel; both hands and modes; different lengths; multi-rod selection; reversed

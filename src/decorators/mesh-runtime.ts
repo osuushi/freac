@@ -39,8 +39,7 @@ function threadOperands(
   );
   if (!geometry) return null;
   const mask = geometry.masks ? threadDomain(scope, body, faces, geometry) : null;
-  const generated = scope.from(geometry.fill);
-  return { mask, generated, geometry };
+  return { mask, geometry };
 }
 
 export function decoratedMeshes(
@@ -71,7 +70,15 @@ export function decoratedMeshes(
         }
         const operands = threadOperands(scope, document, instance, "export");
         if (!operands) continue;
-        const { mask, generated, geometry } = operands;
+        const { mask, geometry } = operands;
+        const direct = geometry.direct;
+        if (direct) {
+          let tool = scope.from(direct.mesh);
+          if (mask) tool = scope.keep(tool.intersect(mask));
+          solid = scope.keep(direct.operation === "add" ? solid.add(tool) : solid.subtract(tool));
+          continue;
+        }
+        const generated = scope.from(geometry.fill);
         if (geometry.hasRemove) {
           let remove = scope.keep(scope.from(geometry.referenceRemove).subtract(generated));
           remove = scope.keep(remove.intersect(scope.from(geometry.removeBand)));
@@ -107,7 +114,8 @@ export function decoratorPreview(
   try {
     const operands = threadOperands(scope, document, instance, "preview");
     if (!operands) return { vertices: [], triangles: [] };
-    const { mask, generated } = operands;
+    const { mask, geometry } = operands;
+    const generated = scope.from(geometry.fill);
     return scope.mesh(mask ? scope.keep(generated.intersect(mask)) : generated);
   } finally {
     scope.close();
