@@ -2,6 +2,7 @@
 export const decoratorTypes = `
 export type DecoratorSettings = Record<string, string | number | boolean>;
 export interface DecoratorFace { body: string; face: string }
+export interface DecoratorEdge { body: string; edge: string }
 export interface DecoratorField {
   key: string; label: string; type: "number" | "enum"; unit?: string;
   min?: number; max?: number; default?: string | number | boolean;
@@ -39,7 +40,7 @@ export interface DecoratorInspectionRequest {
 export interface DecoratorInspection {
   reason: string | null;
   groups: { faces: DecoratorFace[]; state?: unknown }[];
-  diagnostics: { severity: "warning" | "error"; message: string; faces?: DecoratorFace[] }[];
+  diagnostics: { severity: "warning" | "error"; message: string; faces?: DecoratorFace[]; edges?: DecoratorEdge[] }[];
 }
 export interface DecoratorScriptApi {
   decorators(): Promise<DecoratorCatalog>;

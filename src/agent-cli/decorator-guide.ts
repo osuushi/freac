@@ -11,8 +11,9 @@ Its synchronous hooks are:
   JSON continuity data, at most 64 KiB. Return updated state explicitly to preserve
   it across partition calls. To reject Continue, return a useful reason or more
   than one group; the host only continues when the union forms one group.
-- validate(context): return [{severity:"warning"|"error",message,faces?}]. Highlighted
-  faces must exist in the selected bodies. Errors block application/generation;
+- validate(context): return [{severity:"warning"|"error",message,faces?,edges?}].
+  faces are {body,face} references; edges are {body,edge} references. Highlighted
+  geometry must exist in the selected bodies. Errors block application/generation;
   warnings remain visible in the settings panel. At most 100 diagnostics.
 - generate(context): return [{operation:"add"|"subtract",mesh}]. Each modifier is a
   closed, consistently oriented triangle mesh; the array may be empty. The host

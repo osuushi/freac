@@ -72,8 +72,10 @@ export async function customDecoratorRoute(page) {
   await width.fill("20");
   await width.press("Enter");
   await page.getByText("Pad width may extend beyond this face", { exact: true }).waitFor();
-  await page.getByRole("button", { name: "Show affected faces", exact: true }).click();
-  assert.equal((await inspect(page)).modelingSelection.length, 2);
+  await page.getByRole("button", { name: "Show affected geometry", exact: true }).click();
+  const highlighted = (await inspect(page)).modelingSelection;
+  assert.equal(highlighted.filter((t) => t.kind === "face").length, 2);
+  assert.ok(highlighted.some((t) => t.kind === "edge"));
   await width.fill("2");
   await width.press("Enter");
   await inspect(page);

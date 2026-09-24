@@ -14,6 +14,7 @@ export interface DecoratorDiagnostic {
   severity: "warning" | "error";
   message: string;
   faces?: FaceReference[];
+  edges?: { body: string; edge: string }[];
 }
 export interface DecoratorGroup {
   faces: FaceReference[];
@@ -107,9 +108,19 @@ export class JavaScriptDecorators {
                 !document.bodies
                   ?.find((b) => b.id === f.body)
                   ?.faces.some((face) => face.id === f.face),
+            ))) ||
+        (d.edges !== undefined &&
+          (!Array.isArray(d.edges) ||
+            d.edges.some(
+              (e: { body: string; edge: string }) =>
+                !e ||
+                !bodies.has(e.body) ||
+                !document.bodies
+                  ?.find((b) => b.id === e.body)
+                  ?.edges.some((edge) => edge.id === e.edge),
             )))
       )
-        throw new Error("Invalid decorator diagnostic or highlighted face");
+        throw new Error("Invalid decorator diagnostic or highlighted geometry");
     }
     return result;
   }

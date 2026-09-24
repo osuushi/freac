@@ -29,7 +29,8 @@ The module's default export supplies synchronous methods:
 - `partition(context)` returns `{ groups: [{ faces, state? }] }`, or `{ reason }`.
   Groups must cover every selected face exactly once, with one body per group.
 - `validate(context)` returns diagnostics, each with `severity` (`warning` or
-  `error`), `message`, and optional `faces` to highlight. Errors prevent generation.
+  `error`), `message`, and optional `faces` (`{body,face}` references) and `edges`
+  (`{body,edge}` references) to highlight within selected bodies. Errors prevent generation.
 - `preview(context)` returns a triangle mesh or `null` when the manifest enables
   preview. Open meshes are allowed for preview.
 - `generate(context)` returns `{ operation: "add" | "subtract", mesh }[]`.

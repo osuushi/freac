@@ -1,4 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
+import { type ModelingTarget, modelingKey } from "../sketch/model-selection.js";
+import type { DecoratorDiagnostic } from "./javascript-hooks.js";
 import type { DecoratorInstance } from "./types.js";
 
 export function appendCustomDiagnostics(
@@ -18,7 +20,7 @@ export function appendCustomDiagnostics(
     })
     .then((result) => {
       if (!container.isConnected || editor.store.data !== snapshot) return;
-      const diagnostics = result.diagnostics.length
+      const diagnostics: DecoratorDiagnostic[] = result.diagnostics.length
         ? result.diagnostics
         : result.reason
           ? [{ severity: "error", message: result.reason, faces: undefined }]
@@ -28,14 +30,21 @@ export function appendCustomDiagnostics(
         note.className = "decorator-warning";
         note.textContent = diagnostic.message;
         container.append(note);
-        if (!diagnostic.faces?.length) continue;
+        if (!diagnostic.faces?.length && !diagnostic.edges?.length) continue;
         const button = document.createElement("button");
         button.type = "button";
-        button.textContent = "Show affected faces";
+        button.textContent = diagnostic.edges?.length
+          ? "Show affected geometry"
+          : "Show affected faces";
         button.onclick = () => {
-          const refs = [...instance.faces, ...(diagnostic.faces ?? [])];
-          const unique = new Map(refs.map((f) => [`${f.body}/${f.face}`, f]));
-          editor.modeling.targets = [...unique.values()].map((f) => ({ kind: "face", ...f }));
+          const targets: ModelingTarget[] = [
+            ...[...instance.faces, ...(diagnostic.faces ?? [])].map((f) => ({
+              kind: "face" as const,
+              ...f,
+            })),
+            ...(diagnostic.edges ?? []).map((e) => ({ kind: "edge" as const, ...e })),
+          ];
+          editor.modeling.targets = [...new Map(targets.map((t) => [modelingKey(t), t])).values()];
           editor.refresh();
         };
         container.append(button);
