@@ -77,7 +77,7 @@ current brief. They do not override these documents or later founder input.
   point-on-edge coincidence on a single edge. Shift suppresses attachment during
   geometry gestures; ambiguous
   junctions stay explicit. Grid placement alone creates no relationship. Trackpad scroll
-  pans; Alt-scroll uses Z-up turntable orbit. Two-finger click-drag also pans, and pinch zooms.
+  pans; Command-drag orbits. Two-finger click-drag also pans, and pinch zooms.
   Middle-button pan remains available. Option controls symmetric sizing/creation;
   Shift bypasses geometry snaps during geometry gestures, preserving Shift-click
   selection and Shift-hover inspection. The grid has its own toggle.

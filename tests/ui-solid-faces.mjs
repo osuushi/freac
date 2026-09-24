@@ -1,24 +1,12 @@
 import assert from "node:assert/strict";
 import * as THREE from "three";
+import { orient } from "./ui-blend-edit.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function faceView(page, face) {
-  const { camera } = await inspect(page);
-  const offset = new THREE.Vector3(...camera.position).sub(new THREE.Vector3(...camera.target));
-  const polar = Math.acos(offset.z / offset.length());
-  const azimuth =
-    Math.hypot(offset.x, offset.y) < offset.length() * 1e-6
-      ? Math.atan2(-camera.up[1], -camera.up[0])
-      : Math.atan2(offset.y, offset.x);
   const normal = new THREE.Vector3(...face.plane.u).cross(new THREE.Vector3(...face.plane.v));
-  const yaw = Math.atan2(normal.y, normal.x),
-    pitch = Math.acos(normal.z);
-  await page.mouse.move(1100, 700);
-  await page.keyboard.down("Alt");
-  await page.mouse.wheel((yaw - azimuth) / 0.007, (polar - pitch) / 0.007);
-  await page.keyboard.up("Alt");
-  await page.waitForFunction(() => window.freacInspect().activePlane === null);
+  await orient(page, normal.toArray());
   const current = (await inspect(page)).camera;
   const bounds = await page.locator("canvas").boundingBox();
   assert.ok(bounds);
@@ -60,7 +48,19 @@ export async function solidFacesRoute(page, name) {
   await inspect(page);
   await page.keyboard.press("Enter");
   let state = await inspect(page);
-  close(state.document.bodies[0].volume, (400 - 9 * Math.PI) * 5);
+  const sketch = state.document.sketches[0];
+  const segments = sketch.curves.filter((curve) => curve.kind === "segment");
+  const circle = sketch.curves.find((curve) => curve.kind === "circle");
+  const xs = segments.flatMap((curve) => [curve.a.x, curve.b.x]);
+  const ys = segments.flatMap((curve) => [curve.a.y, curve.b.y]);
+  close(
+    state.document.bodies[0].volume,
+    ((Math.max(...xs) - Math.min(...xs)) * (Math.max(...ys) - Math.min(...ys)) -
+      Math.PI * circle.radius ** 2) *
+      5,
+  );
+  const hideSource = page.getByRole("button", { name: "Hide Sketch 1", exact: true });
+  if (await hideSource.count()) await hideSource.click();
   const body = state.document.bodies[0];
   const faces = body.faces.filter((f) => f.plane);
   const normal = (face) =>

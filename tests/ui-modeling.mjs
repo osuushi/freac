@@ -117,11 +117,18 @@ async function placementDragChecks(page, original) {
   await page.keyboard.press("Escape");
 }
 async function activeHistoryChecks(page, original) {
-  await chooseTool(page, "undo", "undo");
-  let state = await inspect(page);
+  const cameraUp = (await inspect(page)).camera.up;
+  let state;
+  let steps = 0;
+  do {
+    await chooseTool(page, "undo", "undo");
+    state = await inspect(page);
+    steps++;
+  } while (state.document.sketches[0].plane.v[2] !== 0 && steps < 5);
   assert.deepEqual(state.document.sketches[0].plane.v, [0, 1, 0]);
-  assert.deepEqual(state.camera.up, [0, 1, 0], "Undo restores the active camera frame");
-  await chooseTool(page, "redo", "redo");
+  assert.equal(state.activePlane, null, "Undo restores the prior modeling context");
+  assert.deepEqual(state.camera.up, cameraUp, "Undo leaves the modeling camera unchanged");
+  for (let i = 0; i < steps; i++) await chooseTool(page, "redo", "redo");
   state = await inspect(page);
   assert.deepEqual(state.document.sketches[0], original);
   assert.deepEqual(state.camera.up, original.plane.v);

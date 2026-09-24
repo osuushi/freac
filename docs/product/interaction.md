@@ -32,7 +32,7 @@ resizing preserves the original center. Width, height and length remain full
 dimensions. Modifier changes recompute from the original gesture rather than
 accumulating edits. Circles are already centered. Symmetry is gesture intent, not
 a persistent constraint. Shift-click selection and Shift-hover inspection remain
-available, as do Command-drag orbit and Alt-scroll turntable navigation.
+available, as does Command-drag orbit navigation.
 
 Symmetric extrusion keeps the source profile on its middle plane. Its signed
 distance measures total cap-to-cap depth. The mode remains available during numeric
@@ -118,8 +118,7 @@ leave a dead editor. Kernel failures must be explained without losing valid work
 
 ### Trackpad navigation
 
-Two-finger scrolling pans. Alt-scroll orbits using a Z-up turntable, with pitch limited at the
-poles to avoid flips. Vertical rotation is inverted from the initial mapping.
+Two-finger scrolling pans. Command-drag orbits using Arcball rotation.
 Two-finger click-and-drag (secondary-button drag) pans.
 Pinching zooms about the pointer. Pan and zoom retain the current sketch plane;
 orbit exits sketch mode. Camera edits never alter document geometry or Undo.

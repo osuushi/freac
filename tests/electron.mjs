@@ -91,6 +91,7 @@ try {
   const page = await app.firstWindow();
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  await page.waitForFunction(() => !!window.freacInspect);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.getByRole("status").filter({ hasText: "XY sketch" }).waitFor();
   assert.equal(

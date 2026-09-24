@@ -8,6 +8,7 @@ export async function useEdgeRoute(page, name) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("c");
   await drag(page, [0, 0], [5, 0]);
+  const radius = (await inspect(page)).document.sketches[0].curves[0].radius;
   const center = await at(page, 0, 0);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(center.x, center.y);
@@ -22,8 +23,8 @@ export async function useEdgeRoute(page, name) {
   await chooseTool(page, "sketch on face", "sketch-on-face");
   await chooseTool(page, "use body edge", "use-edge");
   for (const xy of [
-    [0, 5],
-    [0, -5],
+    [0, radius],
+    [0, -radius],
   ]) {
     const p = await at(page, ...xy);
     await page.mouse.click(p.x, p.y);
@@ -35,7 +36,7 @@ export async function useEdgeRoute(page, name) {
   // Periodic rims are now single circular edges; picking both halves must not duplicate them.
   assert.equal(sketch.curves.length, 1);
   assert.equal(sketch.curves[0].kind, "circle");
-  close(sketch.curves[0].radius, 5);
+  close(sketch.curves[0].radius, radius);
   assert.equal(sketch.constraints.length, 0);
   await chooseTool(page, "undo", "undo");
   assert.equal((await inspect(page)).document.sketches.length, 1);
@@ -44,7 +45,7 @@ export async function useEdgeRoute(page, name) {
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(center.x, center.y);
   state = await inspect(page);
-  close(state.modelingSelection[0].area, 25 * Math.PI);
+  close(state.modelingSelection[0].area, radius * radius * Math.PI);
   if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
     await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
   await page.getByRole("textbox", { name: "Extrusion distance" }).fill("5");
@@ -53,7 +54,7 @@ export async function useEdgeRoute(page, name) {
   await page.keyboard.press("u");
   state = await inspect(page);
   assert.equal(state.preview.bodies.length, 1);
-  close(state.preview.bodies[0].volume, 250 * Math.PI);
+  close(state.preview.bodies[0].volume, 10 * radius * radius * Math.PI);
   await page.keyboard.press("Enter");
   await inspect(page);
   await page.screenshot({ path: `.cache/sketch-review/${name}-copied-circle-union.png` });

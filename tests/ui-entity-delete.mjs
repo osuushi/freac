@@ -4,7 +4,7 @@ import { inspect } from "./ui-helpers.mjs";
 import { browseTools, chooseTool } from "./ui-tools.mjs";
 
 export async function entityDeleteRoute(page, name) {
-  const { top } = await plate(page);
+  await plate(page);
   const original = (await inspect(page)).document;
   const bodyId = original.bodies[0].id;
   const sketchId = original.sketches[0].id;
@@ -21,7 +21,7 @@ export async function entityDeleteRoute(page, name) {
     kind: "delete-entities",
     parameters: { bodyIds: [bodyId], sketchIds: [] },
   });
-  await page.mouse.click(top.x, top.y);
+  await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
   assert.deepEqual((await inspect(page)).modelingSelection, [{ kind: "sketch", sketch: sketchId }]);
   await page.keyboard.press("Backspace");
   state = await inspect(page);

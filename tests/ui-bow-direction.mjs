@@ -32,7 +32,8 @@ export async function bowDirectionRoute(page, name) {
   await drag(page, [-25, -10], [-5, 10]);
   await page.keyboard.press("r");
   await drag(page, [5, -10], [25, 10]);
-  await selectPair(page, [-20, -10], [25, -5]);
+  const right = (await inspect(page)).document.sketches[0].curves[5].a.x;
+  await selectPair(page, [-20, -10], [right - 0.3, -5]);
   const original = (await inspect(page)).document;
   assert.equal(await page.locator(".bow-handle").count(), 4);
   const guide = await page.locator(".bow-handle").first().boundingBox();

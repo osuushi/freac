@@ -39,7 +39,7 @@ geometry; hidden parametric source copies are not part of the chosen model.
 | Active extrusion | Distance and U/S/I/N controls stay by the handle. Drag release keeps the result temporary. Numeric Enter accepts the number while retaining the tool. Camera navigation remains available. |
 | Complete extrusion | Proposed: Enter outside a field or a small local accept control commits. Clicking another target completes the valid extrusion and then performs the intended selection; double-clicking a face completes it and enters sketching there. |
 | Cancel extrusion | Proposed: Escape or the local cancel control discards the whole extrusion. Invalid previews cannot complete. Window focus loss neither commits nor discards. |
-| Planar body face | Single-click selects the face and offers local actions. Double-click enters sketching on its infinite supporting plane. Existing face-workspace drawing reappears. Pan/pinch retain sketch mode; Alt-scroll orbit exits it. |
+| Planar body face | Single-click selects the face and offers local actions. Double-click enters sketching on its infinite supporting plane. Existing face-workspace drawing reappears. Pan/pinch retain sketch mode; Command-drag orbit exits it. |
 | Curved face | Selectable body geometry, but no planar-sketch entry inferred from a triangle. Revolve/project/other tools get their own designs later. |
 
 Two-step numeric Enter prevents accepting the solid while someone is only setting

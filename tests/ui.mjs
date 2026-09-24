@@ -128,9 +128,11 @@ try {
           .filter({ hasText: `${plane} sketch` })
           .waitFor();
         await page.mouse.move(950, 500);
-        await page.keyboard.down("Alt");
-        await page.mouse.wheel(-50, 30);
-        await page.keyboard.up("Alt");
+        await page.keyboard.down("Meta");
+        await page.mouse.down();
+        await page.mouse.move(900, 530, { steps: 4 });
+        await page.mouse.up();
+        await page.keyboard.up("Meta");
         await page.waitForFunction(() => window.freacInspect().activePlane === null);
         await page.getByRole("status").filter({ hasText: "Choose a plane" }).waitFor();
       }

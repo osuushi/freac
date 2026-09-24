@@ -53,7 +53,7 @@ A valid drag release or numeric Enter accepts one transform in one Undo step;
 the gizmo remains for the next adjustment. Escape during an edit restores its
 starting placement; Escape while idle exits Move. Camera navigation works between
 adjustments, including when the pointer is over a floating widget or numeric
-field: scroll pans, Alt-scroll orbits, pinch zooms, and secondary/middle drag pans.
+field: scroll pans, Command-drag orbits, pinch zooms, and secondary/middle drag pans.
 Navigation remains blocked during a geometry or anchor drag. Leaving the application does not accept an unfinished edit.
 
 Duplicate enters the same Move interaction with temporary independent copies,
