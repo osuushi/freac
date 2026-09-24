@@ -29,7 +29,12 @@ for (const name of [
   "node-pty",
 ])
   assert(
-    inventory.entries.some((entry) => entry.name === name && entry.text.length > 100),
+    inventory.entries.some(
+      (entry) =>
+        (entry.name === name ||
+          (name === "Open CASCADE Technology" && entry.name.startsWith(`${name} (`))) &&
+        entry.text.length > 100,
+    ),
     `Missing notices: ${name}`,
   );
 let binaries = 0;
