@@ -42,7 +42,7 @@ export class DocumentOwner {
       this.solids,
       this.kernel,
       solver,
-      (document) => this.decorators.continue(document),
+      this.decorators,
     );
   }
   beginScript(name: string): void {

@@ -296,7 +296,18 @@ accepting a document. Continue offers the last selected custom instance on a new
 face selection and enables only when inspection resolves one compatible group.
 Acceptance expands selection to all members. Partial removal preserves remaining
 members. The library exposes exact source, portable bundle export and Undoable
-removal of unused bundles. Agent authoring is still being integrated.
+removal of unused bundles.
+
+Agent scripts expose `decorators`, `inspectDecorator`, `editDecorator`,
+`editDecoratorDefinition` and `enableDecorator`. Catalog and hook inspection read
+the current temporary candidate. Edits share the ordinary instance/definition
+validators, with script acceptance as one Undo step. Source enablement is forked
+for the script and adopted only on success; cancellation/failure cannot change the
+accepted session's permission. Enablement itself remains session state outside
+Undo and archives. Ordinary inspection lists bundled source/schema, instances and
+built-in fields; face inspection includes its attachments. Thread inspection uses
+the same cylinder partition, settings resolution and highlighted local warnings.
+`freac docs/types` carries the authoring and typed command contracts.
 
 ## Mesh export and preview
 

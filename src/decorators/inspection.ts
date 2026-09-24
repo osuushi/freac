@@ -6,13 +6,14 @@ import type {
   DecoratorGroup,
   JavaScriptDecorators,
 } from "./javascript-hooks.js";
-import type { DecoratorInstance, FaceReference } from "./types.js";
+import type { DecoratorInstance, FaceReference, Settings } from "./types.js";
 
 export interface DecoratorInspectionRequest {
   definition: string;
   version: number;
   faces: FaceReference[];
   instanceId?: string;
+  settings?: Settings;
 }
 export interface DecoratorInspection {
   reason: string | null;
@@ -39,13 +40,17 @@ export function inspectDecorator(
     )
       throw new Error("Select an existing decorator instance");
     const instance: DecoratorInstance = existing
-      ? { ...existing, faces: request.faces }
+      ? {
+          ...existing,
+          faces: request.faces,
+          settings: definitionSettings(definition, { ...existing.settings, ...request.settings }),
+        }
       : {
           id: "inspection",
           definition: definition.id,
           version: definition.version,
           faces: request.faces,
-          settings: definitionSettings(definition, {}),
+          settings: definitionSettings(definition, request.settings ?? {}),
           frame: planes.XY,
         };
     if (

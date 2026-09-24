@@ -1,3 +1,4 @@
+import { decoratorGuide } from "./decorator-guide.js";
 export const scriptGuide = `
 ## Typed modeling scripts
 
@@ -6,6 +7,7 @@ TypeScript compiler checks a source snapshot before execution; no separate Node 
 TypeScript install is needed. The global freac object has the API printed by freac types.
 Available modeling calls are createSketch, extrude, revolve, offsetFaces, transformBodies,
 constructionPlane, deleteConstructionPlane, splitBody, imprint, scale, sweep, booleanBodies, finishEdges and shell.
+Decorator calls are decorators, inspectDecorator, editDecorator, editDecoratorDefinition and enableDecorator.
 Revolve already includes constant-pitch helical sweeps; it is not limited to rings.
 constructionPlane({frame}) returns {plane,frame}; pass id to reposition an existing plane.
 Sketches copy frames and remain independent when a plane moves or is deleted.
@@ -70,6 +72,35 @@ is deferred until harness-specific hooks exist. Filesystem/network side effects 
 outside geometry Undo. Script code runs in a CLI child process, inheriting its sandbox;
 Freac does not execute arbitrary script code in its host or renderer.
 
+Decorators modify export meshes while retaining editable original faces. freac inspect
+lists instances, exact bundled definitions and the built-in Threads schema; inspecting
+a face includes its decorators. During a script, await freac.decorators() reads the
+current candidate's instances, schemas, source and code enablement. Use
+inspectDecorator({definition,version,faces,instanceId?,settings?}) for read-only
+eligibility, partition and diagnostic face references. settings is an optional patch
+against the instance or definition defaults. A non-null reason means incompatible;
+this query does not apply geometry or abort the script by itself.
+editDecorator accepts apply, settings, continue, reassign, remove (selected faces),
+and discard (whole instance). It uses the same validated edits as the UI. Threads
+use definition "freac.threads", version 1; diameter comes from the modeled cylinder.
+Apply accepts settings such as preset, pitch, hand, cut, clearance, start/end and
+startTaper/endTaper. Read the returned schema for allowed values. One decorator per
+face; separate instances can coexist on different faces. No V1 composition or
+print-in-place phase alignment is promised.
+editDecoratorDefinition({action:"install",definition}) bundles a self-contained
+JavaScript ES module and schema; same ID/version replaces it. It does not execute
+source. Explicitly call enableDecorator({id,version,enabled:true}) before invoking
+its hooks. Enablement is source-specific, resets on document opening and is not
+part of Undo. Within a script, source permissions are committed only on success;
+failure/cancellation discards them along with candidate geometry. Use
+editDecoratorDefinition({action:"remove",id,version}) only after removing its
+instances. Custom modules export partition, validate, generate and optional preview;
+see the bundled JavaScript authoring reference below.
+Inspect after a modeling call to see inherited faces and any unresolved attachment;
+ambiguous continuation needs explicit reassign or discard. Diagnostics validate
+hook inputs and local geometry; final mesh generation/Booleans are checked by
+ordinary STL/3MF export. Read-only calls do not create an Undo step.
+
 Example: create an editable circle sketch and a separate extruded solid:
 \`\`\`typescript
 const sketch = await freac.createSketch({
@@ -126,4 +157,6 @@ selected and edited manually. There is no feature-history link from a solid back
 its source sketch. Offset requests that cannot achieve the requested distance reject;
 the script does not silently accept a clamped offset. Run freac inspect/render after
 completion to check the accepted result.
+
+${decoratorGuide}
 `;

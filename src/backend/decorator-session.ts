@@ -6,6 +6,8 @@ import { type DecoratorInspectionRequest, inspectDecorator } from "../decorators
 import { editJavaScriptDecorators, needsJavaScript } from "../decorators/javascript-edits.js";
 import { type EnabledDefinition, JavaScriptDecorators } from "../decorators/javascript-hooks.js";
 import { initializeDecoratorRuntime } from "../decorators/javascript-runtime.js";
+import { inspectThreads } from "../decorators/thread-inspection.js";
+import { threadDefinition } from "../decorators/thread-settings.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 
@@ -16,7 +18,9 @@ export class DecoratorSession {
     return resolveCustomContinuation(document, await this.hooks());
   }
   async inspect(document: SketchDocument, query: DecoratorInspectionRequest) {
-    return inspectDecorator(document, query, await this.hooks());
+    return query.definition === threadDefinition
+      ? inspectThreads(document, query)
+      : inspectDecorator(document, query, await this.hooks());
   }
   async edit(document: SketchDocument, request: ModelRequest): Promise<SketchDocument | null> {
     if (request.kind === "decorator-enable") {
@@ -26,6 +30,15 @@ export class DecoratorSession {
     if (request.kind === "decorator" && needsJavaScript(document, request.edit))
       return editJavaScriptDecorators(document, request.edit, await this.hooks());
     return null;
+  }
+  fork(): DecoratorSession {
+    const session = new DecoratorSession();
+    session.adopt(this);
+    return session;
+  }
+  adopt(session: DecoratorSession): void {
+    this.enabled = [...session.enabled];
+    this.runtime = session.runtime;
   }
   private enabled: EnabledDefinition[] = [];
   private runtime?: ReturnType<typeof initializeDecoratorRuntime>;

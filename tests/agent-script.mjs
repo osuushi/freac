@@ -4,6 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { readPortableArchive } from "../.build/host/model/portable-archive.js";
+import { agentDecoratorRoute } from "./agent-decorator-route.mjs";
 import { agentModelingRoute } from "./agent-modeling-route.mjs";
 import { agentPathRoute } from "./agent-path-route.mjs";
 import { scriptBrowser } from "./agent-script-browser.mjs";
@@ -56,6 +57,7 @@ try {
   const solidResult = await agentSolidRoute(page, run, name);
   await agentModelingRoute(page, run);
   const pathResult = await agentPathRoute(page, run, name);
+  await agentDecoratorRoute(page, run);
   await run(box);
   const made = (await inspect(page)).document;
   assert.equal(made.sketches.length, 1);

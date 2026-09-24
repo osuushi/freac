@@ -56,5 +56,13 @@ can produce independent groups; ambiguous merges remain unresolved. Enable code
 and use **Use selected faces for this decorator** to repair an unresolved attachment.
 Disabled code is never executed merely because geometry changed.
 
-This interface is under active implementation. Agent authoring integration is not
-complete yet.
+Agents use `freac.decorators()` to inspect the current script candidate, including
+source/schema, instances and source-specific enablement. `editDecoratorDefinition`
+installs/removes bundles; `enableDecorator` explicitly enables exact source;
+`inspectDecorator` returns eligibility, groups and highlighted diagnostics;
+`editDecorator` applies the same settings/membership edits as the UI. All calls are
+awaited. A successful script accepts document edits as one Undo step; failed or
+cancelled scripts discard both candidate edits and pending enablement. Ordinary
+`freac inspect` also lists definitions, built-in schema and instances. The installed
+`freac docs` includes the hook authoring contract; `freac types` contains the actual
+public scripting declarations.

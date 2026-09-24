@@ -16,7 +16,10 @@ import { solveSketch } from "./solve-sketch.js";
 /** Validate the public operation before it reaches the shared solver/kernel. */
 export async function scriptOperation(
   document: SketchDocument,
-  operation: ScriptOperation,
+  operation: Exclude<
+    ScriptOperation,
+    import("../agent-script/decorators.js").DecoratorScriptOperation
+  >,
   solids: SolidEdits,
   solver: NativeSolver,
   kernel: SolidCalculator,

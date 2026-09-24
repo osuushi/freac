@@ -12,6 +12,7 @@ import type { PathSweep } from "../model/path-sweep.js";
 import type { PlaneCut } from "../model/plane-cut.js";
 import type { ScaleOperation } from "../model/scale.js";
 import type { PlaneFrame, PlaneId, Point } from "../sketch/planes.js";
+import type { DecoratorScriptApi, DecoratorScriptOperation } from "./decorators.js";
 
 export type ScriptCurve =
   | { kind: "segment"; a: Point; b: Point }
@@ -48,7 +49,7 @@ export type ScriptResult =
   | PlaneResult
   | { removed: string };
 /** All distances are mm, angles degrees. Await each call; parallel edits reject. */
-export interface ScriptApi {
+export interface ScriptApi extends DecoratorScriptApi {
   /** Omit id to create; supply an existing plane id to reposition. Frames are copied. */
   constructionPlane(input: PlaneInput): Promise<PlaneResult>;
   deleteConstructionPlane(input: { id: string }): Promise<{ removed: string }>;
@@ -77,6 +78,7 @@ export interface ScriptApi {
   transformBodies(input: BodyTransform): Promise<SolidResult>;
 }
 export type ScriptOperation =
+  | DecoratorScriptOperation
   | { kind: "booleanBodies"; input: BodyBoolean }
   | { kind: "finishEdges"; input: BodyEdgeFinish }
   | { kind: "shell"; input: BodyShell }
