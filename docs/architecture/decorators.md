@@ -254,6 +254,21 @@ print clearance. A finer thread mesh cannot recover a coarse base cylinder. Defi
 an export error budget in millimeters relative to thread depth/fit, and retessellate
 the export copy when needed. Avoid silently increasing weld tolerance to fix errors.
 
+The built-in export prepares an accepted read-only snapshot through the geometry
+query worker. Only decorated bodies are retessellated; the original BRep, IDs,
+settings and Undo history stay unchanged. The linear sampling target is the minimum
+of 0.004 mm, pitch/200 and positive hole relief/8; zero relief does not imply zero
+numerical tolerance. Requests below 0.00001 mm fail explicitly. Metric mesh edges
+follow crest/root transitions; axial rows include taper transitions. Facet samples
+are checked against the analytic envelope with a separate allowance of twice the
+sampling target. This is measured numerical accuracy, not a general certification
+of arbitrary trimmed domains or physical fit. The selected-domain and large-world-
+coordinate error checks remain part of the unfinished geometry acceptance.
+
+Export preparation and mesh generation show status. Cancel export discards a
+pending preparation result or terminates the mesh worker and publishes no file.
+It does not undo accepted edits or replace the document with the export snapshot.
+
 A translucent overlay can communicate grooves, but cannot accurately reveal
 subtracted surfaces hidden behind the original opaque solid. Accept this as an
 illustrative preview, or later add an explicit export-result inspection view.

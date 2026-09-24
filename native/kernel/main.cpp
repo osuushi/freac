@@ -161,7 +161,9 @@ int main() {
             std::ostringstream output; output << std::setprecision(17) << "{\"mode\":" << quoted(mode) << ",\"participants\":[";
             for (size_t i = 0; i < participants.size(); i++) { if (i) output << ','; output << quoted(participants[i]); }
             output << "],\"results\":[";
-            for (size_t i = 0; i < results.size(); i++) { if (i) output << ','; present(output, results[i]); }
+            const double deflection = input.get<std::string>("kind") == "inspect"
+                ? input.get<double>("deflection", 0.05) : 0.05;
+            for (size_t i = 0; i < results.size(); i++) { if (i) output << ','; present(output, results[i], deflection); }
             timing.phase("presentation");
             std::cout << output.str() << "]}" << std::endl;
             timing.phase("write");

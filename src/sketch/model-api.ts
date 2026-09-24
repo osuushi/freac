@@ -19,6 +19,7 @@ import type { OperationHistoryEntry } from "./operation-history.js";
 import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
+  | { kind: "export-geometry" }
   | { kind: "decorator"; edit: import("../decorators/types.js").DecoratorEdit }
   | { kind: "offset-sketch"; sketchId: string; curves: string[]; amount: number }
   | { kind: "sections"; frame: PlaneFrame; bodies: string[] }
@@ -88,6 +89,7 @@ export interface ModelView {
   solveMs: number;
 }
 export type ModelReply = {
+  exportDocument?: SketchDocument;
   sections?: import("../model/sketch-section.js").SketchSection[];
   documentChanged?: boolean;
   view: ModelView;

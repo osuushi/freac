@@ -190,7 +190,10 @@ test("real rod and hole export watertight complementary threads in both cut mode
         undefined,
       );
       const before = documentArchive(owner.view.data);
-      const meshes = decoratedMeshes(runtime, owner.view.data);
+      const prepared = await owner.call({ kind: "export-geometry" });
+      assert.equal(prepared.error, undefined);
+      assert.ok(prepared.exportDocument);
+      const meshes = decoratedMeshes(runtime, prepared.exportDocument);
       assert.equal(meshes.length, 2);
       for (const mesh of meshes) validateMesh(mesh);
       for (const format of ["3mf", "stl"] as const)

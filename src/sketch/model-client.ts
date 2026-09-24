@@ -138,6 +138,12 @@ export class ModelClient {
     if (!reply.sections) throw new Error("Cross sections unavailable");
     return reply.sections;
   }
+  async exportGeometry() {
+    const reply = await call({ kind: "export-geometry" });
+    if (reply.error) throw new Error(reply.error);
+    if (!reply.exportDocument) throw new Error("Export geometry unavailable");
+    return reply.exportDocument;
+  }
   async measure(targets: import("../model/measurement.js").MeasurementTarget[]) {
     const reply = await call({ kind: "measure", targets });
     if (reply.error) throw new Error(reply.error);

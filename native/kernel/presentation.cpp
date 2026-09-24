@@ -135,9 +135,11 @@ std::vector<double> signature(const TopoDS_Shape& shape) {
     const auto center = props.CentreOfMass();
     return {double(type), double(shape.Orientation()), props.Mass(), center.X(), center.Y(), center.Z()};
 }
-void present(std::ostream& out, const Result& result) {
+void present(std::ostream& out, const Result& result, double deflection) {
     KernelTiming timing("presentation");
-    BRepMesh_IncrementalMesh mesh(result.shape, 0.05, false, 0.2, OSD_ThreadPool::DefaultPool()->HasThreads());
+    if (!std::isfinite(deflection) || deflection < 1e-5 || deflection > 0.05)
+        throw std::runtime_error("Invalid mesh deflection");
+    BRepMesh_IncrementalMesh mesh(result.shape, deflection, false, 0.2, OSD_ThreadPool::DefaultPool()->HasThreads());
     timing.phase("mesh");
     out << "{\"brep\":" << quoted(encode(result.shape)) << ",\"volume\":" << volume(result.shape);
     GProp_GProps properties; BRepGProp::VolumeProperties(result.shape, properties, 1e-10);

@@ -20,7 +20,7 @@ TopoDS_Shape decode(const std::string& data);
 std::vector<Operand> operands(const Tree& input);
 TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies);
 std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bodies, std::string& mode, std::vector<std::string>& participants);
-void present(std::ostream& out, const Result& result);
+void present(std::ostream& out, const Result& result, double deflection = 0.05);
 double volume(const TopoDS_Shape& shape);
 void validate(const TopoDS_Shape& shape);
 

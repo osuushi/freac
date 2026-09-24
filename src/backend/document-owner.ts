@@ -83,7 +83,11 @@ export class DocumentOwner {
   async call(request: ModelRequest): Promise<ModelReply> {
     if (this.scripts.busy && request.kind !== "read" && request.kind !== "read-history")
       return { view: this.view, error: "Finish or cancel the running script first" };
-    if (request.kind === "sections" || request.kind === "measure")
+    if (
+      request.kind === "sections" ||
+      request.kind === "measure" ||
+      request.kind === "export-geometry"
+    )
       return this.queries.call(this.view, request);
     if (request.kind === "read-history") return { view: this.view, history: this.store.history };
     if (request.kind === "supersede-preview") {

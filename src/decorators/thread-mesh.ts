@@ -9,6 +9,8 @@ import {
   dot,
   subtract,
 } from "./cylinder.js";
+import { threadTolerance } from "./precision.js";
+import { threadGrid } from "./thread-grid.js";
 import type { ThreadSettings } from "./thread-settings.js";
 
 /** The same radial envelope defines both mating surfaces; only the hole gets relief. */
@@ -144,18 +146,23 @@ export function threadMeshes(
   const low = cylinder.radius - depth - 0.02,
     high = cylinder.radius + depth + settings.clearance + 0.02;
   if (low <= 0) throw new Error("Thread pitch is too large for this cylinder");
-  const tolerance = quality === "preview" ? 0.08 : 0.008;
+  const tolerance = quality === "preview" ? 0.08 : threadTolerance(settings);
   const segments = Math.max(
     32,
-    Math.ceil(Math.PI / Math.acos(1 - Math.min(0.1, tolerance / high))),
+    Math.ceil(Math.PI / Math.acos(1 - Math.min(0.1, tolerance / (2 * high)))),
   );
   const steps = Math.max(
     1,
-    Math.ceil(((bounds[1] - bounds[0]) / settings.pitch) * (quality === "preview" ? 12 : 32)),
+    Math.ceil(
+      ((bounds[1] - bounds[0]) / settings.pitch) *
+        (quality === "preview"
+          ? 12
+          : Math.max(32, Math.ceil(Math.PI * Math.sqrt(depth / tolerance)))),
+    ),
   );
   if (steps * segments > 1_000_000)
     throw new Error("Threads exceed the mesh budget; increase pitch or reduce length");
-  const { coords, triangles } = cylinderGrid(segments, steps, bounds);
+  const { coords, triangles } = threadGrid(segments, steps, bounds, settings);
   const bandGrid = cylinderGrid(segments, 1, bounds);
   const area = faces.reduce((sum, face) => sum + face.signature[2], 0);
   const complete = Math.abs(area - 2 * Math.PI * cylinder.radius * (extent[1] - extent[0])) < 1e-6;

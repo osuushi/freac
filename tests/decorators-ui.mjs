@@ -69,7 +69,19 @@ try {
       assert.equal((await inspect(page)).document.decorators[0].settings.cut, "rod");
       await chooseTool(page, "redo", "redo");
       assert.equal((await inspect(page)).document.decorators[0].settings.cut, "hole");
-      await exportDecorated(page, name, app);
+      if (!app) {
+        let downloads = 0;
+        const countDownload = () => {
+          downloads++;
+        };
+        page.on("download", countDownload);
+        await chooseTool(page, "export 3mf", "export-3mf");
+        await chooseTool(page, "cancel export", "cancel-export");
+        assert.equal(await toolEnabled(page, "cancel export", "cancel-export"), false);
+        await exportDecorated(page, name, app);
+        assert.equal(downloads, 1, "cancelled export must not publish a file");
+        page.off("download", countDownload);
+      } else await exportDecorated(page, name, app);
       await page.screenshot({ path: `.cache/sketch-review/${name}-decorators.png` });
       await bodyArchiveRoute(page, `${name}-decorators`);
       assert.equal((await inspect(page)).document.decorators[0].settings.pitch, 2.5);
