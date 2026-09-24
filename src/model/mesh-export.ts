@@ -8,7 +8,11 @@ export function exportBodies(
   format: ExportFormat,
 ): Uint8Array<ArrayBuffer> {
   if (!bodies.length) throw new Error("Create a solid body before exporting");
-  const meshes = bodies.map(exportMesh);
+  return encodeMeshes(bodies.map(exportMesh), format);
+}
+
+export function encodeMeshes(meshes: ExportMesh[], format: ExportFormat): Uint8Array<ArrayBuffer> {
+  if (!meshes.length) throw new Error("Create a solid body before exporting");
   return format === "stl" ? stl(meshes) : threeMF(meshes);
 }
 

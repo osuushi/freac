@@ -63,7 +63,7 @@ export function triangleNormal(points: number[][]): number[] {
   return cross.map((value) => value / length);
 }
 
-function validateMesh(mesh: ExportMesh): void {
+export function validateMesh(mesh: ExportMesh): void {
   if (!mesh.triangles.length) throw new Error("There is no solid mesh to export");
   const edges = new Map<string, { count: number; direction: number }>();
   for (const triangle of mesh.triangles) {

@@ -19,6 +19,7 @@ import type { OperationHistoryEntry } from "./operation-history.js";
 import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
+  | { kind: "decorator"; edit: import("../decorators/types.js").DecoratorEdit }
   | { kind: "offset-sketch"; sketchId: string; curves: string[]; amount: number }
   | { kind: "sections"; frame: PlaneFrame; bodies: string[] }
   | { kind: "selection"; changes: import("./history-selection.js").SelectionChanges }

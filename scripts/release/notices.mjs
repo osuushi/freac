@@ -33,7 +33,10 @@ export async function generateNotices(destination, metadata) {
   }
   const lock = JSON.parse(await readFile("package-lock.json", "utf8"));
   for (const [path, data] of Object.entries(lock.packages)) {
-    if (!path || data.dev || !existsSync(`${path}/package.json`)) continue;
+    // Vite bundles only Manifold's core JS/WASM. Its npm CLI/image dependencies
+    // are build-only and are not shipped in the application.
+    const bundledManifold = path === "node_modules/manifold-3d";
+    if (!path || (data.dev && !bundledManifold) || !existsSync(`${path}/package.json`)) continue;
     const pkg = JSON.parse(await readFile(`${path}/package.json`, "utf8"));
     if (!["MIT", "ISC", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause"].includes(pkg.license))
       throw new Error(`Review new runtime license/source obligations: ${pkg.name}: ${pkg.license}`);

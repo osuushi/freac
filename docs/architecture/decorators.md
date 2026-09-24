@@ -1,0 +1,285 @@
+# Decorators — proposal for discussion
+
+2026-09-24. Implementation authorized by the active decorators V1 goal.
+Recommendations below guide implementation; confirmed founder decisions take
+precedence. Confirmed: Metric is a diameter-driven family;
+compatible split descendants inherit threads; decorator composition is outside V1;
+off-table diameters remain exact/nonstandard; decorator code travels in the file.
+Mirroring preserves configured handedness; scaling preserves pitch and clearance;
+one fit allowance is implemented as hole-side relief. General transform hooks
+are deferred.
+Nearest-listed coarse pitch supplies the Metric default; compatibility and
+consistency under equal settings take priority. End tapers are configurable and
+middle-of-rod threads are in scope. Print-in-place support and user-facing phase
+alignment controls are deferred. One decorator per face; effects
+from different decorated faces may overlap with undefined behavior.
+
+## Requested outcome
+
+Attach editable settings to selected geometry without replacing that geometry.
+At export, generate mesh modifications using the accepted geometry
+as read-only input. Threads are the first built-in decorator. JavaScript authors
+must be able to implement the same hooks. Gears, gear relationships, approximate
+cylinder recognition, shader previews and print-color assignment are later work.
+
+Apply to multiple cylindrical faces, internal or external. Reject incompatible
+mixed selections with a reason rather than silently dropping targets. Partition
+compatible faces into individual continuous thread instances; applying to several
+rods creates several instances in one edit. Users normally see threads and their
+settings, not the internal grouping noun.
+
+## Current foundation and gaps
+
+Inspected Freac commit: `3bacee0b187b9c0a4b6075a222cf0899f971be84`.
+These are source observations, not new runtime verification.
+
+- [Face metadata](https://github.com/osuushi/freac/blob/3bacee0b187b9c0a4b6075a222cf0899f971be84/src/model/body.ts)
+  includes cylinder origin, axis, radius and inward/outward sign. It does not
+  expose an exact trimmed cylindrical parameter domain.
+- [materialize](https://github.com/osuushi/freac/blob/3bacee0b187b9c0a4b6075a222cf0899f971be84/src/backend/kernel-result.ts)
+  preserves IDs for one-to-one continuations. Splits/merges get new IDs; immediate
+  predecessor relationships are consumed here and not retained in the body model.
+- [exportBodies](https://github.com/osuushi/freac/blob/3bacee0b187b9c0a4b6075a222cf0899f971be84/src/model/mesh-export.ts)
+  converts accepted body tessellations into STL/3MF. Its worker is the natural
+  location for mesh modification. Export currently has no quality setting.
+- [exportMesh](https://github.com/osuushi/freac/blob/3bacee0b187b9c0a4b6075a222cf0899f971be84/src/model/export-mesh.ts)
+  welds vertices and rejects open/inconsistently oriented edges; this alone does
+  not certify manifold vertex neighborhoods, absence of self-intersection or fit.
+- Existing document ownership, candidate edits, snapshot Undo and agent script
+  routes should be extended. No second document or executable feature history.
+
+## Proposed interaction
+
+1. Select faces and invoke Threads; show eligibility reasons in tool discovery.
+2. Create all inferred instances atomically with resolved settings and a preview.
+3. A right-side decorator panel shows instances touching the selection, aggregated
+   by type. Equal fields show values; unequal fields show Mixed. A change patches
+   only that field across affected instances, preserving every other setting.
+4. Editing a setting first selects all faces of the affected instances, then
+   updates them in one Undo step. Numeric drafts preview; confirmation accepts;
+   Escape cancels. Merely focusing a field should not change the document.
+5. Clicking a decorator selects its faces. Deselecting some and using the panel's
+   Remove threads action removes membership only from the still-selected faces.
+   This must not be routed through the viewport's geometry Delete action.
+6. Continue threads adds selected faces only when they form one compatible
+   continuation with the chosen instance. Otherwise use decorator-specific wording
+   and offer separate application; initial multi-rod application remains valid.
+7. Removing members keeps the remaining phase and settings. Empty instances vanish.
+   Do not automatically merge independently created instances after geometry edits.
+8. A face has at most one decorator in V1. Applying Threads to an already threaded
+   face opens its existing settings rather than adding another instance. A different
+   decorator requires removing the existing assignment first.
+
+The same typed operations serve agents, including inspection of settings, members,
+resolved dimensions and diagnostics. Multi-selection does not create a permanent
+relationship between separately threaded parts.
+
+## Thread geometry contract
+
+Equal reference diameters plus the same resolved thread definition must produce
+complementary male/female profiles, with independently chosen lengths. Resolve
+profile, pitch, hand, start count (one initially), reference convention and fit
+allowance consistently; independent defaults per face must not break mating.
+
+| Reference mode | Exterior rod | Interior hole |
+| --- | --- | --- |
+| Cut into rod | Remove material inward from the reference cylinder | Add complementary ridges inward into the hole |
+| Cut into hole | Add ridges outward from the reference cylinder | Remove complementary grooves outward into the wall |
+
+This describes the zero-clearance reference construction. Fit clearance must have
+an explicit total-gap definition and allocation, rather than accidentally being
+applied twice. Confirmed: one allowance provides female-side relief, displayed with units and
+whether radial or diametral; exact flank/root treatment remains to design.
+Thread-form compatibility does not promise assembly through shoulders, flats,
+unthreaded portions or blind-hole bottoms.
+
+Confirmed: Metric is the preset family; cylinder diameter determines thread size,
+rather than a preset such as M10 overriding the modeled cylinder. An off-table
+diameter such as 10.3 mm remains exactly 10.3 mm and produces a nonstandard thread.
+The chosen cut mode affects the relation between reference diameter and standard
+major/minor diameters; that mapping must be explicit. Never silently relabel a
+nonstandard result. Diameter changes update the reference diameter and its dependent
+envelope dimensions using the same rule in preview and export, while resolved pitch
+and clearance remain fixed. A preset supplies concrete settings; changing geometry
+does not silently reapply that preset or choose a different pitch. Confirmed:
+initialize Metric pitch from the nearest listed diameter's coarse pitch without
+snapping the modeled diameter. Use one deterministic lookup and tie rule for both
+internal and external threads. Applying equal settings to equal reference
+diameters must resolve consistently, whether applied together or separately.
+
+Printing presets are explicit heuristics based on chosen layer/nozzle dimensions
+and intended orientation. Do not infer print direction from camera orientation or
+claim guaranteed physical fit. Preset values, not just a mutable preset name, are saved.
+
+## Thread extent and ends
+
+Confirmed: default to full selected-face coverage without extending beyond its
+boundaries. Start/end taper lengths are configurable, initially zero. Tapers reduce
+thread depth near axial ends; they do not chamfer the underlying BRep. They do not
+restart at face seams or angular interruptions such as flattened sides.
+
+Middle-of-rod threads remain a V1 case; a thread need not reach the rod end.
+This does not guarantee that mating parts can be assembled in every surrounding
+geometry configuration.
+
+Proposed controls to make this work on an unsplit cylindrical face: start/end
+insets along the saved thread axis, initially zero, bounding the threaded band
+within the selected geometry. Intersect that band with actual selected face domains;
+do not fill flats or gaps. Apply optional tapers at its axial ends and preserve
+helix phase when changing extent. Exact behavior at separated axial patches must
+remain consistent with one continuous helix and the requested face coverage.
+
+Founder decision: defer print-in-place support, including user-facing phase
+alignment controls and captive-pair acceptance. V1 promises compatible thread
+forms, not clearance between independently decorated parts in their current
+exported positions. Internal phase continuity within each thread instance remains
+required across selected patches, topology changes and extent edits.
+
+## Continuity, boundaries and editing geometry
+
+Partition by body, cylindrical support (axis line and radius within documented
+tolerances) and material side. Opposite parameter-axis signs do not imply different
+supports. Disconnected selected patches can share one instance: angular gaps,
+flats and separated axial sections do not restart the helix.
+
+Save a thread reference frame and phase when first applied. Do not derive phase
+again from the first remaining face or its parameter seam. Transport this frame
+through rigid movement; copying creates independent instances with copied settings.
+
+Use the actual trimmed face domains, including holes and sloping ends. A full
+cylinder or min/max axial bounds is insufficient: it could fill flats, bridge gaps,
+cut a neighboring wall, or extend threads beyond selected geometry. Construct
+bounded, closed modifier volumes from the selected domain and chosen radial range.
+Thread-specific diagnostics can inspect adjacent original geometry and report
+implicated face IDs. This is distinct from cross-decorator overlap handling below;
+V1 does not require detecting or diagnosing overlaps between decorator outputs.
+
+Confirmed topology policy: follow compatible split
+descendants, preserve phase and exclude newly generated unrelated faces. For
+merges with unselected regions or conflicting settings, retain an unresolved
+instance and identify the repair needed rather than expand coverage silently.
+Consume immediate operation correspondence when accepting the geometry edit;
+do not add a persistent operation-history graph. Undo restores geometry and
+decorator assignments together. Body deletion removes its decorations.
+
+Confirmed V1 transform behavior: reflection preserves the configured handedness;
+uniform scaling preserves physical pitch and clearance while the decoration follows
+the changed cylinder diameter and face extent. The final decorated object therefore
+need not be a literal reflection or scaled copy of its former exported mesh.
+Transform the geometric placement/reference frame without implicitly reversing the
+handedness setting or scaling those numeric settings. Do not retain a stale standard
+size designation after the diameter changes.
+
+General decorator hooks for transform-specific behavior are future work, not part
+of the V1 interface. Nonuniform scale that destroys cylindrical eligibility must
+visibly invalidate the affected threads. Geometry and decorator parameter edits
+remain distinct operations.
+
+## Small extension contract
+
+Persist instance ID, definition ID/version, target references, validated settings,
+and only the decorator-specific continuity data needed (thread frame/phase).
+Preview meshes, kernel handles and diagnostics are derived, never authoritative.
+
+Definition responsibilities:
+
+- Settings schema: a bounded JSON-schema-shaped subset, units, labels, ranges,
+  enums, defaults and conditional applicability; host owns Mixed-value behavior.
+- Eligibility and partition: reasons, implicated targets and stable continuation
+  information; Continue uses the same geometric rules plus its existing instance.
+- Validation: structured errors/warnings with optional face/edge highlights.
+- Optional preview: mesh overlay from the same geometric definition at coarser
+  resolution; never selectable or hoverable. Depth bias handles coincident faces.
+- Export: read-only original selected geometry context; generate independent
+  mesh modifications for host application to the body mesh. No hook receives
+  another decorator's output, and no identity-preserving BRep output is required.
+
+Expose useful immutable geometry queries/descriptors, with exact BRep queries
+prepared before mesh generation if necessary. Passing a BRep string alone does not
+give JavaScript authors a usable geometric API. No BRep mutation in this pipeline.
+
+Run geometry work outside the UI thread, with bounded inputs and cancellation.
+Use a single sequential export pipeline from one accepted snapshot. Opening a
+saved file must not automatically execute unknown embedded JavaScript. Confirmed:
+bundle decorator code with the document. Proposed packaging: a self-contained
+module and declarative manifest, stored once per definition/version, with no
+network dependency resolution at export. Pin source bytes; updating code is an
+explicit document change, not an installed plugin silently changing old exports.
+Design code/settings replacement as an atomic owner edit with Undo, rather than
+treating executable definitions like independently watched agent workspace files.
+A Worker alone is not a security sandbox. Missing definitions
+retain data, identify the missing dependency and block affected export rather
+than silently omit a decoration. No marketplace or general plugin platform needed.
+
+## Mesh export and preview
+
+Proposed export path: capture accepted geometry/settings; prepare geometry context
+and sufficiently accurate base tessellation; validate inputs; generate independent
+modifications from the original geometry; apply those modifications to
+each body mesh; validate results; encode through existing STL/3MF paths.
+Bodies remain separate export objects. Failure identifies the body/decorator and
+produces no partial file. Export changes neither the document nor Undo.
+
+Confirmed: no decorator composition in V1. No ordering UI, modifier stack or
+mesh-input decorator signature. Multiple independent decorations on a body are
+still supported, with at most one decorator assigned to each face. Confirmed:
+overlap between effects on different faces is undefined behavior in V1. Do not
+implement cross-decorator conflict detection, special overlap warnings, or an
+overlap-based export gate. Internal execution order is not a promised composition
+contract. Apply the ordinary mesh validity/error checks to whatever result is
+produced. The host's mesh Booleans are not a public composition API.
+
+Manifold 3.5.3 is pinned as a build dependency. Vite bundles its core JS/WASM into
+the export/preview workers; the npm package's CLI, glTF and image-conversion tools
+are not imported or shipped. Release notices explicitly include its Apache-2.0
+license despite the build-only npm classification. Native document/model modules
+do not depend on the mesh runtime. No upstream implementation source was copied.
+
+The initial built-in uses the metric basic 60° profile and nearest coarse pitch
+from the [manufacturer reference table](https://sg.misumi-ec.com/tech-info/categories/technical_data/td01/a0063.html).
+User-selected clearance is a radial hole-side allowance, not an ISO fit class.
+
+Separate numerical Boolean precision, mesh approximation error and intentional
+print clearance. A finer thread mesh cannot recover a coarse base cylinder. Define
+an export error budget in millimeters relative to thread depth/fit, and retessellate
+the export copy when needed. Avoid silently increasing weld tolerance to fix errors.
+
+A translucent overlay can communicate grooves, but cannot accurately reveal
+subtracted surfaces hidden behind the original opaque solid. Accept this as an
+illustrative preview, or later add an explicit export-result inspection view.
+Do not replace the selectable original. Mechanical interference warnings can be
+nonblocking; invalid output remains an export error. General assembly/motion proof
+is outside V1; warnings must describe what was actually checked.
+
+## Delivery and acceptance proposal
+
+Multiple reviewed increments, not a single two-hour change. Estimate after the
+open contracts are settled and the geometry integration is measured.
+
+1. Complete first vertical slice: one external and one internal full cylinder,
+   shared procedural definition, both reference modes, panel editing/removal,
+   preview, save/open, Undo/Redo and validated STL/3MF. Benchmark final generation.
+2. Multi-selection, continuation/removal, interrupted/sloping domains, phase
+   preservation and topology edits. This completes the requested geometry scope.
+3. Verified metric/printing presets, clearance, axial extent and end/runout controls,
+   and thread-specific highlighted diagnostics;
+   finish print-oriented acceptance. No cross-decorator conflict detection.
+4. JavaScript module loading/portability, agent parity and a small independent
+   example decorator proving the contract without special-casing Threads.
+
+Each increment includes real geometry and ordinary pointer/keyboard routes.
+First-slice review is an intermediate checkpoint, not completion of V1.
+Measure preview and export on short/long threads and batches; do not promise
+near-instant generation before measuring cold and warm worker runs.
+
+Acceptance includes mating cross-sections and screw-motion checks over specified
+travel; both hands and modes; different lengths; multi-rod selection; reversed
+axis parameterization; split seams and flattened/gapped cylinders; close neighbors;
+thin walls and blind ends; field-level mixed edits; partial removal; move/copy/
+mirror/scale policy; save/reopen; missing plugin; cancel/failure/Undo; exported
+closure/orientation and geometric deviation; middle-of-rod threads with configured
+extent, tapers and clearance. Print-in-place alignment is outside acceptance. Verify
+single assignment per face; do not require a particular geometric result from
+overlapping independent decorators. Physical printer fit requires a real
+print, which software checks cannot certify. Run headless Chromium/WebKit and
+hidden Electron where host/plugin boundaries change.

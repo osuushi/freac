@@ -1,3 +1,4 @@
+import { editDecorators } from "../decorators/edits.js";
 import { withConstructionPlane } from "../model/construction-plane.js";
 import { editEntityPresentation } from "../model/entity-presentation.js";
 import { copySketch } from "../sketch/copy-selection.js";
@@ -10,6 +11,7 @@ export function isDirectDocumentEdit(
   request: ModelRequest,
 ): request is Exclude<Parameters<typeof editDocument>[1], { kind: "delete-entities" }> {
   return [
+    "decorator",
     "rename-entity",
     "reorder-entity",
     "construction-plane",
@@ -28,6 +30,7 @@ export function editDocument(
     ModelRequest,
     {
       kind:
+        | "decorator"
         | "rename-entity"
         | "reorder-entity"
         | "construction-plane"
@@ -42,6 +45,8 @@ export function editDocument(
   >,
 ): SketchDocument {
   switch (request.kind) {
+    case "decorator":
+      return editDecorators(document, request.edit);
     case "rename-entity":
     case "reorder-entity":
       return editEntityPresentation(document, request);
@@ -80,6 +85,16 @@ export function editDocument(
         ...document,
         ...(bodyIds.size
           ? { bodies: (document.bodies ?? []).filter((body) => !bodyIds.has(body.id)) }
+          : {}),
+        ...(document.decorators && bodyIds.size
+          ? {
+              decorators: document.decorators
+                .map((instance) => ({
+                  ...instance,
+                  faces: instance.faces.filter((face) => !bodyIds.has(face.body)),
+                }))
+                .filter((instance) => instance.faces.length),
+            }
           : {}),
         sketches: document.sketches.filter((sketch) => !sketchIds.has(sketch.id)),
       };

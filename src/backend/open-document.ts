@@ -1,8 +1,10 @@
+import { validateDecorators } from "../decorators/edits.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { validateSketch } from "../sketch/document.js";
 import { validateFrame } from "../sketch/planes.js";
 
 export function validateDocument(document: SketchDocument): void {
+  validateDecorators(document);
   if (
     document.units !== "mm" ||
     !Array.isArray(document.sketches) ||
@@ -41,6 +43,7 @@ export function validateDocument(document: SketchDocument): void {
     identify(plane.id);
     validateFrame(plane.frame);
   }
+  for (const instance of document.decorators ?? []) identify(instance.id);
   for (const body of document.bodies ?? []) {
     identify(body.id);
     for (const face of body.faces) identify(face.id);

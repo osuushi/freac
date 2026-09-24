@@ -104,6 +104,7 @@ export interface Sketch {
   readonly groups: readonly EditingGroup[];
 }
 export interface SketchDocument {
+  readonly decorators?: readonly import("../decorators/types.js").DecoratorInstance[];
   readonly entityPresentation?: readonly import("../model/entity-presentation.js").EntityPresentation[];
   readonly units: "mm";
   readonly constructionPlanes?: readonly import("../model/construction-plane.js").ConstructionPlane[];

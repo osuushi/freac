@@ -33,7 +33,7 @@ export function exportControls(editor: SketchEditor): () => void {
         finish(event.data.error);
       };
       worker.onerror = () => finish("Could not export the solid mesh");
-      worker.postMessage({ bodies: editor.store.data.bodies, format: extension });
+      worker.postMessage({ document: editor.store.data, format: extension });
       editor.refresh();
     } catch (error) {
       finish(error instanceof Error ? error.message : String(error));
