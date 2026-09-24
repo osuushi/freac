@@ -100,7 +100,7 @@ export async function decoratorMembershipRoute(page) {
   assert.equal(state.modelingSelection.length, 2);
   assert.equal(state.document.decorators.length, 2);
   assert.equal(await pitch.getAttribute("placeholder"), "Mixed");
-  const relief = page.getByRole("spinbutton", { name: "Tolerance", exact: true });
+  const relief = page.getByRole("spinbutton", { name: "Clearance", exact: true });
   await relief.fill("0.15");
   await relief.press("Enter");
   state = await inspect(page);

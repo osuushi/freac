@@ -3,12 +3,12 @@ import { inspect } from "./ui-helpers.mjs";
 
 export async function decoratorPresetRoute(page, name) {
   const preset = page.getByRole("combobox", { name: "Preset", exact: true });
-  const tolerance = page.getByRole("spinbutton", { name: "Tolerance", exact: true });
+  const clearance = page.getByRole("spinbutton", { name: "Clearance", exact: true });
   const pitch = page.getByRole("spinbutton", { name: "Pitch", exact: true });
   const nozzle = page.getByRole("spinbutton", { name: "Nozzle diameter", exact: true });
   const advanced = page.locator("details.thread-advanced");
   assert.equal(await preset.inputValue(), "fdm-fine");
-  assert.equal(await tolerance.inputValue(), "0.05");
+  assert.equal(await clearance.inputValue(), "0.05");
   assert.equal(await pitch.isVisible(), false);
   assert.equal(await advanced.evaluate((element) => element.open), false);
   assert.match(
@@ -21,8 +21,8 @@ export async function decoratorPresetRoute(page, name) {
   assert.equal(settings.pitch, 1);
   assert.equal(settings.profile, "triangle");
   assert.equal(settings.clearance, 0.05);
-  await tolerance.fill("0");
-  await tolerance.press("Enter");
+  await clearance.fill("0");
+  await clearance.press("Enter");
   assert.equal((await inspect(page)).document.decorators[0].settings.clearance, 0);
   await preset.selectOption("fdm-fine");
   settings = (await inspect(page)).document.decorators[0].settings;

@@ -228,9 +228,9 @@ export class DecoratorPanel {
         this.field(basic ? this.root : advanced, field, instances);
         if (field.key === "clearance") {
           const hint = document.createElement("p");
-          hint.className = "thread-tolerance-hint";
+          hint.className = "thread-clearance-hint";
           hint.textContent =
-            "Hole-side radial relief. Try 0.05 mm for vertical prints; 0 mm may suit horizontal holes.";
+            "Moves hole threads outward, away from the rod. Try 0.05 mm for vertical prints; 0 mm may suit horizontal holes.";
           this.root.append(hint);
         }
       }

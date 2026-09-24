@@ -9,7 +9,7 @@ import {
   threadSettings,
 } from "../src/decorators/thread-settings.js";
 
-test("FDM presets resolve the captured 1 mm triangular ridge and one hole-side tolerance", () => {
+test("FDM presets resolve the captured 1 mm triangular ridge and one hole-side clearance", () => {
   for (const [preset, pitch] of [
     ["fdm-fine", 0.5],
     ["fdm-coarse", 1],

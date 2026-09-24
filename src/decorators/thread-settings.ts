@@ -79,7 +79,7 @@ export const threadFields: readonly DecoratorField[] = [
       { value: "hole", label: "Hole — rod ridges outward" },
     ],
   },
-  { key: "clearance", label: "Tolerance", type: "number", unit: "mm", min: 0, max: 10 },
+  { key: "clearance", label: "Clearance", type: "number", unit: "mm", min: 0, max: 10 },
   { key: "start", label: "Start inset", type: "number", unit: "mm", min: 0 },
   { key: "end", label: "End inset", type: "number", unit: "mm", min: 0 },
   { key: "startTaper", label: "Start taper", type: "number", unit: "mm", min: 0 },

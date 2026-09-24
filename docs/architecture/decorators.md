@@ -107,11 +107,11 @@ over a 0.5 mm axial pitch, matching the founder's captured revolved profile.
 FDM coarse keeps the 1 mm radial depth and uses a 1 mm pitch. Neither mode changes
 the modeled diameter or depends on layer/nozzle dimensions. Both begin with
 0.05 mm hole-side radial relief; changing the preset explicitly restores that
-value. The simple panel shows preset, handedness, cut direction and a Tolerance
+value. The simple panel shows preset, handedness, cut direction and a Clearance
 field for this relief. Its hint suggests 0.05 mm for vertical prints and 0 mm as
 an option for horizontal holes. Pitch, profile, the older printer heuristic inputs,
 insets and tapers are in collapsed Advanced controls. Changing an FDM preset's
-pitch or profile marks it Custom; tolerance, handedness, cut and extent edits keep
+pitch or profile marks it Custom; clearance, handedness, cut and extent edits keep
 the chosen preset. Edits use the same owner/Undo path.
 
 Metric, Print upright, Print sideways and Custom remain available, including in
