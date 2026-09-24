@@ -12,6 +12,8 @@ export interface ThreadSettings extends Settings {
   end: number;
   startTaper: number;
   endTaper: number;
+  layerHeight: number;
+  nozzleDiameter: number;
 }
 
 export const threadFields: readonly DecoratorField[] = [
@@ -25,6 +27,26 @@ export const threadFields: readonly DecoratorField[] = [
       { value: "print-sideways", label: "Print sideways" },
       { value: "custom", label: "Custom" },
     ],
+  },
+  {
+    key: "layerHeight",
+    label: "Layer height",
+    type: "number",
+    unit: "mm",
+    min: 0.01,
+    max: 5,
+    default: 0.2,
+    visibleWhen: { key: "preset", values: ["print-upright", "print-sideways"] },
+  },
+  {
+    key: "nozzleDiameter",
+    label: "Nozzle diameter",
+    type: "number",
+    unit: "mm",
+    min: 0.05,
+    max: 10,
+    default: 0.4,
+    visibleWhen: { key: "preset", values: ["print-upright", "print-sideways"] },
   },
   { key: "pitch", label: "Pitch", type: "number", unit: "mm", min: 0.05, max: 100 },
   {
@@ -100,18 +122,42 @@ const coarse = [
   [64, 6],
 ];
 
-export function threadDefaults(diameter: number, preset = "metric"): ThreadSettings {
+export function coarseMetric(diameter: number) {
   const nearest = coarse.reduce((a, b) =>
     Math.abs(b[0] - diameter) < Math.abs(a[0] - diameter) ? b : a,
   );
-  const print = preset === "print-upright" || preset === "print-sideways";
   return {
+    diameter: nearest[0],
+    pitch: nearest[1],
+    listed: Math.abs(diameter - nearest[0]) < 1e-7,
+  };
+}
+
+export function threadDefaults(
+  diameter: number,
+  preset = "metric",
+  printing: { layerHeight: number; nozzleDiameter: number } = {
+    layerHeight: 0.2,
+    nozzleDiameter: 0.4,
+  },
+): ThreadSettings {
+  const print = preset === "print-upright" || preset === "print-sideways";
+  const sideways = preset === "print-sideways";
+  return {
+    layerHeight: printing.layerHeight,
+    nozzleDiameter: printing.nozzleDiameter,
     preset: preset as ThreadSettings["preset"],
-    pitch: Math.max(nearest[1], preset === "print-sideways" ? 2 : print ? 1.2 : 0),
+    pitch: print
+      ? Math.max(
+          coarseMetric(diameter).pitch,
+          printing.layerHeight * (sideways ? 10 : 6),
+          printing.nozzleDiameter * (sideways ? 5 : 3),
+        )
+      : coarseMetric(diameter).pitch,
     profile: print ? "rounded" : "metric",
     hand: "right",
     cut: "rod",
-    clearance: print ? 0.2 : 0.1,
+    clearance: print ? printing.nozzleDiameter / 2 : 0.1,
     start: 0,
     end: 0,
     startTaper: 0,
@@ -120,8 +166,9 @@ export function threadDefaults(diameter: number, preset = "metric"): ThreadSetti
 }
 
 export function threadSettings(settings: Settings): ThreadSettings {
+  const normalized: Settings = { layerHeight: 0.2, nozzleDiameter: 0.4, ...settings };
   for (const field of threadFields) {
-    const value = settings[field.key];
+    const value = normalized[field.key];
     if (field.type === "number") {
       if (
         typeof value !== "number" ||
@@ -135,5 +182,23 @@ export function threadSettings(settings: Settings): ThreadSettings {
   }
   if (Object.keys(settings).some((key) => !threadFields.some((field) => field.key === key)))
     throw new Error("Unknown thread setting");
-  return settings as ThreadSettings;
+  return normalized as ThreadSettings;
+}
+
+/** Resolve a preset only on explicit preset/printer edits, never on geometry changes. */
+export function patchThreadSettings(
+  diameter: number,
+  settings: Settings,
+  patch: Settings,
+): ThreadSettings {
+  const merged = threadSettings({ ...threadSettings(settings), ...patch });
+  const printing = merged.preset === "print-upright" || merged.preset === "print-sideways";
+  if (
+    (patch.preset && patch.preset !== "custom") ||
+    (printing && (patch.layerHeight !== undefined || patch.nozzleDiameter !== undefined))
+  ) {
+    const { pitch, profile, clearance } = threadDefaults(diameter, merged.preset, merged);
+    return threadSettings({ ...merged, pitch, profile, clearance, ...patch });
+  }
+  return threadSettings(merged);
 }

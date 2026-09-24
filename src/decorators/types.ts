@@ -23,6 +23,8 @@ export interface DecoratorField {
   unit?: string;
   min?: number;
   max?: number;
+  default?: string | number | boolean;
+  visibleWhen?: { key: string; values: readonly (string | number | boolean)[] };
   options?: readonly { value: string; label: string }[];
 }
 export interface MeshModification {

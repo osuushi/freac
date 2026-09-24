@@ -111,6 +111,15 @@ Printing presets are explicit heuristics based on chosen layer/nozzle dimensions
 and intended orientation. Do not infer print direction from camera orientation or
 claim guaranteed physical fit. Preset values, not just a mutable preset name, are saved.
 
+The initial printing heuristic chooses the maximum of nearest coarse pitch,
+six layer heights and three nozzle diameters upright, or ten layer heights and
+five nozzle diameters sideways. It uses a rounded profile and radial hole relief
+of half the nozzle diameter. Layer/nozzle defaults are 0.2/0.4 mm. Explicit edits
+to these printing inputs re-resolve pitch/profile/relief; explicit values supplied
+in the same edit win. Other edits and geometry transforms retain resolved values.
+Printer controls appear only for printing presets; older saved settings without
+these inputs normalize to the defaults.
+
 ## Thread extent and ends
 
 Confirmed: default to full selected-face coverage without extending beyond its

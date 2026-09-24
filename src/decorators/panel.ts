@@ -126,7 +126,7 @@ export class DecoratorPanel {
     return accepted;
   }
   private field(field: (typeof threadFields)[number], instances: DecoratorInstance[]): void {
-    const values = instances.map((d) => d.settings[field.key]);
+    const values = instances.map((d) => d.settings[field.key] ?? field.default);
     const mixed = values.some((v) => v !== values[0]);
     const label = document.createElement("label"),
       text = document.createElement("span");
@@ -203,7 +203,14 @@ export class DecoratorPanel {
       this.editor.refresh();
     });
     if (!instances.some((d) => d.problem))
-      for (const field of threadFields) this.field(field, instances);
+      for (const field of threadFields)
+        if (
+          !field.visibleWhen ||
+          instances.some((d) =>
+            field.visibleWhen?.values.includes(d.settings[field.visibleWhen.key]),
+          )
+        )
+          this.field(field, instances);
     const note = document.createElement("p");
     note.textContent =
       instances.find((d) => d.problem)?.problem ??

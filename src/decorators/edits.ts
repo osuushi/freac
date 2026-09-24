@@ -1,7 +1,12 @@
 import { newId, type SketchDocument } from "../sketch/document.js";
 import { validateFrame } from "../sketch/planes.js";
 import { cylinderExtent, cylinderFrame, resolveFaces, sameCylinder } from "./cylinder.js";
-import { threadDefaults, threadDefinition, threadSettings } from "./thread-settings.js";
+import {
+  patchThreadSettings,
+  threadDefaults,
+  threadDefinition,
+  threadSettings,
+} from "./thread-settings.js";
 import type { DecoratorEdit, DecoratorInstance, FaceReference } from "./types.js";
 
 export const faceKey = (face: FaceReference) => `${face.body}/${face.face}`;
@@ -105,10 +110,11 @@ function applyDecorator(
       version: 1,
       faces,
       frame: cylinderFrame(cylinder),
-      settings: {
-        ...threadDefaults(cylinder.radius * 2, String(edit.settings?.preset ?? "metric")),
-        ...edit.settings,
-      },
+      settings: patchThreadSettings(
+        cylinder.radius * 2,
+        threadDefaults(cylinder.radius * 2),
+        edit.settings ?? {},
+      ),
     };
   });
   for (const instance of added) validateThread(document, instance);
@@ -126,13 +132,11 @@ export function editDecorators(document: SketchDocument, edit: DecoratorEdit): S
       if (!edit.ids.includes(instance.id)) return instance;
       if (instance.definition !== threadDefinition)
         throw new Error("Decorator definition is unavailable");
-      let patch = edit.patch;
-      if (patch.preset && patch.preset !== "custom") {
-        const radius = resolveFaces(document.bodies ?? [], instance.faces)[0].cylinder.radius;
-        const { pitch, profile, clearance } = threadDefaults(radius * 2, String(patch.preset));
-        patch = { pitch, profile, clearance, ...patch };
-      }
-      const updated = { ...instance, settings: { ...instance.settings, ...patch } };
+      const radius = resolveFaces(document.bodies ?? [], instance.faces)[0].cylinder.radius;
+      const updated = {
+        ...instance,
+        settings: patchThreadSettings(radius * 2, instance.settings, edit.patch),
+      };
       validateThread(document, updated);
       return updated;
     });
