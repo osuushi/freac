@@ -72,6 +72,7 @@ import { offsetContactRoute } from "./ui-offset-contact.mjs";
 import { planeTargetsRoute } from "./ui-plane-targets.mjs";
 import { pointChoiceRoute } from "./ui-point-choice.mjs";
 import { pointEdgeRoute } from "./ui-point-edge.mjs";
+import { pointGroupsRoute } from "./ui-point-groups.mjs";
 import { pointIntentRoute } from "./ui-point-intent.mjs";
 import { circleLinkRoute, pointLinkRoute, pointTangentRoute } from "./ui-point-links.mjs";
 import { projectionRoute } from "./ui-projection.mjs";
@@ -156,6 +157,7 @@ try {
       await pointEdgeRoute(page, name);
       await moveToolRoute(page, name);
       await pointLinkRoute(page, name);
+      await pointGroupsRoute(page, name);
       await circleLinkRoute(page, name);
       await pointTangentRoute(page, name);
       await arcLinkRoute(page, name);

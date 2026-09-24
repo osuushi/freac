@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { pickFace } from "../model/body-view.js";
 import { pickBodyEdge } from "../model/edge-selection.js";
 import {
@@ -142,6 +143,7 @@ export function pickModels(
     if (!edge && !profile) continue;
     const p = worldPoint(sketch.plane, point),
       camera = editor.world.camera.position;
+    if (!editor.world.visiblePoint(new THREE.Vector3(...p))) continue;
     hits.push({
       target:
         edge || !profile

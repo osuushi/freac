@@ -55,3 +55,42 @@ floor). Estimated integration errors consume that allowance. If ordinary adaptiv
 integration disagrees, retry with spline-span Gauss–Kronrod integration from a
 shared exterior reference plane. This changes measurement only; source geometry,
 split topology and validation precision remain unchanged.
+
+## Cross-section view
+
+**Cross section** in Cmd-F → View uses one selected planar face or saved plane;
+otherwise it picks a world plane, saved plane or planar face in the viewport.
+The initial cut removes the camera-facing half. Its direction then stays fixed
+while orbiting. Existing XYZ plane handles translate/rotate it by dragging or
+numeric entry. **Flip side** reverses the normal 180° at the same origin, keeping
+the exact same infinite support plane; it does not orbit the camera.
+
+The section frame belongs to renderer view state, copied from its reference.
+Moving it never edits a construction plane, sketch or body and creates no Undo
+entry. Enter/Done keeps the section visible and releases placement; **Adjust
+section** reopens its handles, **Choose section plane** replaces the reference,
+and **Turn off section** restores the full view. Escape/Cancel restores the view
+from before adjustment, including restoring no section after first activation.
+Invalid numeric input must be corrected or cancelled. A new section starts from
+selection; an existing section resumes at its last placement.
+
+Clipping updates during drag. After release, the existing exact section query
+fills the exposed solid cross section, including holes; these fills are visual,
+not new selectable topology. While a new fill is calculating the clipped shell
+remains visible. During a body-edit preview, accepted-body fills are hidden until
+acceptance to avoid displaying a stale cut surface. Faces, edges, reference patches and sketches on the removed
+side do not participate in point picking or snapping. Geometry operations still
+operate on whole accepted entities, not visually trimmed fragments.
+
+Sketch mode temporarily uses its own camera-facing clipping and section capture;
+returning to Modeling restores the cross-section view. New/Open resets the view.
+The section is not saved in the document or included in exported geometry.
+
+Coplanar rendering gives existing body faces priority over generated section fills.
+Body faces on the active section support mark stencil bit 4; caps exclude those
+samples and write only the solid-silhouette bit 2. Sketch-fill union retains bit 1.
+This preserves face selection colors without competing coplanar triangulations;
+material stencil state updates when the plane moves, without retessellating bodies.
+Filled surfaces, sketch overlays and plane cues interpolate signed clip distances
+computed at vertices, avoiding cancellation from interpolated camera-space positions
+on thin triangles. The clipping tolerance and actual section plane remain unchanged.

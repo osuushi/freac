@@ -4,6 +4,7 @@ import type { SketchDocument } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { type PlaneFrame, worldPoint } from "./planes.js";
 import { closedBoundaries } from "./regions.js";
+import { stableClipping } from "./stable-clipping.js";
 
 /** A stencil union keeps overlapping/nested closed cells at one translucent tint. */
 export function drawRegionFills(editor: SketchEditor): () => void {
@@ -21,6 +22,7 @@ export function drawRegionFills(editor: SketchEditor): () => void {
     stencilFunc: THREE.NotEqualStencilFunc,
     stencilZPass: THREE.ReplaceStencilOp,
   });
+  stableClipping(material);
   const mesh = new THREE.Mesh(new THREE.BufferGeometry(), material);
   mesh.renderOrder = 5;
   editor.world.scene.add(mesh);

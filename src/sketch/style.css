@@ -1,3 +1,5 @@
+@import "./orientation-cube.css";
+
 * {
   box-sizing: border-box;
 }

@@ -32,10 +32,12 @@ export async function pointLinkRoute(page, name) {
   assert.equal((await data(page)).constraints.length, 2);
   assert.equal(await chooser(page).locator("button[data-point-key]").count(), 0);
   await inspectPointChoices(page, 0, 0);
+  assert.equal(await chooser(page).locator("button[data-point-key]").count(), 1);
+  assert.equal(await choice(page, 1).locator("polyline").count(), 3);
   await choice(page, 1).click();
   await page.keyboard.press("Escape");
-  await drag(page, [0, 0], [2, 3]);
-  for (const curve of (await data(page)).curves) pointEquals(curve.a, [2, 3]);
+  await drag(page, [0, 0], [2, 4]);
+  for (const curve of (await data(page)).curves) pointEquals(curve.a, [2, 4]);
   await chooseTool(page, "undo", "undo");
   await inspect(page);
   await click(page, 0, 0);
@@ -43,11 +45,12 @@ export async function pointLinkRoute(page, name) {
   await choice(page, 1).click();
   await page.getByRole("button", { name: "Unfuse selected points", exact: true }).click();
   await inspect(page);
-  assert.equal((await data(page)).constraints.length, 1, "Other points remain linked");
+  assert.equal((await data(page)).constraints.length, 0, "Unfuse splits the selected component");
+  await choice(page, 1).click();
   await page.keyboard.press("Escape");
-  await drag(page, [0, 0], [2, 3]);
+  await drag(page, [0, 0], [2, 4]);
   const curves = (await data(page)).curves;
-  pointEquals(curves[0].a, [2, 3]);
+  pointEquals(curves[0].a, [2, 4]);
   pointEquals(curves[1].a, [0, 0]);
   pointEquals(curves[2].a, [0, 0]);
   await chooseTool(page, "undo", "undo");
@@ -59,9 +62,7 @@ export async function pointLinkRoute(page, name) {
   await inspectPointChoices(page, 0, 0);
   await choice(page, 1).click();
   await page.screenshot({ path: `.cache/sketch-review/${name}-point-links.png` });
-  console.log(
-    `${name}: explicit line-point Fuse, narrowed linked drag, Unfuse preserving other links and Undo passed`,
-  );
+  console.log(`${name}: explicit line-point Fuse, grouped drag, Unfuse and Undo passed`);
 }
 
 export async function circleLinkRoute(page, name) {
@@ -78,10 +79,10 @@ export async function circleLinkRoute(page, name) {
   await inspectPointChoices(page, 0, 0);
   await choice(page, 1).click();
   await page.keyboard.press("Escape");
-  await drag(page, [0, 0], [2, 3]);
+  await drag(page, [0, 0], [2, 4]);
   let curves = (await data(page)).curves;
-  pointEquals(curves[0].center, [2, 3]);
-  pointEquals(curves[1].a, [2, 3]);
+  pointEquals(curves[0].center, [2, 4]);
+  pointEquals(curves[1].a, [2, 4]);
   assert.equal(curves[0].radius, 4);
   await chooseTool(page, "undo", "undo");
   await inspect(page);
@@ -90,10 +91,11 @@ export async function circleLinkRoute(page, name) {
   await choice(page, 1).click();
   await page.getByRole("button", { name: "Unfuse selected points", exact: true }).click();
   await inspect(page);
+  await choice(page, 1).click();
   await page.keyboard.press("Escape");
-  await drag(page, [0, 0], [2, 3]);
+  await drag(page, [0, 0], [2, 4]);
   curves = (await data(page)).curves;
-  pointEquals(curves[0].center, [2, 3]);
+  pointEquals(curves[0].center, [2, 4]);
   pointEquals(curves[1].a, [0, 0]);
   await page.screenshot({ path: `.cache/sketch-review/${name}-circle-links.png` });
   console.log(

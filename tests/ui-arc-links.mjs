@@ -20,7 +20,12 @@ export async function startArc(page, height) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-4, 0], [4, 0]);
-  const box = await page.locator(".bow-handle").nth(1).boundingBox();
+  await page.keyboard.press("v");
+  await click(page, 0, 0);
+  await inspect(page);
+  const handle = page.locator(".bow-handle").nth(1);
+  await handle.waitFor({ state: "visible" });
+  const box = await handle.evaluate((element) => element.getBoundingClientRect().toJSON());
   const to = await at(page, 0, height);
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
@@ -41,11 +46,11 @@ export async function arcLinkRoute(page, name) {
   await inspectPointChoices(page, -4, 0);
   await choose(page, 1).click();
   await page.keyboard.press("Escape");
-  await drag(page, [-4, 0], [-3, 1]);
+  await drag(page, [-4, 0], [-2, 2]);
   let curves = (await sketch(page)).curves;
-  pointEquals(curves[0].a, [-3, 1]);
+  pointEquals(curves[0].a, [-2, 2]);
   pointEquals(curves[0].b, [4, 0]);
-  pointEquals(curves[1].a, [-3, 1]);
+  pointEquals(curves[1].a, [-2, 2]);
   close(radiusOf(curves[0]), 4);
   await chooseTool(page, "undo", "undo");
   await inspect(page);
@@ -61,6 +66,7 @@ export async function arcLinkRoute(page, name) {
   await choose(page, 1).click();
   await page.keyboard.press("Escape");
   // A center link must also follow fixed-endpoint radius edits through 180 degrees.
+  await click(page, 0, 8); // Select the arc for radius editing after choosing the fused component.
   await page.getByRole("button", { name: "Lock Radius", exact: true }).click();
   await inspect(page);
   for (const value of [4, 6]) {
@@ -82,12 +88,12 @@ export async function arcLinkRoute(page, name) {
   await inspectPointChoices(page, 0, 3);
   await choose(page, 1).click();
   await page.keyboard.press("Escape");
-  // Bypass the other line's midpoint alignment guide at y=6.5.
-  await drag(page, [0, 3], [2, 6], ["Shift"]);
+  // The grouped selection uses a grid-snapped displacement; bypass geometry guides.
+  await drag(page, [0, 3], [2, 7], ["Shift"]);
   curves = (await sketch(page)).curves;
-  pointEquals(curves[0].a, [-2, 3]);
-  pointEquals(curves[0].b, [6, 3]);
-  pointEquals(curves[1].a, [2, 6]);
+  pointEquals(curves[0].a, [-2, 4]);
+  pointEquals(curves[0].b, [6, 4]);
+  pointEquals(curves[1].a, [2, 7]);
   close(curves[0].bulge, -2);
   await chooseTool(page, "undo", "undo");
   await inspect(page);
@@ -96,12 +102,13 @@ export async function arcLinkRoute(page, name) {
   await choose(page, 1).click();
   await page.getByRole("button", { name: "Unfuse selected points", exact: true }).click();
   await inspect(page);
+  await choose(page, 1).click();
   await page.keyboard.press("Escape");
-  // Bypass the other line's midpoint alignment guide at y=6.5.
-  await drag(page, [0, 3], [2, 6], ["Shift"]);
+  // Use the same grid-aligned displacement after detaching, bypassing geometry guides.
+  await drag(page, [0, 3], [2, 7], ["Shift"]);
   curves = (await sketch(page)).curves;
   pointEquals(curves[1].a, [0, 3]);
-  pointEquals(curves[0].a, [-2, 3]);
+  pointEquals(curves[0].a, [-2, 4]);
   assert.equal((await sketch(page)).constraints.length, 0);
   await page.screenshot({ path: `.cache/sketch-review/${name}-arc-links.png` });
   console.log(

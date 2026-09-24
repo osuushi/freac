@@ -131,10 +131,12 @@ founder feedback update these contracts before further tools depend on them.
 ### Point disambiguation
 
 Click a coincident point location to open a local chooser of incident-edge diagrams.
-The ordinary default includes all colocated point targets; choosing a diagram
-selects just that point, Shift-click adds choices, and Command/Ctrl-click toggles
-them. Shift while hovering the junction reopens the chooser with those choices indicated. No point
-is fused by selection; Fuse/Unfuse remains the coincidence-constraint ticket.
+The ordinary default includes all colocated point targets. Each stored coincidence
+component appears as one diagram containing all its incident branches; independent
+colocated points remain separate diagrams. Choosing a diagram selects all its point
+targets, Shift-click adds the component, and Command/Ctrl-click toggles it as a unit.
+Hover highlights all branches of that component. Shift while hovering the junction
+reopens the chooser with those choices indicated. Selection does not create point links.
 
 The next point drag uses the chosen targets. Whole-curve multiselection keeps its
 existing Shift-add/Command-toggle behavior; a plain point click does not silently
@@ -148,7 +150,9 @@ Point selection fades blue along incident edges; hovering a diagram fades amber
 along its branches. Center choices highlight associated curves, and concentric
 center diagrams use a shared scale. A rectangle corner is one choice with two
 incident edges; coincident independent endpoints remain separate choices. All
-candidates are shown with wrapping, not truncated at four. Identical overlapping
+candidates are shown with wrapping, not truncated at four. Unfuse is shown only when
+the chosen targets have detachable coincidence links. Unfusing a selected component
+immediately restores its separate diagrams. Identical overlapping
 geometry can still yield identical diagrams; moving a chosen duplicate is explicit.
 
 Selecting the entire physical degree-two endpoint junction offers Tangent for its

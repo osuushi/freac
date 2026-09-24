@@ -1,0 +1,25 @@
+.cross-section-actions {
+  position: absolute;
+  bottom: 45px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 24px);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 6px 9px;
+  border: 1px solid #c5cbd3;
+  border-radius: 8px;
+  background: #f8f9fb;
+  pointer-events: auto;
+}
+.cross-section-actions[hidden],
+.cross-section-actions button[hidden] {
+  display: none;
+}
+.cross-section-actions span {
+  white-space: nowrap;
+  font-size: 12px;
+  margin-right: 5px;
+}

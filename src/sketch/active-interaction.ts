@@ -4,6 +4,7 @@ type Kind =
   | "entity-reorder"
   | "scale"
   | "transform-box-move"
+  | "cross-section"
   | "construction-plane"
   | "plane-cut"
   | "mirror"
@@ -48,6 +49,7 @@ export class ActiveInteraction {
         "revolve",
         "scale",
         "construction-plane",
+        "cross-section",
         "plane-cut",
         "extrude",
         "body-move",

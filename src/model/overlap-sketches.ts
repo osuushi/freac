@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { curveDistance, displayPoints } from "../sketch/curve-geometry.js";
 import type { Sketch } from "../sketch/document.js";
 import type { SketchEditor } from "../sketch/editor.js";
@@ -32,6 +33,7 @@ export function overlapSketchCandidates(
       continue;
     const p = worldPoint(sketch.plane, point),
       camera = editor.world.camera.position;
+    if (!editor.world.visiblePoint(new THREE.Vector3(...p))) continue;
     result.push({
       target: { kind: "sketch", sketch: sketch.id },
       key: sketch.id,

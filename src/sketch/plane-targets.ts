@@ -66,10 +66,12 @@ class PlaneTargetInteraction {
       this.world.camera,
     );
     const targets = this.targets.filter((t) => this.available(t));
-    const hit = this.raycaster.intersectObjects(
-      targets.map((t) => t.mesh),
-      false,
-    )[0];
+    const hit = this.raycaster
+      .intersectObjects(
+        targets.map((t) => t.mesh),
+        false,
+      )
+      .find((hit) => this.world.visiblePoint(hit.point));
     if (!hit || this.occupied(point, hit.point.distanceTo(this.world.camera.position))) return null;
     return targets.find((t) => t.mesh === hit.object) ?? null;
   }

@@ -7,6 +7,7 @@ import type { SketchDocument } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { worldPoint } from "./planes.js";
 import { coloredCurve, pointFeedback } from "./point-colors.js";
+import { stableClipping } from "./stable-clipping.js";
 
 export function drawSketches(editor: SketchEditor, obscured = false): () => void {
   const disposeObscured = obscured ? null : drawSketches(editor, true);
@@ -19,6 +20,7 @@ export function drawSketches(editor: SketchEditor, obscured = false): () => void
     opacity: obscured ? 0.3 : 1,
     depthWrite: false,
   });
+  stableClipping(material);
   let geometry = new LineSegmentsGeometry(),
     lines = new LineSegments2(geometry, material);
   editor.world.scene.add(lines);

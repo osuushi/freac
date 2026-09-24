@@ -16,7 +16,12 @@ export function screenRay(editor: SketchEditor, screen: Point): THREE.Ray {
   );
   return caster.ray;
 }
-export function faceRayHits(bodies: readonly Body[], ray: THREE.Ray, camera: THREE.Vector3) {
+export function faceRayHits(
+  bodies: readonly Body[],
+  ray: THREE.Ray,
+  camera: THREE.Vector3,
+  clipping: readonly THREE.Plane[] = [],
+) {
   const hits: { body: string; face: string; depth: number }[] = [];
   const a = new THREE.Vector3(),
     b = new THREE.Vector3(),
@@ -29,7 +34,10 @@ export function faceRayHits(bodies: readonly Body[], ray: THREE.Ray, camera: THR
         a.fromArray(face.vertices, i);
         b.fromArray(face.vertices, i + 3);
         c.fromArray(face.vertices, i + 6);
-        if (ray.intersectTriangle(a, b, c, true, hit))
+        if (
+          ray.intersectTriangle(a, b, c, true, hit) &&
+          clipping.every((p) => p.distanceToPoint(hit) >= 0)
+        )
           depth = Math.min(depth, hit.distanceTo(camera));
       }
       if (Number.isFinite(depth)) hits.push({ body: body.id, face: face.id, depth });
@@ -89,6 +97,7 @@ export function edgeRayHits(editor: SketchEditor, screen: Point, bodies: readonl
         if (distance > 7) continue;
         const point = a.lerp(b, t),
           depth = point.distanceTo(camera);
+        if (!editor.world.visiblePoint(point)) continue;
         if (
           !best ||
           distance < best.distance - 0.1 ||

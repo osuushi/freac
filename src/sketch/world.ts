@@ -3,6 +3,7 @@ import {
   alignCameraToPlane,
   applyCameraPose,
   type CameraFraming,
+  type CameraPose,
   planeCameraPose,
 } from "./camera-motion.js";
 import { Arcball, levelOrientation } from "./camera-orbit.js";
@@ -15,6 +16,7 @@ import {
   type Vector,
   worldPoint,
 } from "./planes.js";
+import { sectionClip } from "./view-clipping.js";
 import { SketchForeground } from "./world-foreground.js";
 import { createGrids } from "./world-grid.js";
 import { installNavigation } from "./world-navigation.js";
@@ -34,6 +36,7 @@ export class World {
   get activeFrame(): PlaneFrame | null {
     return this.workspace?.frame ?? null;
   }
+  crossSection: PlaneFrame | null = null;
   height = 80;
   spacing = 1;
   canNavigate = () => true;
@@ -96,17 +99,18 @@ export class World {
       this.activeFrame,
       height,
     );
+    this.updateClipping();
     for (const listener of this.changed) listener();
-    this.updateSketchClipping();
     this.renderer.render(this.scene, this.camera);
     if (this.activeFrame) {
       this.foreground.render(this.renderer, this.scene, this.camera, this.sketchClip);
     }
   }
-  private updateSketchClipping(): void {
+  private updateClipping(): void {
     const frame = this.activeFrame;
     if (!frame) {
-      this.renderer.clippingPlanes = [];
+      this.renderer.clippingPlanes = this.crossSection ? [sectionClip(this.crossSection)] : [];
+      if (this.renderer.clippingPlanes[0]) this.renderer.clippingPlanes[0].constant += 1e-4;
       return;
     }
     const normal = new THREE.Vector3(...frame.u).cross(new THREE.Vector3(...frame.v)).normalize();
@@ -116,6 +120,9 @@ export class World {
     // Retain coplanar curves and faces despite floating-point projection noise.
     this.sketchClip.constant += 1e-4;
     this.renderer.clippingPlanes = [this.sketchClip];
+  }
+  visiblePoint(point: THREE.Vector3): boolean {
+    return this.renderer.clippingPlanes.every((plane) => plane.distanceToPoint(point) >= 0);
   }
   requestDraw(): void {
     // Subsequent input events need the latest basis even before the next paint.
@@ -141,18 +148,27 @@ export class World {
     alignCameraToPlane(this, frame);
   }
   private animateTo(frame: PlaneFrame, framing: CameraFraming): void {
+    this.animatePose(planeCameraPose(this, frame, framing));
+  }
+  animateOrientation(quaternion: THREE.Quaternion): void {
+    this.animatePose({
+      target: this.target.clone(),
+      quaternion,
+      distance: this.camera.position.distanceTo(this.target),
+      height: this.height,
+    });
+  }
+  private animatePose(end: CameraPose): void {
     this.cancelCameraMotion();
     this.camera.lookAt(this.target);
     this.camera.updateMatrixWorld();
     const start = {
-        target: this.target.clone(),
-        quaternion: this.camera.quaternion.clone(),
-        distance: this.camera.position.distanceTo(this.target),
-        height: this.height,
-      },
-      end = planeCameraPose(this, frame, framing),
-      duration = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 280;
-    if (!duration) {
+      target: this.target.clone(),
+      quaternion: this.camera.quaternion.clone(),
+      distance: this.camera.position.distanceTo(this.target),
+      height: this.height,
+    };
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
       applyCameraPose(this, end);
       this.draw();
       return;
@@ -164,24 +180,7 @@ export class World {
     this.draw();
   }
   levelHorizon(): void {
-    this.cancelCameraMotion();
-    const quaternion = levelOrientation(this);
-    const start = {
-      target: this.target.clone(),
-      quaternion: this.camera.quaternion.clone(),
-      distance: this.camera.position.distanceTo(this.target),
-      height: this.height,
-    };
-    const end = { ...start, quaternion };
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      applyCameraPose(this, end);
-      this.requestDraw();
-      return;
-    }
-    const started = performance.now();
-    this.cameraAnimation = requestAnimationFrame((now) =>
-      this.cameraStep(start, end, started, now),
-    );
+    this.animateOrientation(levelOrientation(this));
   }
   private cameraStep(
     start: ReturnType<typeof planeCameraPose>,

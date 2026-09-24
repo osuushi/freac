@@ -18,6 +18,8 @@ function scene(faceZ: number) {
     modeling: { targets: [] },
     world: {
       camera,
+      renderer: { clippingPlanes: [] },
+      visiblePoint: () => true,
       planeBounds: minimumPlaneBounds,
       canvas: { getBoundingClientRect: () => ({ left: 0, top: 0, width: 400, height: 400 }) },
     },
