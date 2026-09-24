@@ -6,6 +6,7 @@ import {
   patchThreadSettings,
   threadDefaults,
   threadDefinition,
+  threadDepth,
   threadSettings,
 } from "./thread-settings.js";
 import type { DecoratorEdit, DecoratorInstance, FaceReference } from "./types.js";
@@ -37,8 +38,10 @@ export function validateThread(document: SketchDocument, instance: DecoratorInst
   const [low, high] = threadReference(document.bodies ?? [], instance);
   if (settings.start + settings.end >= high - low - 1e-7)
     throw new Error("Thread insets leave no threaded length");
-  if (settings.pitch * 0.62 >= faces[0].cylinder.radius)
-    throw new Error("Thread pitch is too large for this cylinder");
+  const needed =
+    settings.profile === "triangle" ? threadDepth(settings) + 0.02 : settings.pitch * 0.62;
+  if (needed >= faces[0].cylinder.radius)
+    throw new Error("Thread profile is too deep for this cylinder");
 }
 
 function validateReferences(refs: readonly FaceReference[]): void {

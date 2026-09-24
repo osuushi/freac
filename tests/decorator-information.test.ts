@@ -19,7 +19,7 @@ async function information(owner: DocumentOwner, body: Body, radius: number, cut
           action: "apply",
           definition: threadDefinition,
           faces: refs,
-          settings: { cut },
+          settings: { cut, preset: "metric" },
         },
       })
     ).error,

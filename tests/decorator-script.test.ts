@@ -43,7 +43,7 @@ test("script thread inspection and edits use current geometry and accept as one 
       },
     })) as DecoratorCatalog;
     assert.ok(catalog.builtins[0].fields.some((f) => f.key === "pitch"));
-    assert.equal(catalog.instances[0].settings.pitch, 1.5);
+    assert.equal(catalog.instances[0].settings.pitch, 0.5);
     await owner.scripts.step({
       kind: "editDecorator",
       input: {

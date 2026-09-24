@@ -54,7 +54,7 @@ test("threads apply atomically to rod/hole, patch only the requested setting, Un
     const instances = owner.view.data.decorators ?? [];
     assert.equal(instances.length, 2);
     assert.deepEqual(instances[0].settings, instances[1].settings);
-    assert.equal(instances[0].settings.pitch, 1.5);
+    assert.equal(instances[0].settings.pitch, 0.5);
     assert.equal(
       (
         await owner.call({
@@ -119,8 +119,8 @@ test("threads apply atomically to rod/hole, patch only the requested setting, Un
 });
 
 test("same nonstandard diameter resolves consistently and hand reverses the helix", () => {
-  assert.equal(threadDefaults(10.3).pitch, 1.5);
-  const settings = threadDefaults(10.3);
+  assert.equal(threadDefaults(10.3, "metric").pitch, 1.5);
+  const settings = threadDefaults(10.3, "metric");
   const flankRise =
     threadRadius(5.15, 0, settings.pitch * 0.2, settings, 1, [0, 10]) -
     threadRadius(5.15, 0, settings.pitch * 0.25, settings, 1, [0, 10]);
@@ -165,7 +165,7 @@ test("deleting a body removes its decorators in the same Undo step", async () =>
   }
 });
 
-test("real rod and hole export watertight complementary threads in both cut modes", async () => {
+test("FDM fine and coarse export watertight complementary threads in both cut modes", async () => {
   const runtime = await initializeMeshRuntime();
   const owner = new DocumentOwner();
   try {
@@ -174,54 +174,58 @@ test("real rod and hole export watertight complementary threads in both cut mode
       kind: "decorator",
       edit: { action: "apply", definition: threadDefinition, faces: refs },
     });
-    for (const cut of ["rod", "hole"] as const) {
-      const instances = owner.view.data.decorators ?? [];
-      assert.equal(
-        (
-          await owner.call({
-            kind: "decorator",
-            edit: {
-              action: "settings",
-              ids: instances.map((d) => d.id),
-              patch: { cut },
-            },
-          })
-        ).error,
-        undefined,
-      );
-      const before = documentArchive(owner.view.data);
-      const prepared = await owner.call({ kind: "export-geometry" });
-      assert.equal(prepared.error, undefined);
-      assert.ok(prepared.exportDocument);
-      const meshes = decoratedMeshes(runtime, prepared.exportDocument);
-      assert.equal(meshes.length, 2);
-      for (const mesh of meshes) validateMesh(mesh);
-      for (const format of ["3mf", "stl"] as const)
-        assert.ok(encodeMeshes(meshes, format).length > 100);
-      const solids = meshes.map(
-        (mesh) =>
-          new runtime.Manifold(
-            new runtime.Mesh({
-              numProp: 3,
-              vertProperties: new Float32Array(mesh.vertices.flat()),
-              triVerts: new Uint32Array(mesh.triangles.flat()),
-            }),
-          ),
-      );
-      const intersection = solids[0].intersect(solids[1]);
-      try {
-        assert.ok(intersection.volume() < 1e-6, `mating ${cut} threads must not collide`);
-      } finally {
-        intersection.delete();
-        for (const solid of solids) solid.delete();
+    for (const preset of ["fdm-fine", "fdm-coarse"] as const)
+      for (const cut of ["rod", "hole"] as const) {
+        const instances = owner.view.data.decorators ?? [];
+        assert.equal(
+          (
+            await owner.call({
+              kind: "decorator",
+              edit: {
+                action: "settings",
+                ids: instances.map((d) => d.id),
+                patch: { preset, cut },
+              },
+            })
+          ).error,
+          undefined,
+        );
+        const before = documentArchive(owner.view.data);
+        const prepared = await owner.call({ kind: "export-geometry" });
+        assert.equal(prepared.error, undefined);
+        assert.ok(prepared.exportDocument);
+        const meshes = decoratedMeshes(runtime, prepared.exportDocument);
+        assert.equal(meshes.length, 2);
+        for (const mesh of meshes) validateMesh(mesh);
+        for (const format of ["3mf", "stl"] as const)
+          assert.ok(encodeMeshes(meshes, format).length > 100);
+        const solids = meshes.map(
+          (mesh) =>
+            new runtime.Manifold(
+              new runtime.Mesh({
+                numProp: 3,
+                vertProperties: new Float32Array(mesh.vertices.flat()),
+                triVerts: new Uint32Array(mesh.triangles.flat()),
+              }),
+            ),
+        );
+        const intersection = solids[0].intersect(solids[1]);
+        try {
+          assert.ok(
+            intersection.volume() < 1e-6,
+            `mating ${preset}/${cut} threads must not collide`,
+          );
+        } finally {
+          intersection.delete();
+          for (const solid of solids) solid.delete();
+        }
+        assert.equal(
+          documentArchive(owner.view.data),
+          before,
+          "export never changes accepted geometry/settings",
+        );
+        assert.equal(threadSettings((owner.view.data.decorators ?? [])[0].settings).cut, cut);
       }
-      assert.equal(
-        documentArchive(owner.view.data),
-        before,
-        "export never changes accepted geometry/settings",
-      );
-      assert.equal(threadSettings((owner.view.data.decorators ?? [])[0].settings).cut, cut);
-    }
   } finally {
     owner.close();
   }

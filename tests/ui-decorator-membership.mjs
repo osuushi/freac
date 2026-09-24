@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { orient } from "./ui-blend-edit.mjs";
+import { openThreadAdvanced } from "./ui-decorator-advanced.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { clearSelection } from "./ui-reconnection-helpers.mjs";
@@ -20,6 +21,7 @@ async function imprintThreadedCylinder(page) {
   await orient(page, [0, -1, 0.3]);
   await worldClick(page, [0, -8, 2]);
   await chooseTool(page, "threads", "threads");
+  await openThreadAdvanced(page);
   for (const [name, value] of [
     ["Start inset", "1"],
     ["End inset", "2"],
@@ -78,12 +80,14 @@ export async function decoratorMembershipRoute(page) {
   await page.getByRole("button", { name: "Continue threads onto selection", exact: true }).click();
   state = await inspect(page);
   assert.equal(state.document.decorators[0].faces.length, 2);
+  await openThreadAdvanced(page);
   const pitch = page.getByRole("spinbutton", { name: "Pitch", exact: true });
   await pitch.fill("3");
   await pitch.press("Enter");
   state = await inspect(page);
   assert.equal(state.modelingSelection.length, 2, "Editing expands to all affected faces");
   assert.equal(state.document.decorators[0].settings.pitch, 3);
+  assert.equal(state.document.decorators[0].settings.preset, "custom");
   await clearSelection(page);
   await worldClick(page, [0, -8, 2]);
   await page
@@ -96,10 +100,10 @@ export async function decoratorMembershipRoute(page) {
   assert.equal(state.modelingSelection.length, 2);
   assert.equal(state.document.decorators.length, 2);
   assert.equal(await pitch.getAttribute("placeholder"), "Mixed");
-  const relief = page.getByRole("spinbutton", { name: "Hole radial relief", exact: true });
+  const relief = page.getByRole("spinbutton", { name: "Tolerance", exact: true });
   await relief.fill("0.15");
   await relief.press("Enter");
   state = await inspect(page);
-  assert.deepEqual(state.document.decorators.map((d) => d.settings.pitch).sort(), [2, 3]);
+  assert.deepEqual(state.document.decorators.map((d) => d.settings.pitch).sort(), [0.5, 3]);
   assert.ok(state.document.decorators.every((d) => d.settings.clearance === 0.15));
 }

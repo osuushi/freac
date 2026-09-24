@@ -19,6 +19,7 @@ export class DecoratorPanel {
   private key = "";
   private shownDocument: SketchEditor["store"]["data"] | null = null;
   private last: string | null = null;
+  private advancedOpen = false;
   private draft: DecoratorSettingsDraft;
   constructor(
     private editor: SketchEditor,
@@ -96,7 +97,11 @@ export class DecoratorPanel {
     if (preview) this.draft.preview(edit);
     else void this.edit(edit);
   }
-  private field(field: (typeof threadFields)[number], instances: DecoratorInstance[]): void {
+  private field(
+    target: HTMLElement,
+    field: (typeof threadFields)[number],
+    instances: DecoratorInstance[],
+  ): void {
     const values = instances.map((d) => d.settings[field.key] ?? field.default);
     const mixed = values.some((v) => v !== values[0]);
     const label = document.createElement("label"),
@@ -137,7 +142,7 @@ export class DecoratorPanel {
       };
       label.append(input);
     }
-    this.root.append(label);
+    target.append(label);
   }
   private update = (): void => {
     const instances = this.instances();
@@ -170,6 +175,8 @@ export class DecoratorPanel {
     if (key === this.key && this.shownDocument === this.editor.store.data) return;
     this.key = key;
     this.shownDocument = this.editor.store.data;
+    const advanced = this.root.querySelector<HTMLDetailsElement>("details.thread-advanced");
+    if (advanced) this.advancedOpen = advanced.open;
     this.root.replaceChildren();
     const heading = document.createElement("h2");
     heading.textContent = "Decorators";
@@ -202,20 +209,37 @@ export class DecoratorPanel {
       this.editor.refresh();
     });
     appendThreadInformation(this.root, this.editor, instances);
-    if (!instances.some((d) => d.problem))
-      for (const field of threadFields)
+    if (!instances.some((d) => d.problem)) {
+      const advanced = document.createElement("details");
+      advanced.className = "thread-advanced";
+      advanced.open = this.advancedOpen;
+      const summary = document.createElement("summary");
+      summary.textContent = "Advanced";
+      advanced.append(summary);
+      for (const field of threadFields) {
         if (
-          !field.visibleWhen ||
-          instances.some((d) =>
+          field.visibleWhen &&
+          !instances.some((d) =>
             field.visibleWhen?.values.includes(d.settings[field.visibleWhen.key]),
           )
         )
-          this.field(field, instances);
-    const note = document.createElement("p");
-    note.textContent =
-      instances.find((d) => d.problem)?.problem ??
-      "Export-time threads. Original faces remain editable. Hole relief is radial; printing presets are starting points.";
-    this.root.append(note);
+          continue;
+        const basic = ["preset", "hand", "cut", "clearance"].includes(field.key);
+        this.field(basic ? this.root : advanced, field, instances);
+        if (field.key === "clearance") {
+          const hint = document.createElement("p");
+          hint.className = "thread-tolerance-hint";
+          hint.textContent =
+            "Hole-side radial relief. Try 0.05 mm for vertical prints; 0 mm may suit horizontal holes.";
+          this.root.append(hint);
+        }
+      }
+      this.root.append(advanced);
+    } else {
+      const note = document.createElement("p");
+      note.textContent = instances.find((d) => d.problem)?.problem ?? "";
+      this.root.append(note);
+    }
     this.button("Remove threads from selected faces", () => {
       const keys = new Set(instances.flatMap((d) => d.faces.map(faceKey)));
       void this.edit({

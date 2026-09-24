@@ -5,8 +5,40 @@ import {
   coarseMetric,
   patchThreadSettings,
   threadDefaults,
+  threadDepth,
   threadSettings,
 } from "../src/decorators/thread-settings.js";
+
+test("FDM presets resolve the captured 1 mm triangular ridge and one hole-side tolerance", () => {
+  for (const [preset, pitch] of [
+    ["fdm-fine", 0.5],
+    ["fdm-coarse", 1],
+  ] as const) {
+    const settings = threadDefaults(10.3, preset);
+    assert.equal(settings.pitch, pitch);
+    assert.equal(settings.profile, "triangle");
+    assert.equal(threadDepth(settings), 1);
+    assert.equal(settings.clearance, 0.05);
+    assert.equal(threadRadius(5.15, 0, 0, settings, 1, [0, 10]), 5.15);
+    assert.equal(threadRadius(5.15, 0, pitch / 2, settings, 1, [0, 10]), 4.15);
+    assert.equal(threadRadius(5.15, 0, pitch, settings, 1, [0, 10]), 5.15);
+    assert.equal(threadRadius(5.15, 0, pitch / 2, settings, -1, [0, 10]), 4.2);
+    assert.equal(
+      threadRadius(5.15, 0, pitch / 2, { ...settings, clearance: 0 }, -1, [0, 10]),
+      4.15,
+    );
+    assert.deepEqual(patchThreadSettings(20, settings, { hand: "left" }), {
+      ...settings,
+      hand: "left",
+    });
+  }
+  assert.equal(threadDefaults(10.3).preset, "fdm-fine");
+  const coarse = patchThreadSettings(10.3, threadDefaults(10.3), { preset: "fdm-coarse" });
+  assert.equal(coarse.pitch, 1);
+  assert.equal(patchThreadSettings(10.3, coarse, { preset: "fdm-fine" }).pitch, 0.5);
+  assert.equal(patchThreadSettings(10.3, coarse, { pitch: 2 }).preset, "custom");
+  assert.equal(patchThreadSettings(10.3, coarse, { clearance: 0 }).preset, "fdm-coarse");
+});
 
 test("printing inputs resolve complementary profiles independent of material side", () => {
   for (const preset of ["print-upright", "print-sideways"] as const) {

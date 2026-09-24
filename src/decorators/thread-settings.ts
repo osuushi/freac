@@ -2,9 +2,9 @@ import type { DecoratorField, Settings } from "./types.js";
 
 export const threadDefinition = "freac.threads";
 export interface ThreadSettings extends Settings {
-  preset: "metric" | "print-upright" | "print-sideways" | "custom";
+  preset: "fdm-fine" | "fdm-coarse" | "metric" | "print-upright" | "print-sideways" | "custom";
   pitch: number;
-  profile: "metric" | "rounded";
+  profile: "triangle" | "metric" | "rounded";
   hand: "right" | "left";
   cut: "rod" | "hole";
   clearance: number;
@@ -22,6 +22,8 @@ export const threadFields: readonly DecoratorField[] = [
     label: "Preset",
     type: "enum",
     options: [
+      { value: "fdm-fine", label: "FDM fine" },
+      { value: "fdm-coarse", label: "FDM coarse" },
       { value: "metric", label: "Metric" },
       { value: "print-upright", label: "Print upright" },
       { value: "print-sideways", label: "Print sideways" },
@@ -54,6 +56,7 @@ export const threadFields: readonly DecoratorField[] = [
     label: "Profile",
     type: "enum",
     options: [
+      { value: "triangle", label: "FDM triangle · 1 mm deep" },
       { value: "metric", label: "Metric 60°" },
       { value: "rounded", label: "Rounded" },
     ],
@@ -76,7 +79,7 @@ export const threadFields: readonly DecoratorField[] = [
       { value: "hole", label: "Hole — rod ridges outward" },
     ],
   },
-  { key: "clearance", label: "Hole radial relief", type: "number", unit: "mm", min: 0, max: 10 },
+  { key: "clearance", label: "Tolerance", type: "number", unit: "mm", min: 0, max: 10 },
   { key: "start", label: "Start inset", type: "number", unit: "mm", min: 0 },
   { key: "end", label: "End inset", type: "number", unit: "mm", min: 0 },
   { key: "startTaper", label: "Start taper", type: "number", unit: "mm", min: 0 },
@@ -133,9 +136,14 @@ export function coarseMetric(diameter: number) {
   };
 }
 
+/** The print triangle follows the captured 1 mm protrusion, independent of pitch. */
+export function threadDepth(settings: ThreadSettings): number {
+  return settings.profile === "triangle" ? 1 : (settings.pitch * Math.sqrt(3) * 5) / 16;
+}
+
 export function threadDefaults(
   diameter: number,
-  preset = "metric",
+  preset: ThreadSettings["preset"] = "fdm-fine",
   printing: { layerHeight: number; nozzleDiameter: number } = {
     layerHeight: 0.2,
     nozzleDiameter: 0.4,
@@ -143,21 +151,26 @@ export function threadDefaults(
 ): ThreadSettings {
   const print = preset === "print-upright" || preset === "print-sideways";
   const sideways = preset === "print-sideways";
+  const fdm = preset === "fdm-fine" || preset === "fdm-coarse";
   return {
     layerHeight: printing.layerHeight,
     nozzleDiameter: printing.nozzleDiameter,
-    preset: preset as ThreadSettings["preset"],
-    pitch: print
-      ? Math.max(
-          coarseMetric(diameter).pitch,
-          printing.layerHeight * (sideways ? 10 : 6),
-          printing.nozzleDiameter * (sideways ? 5 : 3),
-        )
-      : coarseMetric(diameter).pitch,
-    profile: print ? "rounded" : "metric",
+    preset,
+    pitch: fdm
+      ? preset === "fdm-fine"
+        ? 0.5
+        : 1
+      : print
+        ? Math.max(
+            coarseMetric(diameter).pitch,
+            printing.layerHeight * (sideways ? 10 : 6),
+            printing.nozzleDiameter * (sideways ? 5 : 3),
+          )
+        : coarseMetric(diameter).pitch,
+    profile: fdm ? "triangle" : print ? "rounded" : "metric",
     hand: "right",
     cut: "rod",
-    clearance: print ? printing.nozzleDiameter / 2 : 0.1,
+    clearance: fdm ? 0.05 : print ? printing.nozzleDiameter / 2 : 0.1,
     start: 0,
     end: 0,
     startTaper: 0,
@@ -193,12 +206,18 @@ export function patchThreadSettings(
 ): ThreadSettings {
   const merged = threadSettings({ ...threadSettings(settings), ...patch });
   const printing = merged.preset === "print-upright" || merged.preset === "print-sideways";
+  let resolved = merged;
   if (
     (patch.preset && patch.preset !== "custom") ||
     (printing && (patch.layerHeight !== undefined || patch.nozzleDiameter !== undefined))
   ) {
     const { pitch, profile, clearance } = threadDefaults(diameter, merged.preset, merged);
-    return threadSettings({ ...merged, pitch, profile, clearance, ...patch });
+    resolved = threadSettings({ ...merged, pitch, profile, clearance, ...patch });
   }
-  return threadSettings(merged);
+  if (resolved.preset === "fdm-fine" || resolved.preset === "fdm-coarse") {
+    const defaults = threadDefaults(diameter, resolved.preset);
+    if (resolved.pitch !== defaults.pitch || resolved.profile !== defaults.profile)
+      return threadSettings({ ...resolved, preset: "custom" });
+  }
+  return resolved;
 }

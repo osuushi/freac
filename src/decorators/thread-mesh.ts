@@ -12,7 +12,7 @@ import {
 } from "./cylinder.js";
 import { threadTolerance } from "./precision.js";
 import { threadGrid } from "./thread-grid.js";
-import type { ThreadSettings } from "./thread-settings.js";
+import { type ThreadSettings, threadDepth } from "./thread-settings.js";
 
 /** The same radial envelope defines both mating surfaces; only the hole gets relief. */
 export function threadRadius(
@@ -29,7 +29,9 @@ export function threadRadius(
   const profile =
     settings.profile === "rounded"
       ? (1 - Math.cos(2 * Math.PI * phase)) / 2
-      : Math.min(1, Math.max(0, (triangle - 0.125) / 0.625));
+      : settings.profile === "triangle"
+        ? triangle
+        : Math.min(1, Math.max(0, (triangle - 0.125) / 0.625));
   const taper = Math.max(
     0,
     Math.min(
@@ -38,8 +40,7 @@ export function threadRadius(
       settings.endTaper ? (bounds[1] - z) / settings.endTaper : 1,
     ),
   );
-  // Truncated 60° profile: radial depth = 5/8 of the fundamental triangle height.
-  const depth = (settings.pitch * Math.sqrt(3) * 5) / 16;
+  const depth = threadDepth(settings);
   return (
     radius +
     (settings.cut === "rod" ? -1 : 1) * depth * profile * taper +
@@ -142,7 +143,7 @@ function threadToolMeshes(
   tolerance: number,
 ) {
   const { radius, outward } = cylinder;
-  const depth = (settings.pitch * Math.sqrt(3) * 5) / 16;
+  const depth = threadDepth(settings);
   const overlap = Math.min(2 * tolerance, low / 2);
   const relief = outward < 0 ? settings.clearance : 0;
   const minimum = radius + (settings.cut === "rod" ? -depth : 0) + relief;
@@ -217,23 +218,31 @@ export function threadMeshes(
     Math.min(extent[1], taperBounds[1]),
   ];
   if (bounds[1] <= bounds[0] + 1e-7) return null;
-  const depth = settings.pitch * 0.62;
+  const depth = threadDepth(settings);
   const low = cylinder.radius - depth - 0.02,
     high = cylinder.radius + depth + settings.clearance + 0.02;
-  if (low <= 0) throw new Error("Thread pitch is too large for this cylinder");
+  if (low <= 0) throw new Error("Thread profile is too deep for this cylinder");
   const tolerance = quality === "preview" ? 0.08 : threadTolerance(settings);
   const segments = Math.max(
     32,
     Math.ceil(Math.PI / Math.acos(1 - Math.min(0.1, tolerance / (2 * high)))),
   );
-  // Corner-aligned metric cells are linear in phase. Bound the mixed radial/angular
-  // interpolation term instead of using the rounded profile's axial curvature rate.
-  const linearMetric = settings.profile === "metric" && !settings.startTaper && !settings.endTaper;
+  // Corner-aligned straight profiles are linear in phase. Bound the mixed
+  // radial/angular interpolation term instead of rounded axial curvature.
+  const linearProfile =
+    settings.profile !== "rounded" && !settings.startTaper && !settings.endTaper;
   const samples =
     quality === "preview"
       ? 12
-      : linearMetric
-        ? Math.max(8, Math.ceil((Math.sqrt(3) * settings.pitch * Math.PI) / (segments * tolerance)))
+      : linearProfile
+        ? Math.max(
+            8,
+            Math.ceil(
+              ((settings.profile === "metric" ? Math.sqrt(3) * settings.pitch : 2 * depth) *
+                Math.PI) /
+                (segments * tolerance),
+            ),
+          )
         : Math.max(32, Math.ceil(Math.PI * Math.sqrt(depth / tolerance)));
   const steps = Math.max(1, Math.ceil(((bounds[1] - bounds[0]) / settings.pitch) * samples));
   if (steps * segments > 1_000_000)

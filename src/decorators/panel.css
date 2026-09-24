@@ -55,6 +55,19 @@
   color: #526477;
   line-height: 1.4;
 }
+.decorator-panel .thread-tolerance-hint {
+  margin: -3px 0 10px;
+  font-size: 11px;
+}
+.decorator-panel .thread-advanced {
+  margin: 8px 0;
+  border-top: 1px solid #dbe3ec;
+  padding-top: 8px;
+}
+.decorator-panel .thread-advanced summary {
+  cursor: pointer;
+  color: #526477;
+}
 .decorator-panel .decorator-warning {
   color: #8a4b0b;
 }

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { orient } from "./ui-blend-edit.mjs";
+import { openThreadAdvanced } from "./ui-decorator-advanced.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { clearSelection } from "./ui-reconnection-helpers.mjs";
@@ -37,6 +38,7 @@ export async function mixedDecoratorTypesRoute(page) {
   const pad = applied.decorators.find((d) => d.definition !== "freac.threads");
   const thread = applied.decorators.find((d) => d.definition === "freac.threads");
   await worldClick(page, top, true);
+  await openThreadAdvanced(page);
   const pitch = page.getByRole("spinbutton", { name: "Pitch", exact: true });
   const height = page.getByRole("spinbutton", { name: "Height", exact: true });
   assert.equal(await pitch.count(), 1);

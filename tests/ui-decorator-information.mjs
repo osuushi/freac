@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { orient } from "./ui-blend-edit.mjs";
+import { openThreadAdvanced } from "./ui-decorator-advanced.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -22,6 +23,8 @@ export async function decoratorInformationRoute(page) {
   await orient(page, [0, -1, 0.3]);
   await worldClick(page, [0, -8, 5]);
   await chooseTool(page, "threads", "threads");
+  await page.getByRole("combobox", { name: "Preset", exact: true }).selectOption("metric");
+  await openThreadAdvanced(page);
   const pitch = page.getByRole("spinbutton", { name: "Pitch", exact: true });
   await pitch.fill("8");
   await pitch.press("Enter");

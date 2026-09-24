@@ -23,9 +23,9 @@ function split(polygon: Point[], level: number, phase: (p: Point) => number): Po
   return [lower, upper].filter((p) => p.length >= 3);
 }
 
-/** Align metric triangles with crest/root corners instead of rounding them by sampling. */
+/** Align straight profile facets with crest/root corners instead of rounding them. */
 function profilePatches(polygon: Point[], settings: ThreadSettings): Point[][] {
-  if (settings.profile !== "metric") return [polygon];
+  if (settings.profile === "rounded") return [polygon];
   const hand = settings.hand === "right" ? 1 : -1;
   const phase = (p: Point) => p.z / settings.pitch - (hand * p.angle) / tau;
   const phases = polygon.map(phase),
@@ -33,7 +33,9 @@ function profilePatches(polygon: Point[], settings: ThreadSettings): Point[][] {
     high = Math.max(...phases);
   let patches = [polygon];
   for (let turn = Math.floor(low); turn <= Math.floor(high); turn++)
-    for (const corner of [1 / 16, 3 / 8, 5 / 8, 15 / 16]) {
+    for (const corner of settings.profile === "triangle"
+      ? [0, 0.5]
+      : [1 / 16, 3 / 8, 5 / 8, 15 / 16]) {
       const level = turn + corner;
       if (level > low + 1e-12 && level < high - 1e-12)
         patches = patches.flatMap((p) => split(p, level, phase));

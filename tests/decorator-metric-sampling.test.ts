@@ -9,15 +9,17 @@ import { validateMesh } from "../src/model/export-mesh.js";
 import type { Vector } from "../src/sketch/planes.js";
 import { roundBody } from "./decorator-domain-fixtures.js";
 
-test("metric interpolation retains its accuracy budget across diameters, pitches, hands and reference modes", async () => {
+test("straight thread profiles retain their accuracy budget across pitches, hands and reference modes", async () => {
   const owner = new DocumentOwner();
   try {
-    for (const [radius, pitch, length] of [
-      [0.5, 0.25, 3],
-      [5, 1.5, 10],
-      [20, 4, 20],
-      [5, 7, 10],
-    ]) {
+    for (const [radius, pitch, length, preset] of [
+      [0.5, 0.25, 3, "metric"],
+      [5, 1.5, 10, "metric"],
+      [20, 4, 20, "metric"],
+      [5, 7, 10, "metric"],
+      [5, 0.5, 10, "fdm-fine"],
+      [5, 1, 10, "fdm-coarse"],
+    ] as const) {
       const body = await roundBody(owner, [radius], length);
       const face = body.faces.find((f) => f.cylinder);
       assert.ok(face?.cylinder);
@@ -25,7 +27,7 @@ test("metric interpolation retains its accuracy budget across diameters, pitches
       for (const hand of ["right", "left"] as const)
         for (const cut of ["rod", "hole"] as const) {
           const settings = {
-            ...threadDefaults(2 * radius),
+            ...threadDefaults(2 * radius, preset),
             pitch,
             hand,
             cut,

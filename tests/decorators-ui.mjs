@@ -62,7 +62,7 @@ try {
       await chooseTool(page, "threads", "threads");
       assert.equal((await inspect(page)).document.decorators.length, 1);
       await recessedPreviewRoute(page, name);
-      await decoratorPresetRoute(page);
+      await decoratorPresetRoute(page, name);
       const pitch = page.getByRole("spinbutton", { name: "Pitch", exact: true });
       await pitch.fill("2.5");
       assert.equal((await inspect(page)).document.decorators[0].settings.pitch, 2);

@@ -1,7 +1,7 @@
 import type { Body } from "../model/body.js";
 import { cross, cylinderExtent, dot, resolveFaces, subtract } from "./cylinder.js";
 import { threadReference } from "./thread-extent.js";
-import { coarseMetric, threadSettings } from "./thread-settings.js";
+import { coarseMetric, threadDepth, threadSettings } from "./thread-settings.js";
 import type { DecoratorInstance, FaceReference } from "./types.js";
 
 export interface ThreadWarning {
@@ -14,11 +14,11 @@ export function threadInformation(bodies: readonly Body[], instance: DecoratorIn
   const cylinder = faces[0].cylinder;
   const settings = threadSettings(instance.settings);
   const diameter = cylinder.radius * 2;
-  const description = `Reference Ø${Number(diameter.toPrecision(10))} mm · ${settings.cut === "rod" ? "rod major" : "rod minor"} diameter${coarseMetric(diameter).listed ? "" : " · nonstandard diameter"}`;
+  const description = `Reference Ø${Number(diameter.toPrecision(10))} mm · ${settings.cut === "rod" ? "rod major" : "rod minor"} diameter${settings.preset === "metric" && !coarseMetric(diameter).listed ? " · nonstandard diameter" : ""}`;
   const body = bodies.find((b) => b.id === instance.faces[0].body);
   const warnings: ThreadWarning[] = [];
   if (!body) return { description, warnings };
-  const depth = (settings.pitch * Math.sqrt(3) * 5) / 16;
+  const depth = threadDepth(settings);
   const extent = threadReference(bodies, instance);
   const low = extent[0] + settings.start,
     high = extent[1] - settings.end;
