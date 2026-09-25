@@ -6,6 +6,15 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function decoratorTransformRoute(page) {
   const before = (await inspect(page)).document;
   const settings = before.decorators[0].settings;
+  const bodyId = before.bodies[0].id;
+  await page.waitForFunction(
+    (id) => window.freacInspect().decoratorPreviewBounds.some((bounds) => bounds.body === id),
+    bodyId,
+  );
+  const originalBounds = (await inspect(page)).decoratorPreviewBounds.find(
+    (b) => b.body === bodyId,
+  );
+  const originalWidth = originalBounds.max[0] - originalBounds.min[0];
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await chooseTool(page, "transform", "transform");
   await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
@@ -14,12 +23,20 @@ export async function decoratorTransformRoute(page) {
   assert.deepEqual(state.document, before);
   assert.deepEqual(state.preview.decorators[0].settings, settings);
   assert.equal(state.preview.decorators[0].problem, undefined);
+  await page.waitForFunction(
+    ({ id, width }) => {
+      const bounds = window.freacInspect().decoratorPreviewBounds.find((b) => b.body === id);
+      return bounds && bounds.max[0] - bounds.min[0] > width * 1.3;
+    },
+    { id: bodyId, width: originalWidth },
+  );
   await page.getByRole("button", { name: "Accept transform scale", exact: true }).click();
   state = await inspect(page);
   assert.ok(state.document.bodies[0].volume > before.bodies[0].volume * 3);
   assert.deepEqual(state.document.decorators[0].settings, settings);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before);
+  await movePreviewRoute(page, before, bodyId, originalBounds);
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await chooseTool(page, "transform", "transform");
   await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).uncheck();
@@ -43,4 +60,55 @@ export async function decoratorTransformRoute(page) {
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before);
   await clearSelection(page);
+}
+
+async function movePreviewRoute(page, before, bodyId, originalBounds) {
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await page.getByRole("button", { name: "Move body X", exact: true }).click();
+  await page.locator(".body-transform-value").fill("5");
+  const state = await inspect(page);
+  assert.deepEqual(state.document, before);
+  assert.equal(state.preview.decorators[0].problem, undefined);
+  assert.ok(
+    Math.abs(
+      state.preview.decorators[0].frame.origin[0] - before.decorators[0].frame.origin[0] - 5,
+    ) < 1e-7,
+  );
+  await page.waitForFunction(
+    ({ id, x }) => {
+      const bounds = window.freacInspect().decoratorPreviewBounds.find((b) => b.body === id);
+      return bounds && Math.abs(bounds.min[0] - x - 5) < 0.1;
+    },
+    { id: bodyId, x: originalBounds.min[0] },
+  );
+  await page.keyboard.press("Escape");
+  assert.deepEqual((await inspect(page)).document, before);
+  await page.waitForFunction(
+    ({ id, x }) => {
+      const bounds = window.freacInspect().decoratorPreviewBounds.find((b) => b.body === id);
+      return bounds && Math.abs(bounds.min[0] - x) < 0.1;
+    },
+    { id: bodyId, x: originalBounds.min[0] },
+  );
+  const handle = await page.getByRole("button", { name: "Move body X", exact: true }).boundingBox();
+  assert.ok(handle);
+  const start = { x: handle.x + handle.width / 2, y: handle.y + handle.height / 2 };
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(start.x + 60, start.y, { steps: 8 });
+  const drag = await inspect(page);
+  const displacement =
+    drag.preview.decorators[0].frame.origin[0] - before.decorators[0].frame.origin[0];
+  assert.ok(Math.abs(displacement) > 0.1);
+  await page.waitForFunction(
+    ({ id, x }) => {
+      const bounds = window.freacInspect().decoratorPreviewBounds.find((b) => b.body === id);
+      return bounds && Math.abs(bounds.min[0] - x) < 0.1;
+    },
+    { id: bodyId, x: originalBounds.min[0] + displacement },
+  );
+  await page.mouse.up();
+  assert.notDeepEqual((await inspect(page)).document, before);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, before);
 }

@@ -1,0 +1,85 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { DocumentOwner } from "../src/backend/document-owner.js";
+import { decoratorPreview, initializeMeshRuntime } from "../src/decorators/mesh-runtime.js";
+import { threadDefinition } from "../src/decorators/thread-settings.js";
+import { placedDocument } from "../src/model/body-placement.js";
+import { roundBody } from "./decorator-domain-fixtures.js";
+
+test("rigid operation previews move, rotate and copy their thread geometry", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const body = await roundBody(owner, [5], 10);
+    const face = body.faces.find((f) => f.cylinder);
+    assert.ok(face?.cylinder);
+    assert.equal(
+      (
+        await owner.call({
+          kind: "decorator",
+          edit: {
+            action: "apply",
+            definition: threadDefinition,
+            faces: [{ body: body.id, face: face.id }],
+          },
+        })
+      ).error,
+      undefined,
+    );
+    const original = owner.view.data;
+    const runtime = await initializeMeshRuntime();
+    const instance = original.decorators?.[0];
+    assert.ok(instance);
+    const originalMesh = decoratorPreview(runtime, original, instance);
+    const edit = {
+      ids: [body.id],
+      pivot: [0, 0, 0] as [number, number, number],
+      axis: [0, 0, 1] as [number, number, number],
+      angle: 0,
+      translation: [12, 3, 0] as [number, number, number],
+      duplicate: false,
+    };
+    const moved = placedDocument(original, edit);
+    const movedFace = moved.bodies?.[0].faces.find((f) => f.id === face.id);
+    assert.ok(movedFace?.cylinder);
+    assert.equal(movedFace.cylinder.origin[0] - face.cylinder.origin[0], 12);
+    assert.equal(movedFace.cylinder.origin[1] - face.cylinder.origin[1], 3);
+    assert.equal(moved.decorators?.[0].problem, undefined);
+    assert.deepEqual(moved.decorators?.[0].frame.origin, [12, 3, 0]);
+    const movedInstance = moved.decorators?.[0];
+    assert.ok(movedInstance);
+    const movedMesh = decoratorPreview(runtime, moved, movedInstance);
+    assert.equal(movedMesh.vertices.length, originalMesh.vertices.length);
+    for (const index of [0, Math.floor(movedMesh.vertices.length / 2)]) {
+      assert.ok(
+        Math.abs(movedMesh.vertices[index][0] - originalMesh.vertices[index][0] - 12) < 1e-4,
+      );
+      assert.ok(
+        Math.abs(movedMesh.vertices[index][1] - originalMesh.vertices[index][1] - 3) < 1e-4,
+      );
+    }
+    const rotated = placedDocument(original, {
+      ...edit,
+      axis: [1, 0, 0],
+      angle: 90,
+    });
+    assert.equal(rotated.decorators?.[0].problem, undefined);
+    assert.ok(
+      Math.abs(rotated.bodies?.[0].faces.find((f) => f.id === face.id)?.cylinder?.axis[1] ?? 0) >
+        0.99,
+    );
+    const rotatedInstance = rotated.decorators?.[0];
+    assert.ok(rotatedInstance);
+    assert.ok(decoratorPreview(runtime, rotated, rotatedInstance).triangles.length);
+    const duplicated = placedDocument(original, { ...edit, duplicate: true });
+    assert.equal(duplicated.bodies?.length, 2);
+    assert.equal(duplicated.decorators?.length, 2);
+    assert.equal(duplicated.decorators[0].id, original.decorators?.[0].id);
+    assert.equal(duplicated.decorators[0].faces[0].body, body.id);
+    assert.equal(duplicated.decorators[1].faces[0].body, `copy-preview/${body.id}`);
+    assert.equal(duplicated.decorators[1].problem, undefined);
+    assert.ok(decoratorPreview(runtime, duplicated, duplicated.decorators[1]).triangles.length);
+    assert.equal(owner.view.data, original);
+  } finally {
+    owner.close();
+  }
+});

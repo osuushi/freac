@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { continueDecorators } from "../decorators/continuation.js";
+import type { SketchDocument } from "../sketch/document.js";
 import type { Vector } from "../sketch/planes.js";
 import type { Body, BodyTransform } from "./body.js";
 
@@ -43,6 +45,13 @@ export function placedBodies(bodies: readonly Body[], edit: BodyTransform): Body
             v: direction(face.plane.v),
           }
         : null,
+      cylinder: face.cylinder
+        ? {
+            ...face.cylinder,
+            origin: point(face.cylinder.origin),
+            axis: direction(face.cylinder.axis),
+          }
+        : null,
     }));
     const box = new THREE.Box3().setFromPoints(
       faces.flatMap((f) =>
@@ -77,4 +86,16 @@ export function placedBodies(bodies: readonly Body[], edit: BodyTransform): Body
       })),
     };
   });
+}
+
+/** Match client-only rigid body previews with temporary decorator attachments. */
+export function placedDocument(document: SketchDocument, edit: BodyTransform): SketchDocument {
+  const bodies = document.bodies ?? [];
+  const selected = bodies.filter((body) => edit.ids.includes(body.id));
+  const retained = edit.duplicate ? bodies : bodies.filter((body) => !edit.ids.includes(body.id));
+  return continueDecorators(
+    document,
+    { ...document, bodies: [...retained, ...placedBodies(selected, edit)] },
+    { kind: "transform-bodies", transform: edit },
+  );
 }

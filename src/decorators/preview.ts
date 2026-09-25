@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import type { ExportMesh } from "../model/export-mesh.js";
+import type { SketchDocument } from "../sketch/document.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import {
   DecoratorPreviewCompositor,
@@ -26,6 +27,24 @@ function overlayMesh(
   return overlay;
 }
 
+function showMeshes(
+  meshes: { body: string; faces: FaceReference[]; mesh: ExportMesh }[],
+  group: THREE.Group,
+  surfaces: PreviewSurface[],
+  compositor: DecoratorPreviewCompositor,
+  editor: SketchEditor,
+): void {
+  for (const { body, faces, mesh } of meshes) {
+    const overlay = overlayMesh(body, mesh, compositor);
+    overlay.visible = editor.visibility.visible(body);
+    group.add(overlay);
+    surfaces.push({
+      mesh: overlay,
+      faces: new Set(faces.map((f) => previewFaceKey(f.body, f.face))),
+    });
+  }
+}
+
 export function decoratorOverlay(editor: SketchEditor): () => void {
   const group = new THREE.Group();
   const compositor = new DecoratorPreviewCompositor();
@@ -37,7 +56,8 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
   editor.world.renderOverlays.add(render);
   editor.world.scene.add(group);
   let worker: Worker | null = null,
-    key = "",
+    previous: SketchDocument | null = null,
+    sourcesKey = "",
     timer: ReturnType<typeof setTimeout> | undefined;
   const clear = () => {
     surfaces.length = 0;
@@ -53,14 +73,10 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
     for (const child of group.children)
       child.visible = editor.visibility.visible(child.userData.body);
     const document = editor.display;
-    const next = JSON.stringify([
-      document.decorators,
-      document.decoratorDefinitions,
-      editor.store.decoratorSources,
-      document.bodies?.map((b) => b.brep),
-    ]);
-    if (next === key) return;
-    key = next;
+    const nextSources = JSON.stringify(editor.store.decoratorSources);
+    if (document === previous && nextSources === sourcesKey) return;
+    previous = document;
+    sourcesKey = nextSources;
     clearTimeout(timer);
     worker?.terminate();
     worker = null;
@@ -82,15 +98,7 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
           editor.notice = `Decorator preview: ${event.data.error}`;
           editor.refresh();
         }
-        for (const { body, faces, mesh } of event.data.meshes ?? []) {
-          const overlay = overlayMesh(body, mesh, compositor);
-          overlay.visible = editor.visibility.visible(body);
-          group.add(overlay);
-          surfaces.push({
-            mesh: overlay,
-            faces: new Set(faces.map((f) => previewFaceKey(f.body, f.face))),
-          });
-        }
+        showMeshes(event.data.meshes ?? [], group, surfaces, compositor, editor);
         editor.world.draw();
       };
       worker.onerror = () => {

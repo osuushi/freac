@@ -414,6 +414,11 @@ so overlap does not accumulate transparency or depend on decorator order.
 Two reusable full-viewport targets bound buffer memory; draw work grows with visible
 decorators. The passes preserve clipping, visibility and renderer state. Preview
 meshes remain non-pickable, and neither accepted geometry nor Undo changes.
+Preview generation reads the currently displayed candidate. Client-only rigid
+body placement carries its cylinder descriptors and decorator frames with the
+temporary faces; kernel-calculated edits use their continued candidate attachments.
+The overlay invalidates when the displayed document changes even if a temporary
+body keeps the same accepted BRep bytes. Canceling restores the accepted preview.
 The original surface color remains under the translucent result: this is an
 illustrative preview, not an export-result replacement. Mechanical interference warnings can be
 nonblocking; invalid output remains an export error. General assembly/motion proof

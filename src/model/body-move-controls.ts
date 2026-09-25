@@ -5,15 +5,14 @@ import { replayPointerModifiers } from "../sketch/modifier-pointer.js";
 import type { Vector } from "../sketch/planes.js";
 import { snapRotation } from "../sketch/rotation-snap.js";
 import { numericFocus } from "../tools/menu-focus.js";
-import type { Body, BodyTransform } from "./body.js";
+import type { BodyTransform } from "./body.js";
 import { selectedBodies } from "./body-actions.js";
 import { bodySnap, dragFrame } from "./body-drag.js";
 import { BodyGizmo } from "./body-gizmo.js";
 import { BodyPivotDrag } from "./body-pivot-drag.js";
-import { axes, bodyCenter, placedBodies } from "./body-placement.js";
+import { axes, bodyCenter, placedDocument } from "./body-placement.js";
 
 type Session = {
-  bodies: Body[];
   edit: BodyTransform;
   lease: InteractionLease;
   valid: boolean;
@@ -85,7 +84,6 @@ export class BodyMoveControls {
     if (!lease) return null;
     this.gizmo.input.removeAttribute("aria-label");
     this.session = {
-      bodies,
       lease,
       explicitCopy: duplicate,
       valid: true,
@@ -148,14 +146,7 @@ export class BodyMoveControls {
       s.edit.translation = s.rotate ? [0, 0, 0] : (axes[s.axis].map((v) => v * value) as Vector);
       s.edit.angle = s.rotate ? value : 0;
       if (!s.pivotOnly) {
-        const retained =
-          this.editor.store.data.bodies?.filter(
-            (b) => s.edit.duplicate || !s.edit.ids.includes(b.id),
-          ) ?? [];
-        s.lease.show({
-          ...this.editor.store.data,
-          bodies: [...retained, ...placedBodies(s.bodies, s.edit)],
-        });
+        s.lease.show(placedDocument(this.editor.store.data, s.edit));
       }
     }
     if (!numericFocus(this.gizmo.input)) this.gizmo.input.value = String(Number(value.toFixed(4)));

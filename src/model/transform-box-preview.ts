@@ -3,7 +3,7 @@ import { type SketchDocument, withSketch } from "../sketch/document.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { PlaneFrame, Vector } from "../sketch/planes.js";
 import { transformSelected } from "../sketch/selection-transform.js";
-import { placedBodies } from "./body-placement.js";
+import { placedDocument } from "./body-placement.js";
 import type { ScaleSource } from "./scale.js";
 
 export async function previewBoxMove(
@@ -37,21 +37,17 @@ export async function previewBoxMove(
     return true;
   }
   if (!source.faces.length && !source.edges.length) {
-    const bodies = document.bodies ?? [];
-    const selected = bodies.filter((b) => source.ids.includes(b.id));
-    if (!selected.length) return false;
-    const moved = placedBodies(selected, {
-      ids: source.ids,
-      pivot: origin,
-      translation: delta,
-      axis: [0, 0, 1],
-      angle: 0,
-      duplicate: false,
-    });
-    lease.show({
-      ...document,
-      bodies: [...bodies.filter((b) => !source.ids.includes(b.id)), ...moved],
-    });
+    if (!document.bodies?.some((body) => source.ids.includes(body.id))) return false;
+    lease.show(
+      placedDocument(document, {
+        ids: source.ids,
+        pivot: origin,
+        translation: delta,
+        axis: [0, 0, 1],
+        angle: 0,
+        duplicate: false,
+      }),
+    );
     return true;
   }
   const request = source.faces.length
