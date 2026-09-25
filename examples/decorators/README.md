@@ -18,7 +18,7 @@ referenced by decorations must have those decorations removed first. Importing t
 same ID/version replaces its source and schema as one Undoable edit.
 
 The JSON bundle contains `id`, positive integer `version`, `name`, `fields`,
-optional `preview: true`, and a self-contained ES module in `source`. Installation
+optional `preview: true` and `livePreview: true`, and a self-contained ES module in `source`. Installation
 and document opening do not run source. Enablement applies to the exact source
 bytes for that ID/version and is cleared on opening a document. Source replacement
 is a document edit with Undo; code is never fetched from a network or an installed
@@ -42,6 +42,11 @@ Every context includes `units`, `selection`, `bodies`, `instance`, and resolved
 triangles, edges/curves, bounds and measurements. They omit the opaque BRep string.
 The context is a JSON copy, so changes to it cannot mutate the document. Preview
 and export additionally provide `quality` and a suggested `tolerance` in mm.
+Preview also receives `live: boolean`. Set `livePreview: true` to update during
+temporary moves and scales; the live callback has a 100 ms execution budget and
+gets a coarser suggested tolerance (0.2 mm instead of 0.08 mm). Use `live` to
+reduce mesh detail if needed. Without opt-in, preview updates after a gesture
+pauses for 100 ms. Accepted geometry uses the ordinary preview.
 No hook receives another decorator's result. JavaScript has no host, DOM, file,
 network, timer or module-import APIs; bundle any helpers into the source itself.
 

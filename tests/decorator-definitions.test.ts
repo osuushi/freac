@@ -74,6 +74,12 @@ test("definition schema rejects ambiguous keys and validates settings without ex
   assert.throws(() => definitionSettings(definition, { height: 0 }), /Invalid/);
   assert.throws(() => definitionSettings(definition, { mystery: 2 }), /Unknown/);
   assert.throws(() => validateDefinition({ ...definition, id: "freac.threads" }), /Invalid/);
+  assert.throws(() => validateDefinition({ ...definition, livePreview: true }), /Invalid/);
+  assert.throws(
+    () => validateDefinition({ ...definition, livePreview: "yes" as never }),
+    /Invalid/,
+  );
+  validateDefinition({ ...definition, preview: true, livePreview: true });
   assert.throws(
     () =>
       validateDefinition({ ...definition, fields: [...definition.fields, ...definition.fields] }),

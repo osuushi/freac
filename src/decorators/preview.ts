@@ -8,6 +8,8 @@ import {
   type PreviewSurface,
   previewFaceKey,
 } from "./preview-compositor.js";
+import { PreviewQueue } from "./preview-queue.js";
+import { threadDefinition } from "./thread-settings.js";
 import type { FaceReference } from "./types.js";
 
 function overlayMesh(
@@ -45,6 +47,18 @@ function showMeshes(
   }
 }
 
+function previewAttachmentKey(document: SketchDocument): string {
+  return JSON.stringify(
+    document.decorators?.map(({ id, definition, faces, problem, settings }) => ({
+      id,
+      definition,
+      faces,
+      problem,
+      settings,
+    })),
+  );
+}
+
 export function decoratorOverlay(editor: SketchEditor): () => void {
   const group = new THREE.Group();
   const compositor = new DecoratorPreviewCompositor();
@@ -55,10 +69,10 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
   };
   editor.world.renderOverlays.add(render);
   editor.world.scene.add(group);
-  let worker: Worker | null = null,
-    previous: SketchDocument | null = null,
-    sourcesKey = "",
-    timer: ReturnType<typeof setTimeout> | undefined;
+  let previous: SketchDocument | null = null;
+  let sourcesKey = "";
+  let attachmentKey = "";
+  let settleTimer: ReturnType<typeof setTimeout> | undefined;
   const clear = () => {
     surfaces.length = 0;
     for (const child of [...group.children]) {
@@ -68,6 +82,21 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
       group.remove(mesh);
     }
   };
+  const queue = new PreviewQueue(
+    (response) => {
+      clear();
+      showMeshes(response.meshes ?? [], group, surfaces, compositor, editor);
+      if (response.error) {
+        editor.notice = `Decorator preview: ${response.error}`;
+        editor.refresh();
+      }
+      editor.world.draw();
+    },
+    () => {
+      editor.notice = "Decorator preview unavailable";
+      editor.refresh();
+    },
+  );
   const update = () => {
     group.visible = editor.bodiesVisible;
     for (const child of group.children)
@@ -75,46 +104,43 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
     const document = editor.display;
     const nextSources = JSON.stringify(editor.store.decoratorSources);
     if (document === previous && nextSources === sourcesKey) return;
+    const nextAttachments = previewAttachmentKey(document);
+    if (nextSources !== sourcesKey || nextAttachments !== attachmentKey) clear();
     previous = document;
     sourcesKey = nextSources;
-    clearTimeout(timer);
-    worker?.terminate();
-    worker = null;
-    clear();
-    if (!document.decorators?.length) return;
-    timer = setTimeout(() => {
-      worker = new Worker(new URL("./preview-worker.ts", import.meta.url), { type: "module" });
-      const current = worker;
-      worker.onmessage = (
-        event: MessageEvent<{
-          meshes?: { body: string; faces: FaceReference[]; mesh: ExportMesh }[];
-          error?: string;
-        }>,
-      ) => {
-        if (worker !== current) return;
-        worker.terminate();
-        worker = null;
-        if (event.data.error) {
-          editor.notice = `Decorator preview: ${event.data.error}`;
-          editor.refresh();
-        }
-        showMeshes(event.data.meshes ?? [], group, surfaces, compositor, editor);
-        editor.world.draw();
-      };
-      worker.onerror = () => {
-        if (worker !== current) return;
-        worker.terminate();
-        worker = null;
-        editor.notice = "Decorator preview unavailable";
-        editor.refresh();
-      };
-      worker.postMessage({ document, sources: editor.store.decoratorSources });
-    }, 100);
+    attachmentKey = nextAttachments;
+    clearTimeout(settleTimer);
+    if (!document.decorators?.length) {
+      queue.clear();
+      clear();
+      return;
+    }
+    const live = editor.candidate !== null;
+    queue.submit(document, editor.store.decoratorSources, live);
+    const hasDeferred = document.decorators.some(
+      (instance) =>
+        instance.definition !== threadDefinition &&
+        document.decoratorDefinitions?.some(
+          (definition) =>
+            definition.id === instance.definition &&
+            definition.version === instance.version &&
+            definition.preview &&
+            !definition.livePreview,
+        ),
+    );
+    if (live && hasDeferred) {
+      // Non-live JavaScript previews render after the gesture pauses. Live work
+      // starts immediately and coalesces to the newest candidate while busy.
+      settleTimer = setTimeout(() => {
+        if (editor.display === document && sourcesKey === nextSources)
+          queue.submit(document, editor.store.decoratorSources, false);
+      }, 100);
+    }
   };
   editor.world.changed.add(update);
   return () => {
-    clearTimeout(timer);
-    worker?.terminate();
+    clearTimeout(settleTimer);
+    queue.dispose();
     clear();
     editor.world.renderOverlays.delete(render);
     compositor.dispose();

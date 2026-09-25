@@ -57,6 +57,26 @@ test("bundled custom decorator applies, edits, previews and exports through the 
     assert.ok(current);
     await assertReadOnlyInspection(owner, body, current);
     assert.equal(hooks.preview(owner.view.data, current)?.triangles.length, 12);
+    assert.equal(hooks.preview(owner.view.data, current, true), null);
+    const liveSource = `export default { preview({ live, tolerance }) {
+      if (!live || tolerance !== 0.2) throw new Error("Missing live preview context");
+      return { vertices: [[0,0,0], [1,0,0], [0,1,0]], triangles: [[0,1,2]] };
+    } };`;
+    const liveDefinition = { ...definition, livePreview: true, source: liveSource };
+    const liveDocument = { ...owner.view.data, decoratorDefinitions: [liveDefinition] };
+    const liveHooks = new JavaScriptDecorators(javascript, [
+      { id: definition.id, version: definition.version, source: liveSource },
+    ]);
+    assert.equal(liveHooks.preview(liveDocument, current, true)?.triangles.length, 1);
+    const slowSource = "export default { preview() { while (true) {} } };";
+    const slowHooks = new JavaScriptDecorators(javascript, [
+      { id: definition.id, version: definition.version, source: slowSource },
+    ]);
+    const slowDocument = {
+      ...owner.view.data,
+      decoratorDefinitions: [{ ...definition, livePreview: true, source: slowSource }],
+    };
+    assert.throws(() => slowHooks.preview(slowDocument, current, true), /interrupted/);
     const prepared = (await owner.call({ kind: "export-geometry" })).exportDocument;
     assert.ok(prepared);
     const manifold = await initializeMeshRuntime();

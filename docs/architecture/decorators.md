@@ -252,7 +252,7 @@ Definition responsibilities:
   information; Continue uses the same geometric rules plus its existing instance.
 - Validation: structured errors/warnings with optional face/edge highlights.
 - Optional preview: mesh overlay from the same geometric definition at coarser
-  resolution; never selectable or hoverable. Depth bias handles coincident faces.
+  resolution; never selectable or hoverable. The compositor handles coincident faces.
 - Export: read-only original selected geometry context; generate independent
   mesh modifications for host application to the body mesh. No hook receives
   another decorator's output, and no identity-preserving BRep output is required.
@@ -280,8 +280,16 @@ The interpreter is QuickJS through pinned `quickjs-emscripten-core` and
 QuickJS license). The wrapper creates a fresh VM for each synchronous hook,
 installs no host callbacks, denies external imports, and exchanges only JSON.
 Current bounds are 256 KiB source, 32 MiB input/output JSON, 128 MiB VM memory,
-512 KiB stack and a 10-second hook deadline. Worker termination remains the
-outer cancellation mechanism. Upstream runtime APIs are documented in the
+512 KiB stack and a 10-second hook deadline. Optional `livePreview: true` opts
+a preview hook into temporary modeling gestures. Its context includes `live: true`
+and a coarser suggested tolerance; the QuickJS callback has a 100 ms deadline.
+Without that opt-in, the preview runs after 100 ms of inactivity. Accepted
+geometry always requests the ordinary preview. Built-in threads update live.
+One retained worker computes serially, coalescing pending candidates to the latest
+one; it never delays a new live job until motion stops. The 100 ms callback
+deadline is not a wall-clock limit for mesh generation or worker startup, so
+long previews can visibly lag. Worker termination remains the outer cancellation
+mechanism. Upstream runtime APIs are documented in the
 [pinned runtime source](https://github.com/justjake/quickjs-emscripten/blob/df4efb9ef2cb25c417ecb57986da462d11b244ed/packages/quickjs-emscripten-core/src/runtime.ts).
 These limits constrain execution; they do not validate returned geometry.
 

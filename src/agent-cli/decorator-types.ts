@@ -11,7 +11,7 @@ export interface DecoratorField {
 }
 export interface DecoratorDefinition {
   id: string; version: number; name: string; source: string;
-  fields: readonly DecoratorField[]; preview?: boolean;
+  fields: readonly DecoratorField[]; preview?: boolean; livePreview?: boolean;
 }
 export interface DecoratorInstance {
   readonly id: string; readonly definition: string; readonly version: number;

@@ -54,14 +54,26 @@ export class JavaScriptDecorators {
       throw new Error(`Enable bundled code for ${definition.name} before using this decorator`);
     return definition;
   }
-  invoke(document: SketchDocument, instance: DecoratorInstance, hook: string, extra = {}) {
+  invoke(
+    document: SketchDocument,
+    instance: DecoratorInstance,
+    hook: string,
+    extra = {},
+    milliseconds?: number,
+  ) {
     const definition = this.definition(document, instance.definition, instance.version);
-    return runDecoratorHook(this.runtime, definition.source, hook, {
-      ...geometryContext(document, instance.faces),
-      instance,
-      settings: definitionSettings(definition, instance.settings),
-      ...extra,
-    });
+    return runDecoratorHook(
+      this.runtime,
+      definition.source,
+      hook,
+      {
+        ...geometryContext(document, instance.faces),
+        instance,
+        settings: definitionSettings(definition, instance.settings),
+        ...extra,
+      },
+      milliseconds,
+    );
   }
   partition(document: SketchDocument, instance: DecoratorInstance): DecoratorGroup[] {
     const result = this.invoke(document, instance, "partition") as {
@@ -140,12 +152,20 @@ export class JavaScriptDecorators {
     }
     return result;
   }
-  preview(document: SketchDocument, instance: DecoratorInstance): ExportMesh | null {
-    if (!this.definition(document, instance.definition, instance.version).preview) return null;
-    const result = this.invoke(document, instance, "preview", {
-      quality: "preview",
-      tolerance: 0.08,
-    }) as ExportMesh | null;
+  preview(document: SketchDocument, instance: DecoratorInstance, live = false): ExportMesh | null {
+    const definition = this.definition(document, instance.definition, instance.version);
+    if (!definition.preview || (live && !definition.livePreview)) return null;
+    const result = this.invoke(
+      document,
+      instance,
+      "preview",
+      {
+        quality: "preview",
+        tolerance: live ? 0.2 : 0.08,
+        live,
+      },
+      live ? 100 : undefined,
+    ) as ExportMesh | null;
     if (result) validateGeneratedMesh(result, false);
     return result;
   }

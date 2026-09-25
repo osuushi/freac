@@ -95,6 +95,15 @@ async function movePreviewRoute(page, before, bodyId, originalBounds) {
   const start = { x: handle.x + handle.width / 2, y: handle.y + handle.height / 2 };
   await page.mouse.move(start.x, start.y);
   await page.mouse.down();
+  const livePositions = new Set();
+  for (let i = 0; i < 20; i++) {
+    await page.mouse.move(start.x + [24, 48, 72, 48][i % 4], start.y);
+    await page.waitForTimeout(55);
+    const bounds = (await inspect(page)).decoratorPreviewBounds.find((b) => b.body === bodyId);
+    if (bounds && Math.abs(bounds.min[0] - originalBounds.min[0]) > 0.1)
+      livePositions.add(bounds.min[0].toFixed(1));
+  }
+  assert.ok(livePositions.size >= 2, "overlay must update more than once before drag release");
   await page.mouse.move(start.x + 60, start.y, { steps: 8 });
   const drag = await inspect(page);
   const displacement =
