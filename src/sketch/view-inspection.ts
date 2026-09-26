@@ -5,7 +5,8 @@ import { inspectPlaneTargets } from "./plane-target-inspection.js";
 import { selectionFrame } from "./selection-frame.js";
 
 function decoratorPreviewBounds(world: SketchEditor["world"]) {
-  const bounds: { body: string; min: number[]; max: number[]; triangles: number }[] = [];
+  const bounds: { body: string; mesh: string; min: number[]; max: number[]; triangles: number }[] =
+    [];
   world.scene.traverse((object) => {
     if (
       typeof object.userData.body !== "string" ||
@@ -20,6 +21,7 @@ function decoratorPreviewBounds(world: SketchEditor["world"]) {
     if (box)
       bounds.push({
         body: object.userData.body,
+        mesh: object.uuid,
         min: box.min.toArray(),
         max: box.max.toArray(),
         triangles: geometry.index

@@ -93,7 +93,19 @@ try {
               );
               live.push(await render(moved, true));
             }
-            return { live, identical, unaffected, settled: await render(document, false) };
+            const settled = await render(document, false);
+            const oneLiveFromSettled = await render(oneMoved, true);
+            const repeatedOneLive = await render(oneMoved, true);
+            const oneSettled = await render(oneMoved, false);
+            return {
+              live,
+              identical,
+              unaffected,
+              settled,
+              oneLiveFromSettled,
+              repeatedOneLive,
+              oneSettled,
+            };
           } finally {
             worker.terminate();
           }
@@ -108,6 +120,9 @@ try {
       assert.equal(results.live[0].triangles.length, 2);
       assert.equal(results.identical.processedIds.length, 0);
       assert.equal(results.unaffected.processedIds.length, 1);
+      assert.equal(results.oneLiveFromSettled.processedIds.length, 1);
+      assert.equal(results.repeatedOneLive.processedIds.length, 0);
+      assert.equal(results.oneSettled.processedIds.length, 1);
       assert.ok(
         results.live[0].triangles.every((count, i) => count < results.settled.triangles[i]),
         `${name}: first live preview should be cheaper than the settled preview`,

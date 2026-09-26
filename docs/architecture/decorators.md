@@ -305,7 +305,9 @@ One retained worker computes serially, coalescing pending candidates to the late
 one; it never delays a new live job until motion stops. A preview request carries
 per-instance support signatures. Built-in threads depend on their owning body's
 faces, so moving an unrelated body neither regenerates their mesh nor restarts
-their transition. Identical candidate geometry is skipped. Custom previews can
+their transition. Live/full-quality state is tracked per group: beginning or ending
+a gesture changes only groups whose support changed or whose own live preview must
+settle. Identical candidate geometry is skipped. Custom previews can
 inspect the full document, so their signature includes it. Each changed group
 fades in over 100 ms. A stale preview fades out over 200 ms after its fade-in
 finishes, or immediately when a newer preview replaces it. The sketch foreground

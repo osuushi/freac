@@ -14,9 +14,23 @@ import { packPreviewMesh } from "./preview-wire.js";
 import { threadDefinition } from "./thread-settings.js";
 
 const histories = new PreviewHistories();
-const rendered = new Map<string, string>();
+type RenderState = { signature?: string; live: boolean };
+const rendered = new Map<string, RenderState>();
 let runtime: ReturnType<typeof initializeMeshRuntime> | undefined;
 let javascriptRuntime: Promise<QuickJSWASMModule> | undefined;
+
+function nextRenderState(id: string, signature: string | undefined, live: boolean): RenderState {
+  const previous = rendered.get(id);
+  return {
+    signature,
+    live: live && (previous?.live === true || previous?.signature !== signature),
+  };
+}
+
+function needsRender(id: string, next: RenderState): boolean {
+  const previous = rendered.get(id);
+  return previous?.signature !== next.signature || previous?.live !== next.live;
+}
 
 async function javascriptDecorators(sources?: EnabledDefinition[]) {
   const [{ JavaScriptDecorators }, { initializeDecoratorRuntime }] = await Promise.all([
@@ -62,7 +76,7 @@ self.onmessage = async (
     const hasJavaScript = document.decorators?.some(
       (instance) =>
         instance.definition !== threadDefinition &&
-        rendered.get(instance.id) !== JSON.stringify([signatures.get(instance.id), live]),
+        needsRender(instance.id, nextRenderState(instance.id, signatures.get(instance.id), live)),
     );
     const javascript = hasJavaScript ? await javascriptDecorators(sources) : undefined;
     const meshes = [],
@@ -73,8 +87,8 @@ self.onmessage = async (
     const targetMs = Math.max(16, 100 / Math.max(1, liveGroupCount(document, sources)));
     for (const instance of document.decorators ?? []) {
       if (instance.problem) continue;
-      const renderKey = JSON.stringify([signatures.get(instance.id), live]);
-      if (rendered.get(instance.id) === renderKey) continue;
+      const next = nextRenderState(instance.id, signatures.get(instance.id), live);
+      if (!needsRender(instance.id, next)) continue;
       processedIds.push(instance.id);
       try {
         const signature = JSON.stringify([
@@ -86,12 +100,12 @@ self.onmessage = async (
         const feedback = histories.feedback(instance.id, signature, targetMs);
         const started = performance.now();
         if (instance.definition !== threadDefinition) {
-          const result = javascript?.preview(document, instance, live, feedback);
+          const result = javascript?.preview(document, instance, next.live, feedback);
           if (!result) {
-            rendered.set(instance.id, renderKey);
+            rendered.set(instance.id, next);
             continue;
           }
-          if (live)
+          if (next.live)
             histories.record(instance.id, signature, performance.now() - started, result.state);
           if (result.mesh)
             meshes.push({
@@ -100,11 +114,11 @@ self.onmessage = async (
               faces: instance.faces,
               ...packPreviewMesh(result.mesh),
             });
-          rendered.set(instance.id, renderKey);
+          rendered.set(instance.id, next);
           continue;
         }
         const preview = (module?: Awaited<ReturnType<typeof initializeMeshRuntime>>) =>
-          live
+          next.live
             ? decoratorLivePreview(module, document, instance, feedback)
             : { mesh: decoratorPreview(module, document, instance), state: null };
         let result: ReturnType<typeof preview>;
@@ -115,7 +129,7 @@ self.onmessage = async (
           if (!runtime) runtime = initializeMeshRuntime(wasmUrl);
           result = preview(await runtime);
         }
-        if (live)
+        if (next.live)
           histories.record(instance.id, signature, performance.now() - started, result.state);
         meshes.push({
           id: instance.id,
@@ -123,7 +137,7 @@ self.onmessage = async (
           faces: instance.faces,
           ...packPreviewMesh(result.mesh),
         });
-        rendered.set(instance.id, renderKey);
+        rendered.set(instance.id, next);
       } catch (error) {
         errors.push(error instanceof Error ? error.message : String(error));
       }

@@ -57,6 +57,7 @@ export async function decoratorMembershipRoute(page) {
   await page.keyboard.press("Enter");
   const split = await inspect(page);
   assert.equal(split.document.bodies.length, 2);
+  assert.equal(split.document.decorators.length, 2);
   assert.ok(
     split.document.decorators.every(
       (d) => !d.problem && d.settings.start === 1 && d.settings.startTaper === 2,
@@ -65,8 +66,15 @@ export async function decoratorMembershipRoute(page) {
   assert.ok(
     split.document.decorators.every((d) => d.axialReference[0] === 0 && d.axialReference[1] === 10),
   );
-  await chooseTool(page, "undo", "undo");
-  await inspect(page);
+  await unrelatedPreviewDuringMove(page, split.document);
+  let unsplit;
+  for (let i = 0; i < 4; i++) {
+    await chooseTool(page, "undo", "undo");
+    unsplit = await inspect(page);
+    if (unsplit.document.bodies.length === 1) break;
+  }
+  assert.equal(unsplit.document.bodies.length, 1);
+  assert.equal(unsplit.document.decorators.length, 1);
   await page.getByRole("button", { name: "Hide Plane 1", exact: true }).click();
   await clearSelection(page);
   await worldClick(page, [0, -8, 2]);
@@ -77,6 +85,8 @@ export async function decoratorMembershipRoute(page) {
   assert.equal(state.document.decorators.length, 1);
   assert.equal(state.document.decorators[0].faces.length, 1);
   assert.deepEqual(state.document.decorators[0].frame, original.frame);
+  assert.equal(state.modelingSelection.length, 1);
+  assert.equal(state.modelingSelection[0].kind, "face");
   await page.getByRole("button", { name: "Continue threads onto selection", exact: true }).click();
   state = await inspect(page);
   assert.equal(state.document.decorators[0].faces.length, 2);
@@ -112,4 +122,41 @@ export async function decoratorMembershipRoute(page) {
   assert.deepEqual(state.preview, beforeCleanup, "Cleanup keeps the boundary between instances");
   await page.getByRole("button", { name: "Accept cleanup", exact: true }).click();
   assert.deepEqual((await inspect(page)).document, beforeCleanup);
+}
+
+async function unrelatedPreviewDuringMove(page, document) {
+  const [moving, untouched] = document.bodies.map(({ id }) => id);
+  await page.waitForFunction(
+    (ids) =>
+      ids.every((id) => window.freacInspect().decoratorPreviewBounds.some((b) => b.body === id)),
+    [moving, untouched],
+  );
+  const before = (await inspect(page)).decoratorPreviewBounds;
+  const movingBefore = before.find((bounds) => bounds.body === moving);
+  const untouchedBefore = before.find((bounds) => bounds.body === untouched);
+  assert.ok(movingBefore && untouchedBefore);
+  await clearSelection(page);
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await page.getByRole("button", { name: "Move body X", exact: true }).click();
+  await page.locator(".body-transform-value").fill("5");
+  await page.waitForFunction(
+    ({ body, x }) =>
+      window
+        .freacInspect()
+        .decoratorPreviewBounds.some(
+          (bounds) => bounds.body === body && Math.abs(bounds.min[0] - x - 5) < 0.1,
+        ),
+    { body: moving, x: movingBefore.min[0] },
+  );
+  const during = (await inspect(page)).decoratorPreviewBounds;
+  assert.equal(
+    during.find((bounds) => bounds.body === untouched)?.mesh,
+    untouchedBefore.mesh,
+    "Moving another body must not replace the untouched decoration preview",
+  );
+  await page.keyboard.press("Enter");
+  assert.notDeepEqual((await inspect(page)).document, document);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, document);
+  await clearSelection(page);
 }
