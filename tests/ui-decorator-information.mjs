@@ -37,7 +37,7 @@ export async function decoratorInformationRoute(page) {
   const selection = (await inspect(page)).modelingSelection;
   assert.equal(selection.length, 2);
   assert.ok(selection.every((s) => s.kind === "face"));
-  await page.getByRole("combobox", { name: "Thread placement", exact: true }).selectOption("hole");
+  await page.getByRole("combobox", { name: "Cut into", exact: true }).selectOption("hole");
   await inspect(page);
   assert.equal(
     await page.getByRole("button", { name: "Show affected faces", exact: true }).count(),

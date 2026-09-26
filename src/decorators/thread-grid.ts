@@ -37,7 +37,9 @@ function profilePatches(polygon: Point[], settings: ThreadSettings): Point[][] {
   const corners =
     settings.profile === "triangle"
       ? tip
-        ? [tip / 2, (1 - tip) / 2, (1 + tip) / 2, 1 - tip / 2]
+        ? settings.cut === "rod"
+          ? [tip / 2, 0.5, 1 - tip / 2]
+          : [0, (1 - tip) / 2, (1 + tip) / 2]
         : [0, 0.5]
       : [1 / 16, 3 / 8, 5 / 8, 15 / 16];
   for (let turn = Math.floor(low); turn <= Math.floor(high); turn++)

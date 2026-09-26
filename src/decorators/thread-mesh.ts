@@ -14,7 +14,7 @@ import { threadGrid } from "./thread-grid.js";
 import { type ThreadPreviewResolution, threadSampling } from "./thread-sampling.js";
 import { type ThreadSettings, threadDepth } from "./thread-settings.js";
 
-/** The same radial envelope defines both mating surfaces; only the hole gets relief. */
+/** Clip the rod crest and open the matching hole groove without adding material. */
 export function threadRadius(
   radius: number,
   angle: number,
@@ -27,12 +27,17 @@ export function threadRadius(
   const phase = turns - Math.floor(turns);
   const triangle = 1 - Math.abs(2 * phase - 1);
   const depth = threadDepth(settings);
-  const clippedTip = settings.tipTruncation / depth;
+  const clippedTip = settings.profile === "triangle" ? settings.tipTruncation / depth : 0;
+  const crest = settings.cut === "rod" ? 1 - triangle : triangle;
+  const relievedCrest =
+    outward > 0 ? Math.min(1 - clippedTip, crest) : Math.min(1, crest / (1 - clippedTip));
   const profile =
     settings.profile === "rounded"
       ? (1 - Math.cos(2 * Math.PI * phase)) / 2
       : settings.profile === "triangle"
-        ? Math.min(1 - clippedTip, Math.max(clippedTip, triangle))
+        ? settings.cut === "rod"
+          ? 1 - relievedCrest
+          : relievedCrest
         : Math.min(1, Math.max(0, (triangle - 0.125) / 0.625));
   const taper = Math.max(
     0,

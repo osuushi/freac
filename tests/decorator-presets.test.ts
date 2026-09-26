@@ -9,7 +9,7 @@ import {
   threadSettings,
 } from "../src/decorators/thread-settings.js";
 
-test("FDM presets truncate both crests and retain one hole-side clearance", () => {
+test("FDM presets flatten the rod crest and hole groove without filling the hole", () => {
   for (const [preset, pitch] of [
     ["fdm-fine", 1],
     ["fdm-coarse", 1.5],
@@ -22,21 +22,27 @@ test("FDM presets truncate both crests and retain one hole-side clearance", () =
     assert.equal(settings.tipTruncation, 0.1);
     for (const cut of ["rod", "hole"] as const) {
       const profile = { ...settings, cut };
-      const sign = cut === "rod" ? -1 : 1;
-      for (const [phase, radialDepth] of [
-        [0, 0.1],
-        [0.025, 0.1],
-        [0.25, 0.5],
-        [0.475, 0.9],
-        [0.5, 0.9],
-        [0.525, 0.9],
-        [0.975, 0.1],
-        [1, 0.1],
-      ]) {
+      const sharp = { ...profile, tipTruncation: 0 };
+      const crestPhase = cut === "rod" ? 0 : 0.5;
+      const oppositePhase = cut === "rod" ? 0.5 : 0;
+      const at = (phase: number, outward: 1 | -1, current = profile) =>
+        threadRadius(5.15, 0, phase * pitch, current, outward, [0, 10]);
+      assert.ok(Math.abs(at(crestPhase, 1) - at(crestPhase, 1, sharp) + 0.1) < 1e-12);
+      assert.ok(Math.abs(at(crestPhase, -1) - at(crestPhase, -1, sharp)) < 1e-12);
+      for (const outward of [1, -1] as const)
+        assert.ok(Math.abs(at(oppositePhase, outward) - at(oppositePhase, outward, sharp)) < 1e-12);
+      for (const phase of cut === "rod"
+        ? [0, 0.025, 0.05, 0.95, 0.975]
+        : [0.45, 0.475, 0.5, 0.525, 0.55]) {
+        assert.ok(Math.abs(at(phase, 1) - at(crestPhase, 1)) < 1e-12);
+        assert.ok(Math.abs(at(phase, -1) - at(crestPhase, -1)) < 1e-12);
+      }
+      for (const phase of Array.from({ length: 41 }, (_, i) => i / 40)) {
         const rod = threadRadius(5.15, 0, phase * pitch, profile, 1, [0, 10]);
         const hole = threadRadius(5.15, 0, phase * pitch, profile, -1, [0, 10]);
-        assert.ok(Math.abs(rod - (5.15 + sign * radialDepth)) < 1e-12);
-        assert.ok(Math.abs(hole - rod - 0.05) < 1e-12);
+        assert.ok(rod <= at(phase, 1, sharp) + 1e-12, "rod relief must remove material");
+        assert.ok(hole >= at(phase, -1, sharp) - 1e-12, "hole relief must remove material");
+        assert.ok(hole - rod >= settings.clearance - 1e-12);
       }
     }
     assert.deepEqual(patchThreadSettings(20, settings, { hand: "left" }), {

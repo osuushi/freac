@@ -73,11 +73,11 @@ export const threadFields: readonly DecoratorField[] = [
   },
   {
     key: "cut",
-    label: "Thread placement",
+    label: "Cut into",
     type: "enum",
     options: [
-      { value: "rod", label: "Inside reference diameter" },
-      { value: "hole", label: "Outside reference diameter" },
+      { value: "rod", label: "Rod" },
+      { value: "hole", label: "Hole" },
     ],
   },
   { key: "clearance", label: "Clearance", type: "number", unit: "mm", min: 0, max: 10 },
