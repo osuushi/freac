@@ -3,7 +3,13 @@ import { type ExportMesh, triangleNormal, validateMesh } from "../model/export-m
 import type { SketchDocument } from "../sketch/document.js";
 import { type DecoratorDefinition, definitionSettings } from "./definition.js";
 import { runDecoratorHook } from "./javascript-runtime.js";
+import { type PreviewFeedback, previewState } from "./preview-feedback.js";
 import type { DecoratorInstance, FaceReference, MeshModification } from "./types.js";
+
+export interface DecoratorPreviewResult {
+  mesh: ExportMesh | null;
+  state: unknown | null;
+}
 
 export interface EnabledDefinition {
   id: string;
@@ -152,7 +158,12 @@ export class JavaScriptDecorators {
     }
     return result;
   }
-  preview(document: SketchDocument, instance: DecoratorInstance, live = false): ExportMesh | null {
+  preview(
+    document: SketchDocument,
+    instance: DecoratorInstance,
+    live = false,
+    feedback: PreviewFeedback = { targetMs: 100, history: [] },
+  ): DecoratorPreviewResult | null {
     const definition = this.definition(document, instance.definition, instance.version);
     if (!definition.preview || (live && !definition.livePreview)) return null;
     const result = this.invoke(
@@ -163,11 +174,16 @@ export class JavaScriptDecorators {
         quality: "preview",
         tolerance: live ? 0.2 : 0.08,
         live,
+        preview: feedback,
       },
-      live ? 100 : undefined,
-    ) as ExportMesh | null;
-    if (result) validateGeneratedMesh(result, false);
-    return result;
+      live ? Math.min(100, feedback.targetMs) : undefined,
+    ) as ExportMesh | { mesh: ExportMesh | null; state?: unknown } | null;
+    if (result === null) return { mesh: null, state: null };
+    if (typeof result !== "object" || !result) throw new Error("Invalid decorator preview result");
+    const wrapped = "mesh" in result;
+    const mesh = wrapped ? result.mesh : result;
+    if (mesh) validateGeneratedMesh(mesh, false);
+    return { mesh, state: previewState(wrapped ? result.state : null) };
   }
 }
 

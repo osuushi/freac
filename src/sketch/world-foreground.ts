@@ -31,6 +31,7 @@ export class SketchForeground {
     scene: THREE.Scene,
     camera: THREE.Camera,
     sketchClip: THREE.Plane,
+    overlays: ReadonlySet<() => void>,
   ): void {
     renderer.getDrawingBufferSize(this.size);
     this.target.setSize(this.size.x, this.size.y);
@@ -51,6 +52,7 @@ export class SketchForeground {
       renderer.setRenderTarget(this.target);
       renderer.autoClear = true;
       renderer.render(scene, camera);
+      for (const render of overlays) render();
       renderer.setRenderTarget(previousTarget);
       renderer.clippingPlanes = [];
       renderer.autoClear = false;

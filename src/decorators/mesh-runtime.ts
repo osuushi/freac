@@ -1,4 +1,4 @@
-import Module, { type ManifoldToplevel } from "manifold-3d";
+import type { ManifoldToplevel } from "manifold-3d";
 import { type ExportMesh, exportMesh } from "../model/export-mesh.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { resolveFaces } from "./cylinder.js";
@@ -6,22 +6,26 @@ import { validateThread } from "./edits.js";
 import type { JavaScriptDecorators } from "./javascript-hooks.js";
 import { MeshScope } from "./mesh-scope.js";
 import { exportTolerance } from "./precision.js";
+import type { PreviewFeedback } from "./preview-feedback.js";
 import { threadDomain } from "./thread-domain.js";
 import { threadMeshes } from "./thread-mesh.js";
+import { nextThreadResolution } from "./thread-preview.js";
+import type { ThreadPreviewResolution } from "./thread-sampling.js";
 import { threadDefinition, threadSettings } from "./thread-settings.js";
 import type { DecoratorInstance } from "./types.js";
 
 export async function initializeMeshRuntime(wasmUrl?: string): Promise<ManifoldToplevel> {
+  const { default: Module } = await import("manifold-3d");
   const runtime = await Module(wasmUrl ? { locateFile: () => wasmUrl } : undefined);
   runtime.setup();
   return runtime;
 }
 
-function threadOperands(
-  scope: MeshScope,
+function prepareThreadGeometry(
   document: SketchDocument,
   instance: DecoratorInstance,
   quality: "preview" | "export",
+  previewResolution?: ThreadPreviewResolution,
 ) {
   if (instance.problem) throw new Error(instance.problem);
   if (instance.definition !== threadDefinition || instance.version !== 1)
@@ -36,11 +40,26 @@ function threadOperands(
     threadSettings(instance.settings),
     quality,
     instance.axialReference,
+    previewResolution,
   );
   if (!geometry) return null;
+  return { body, faces, geometry };
+}
+
+function threadOperands(
+  scope: MeshScope,
+  document: SketchDocument,
+  instance: DecoratorInstance,
+  quality: "preview" | "export",
+) {
+  const prepared = prepareThreadGeometry(document, instance, quality);
+  if (!prepared) return null;
+  const { body, faces, geometry } = prepared;
   const mask = geometry.masks ? threadDomain(scope, body, faces, geometry) : null;
   return { mask, geometry };
 }
+
+export class PreviewRuntimeRequired extends Error {}
 
 export function decoratedMeshes(
   runtime: ManifoldToplevel,
@@ -106,19 +125,43 @@ export function decoratedMeshes(
 }
 
 export function decoratorPreview(
-  runtime: ManifoldToplevel,
+  runtime: ManifoldToplevel | undefined,
   document: SketchDocument,
   instance: DecoratorInstance,
 ): ExportMesh {
-  const body = document.bodies?.find((b) => b.id === instance.faces[0].body);
-  if (!body) throw new Error("Thread body is missing");
+  return renderThreadPreview(runtime, document, instance).mesh;
+}
+
+export function decoratorLivePreview(
+  runtime: ManifoldToplevel | undefined,
+  document: SketchDocument,
+  instance: DecoratorInstance,
+  feedback: PreviewFeedback,
+): { mesh: ExportMesh; state: ThreadPreviewResolution | null } {
+  return renderThreadPreview(runtime, document, instance, nextThreadResolution(feedback));
+}
+
+function renderThreadPreview(
+  runtime: ManifoldToplevel | undefined,
+  document: SketchDocument,
+  instance: DecoratorInstance,
+  resolution?: ThreadPreviewResolution,
+): { mesh: ExportMesh; state: ThreadPreviewResolution | null } {
+  const prepared = prepareThreadGeometry(document, instance, "preview", resolution);
+  if (!prepared) return { mesh: { vertices: [], triangles: [] }, state: null };
+  const { body, faces, geometry } = prepared;
+  // A complete cylindrical face already has the preview shell. Clipping is
+  // needed only for a partial face domain.
+  if (!geometry.masks) return { mesh: geometry.fill, state: geometry.resolution };
+  if (!runtime) throw new PreviewRuntimeRequired();
   const scope = new MeshScope(runtime, body.center);
   try {
-    const operands = threadOperands(scope, document, instance, "preview");
-    if (!operands) return { vertices: [], triangles: [] };
-    const { mask, geometry } = operands;
+    const mask = threadDomain(scope, body, faces, geometry);
     const generated = scope.from(geometry.fill);
-    return scope.mesh(mask ? scope.keep(generated.intersect(mask)) : generated);
+    return {
+      mesh: scope.mesh(scope.keep(generated.intersect(mask))),
+      state: geometry.resolution,
+    };
   } finally {
     scope.close();
   }

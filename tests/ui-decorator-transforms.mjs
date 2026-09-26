@@ -99,7 +99,10 @@ async function movePreviewRoute(page, before, bodyId, originalBounds) {
   for (let i = 0; i < 20; i++) {
     await page.mouse.move(start.x + [24, 48, 72, 48][i % 4], start.y);
     await page.waitForTimeout(55);
-    const bounds = (await inspect(page)).decoratorPreviewBounds.find((b) => b.body === bodyId);
+    const bounds = await page.evaluate(
+      (id) => window.freacInspect().decoratorPreviewBounds.find((b) => b.body === id),
+      bodyId,
+    );
     if (bounds && Math.abs(bounds.min[0] - originalBounds.min[0]) > 0.1)
       livePositions.add(bounds.min[0].toFixed(1));
   }
@@ -115,6 +118,12 @@ async function movePreviewRoute(page, before, bodyId, originalBounds) {
       return bounds && Math.abs(bounds.min[0] - x) < 0.1;
     },
     { id: bodyId, x: originalBounds.min[0] + displacement },
+  );
+  await page.waitForFunction(
+    ({ id, triangles }) =>
+      window.freacInspect().decoratorPreviewBounds.find((b) => b.body === id)?.triangles ===
+      triangles,
+    { id: bodyId, triangles: originalBounds.triangles },
   );
   await page.mouse.up();
   assert.notDeepEqual((await inspect(page)).document, before);

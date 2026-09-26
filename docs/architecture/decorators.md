@@ -281,12 +281,26 @@ QuickJS license). The wrapper creates a fresh VM for each synchronous hook,
 installs no host callbacks, denies external imports, and exchanges only JSON.
 Current bounds are 256 KiB source, 32 MiB input/output JSON, 128 MiB VM memory,
 512 KiB stack and a 10-second hook deadline. Optional `livePreview: true` opts
-a preview hook into temporary modeling gestures. Its context includes `live: true`
-and a coarser suggested tolerance; the QuickJS callback has a 100 ms deadline.
-Without that opt-in, the preview runs after 100 ms of inactivity. Accepted
-geometry always requests the ordinary preview. Built-in threads update live.
+a preview hook into temporary modeling gestures. Its context includes `live: true`,
+a coarser suggested tolerance and `preview: {targetMs, history}`. History holds up
+to three measured group durations and optional plugin-returned JSON state under
+16 KiB. State is view-only, reset on membership/settings changes and never saved
+or exported. A legacy mesh/null return still works; `{mesh,state}` carries the
+optional record. The per-group target shares a 100 ms update budget. QuickJS live
+callbacks have at most 100 ms, bounded further by that group's target. Built-in
+threads use measured cost to adapt angular and axial preview resolution; export
+sampling is unchanged. Without live opt-in, previews wait for 100 ms of inactivity.
+Paused candidates and accepted geometry request ordinary full-quality previews.
 One retained worker computes serially, coalescing pending candidates to the latest
-one; it never delays a new live job until motion stops. The 100 ms callback
+one; it never delays a new live job until motion stops. A preview request carries
+per-instance support signatures. Built-in threads depend on their owning body's
+faces, so moving an unrelated body neither regenerates their mesh nor restarts
+their transition. Identical candidate geometry is skipped. Custom previews can
+inspect the full document, so their signature includes it. Each changed group
+fades in over 100 ms. A stale preview fades out over 200 ms after its fade-in
+finishes, or immediately when a newer preview replaces it. The sketch foreground
+pass renders the same preview with its complementary clip, keeping it visible
+while the sketch plane cuts the body. The 100 ms callback
 deadline is not a wall-clock limit for mesh generation or worker startup, so
 long previews can visibly lag. Worker termination remains the outer cancellation
 mechanism. Upstream runtime APIs are documented in the

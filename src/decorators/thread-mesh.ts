@@ -10,8 +10,8 @@ import {
   dot,
   subtract,
 } from "./cylinder.js";
-import { threadTolerance } from "./precision.js";
 import { threadGrid } from "./thread-grid.js";
+import { type ThreadPreviewResolution, threadSampling } from "./thread-sampling.js";
 import { type ThreadSettings, threadDepth } from "./thread-settings.js";
 
 /** The same radial envelope defines both mating surfaces; only the hole gets relief. */
@@ -206,6 +206,7 @@ export function threadMeshes(
   settings: ThreadSettings,
   quality: "preview" | "export" = "export",
   reference?: [number, number],
+  previewResolution?: ThreadPreviewResolution,
 ) {
   const cylinder = faces[0].cylinder;
   if (!cylinder) throw new Error("Threads require cylindrical faces");
@@ -222,28 +223,13 @@ export function threadMeshes(
   const low = cylinder.radius - depth - 0.02,
     high = cylinder.radius + depth + settings.clearance + 0.02;
   if (low <= 0) throw new Error("Thread profile is too deep for this cylinder");
-  const tolerance = quality === "preview" ? 0.08 : threadTolerance(settings);
-  const segments = Math.max(
-    32,
-    Math.ceil(Math.PI / Math.acos(1 - Math.min(0.1, tolerance / (2 * high)))),
+  const { tolerance, segments, samples } = threadSampling(
+    settings,
+    depth,
+    high,
+    quality,
+    previewResolution,
   );
-  // Corner-aligned straight profiles are linear in phase. Bound the mixed
-  // radial/angular interpolation term instead of rounded axial curvature.
-  const linearProfile =
-    settings.profile !== "rounded" && !settings.startTaper && !settings.endTaper;
-  const samples =
-    quality === "preview"
-      ? 12
-      : linearProfile
-        ? Math.max(
-            8,
-            Math.ceil(
-              ((settings.profile === "metric" ? Math.sqrt(3) * settings.pitch : 2 * depth) *
-                Math.PI) /
-                (segments * tolerance),
-            ),
-          )
-        : Math.max(32, Math.ceil(Math.PI * Math.sqrt(depth / tolerance)));
   const steps = Math.max(1, Math.ceil(((bounds[1] - bounds[0]) / settings.pitch) * samples));
   if (steps * segments > 1_000_000)
     throw new Error("Threads exceed the mesh budget; increase pitch or reduce length");
@@ -261,6 +247,7 @@ export function threadMeshes(
     return (radius * Math.cos(step / 2)) / Math.cos(angle - middle);
   };
   return {
+    resolution: { segments, samples },
     ...threadToolMeshes(frame, bandGrid, cylinder, settings, low, high, tolerance),
     tolerance,
     masks: complete ? null : faces.map((face) => faceMask(frame, [face], low, high)),

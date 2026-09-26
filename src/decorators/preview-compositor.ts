@@ -5,6 +5,7 @@ export const decoratorPreviewLayer = 2;
 export interface PreviewSurface {
   mesh: THREE.Mesh;
   faces: ReadonlySet<string>;
+  opacity?: number;
 }
 export const previewFaceKey = (body: string, face: string) => `${body}/${face}`;
 
@@ -39,6 +40,8 @@ export class DecoratorPreviewCompositor {
       new THREE.MeshStandardMaterial({
         color: "#258c96",
         side: THREE.DoubleSide,
+        transparent: true,
+        blending: THREE.NoBlending,
       }),
     );
     const clip = material.onBeforeCompile;
@@ -86,6 +89,7 @@ if (gl_FragCoord.z > texture2D(decoratorOcclusion, gl_FragCoord.xy / decoratorRe
       renderer.clear();
       for (const { mesh } of visible) mesh.visible = false;
       for (const surface of visible) {
+        (surface.mesh.material as THREE.Material).opacity = surface.opacity ?? 1;
         this.renderSurface(renderer, scene, camera, surface, supports, layers);
       }
       renderer.setRenderTarget(target);

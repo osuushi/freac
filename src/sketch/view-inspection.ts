@@ -5,9 +5,13 @@ import { inspectPlaneTargets } from "./plane-target-inspection.js";
 import { selectionFrame } from "./selection-frame.js";
 
 function decoratorPreviewBounds(world: SketchEditor["world"]) {
-  const bounds: { body: string; min: number[]; max: number[] }[] = [];
+  const bounds: { body: string; min: number[]; max: number[]; triangles: number }[] = [];
   world.scene.traverse((object) => {
-    if (typeof object.userData.body !== "string" || !object.layers.isEnabled(decoratorPreviewLayer))
+    if (
+      typeof object.userData.body !== "string" ||
+      object.userData.previewCurrent === false ||
+      !object.layers.isEnabled(decoratorPreviewLayer)
+    )
       return;
     const geometry = (object as import("three").Mesh).geometry;
     if (!geometry?.isBufferGeometry) return;
@@ -18,6 +22,9 @@ function decoratorPreviewBounds(world: SketchEditor["world"]) {
         body: object.userData.body,
         min: box.min.toArray(),
         max: box.max.toArray(),
+        triangles: geometry.index
+          ? geometry.index.count / 3
+          : geometry.attributes.position.count / 3,
       });
   });
   return bounds;

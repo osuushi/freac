@@ -6,6 +6,7 @@ import type { DecoratorDefinition } from "../src/decorators/definition.js";
 import { JavaScriptDecorators } from "../src/decorators/javascript-hooks.js";
 import { initializeDecoratorRuntime } from "../src/decorators/javascript-runtime.js";
 import { decoratedMeshes, initializeMeshRuntime } from "../src/decorators/mesh-runtime.js";
+import type { DecoratorInstance } from "../src/decorators/types.js";
 import { documentArchive, readArchive } from "../src/model/document-archive.js";
 import { validateMesh } from "../src/model/export-mesh.js";
 import { encodeMeshes } from "../src/model/mesh-export.js";
@@ -56,27 +57,9 @@ test("bundled custom decorator applies, edits, previews and exports through the 
     const current = owner.view.data.decorators?.[0];
     assert.ok(current);
     await assertReadOnlyInspection(owner, body, current);
-    assert.equal(hooks.preview(owner.view.data, current)?.triangles.length, 12);
+    assert.equal(hooks.preview(owner.view.data, current)?.mesh?.triangles.length, 12);
     assert.equal(hooks.preview(owner.view.data, current, true), null);
-    const liveSource = `export default { preview({ live, tolerance }) {
-      if (!live || tolerance !== 0.2) throw new Error("Missing live preview context");
-      return { vertices: [[0,0,0], [1,0,0], [0,1,0]], triangles: [[0,1,2]] };
-    } };`;
-    const liveDefinition = { ...definition, livePreview: true, source: liveSource };
-    const liveDocument = { ...owner.view.data, decoratorDefinitions: [liveDefinition] };
-    const liveHooks = new JavaScriptDecorators(javascript, [
-      { id: definition.id, version: definition.version, source: liveSource },
-    ]);
-    assert.equal(liveHooks.preview(liveDocument, current, true)?.triangles.length, 1);
-    const slowSource = "export default { preview() { while (true) {} } };";
-    const slowHooks = new JavaScriptDecorators(javascript, [
-      { id: definition.id, version: definition.version, source: slowSource },
-    ]);
-    const slowDocument = {
-      ...owner.view.data,
-      decoratorDefinitions: [{ ...definition, livePreview: true, source: slowSource }],
-    };
-    assert.throws(() => slowHooks.preview(slowDocument, current, true), /interrupted/);
+    assertLivePreviewProtocol(owner, javascript, definition, current);
     const prepared = (await owner.call({ kind: "export-geometry" })).exportDocument;
     assert.ok(prepared);
     const manifold = await initializeMeshRuntime();
@@ -102,6 +85,43 @@ test("bundled custom decorator applies, edits, previews and exports through the 
     owner.close();
   }
 });
+
+function assertLivePreviewProtocol(
+  owner: DocumentOwner,
+  javascript: Awaited<ReturnType<typeof initializeDecoratorRuntime>>,
+  definition: DecoratorDefinition,
+  current: DecoratorInstance,
+): void {
+  const liveSource = `export default { preview({ live, tolerance, preview }) {
+      if (!live || tolerance !== 0.2 || preview.targetMs !== 75 ||
+          preview.history[0].durationMs !== 42 || preview.history[0].state.step !== 3)
+        throw new Error("Missing live preview context");
+      return {
+        mesh: { vertices: [[0,0,0], [1,0,0], [0,1,0]], triangles: [[0,1,2]] },
+        state: { step: 4 }
+      };
+    } };`;
+  const liveDefinition = { ...definition, livePreview: true, source: liveSource };
+  const liveDocument = { ...owner.view.data, decoratorDefinitions: [liveDefinition] };
+  const liveHooks = new JavaScriptDecorators(javascript, [
+    { id: definition.id, version: definition.version, source: liveSource },
+  ]);
+  const liveResult = liveHooks.preview(liveDocument, current, true, {
+    targetMs: 75,
+    history: [{ durationMs: 42, state: { step: 3 } }],
+  });
+  assert.equal(liveResult?.mesh?.triangles.length, 1);
+  assert.deepEqual(liveResult?.state, { step: 4 });
+  const slowSource = "export default { preview() { while (true) {} } };";
+  const slowHooks = new JavaScriptDecorators(javascript, [
+    { id: definition.id, version: definition.version, source: slowSource },
+  ]);
+  const slowDocument = {
+    ...owner.view.data,
+    decoratorDefinitions: [{ ...definition, livePreview: true, source: slowSource }],
+  };
+  assert.throws(() => slowHooks.preview(slowDocument, current, true), /interrupted/);
+}
 
 async function assertReadOnlyInspection(
   owner: DocumentOwner,

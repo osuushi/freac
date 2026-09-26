@@ -118,7 +118,7 @@ try {
                     ...(kind === "export"
                       ? { bytes: data.bytes.length }
                       : {
-                          triangles: data.meshes.reduce((n, m) => n + m.mesh.triangles.length, 0),
+                          triangles: data.meshes.reduce((n, m) => n + m.indices.length / 3, 0),
                         }),
                   });
                 } finally {

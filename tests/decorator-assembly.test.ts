@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { decoratedMeshes, initializeMeshRuntime } from "../src/decorators/mesh-runtime.js";
-import { threadDefinition } from "../src/decorators/thread-settings.js";
+import { threadDefinition, threadSettings } from "../src/decorators/thread-settings.js";
 import { roundBody } from "./decorator-domain-fixtures.js";
 
 test("different-length exported threads permit screw travel in both hands and cut modes", async () => {
@@ -47,6 +47,9 @@ test("different-length exported threads permit screw travel in both hands and cu
         const reply = await owner.call({ kind: "export-geometry" });
         assert.equal(reply.error, undefined);
         assert.ok(reply.exportDocument);
+        const instance = reply.exportDocument.decorators?.[0];
+        assert.ok(instance);
+        const pitch = threadSettings(instance.settings).pitch;
         const meshes = decoratedMeshes(runtime, reply.exportDocument);
         const solids = meshes.map(
           (mesh) =>
@@ -63,7 +66,7 @@ test("different-length exported threads permit screw travel in both hands and cu
             const rotation = solids[0].rotate([
               0,
               0,
-              ((hand === "right" ? 1 : -1) * 360 * travel) / 1.5,
+              ((hand === "right" ? 1 : -1) * 360 * travel) / pitch,
             ]);
             const placed = rotation.translate([0, 0, travel]);
             const collision = placed.intersect(solids[1]);

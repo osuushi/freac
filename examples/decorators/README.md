@@ -31,8 +31,9 @@ The module's default export supplies synchronous methods:
 - `validate(context)` returns diagnostics, each with `severity` (`warning` or
   `error`), `message`, and optional `faces` (`{body,face}` references) and `edges`
   (`{body,edge}` references) to highlight within selected bodies. Errors prevent generation.
-- `preview(context)` returns a triangle mesh or `null` when the manifest enables
-  preview. Open meshes are allowed for preview.
+- `preview(context)` returns a triangle mesh, `null`, or `{ mesh, state }` when
+  the manifest enables preview. Open meshes are allowed; `state` is optional
+  transient JSON up to 16 KiB.
 - `generate(context)` returns `{ operation: "add" | "subtract", mesh }[]`.
   Each modifier must be a closed, consistently oriented triangle mesh. Empty
   modifications are allowed. Coordinates are in world millimeters.
@@ -43,10 +44,16 @@ triangles, edges/curves, bounds and measurements. They omit the opaque BRep stri
 The context is a JSON copy, so changes to it cannot mutate the document. Preview
 and export additionally provide `quality` and a suggested `tolerance` in mm.
 Preview also receives `live: boolean`. Set `livePreview: true` to update during
-temporary moves and scales; the live callback has a 100 ms execution budget and
-gets a coarser suggested tolerance (0.2 mm instead of 0.08 mm). Use `live` to
-reduce mesh detail if needed. Without opt-in, preview updates after a gesture
-pauses for 100 ms. Accepted geometry uses the ordinary preview.
+temporary moves and scales. `context.preview` provides `targetMs` and the last
+three successful live `{ durationMs, state }` samples for this decoration group.
+The group may return `{ mesh, state }` to remember its chosen resolution; a bare
+mesh still works. The host validates JSON size and resets history when settings or
+face membership changes. `state: null` opts out of carrying data. A live callback
+has at most 100 ms of JavaScript time, potentially less when several groups
+update, and gets a coarser suggested tolerance (0.2 mm instead of 0.08 mm).
+Without live opt-in, preview updates after a gesture pauses for 100 ms. Pausing
+also restores the ordinary full-quality preview for live groups. Preview history
+is never saved with the document or used at export.
 No hook receives another decorator's result. JavaScript has no host, DOM, file,
 network, timer or module-import APIs; bundle any helpers into the source itself.
 

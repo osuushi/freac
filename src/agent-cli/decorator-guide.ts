@@ -18,9 +18,12 @@ Its synchronous hooks are:
 - generate(context): return [{operation:"add"|"subtract",mesh}]. Each modifier is a
   closed, consistently oriented triangle mesh; the array may be empty. The host
   applies these modifiers to the original body mesh at STL/3MF export.
-- preview(context): optional when preview:true; return one triangle mesh or null.
-  Open meshes are allowed. Preview is translucent and never replaces picking on
-  the original exact faces. Prefer a coarser mesh than export.
+- preview(context): optional when preview:true; return one triangle mesh, null,
+  or {mesh, state}. state is optional transient JSON under 16 KiB. Open meshes
+  are allowed. Preview is translucent and never replaces picking on exact faces.
+  With livePreview:true, context.live is true during a gesture and context.preview
+  contains targetMs and up to three previous {durationMs,state} samples for this
+  group. Adapt detail using those samples; returning a bare mesh remains valid.
 
 A mesh is {vertices:[[x,y,z],...],triangles:[[i,j,k],...]}, with world millimeter
 coordinates and zero-based integer vertex indexes. Reject degenerate triangles;
@@ -40,7 +43,10 @@ surface or -1 for an interior surface; a plane's u/v cross product alone need no
 be its outward normal. Edges have id, points (flat polyline coordinates), and curve
 (line with a/b, arc with a/b/mid, circle with center/normal/radius, or null).
 Preview/export also supply quality:"preview"|"export" and tolerance in millimeters
-(currently 0.08/0.004). These are sampling suggestions, not fit allowances.
+(currently 0.08/0.004; live preview suggests 0.2). These are sampling suggestions,
+not fit allowances. Live preview callbacks have at most 100 ms of JavaScript time;
+targetMs may be smaller when several groups update. A paused gesture renders an
+ordinary full-quality preview. Preview state/history are never saved or exported.
 
 Fields are declarative number or enum controls. Give every field key, label, type,
 and default; numbers can specify min/max/unit, enums require options with value

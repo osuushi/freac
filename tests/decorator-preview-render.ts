@@ -59,6 +59,7 @@ export function previewRenderChecks() {
     const revealed = pixel([red]);
     if (revealed[0] < revealed[1] + 50)
       throw new Error(`Recessed preview remains occluded: ${revealed}`);
+    const faded = checkOpacity(red, pixel, revealed);
     const blocker = new THREE.Mesh(
       new THREE.PlaneGeometry(3, 3),
       new THREE.MeshBasicMaterial({ color: "blue" }),
@@ -80,7 +81,7 @@ export function previewRenderChecks() {
     if (renderer.getContext().getError() !== 0) throw new Error("WebGL error");
     blocker.geometry.dispose();
     blocker.material.dispose();
-    return { revealed, blocked, hiddenBlocker, resized, ...results };
+    return { revealed, faded, blocked, hiddenBlocker, resized, ...results };
   } finally {
     disposeMeshes(scene);
     target.dispose();
@@ -88,6 +89,19 @@ export function previewRenderChecks() {
     renderer.dispose();
     renderer.domElement.remove();
   }
+}
+
+function checkOpacity(
+  surface: PreviewSurface,
+  pixel: (surfaces: PreviewSurface[]) => number[],
+  revealed: number[],
+): number[] {
+  surface.opacity = 0.5;
+  const faded = pixel([surface]);
+  if (faded[1] <= revealed[1] + 15 || faded[1] >= 250)
+    throw new Error(`Preview opacity did not blend over the support: ${revealed}; ${faded}`);
+  surface.opacity = 1;
+  return faded;
 }
 
 function disposeMeshes(scene: THREE.Scene): void {

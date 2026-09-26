@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
-import { decoratorPreview, initializeMeshRuntime } from "../src/decorators/mesh-runtime.js";
+import {
+  decoratorLivePreview,
+  decoratorPreview,
+  initializeMeshRuntime,
+} from "../src/decorators/mesh-runtime.js";
 import { threadDefinition } from "../src/decorators/thread-settings.js";
 import { placedDocument } from "../src/model/body-placement.js";
 import { roundBody } from "./decorator-domain-fixtures.js";
@@ -30,6 +34,7 @@ test("rigid operation previews move, rotate and copy their thread geometry", asy
     const instance = original.decorators?.[0];
     assert.ok(instance);
     const originalMesh = decoratorPreview(runtime, original, instance);
+    assertAdaptiveResolution(runtime, original, instance, originalMesh.triangles.length);
     const edit = {
       ids: [body.id],
       pivot: [0, 0, 0] as [number, number, number],
@@ -83,3 +88,31 @@ test("rigid operation previews move, rotate and copy their thread geometry", asy
     owner.close();
   }
 });
+
+function assertAdaptiveResolution(
+  runtime: Parameters<typeof decoratorPreview>[0],
+  document: Parameters<typeof decoratorPreview>[1],
+  instance: Parameters<typeof decoratorPreview>[2],
+  originalTriangles: number,
+): void {
+  const firstLive = decoratorLivePreview(runtime, document, instance, {
+    targetMs: 100,
+    history: [],
+  });
+  assert.ok(firstLive.state);
+  const higher = decoratorLivePreview(runtime, document, instance, {
+    targetMs: 100,
+    history: [{ durationMs: 25, state: { segments: 20, samples: 10 } }],
+  });
+  assert.ok(higher.state);
+  const adaptive = decoratorLivePreview(runtime, document, instance, {
+    targetMs: 100,
+    history: [{ durationMs: 400, state: higher.state }],
+  });
+  assert.ok(adaptive.state);
+  assert.ok(firstLive.mesh.triangles.length < originalTriangles);
+  assert.ok(adaptive.state.segments < higher.state.segments);
+  assert.ok(adaptive.state.samples < higher.state.samples);
+  assert.ok(adaptive.mesh.triangles.length < higher.mesh.triangles.length);
+  assert.equal(decoratorPreview(runtime, document, instance).triangles.length, originalTriangles);
+}
