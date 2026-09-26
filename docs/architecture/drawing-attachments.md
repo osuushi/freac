@@ -29,3 +29,17 @@ stable through the gesture; moving away from a target removes its temporary
 attachment. Subsequent selection or movement never adds attachments by itself.
 Unfuse or the constraint list can remove the accepted relationship. Bow conversion
 retains point-on-edge relationships, including endpoints attached to another edge.
+
+### Grid placement near edges
+
+With grid snapping enabled, nearby edges offer intersections with horizontal and
+vertical grid lines instead of unrestricted closest-point placement. Choose the
+nearest of these intersections and the ordinary grid corner, so off-edge grid
+corners remain reachable. A segment along a grid line retains ordinary grid
+spacing. Existing endpoint, midpoint, center and curve-intersection feature snaps
+retain their priority. With grid disabled, edges offer continuous placement;
+Shift bypasses geometry while retaining the independent grid setting.
+
+Grid/edge intersections are placement candidates, not new geometry or grid
+constraints. An unambiguous sketch edge still receives the ordinary drawing
+attachment at either end of creation; off-edge grid placement creates no link.

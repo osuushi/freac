@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { at, click, close, drag, inspect, pointEquals, reset } from "./ui-helpers.mjs";
+import { at, click, drag, inspect, pointEquals, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function hover(page, point, kind) {
@@ -83,8 +83,7 @@ async function geometryAndGrid(page) {
   await hover(page, [3.2, 0.2], "curve");
   await drag(page, [3.2, 0.2], [3, -10]);
   curves = (await inspect(page)).document.sketches[0].curves;
-  close(curves[5].a.y, 0, "A new line starts on the edge projection");
-  assert.ok(Math.abs(curves[5].a.x - 3.2) < 0.1, "Edge snap does not quantize along the edge");
+  pointEquals(curves[5].a, [4, 0]); // A grid-collinear edge keeps ordinary grid spacing.
   // Grid off exposes geometry-only attraction; Shift then bypasses that attraction.
   await chooseTool(page, "grid snap", "grid");
   await hover(page, [20.3, 10.3], "handle");

@@ -1,7 +1,8 @@
 import { planarBodyEdges } from "../model/planar-body-edges.js";
 import { drawingAttachment } from "./creation-links.js";
-import { closestOnCurve, curveFeatures } from "./curve-geometry.js";
+import { curveFeatures } from "./curve-geometry.js";
 import { curveIntersections } from "./curve-intersections.js";
+import { snapToEdge } from "./edge-snapping.js";
 import type { SketchEditor } from "./editor.js";
 import { distance } from "./geometry.js";
 import type { Point } from "./planes.js";
@@ -61,15 +62,28 @@ export function snapped(
     };
     return closest.point;
   }
-  const edge = [...curves, ...bodyCurves]
-    .map((curve) => closestOnCurve(curve, point))
-    .filter((p) => distance(p, point) <= tolerance)
-    .sort((a, b) => distance(a, point) - distance(b, point))[0];
+  const edge = snapToEdge(
+    [...curves, ...bodyCurves],
+    point,
+    tolerance,
+    editor.gridSnap ? grid : null,
+    step,
+  );
   if (edge) {
-    editor.snap = { ...edge, label: attachmentLabel(editor, sketch, edge, "Edge") };
-    return edge;
+    editor.snap = { ...edge.point, label: attachmentLabel(editor, sketch, edge.point, edge.label) };
+    return edge.point;
   }
-  const result = grid;
+  const alignment = alignedGrid(targets, point, grid, tolerance);
+  if (alignment.label === "Alignment" || editor.gridSnap) editor.snap = alignment;
+  return { x: alignment.x, y: alignment.y };
+}
+
+function alignedGrid(
+  targets: { point: Point }[],
+  point: Point,
+  grid: Point,
+  tolerance: number,
+): Point & { label: string } {
   const guide = (axis: "x" | "y") =>
     targets
       .filter((target) => Math.abs(target.point[axis] - point[axis]) < tolerance)
@@ -78,10 +92,11 @@ export function snapped(
       )[0];
   const x = guide("x"),
     y = guide("y");
-  if (x) result.x = x.point.x;
-  if (y) result.y = y.point.y;
-  if (x || y || editor.gridSnap) editor.snap = { ...result, label: x || y ? "Alignment" : "Grid" };
-  return result;
+  return {
+    x: x?.point.x ?? grid.x,
+    y: y?.point.y ?? grid.y,
+    label: x || y ? "Alignment" : "Grid",
+  };
 }
 
 function attachmentLabel(

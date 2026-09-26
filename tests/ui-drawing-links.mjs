@@ -71,25 +71,26 @@ export async function drawingLinksRoute(page, name) {
 async function edgeContacts(page) {
   for (const reverse of [false, true]) {
     const before = await baseLine(page, [10, 0]);
+    // Use a grid mark: collinear edge placement now keeps the 2 mm grid.
     await page.keyboard.press("l");
     await drag(
       page,
       ...(reverse
         ? [
-            [3, 5],
-            [3, 0.2],
+            [4, 5],
+            [4, 0.2],
           ]
         : [
-            [3, 0.2],
-            [3, 5],
+            [4, 0.2],
+            [4, 5],
           ]),
     );
     const sketch = (await inspect(page)).document.sketches[0];
     assert.equal(sketch.constraints[0].kind, "point-on-edge");
     assert.equal(sketch.constraints[0].edge, before.sketches[0].curves[0].id);
     await page.keyboard.press("v");
-    await click(page, 3, 0);
-    await drag(page, [3, 0], [6, 0], ["Shift"]);
+    await click(page, 4, 0);
+    await drag(page, [4, 0], [6, 0], ["Shift"]);
     const moved = (await inspect(page)).document.sketches[0];
     assert.deepEqual(moved.curves[0], before.sketches[0].curves[0]);
     pointEquals(moved.curves[1][reverse ? "b" : "a"], [6, 0]);

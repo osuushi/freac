@@ -51,6 +51,7 @@ import { fillRoute } from "./ui-fill.mjs";
 import { filletLossRoute, filletRoute } from "./ui-fillet.mjs";
 import { filletConsumptionRoute } from "./ui-fillet-consumption.mjs";
 import { filletGuideRoute } from "./ui-fillet-guide.mjs";
+import { gridEdgeSnappingRoute } from "./ui-grid-edge-snapping.mjs";
 import { interactionLifecycleRoute } from "./ui-interaction-lifecycle.mjs";
 import { jointBowRoute } from "./ui-joint-bow.mjs";
 import { lineRoute } from "./ui-line.mjs";
@@ -219,6 +220,7 @@ try {
       await constrainedBowRoute(page, name);
       await tangentBowRoute(page, name);
       await rectangleRoute(page, name);
+      await gridEdgeSnappingRoute(page, name);
       await movementSnappingRoute(page, name);
       await movementGeometrySnapRoute(page, name);
       await rectangleEdgeRoute(page, name);
