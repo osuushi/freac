@@ -71,7 +71,12 @@ try {
       await pitch.fill("2.5");
       await pitch.press("Enter");
       assert.equal((await inspect(page)).document.decorators[0].settings.pitch, 2.5);
-      await page.getByRole("combobox", { name: "Cut into", exact: true }).selectOption("hole");
+      const placement = page.getByRole("combobox", { name: "Thread placement", exact: true });
+      assert.deepEqual(await placement.locator("option").allTextContents(), [
+        "Inside reference diameter",
+        "Outside reference diameter",
+      ]);
+      await placement.selectOption("hole");
       assert.equal((await inspect(page)).document.decorators[0].settings.cut, "hole");
       assert.deepEqual((await inspect(page)).document.bodies[0], original);
       await chooseTool(page, "undo", "undo");

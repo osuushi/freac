@@ -81,6 +81,9 @@ This describes the zero-clearance reference construction. Hole radial relief is
 one outward radial offset applied to the entire female profile, including roots,
 crests and flanks; it is not a normal-to-flank offset or an ISO fit class. The rod
 receives no second allowance. The control displays millimeters.
+The shared Thread placement control names these modes Inside and Outside the
+reference diameter. Selecting the same placement for equal-diameter mating faces
+keeps their thread profiles complementary; the label does not switch by face type.
 Thread-form compatibility does not promise assembly through shoulders, flats,
 unthreaded portions or blind-hole bottoms.
 
