@@ -1,4 +1,5 @@
 import type { ThreadSettings } from "./thread-settings.js";
+import { threadDepth } from "./thread-settings.js";
 
 type Point = { angle: number; z: number };
 const tau = 2 * Math.PI;
@@ -32,10 +33,15 @@ function profilePatches(polygon: Point[], settings: ThreadSettings): Point[][] {
     low = Math.min(...phases),
     high = Math.max(...phases);
   let patches = [polygon];
+  const tip = settings.tipTruncation / threadDepth(settings);
+  const corners =
+    settings.profile === "triangle"
+      ? tip
+        ? [tip / 2, (1 - tip) / 2, (1 + tip) / 2, 1 - tip / 2]
+        : [0, 0.5]
+      : [1 / 16, 3 / 8, 5 / 8, 15 / 16];
   for (let turn = Math.floor(low); turn <= Math.floor(high); turn++)
-    for (const corner of settings.profile === "triangle"
-      ? [0, 0.5]
-      : [1 / 16, 3 / 8, 5 / 8, 15 / 16]) {
+    for (const corner of corners) {
       const level = turn + corner;
       if (level > low + 1e-12 && level < high - 1e-12)
         patches = patches.flatMap((p) => split(p, level, phase));

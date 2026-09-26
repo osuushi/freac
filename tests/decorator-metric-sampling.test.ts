@@ -17,8 +17,8 @@ test("straight thread profiles retain their accuracy budget across pitches, hand
       [5, 1.5, 10, "metric"],
       [20, 4, 20, "metric"],
       [5, 7, 10, "metric"],
-      [5, 0.5, 10, "fdm-fine"],
-      [5, 1, 10, "fdm-coarse"],
+      [5, 1, 10, "fdm-fine"],
+      [5, 1.5, 10, "fdm-coarse"],
     ] as const) {
       const body = await roundBody(owner, [radius], length);
       const face = body.faces.find((f) => f.cylinder);

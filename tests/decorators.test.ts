@@ -54,7 +54,7 @@ test("threads apply atomically to rod/hole, patch only the requested setting, Un
     const instances = owner.view.data.decorators ?? [];
     assert.equal(instances.length, 2);
     assert.deepEqual(instances[0].settings, instances[1].settings);
-    assert.equal(instances[0].settings.pitch, 0.5);
+    assert.equal(instances[0].settings.pitch, 1);
     assert.equal(
       (
         await owner.call({

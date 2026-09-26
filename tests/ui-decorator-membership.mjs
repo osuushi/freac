@@ -104,7 +104,7 @@ export async function decoratorMembershipRoute(page) {
   await relief.fill("0.15");
   await relief.press("Enter");
   state = await inspect(page);
-  assert.deepEqual(state.document.decorators.map((d) => d.settings.pitch).sort(), [0.5, 3]);
+  assert.deepEqual(state.document.decorators.map((d) => d.settings.pitch).sort(), [1, 3]);
   assert.ok(state.document.decorators.every((d) => d.settings.clearance === 0.15));
   const beforeCleanup = state.document;
   await chooseTool(page, "clean up", "cleanup");

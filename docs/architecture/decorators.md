@@ -105,21 +105,26 @@ Printing presets are explicit heuristics based on chosen layer/nozzle dimensions
 and intended orientation. Do not infer print direction from camera orientation or
 claim guaranteed physical fit. Preset values, not just a mutable preset name, are saved.
 
-Threads now default to FDM fine, a full triangular profile extending 1 mm radially
-over a 0.5 mm axial pitch, matching the founder's captured revolved profile.
-FDM coarse keeps the 1 mm radial depth and uses a 1 mm pitch. Neither mode changes
-the modeled diameter or depends on layer/nozzle dimensions. Both begin with
-0.05 mm hole-side radial relief; changing the preset explicitly restores that
-value. The simple panel shows preset, handedness, cut direction and a Clearance
-field for this relief. Its hint suggests 0.05 mm for vertical prints and 0 mm as
-an option for horizontal holes. Pitch, profile, the older printer heuristic inputs,
-insets and tapers are in collapsed Advanced controls. Changing an FDM preset's
-pitch or profile marks it Custom; clearance, handedness, cut and extent edits keep
-the chosen preset. Edits use the same owner/Undo path.
+Threads now default to FDM fine with 1 mm pitch; FDM coarse uses 1.5 mm pitch.
+Both derive from the founder's 1 mm radial triangular envelope, but truncate
+0.1 mm radially from each extreme so both rod and hole crests have a short flat.
+The remaining full-depth radial span is 0.8 mm. The same truncation applies to
+the complementary rod and hole profiles; the hole retains its separate radial
+clearance. Neither preset changes the modeled diameter or depends on layer/nozzle
+dimensions. Both begin with 0.05 mm hole-side radial relief; changing the preset
+explicitly restores that value and the 0.1 mm truncation. The simple panel shows
+preset, handedness, placement and a Clearance field for this relief. Its hint
+suggests 0.05 mm for vertical prints and 0 mm as an option for horizontal holes.
+Pitch, profile, tip truncation, the older printer heuristic inputs, insets and
+tapers are in collapsed Advanced controls. Changing an FDM preset's pitch,
+profile or tip truncation marks it Custom; clearance, handedness, placement and
+extent edits keep the chosen preset. Older documents without tip truncation
+retain their sharp profile until a preset is explicitly reapplied. Edits use
+the same owner/Undo path.
 
 Metric, Print upright, Print sideways and Custom remain available, including in
 older documents. The Metric 60° and rounded profiles retain their prior depth
-rule; the FDM triangle's 1 mm radial depth is fixed across pitch edits.
+rule; the FDM triangle's 1 mm radial envelope is fixed across pitch edits.
 
 The initial printing heuristic chooses the maximum of nearest coarse pitch,
 six layer heights and three nozzle diameters upright, or ten layer heights and

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { decoratedMeshes, initializeMeshRuntime } from "../src/decorators/mesh-runtime.js";
-import { threadDefinition } from "../src/decorators/thread-settings.js";
+import { threadDefinition, threadSettings } from "../src/decorators/thread-settings.js";
 import { roundBody } from "./decorator-domain-fixtures.js";
 
 test("FDM clearance removes hole material without enlarging the rod", async () => {
@@ -50,6 +50,7 @@ test("FDM clearance removes hole material without enlarging the rod", async () =
       );
     const solids = cleared.map(makeSolid),
       zeroSolids = zero.map(makeSolid);
+    const pitch = threadSettings((owner.view.data.decorators ?? [])[0].settings).pitch;
     try {
       assert.ok(
         zeroSolids[1].volume() - solids[1].volume() > 1,
@@ -61,7 +62,7 @@ test("FDM clearance removes hole material without enlarging the rod", async () =
       );
       for (const fraction of [0, 0.25, 0.5, 0.75]) {
         const rotated = solids[0].rotate([0, 0, 360 * fraction]);
-        const moved = rotated.translate([0, 0, 0.5 * fraction]);
+        const moved = rotated.translate([0, 0, pitch * fraction]);
         const collision = moved.intersect(solids[1]);
         try {
           assert.ok(

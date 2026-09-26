@@ -26,11 +26,13 @@ export function threadRadius(
   const turns = z / settings.pitch - ((settings.hand === "right" ? 1 : -1) * angle) / (2 * Math.PI);
   const phase = turns - Math.floor(turns);
   const triangle = 1 - Math.abs(2 * phase - 1);
+  const depth = threadDepth(settings);
+  const clippedTip = settings.tipTruncation / depth;
   const profile =
     settings.profile === "rounded"
       ? (1 - Math.cos(2 * Math.PI * phase)) / 2
       : settings.profile === "triangle"
-        ? triangle
+        ? Math.min(1 - clippedTip, Math.max(clippedTip, triangle))
         : Math.min(1, Math.max(0, (triangle - 0.125) / 0.625));
   const taper = Math.max(
     0,
@@ -40,7 +42,6 @@ export function threadRadius(
       settings.endTaper ? (bounds[1] - z) / settings.endTaper : 1,
     ),
   );
-  const depth = threadDepth(settings);
   return (
     radius +
     (settings.cut === "rod" ? -1 : 1) * depth * profile * taper +

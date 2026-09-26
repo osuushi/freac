@@ -8,6 +8,7 @@ export interface ThreadSettings extends Settings {
   hand: "right" | "left";
   cut: "rod" | "hole";
   clearance: number;
+  tipTruncation: number;
   start: number;
   end: number;
   startTaper: number;
@@ -56,7 +57,7 @@ export const threadFields: readonly DecoratorField[] = [
     label: "Profile",
     type: "enum",
     options: [
-      { value: "triangle", label: "FDM triangle · 1 mm deep" },
+      { value: "triangle", label: "FDM triangle · 1 mm envelope" },
       { value: "metric", label: "Metric 60°" },
       { value: "rounded", label: "Rounded" },
     ],
@@ -80,6 +81,16 @@ export const threadFields: readonly DecoratorField[] = [
     ],
   },
   { key: "clearance", label: "Clearance", type: "number", unit: "mm", min: 0, max: 10 },
+  {
+    key: "tipTruncation",
+    label: "Tip truncation",
+    type: "number",
+    unit: "mm",
+    min: 0,
+    max: 0.49,
+    default: 0,
+    visibleWhen: { key: "profile", values: ["triangle"] },
+  },
   { key: "start", label: "Start inset", type: "number", unit: "mm", min: 0 },
   { key: "end", label: "End inset", type: "number", unit: "mm", min: 0 },
   { key: "startTaper", label: "Start taper", type: "number", unit: "mm", min: 0 },
@@ -136,7 +147,7 @@ export function coarseMetric(diameter: number) {
   };
 }
 
-/** The print triangle follows the captured 1 mm protrusion, independent of pitch. */
+/** FDM triangles keep a 1 mm radial envelope before clipping either tip. */
 export function threadDepth(settings: ThreadSettings): number {
   return settings.profile === "triangle" ? 1 : (settings.pitch * Math.sqrt(3) * 5) / 16;
 }
@@ -158,8 +169,8 @@ export function threadDefaults(
     preset,
     pitch: fdm
       ? preset === "fdm-fine"
-        ? 0.5
-        : 1
+        ? 1
+        : 1.5
       : print
         ? Math.max(
             coarseMetric(diameter).pitch,
@@ -171,6 +182,7 @@ export function threadDefaults(
     hand: "right",
     cut: "rod",
     clearance: fdm ? 0.05 : print ? printing.nozzleDiameter / 2 : 0.1,
+    tipTruncation: fdm ? 0.1 : 0,
     start: 0,
     end: 0,
     startTaper: 0,
@@ -179,7 +191,12 @@ export function threadDefaults(
 }
 
 export function threadSettings(settings: Settings): ThreadSettings {
-  const normalized: Settings = { layerHeight: 0.2, nozzleDiameter: 0.4, ...settings };
+  const normalized: Settings = {
+    layerHeight: 0.2,
+    nozzleDiameter: 0.4,
+    tipTruncation: 0,
+    ...settings,
+  };
   for (const field of threadFields) {
     const value = normalized[field.key];
     if (field.type === "number") {
@@ -211,12 +228,20 @@ export function patchThreadSettings(
     (patch.preset && patch.preset !== "custom") ||
     (printing && (patch.layerHeight !== undefined || patch.nozzleDiameter !== undefined))
   ) {
-    const { pitch, profile, clearance } = threadDefaults(diameter, merged.preset, merged);
-    resolved = threadSettings({ ...merged, pitch, profile, clearance, ...patch });
+    const { pitch, profile, clearance, tipTruncation } = threadDefaults(
+      diameter,
+      merged.preset,
+      merged,
+    );
+    resolved = threadSettings({ ...merged, pitch, profile, clearance, tipTruncation, ...patch });
   }
   if (resolved.preset === "fdm-fine" || resolved.preset === "fdm-coarse") {
     const defaults = threadDefaults(diameter, resolved.preset);
-    if (resolved.pitch !== defaults.pitch || resolved.profile !== defaults.profile)
+    if (
+      resolved.pitch !== defaults.pitch ||
+      resolved.profile !== defaults.profile ||
+      resolved.tipTruncation !== defaults.tipTruncation
+    )
       return threadSettings({ ...resolved, preset: "custom" });
   }
   return resolved;
