@@ -67,6 +67,8 @@ export class SketchEditor {
   bowSide: number | null = null;
   transformAxis: "x" | "y" | null = null;
   transformDistance = 0;
+  transformRotation = false;
+  rotationPreview: number | null = null;
   focusQuantity: (quantity: Quantity, duplicate?: boolean) => void = () => {};
   creationArmed = false;
   pointMenu: PointMenu | null = null;
@@ -174,6 +176,7 @@ export class SketchEditor {
     this.moveMode = true;
     this.pointMenu = null;
     this.transformAxis = null;
+    this.transformRotation = false;
     this.refresh();
   }
   get line() {
@@ -266,6 +269,7 @@ export class SketchEditor {
       this.cancelNumeric();
       this.moveMode = false;
       this.transformAxis = null;
+      this.transformRotation = false;
       this.refresh();
       return;
     }

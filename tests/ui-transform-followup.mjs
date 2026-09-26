@@ -68,6 +68,7 @@ export async function transformFollowupRoute(page, name) {
   await chooseTool(page, "undo", "undo");
   const before = (await inspect(page)).document;
   await page.keyboard.press("m");
+  await page.locator(".transform-box-handle:not([hidden])").first().click();
   await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("1.5");
   await inspect(page);
   const scaledMove = await commandDrag(page, inside, b.x - a.x, 0);
@@ -79,6 +80,7 @@ export async function transformFollowupRoute(page, name) {
   await page.keyboard.press("c");
   await drag(page, [40, 0], [50, 0]);
   await page.keyboard.press("m");
+  await page.locator(".transform-box-handle:not([hidden])").first().click();
   await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("1.5");
   await inspect(page);
   const pivotStart = await center(sphere);

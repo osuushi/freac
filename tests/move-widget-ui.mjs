@@ -4,6 +4,7 @@ import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { bodyMoveRoute } from "./ui-body-move.mjs";
+import { moveFieldsRoute } from "./ui-move-fields.mjs";
 import { moveToolRoute } from "./ui-move-tool.mjs";
 import { moveWidgetRoute } from "./ui-move-widget.mjs";
 import { rotationSnappingRoute } from "./ui-rotation-snapping.mjs";
@@ -34,6 +35,7 @@ try {
   page.on("pageerror", (error) => {
     throw error;
   });
+  await moveFieldsRoute(page, name);
   await rotationSnappingRoute(page, name);
   await sketchPlacementWidgetRoute(page, name);
   if (!process.env.FREAC_PLACEMENT_ONLY) {

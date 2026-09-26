@@ -68,6 +68,7 @@ export class PointerGestures {
   private finish(): void {
     const interaction = this.interaction;
     this.drag = null;
+    this.editor.rotationPreview = null;
     this.solve = null;
     this.interaction = null;
     this.editor.snap = null;

@@ -165,7 +165,8 @@ export class Dimensions {
       if (event.key === "Tab") {
         event.preventDefault();
         await this.commit(input, quantity);
-        focusNumericField(this.overlay, event.shiftKey);
+        if (!(await this.focusTransform(event.shiftKey)))
+          focusNumericField(this.overlay, event.shiftKey);
       }
     });
   }
@@ -231,6 +232,30 @@ export class Dimensions {
       }
     }
     interaction?.release();
+  }
+  async focusTransform(reverse = false): Promise<boolean> {
+    const e = this.editor;
+    if (
+      !e.moveMode ||
+      !e.sketch ||
+      e.isDragging ||
+      (e.interactions.current && e.interactions.current.kind !== "numeric")
+    )
+      return false;
+    const index = e.transformRotation
+      ? 2
+      : e.transformAxis === "y"
+        ? 1
+        : e.transformAxis === "x"
+          ? 0
+          : -1;
+    await this.commitFocused();
+    const next = index < 0 ? (reverse ? 2 : 0) : (index + (reverse ? 2 : 1)) % 3;
+    e.transformAxis = next === 0 ? "x" : next === 1 ? "y" : null;
+    e.transformRotation = next === 2;
+    e.refresh();
+    e.focusQuantity(next === 0 ? "translateX" : next === 1 ? "translateY" : "angle");
+    return true;
   }
   focusFirst(initial?: string): void {
     const input = this.fields[0]?.input;

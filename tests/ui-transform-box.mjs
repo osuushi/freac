@@ -30,6 +30,7 @@ export async function transformBoxRoute(page, name) {
   await drag(page, [0, 0], [20, 10]);
   await chooseTool(page, "transform", "transform");
   assert.equal(await page.locator("[data-move-marker=x]").count(), 1);
+  await page.locator(".transform-box-handle:not([hidden])").first().click();
   await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("2");
   let state = await inspect(page);
   const before = state.document;
@@ -79,6 +80,7 @@ async function curvedRoute(page) {
   await drag(page, [0, 0], [10, 0]);
   await page.keyboard.press("m");
   const original = (await inspect(page)).document;
+  await page.locator(".transform-box-handle:not([hidden])").first().click();
   await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("2");
   let state = await accept(page);
   assert.ok(state.document.sketches[0].curves.every((c) => c.kind === "bezier"));
@@ -134,6 +136,7 @@ async function curvedRoute(page) {
   const arc = (await inspect(page)).document;
   assert.equal(arc.sketches[0].curves[0].kind, "arc");
   await page.keyboard.press("m");
+  await page.locator(".transform-box-handle:not([hidden])").first().click();
   await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("2");
   state = await accept(page);
   assert.ok(state.document.sketches[0].curves.every((c) => c.kind === "bezier"));

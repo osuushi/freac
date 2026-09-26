@@ -45,6 +45,7 @@ export class ScaleGestures {
         if (!drag || event.pointerId !== drag.id) return;
         this.move(event);
         this.stop();
+        this.editor.refresh();
         if (!drag.moved) {
           const input = widget.factors[drag.handle.axes[0]];
           input.focus();

@@ -40,8 +40,11 @@ function installShortcuts(
   onModelKeydown(
     (event) => {
       if (event.key === "Tab" && !event.metaKey && !event.ctrlKey && !event.altKey) {
-        if (!event.defaultPrevented && focusNumericField(app, event.shiftKey))
+        if (event.defaultPrevented) return;
+        if (editor.moveMode && editor.sketch && !editor.interactions.current) {
           event.preventDefault();
+          void dimensions.focusTransform(event.shiftKey);
+        } else if (focusNumericField(app, event.shiftKey)) event.preventDefault();
         return;
       }
       const input =

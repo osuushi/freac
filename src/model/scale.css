@@ -6,7 +6,8 @@
   pointer-events: none;
   z-index: 30;
 }
-.scale-widget[hidden] {
+.scale-widget[hidden],
+.scale-card[hidden] {
   display: none;
 }
 .scale-widget button,

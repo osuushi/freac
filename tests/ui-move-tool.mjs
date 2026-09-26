@@ -102,6 +102,8 @@ async function mixedMoveRotation(page) {
   await page.keyboard.up("Shift");
   const before = (await inspect(page)).document;
   await page.keyboard.press("m");
+  const rotation = await markerCenter(page, "rotation");
+  await page.mouse.click(rotation.x, rotation.y);
   await page.getByRole("textbox", { name: "Angle", exact: true }).fill("90");
   await page.keyboard.press("Enter");
   const curves = (await inspect(page)).document.sketches[0].curves;

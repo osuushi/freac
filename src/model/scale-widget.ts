@@ -212,6 +212,7 @@ export class ScaleWidget {
   }
   update(visible: boolean, active: boolean, valid: boolean, busy: boolean, closing: boolean): void {
     this.root.hidden = !visible;
+    this.card.hidden = !active;
     this.accept.hidden = this.cancel.hidden = !active;
     this.accept.disabled = !valid || busy;
     this.root.setAttribute("aria-busy", String(busy));

@@ -5,6 +5,8 @@ import { chooseTool } from "./ui-tools.mjs";
 
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-4, `${a} != ${b}`);
 async function factor(page, axis, value) {
+  if (!(await page.locator(".scale-card").isVisible()))
+    await page.locator(".transform-box-handle:not([hidden])").first().click();
   await page
     .getByRole("textbox", { name: `Transform scale ${axis}`, exact: true })
     .fill(String(value));

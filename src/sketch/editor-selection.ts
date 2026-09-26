@@ -16,5 +16,6 @@ export function replaceSelection(editor: SketchEditor, targets: readonly Selecti
   editor.pointMenu = null;
   editor.bowSide = null;
   editor.transformAxis = null;
+  editor.transformRotation = false;
   editor.transformDistance = 0;
 }

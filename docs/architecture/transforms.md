@@ -177,7 +177,12 @@ fixed. Option/Alt instead resizes symmetrically about the sphere anchor. Shift
 makes scaling uniform across the available axes, including axes not directly
 dragged by an edge handle; without Option, their lower bounds remain fixed.
 Shift also bypasses point attraction. Held modifiers update the preview during
-the drag. Local X/Y/Z factors allow exact entry and use the box's lower bound
+the drag. The scale card stays hidden until a resize handle is used; clicking a handle
+opens exact entry without requiring a drag. It hides again on acceptance or cancellation.
+In sketch Move, Tab reveals and focuses X translation, Y translation, then rotation
+in a cycle (Shift-Tab reverses it). Only the active Move field is shown; rotation
+is revealed by its widget or its turn in the Tab cycle and updates during dragging.
+Local X/Y/Z factors allow exact entry and use the box's lower bound
 on each changed axis; **Uniform scale** links the factors. Positive finite
 factors are required; collapsed or reflected scale candidates cannot accept.
 Grid snapping quantizes handle destinations. Scaling release retains a temporary

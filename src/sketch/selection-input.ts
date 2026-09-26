@@ -9,6 +9,7 @@ export function selectHit(
 ): boolean {
   if (hit.kind === "rotate" || hit.kind === "translate") {
     editor.transformAxis = hit.kind === "translate" ? hit.axis : null;
+    editor.transformRotation = hit.kind === "rotate";
     editor.transformDistance = 0;
     return true;
   }

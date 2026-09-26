@@ -222,14 +222,14 @@ function translationDimensions(editor: SketchEditor): DimensionValue[] {
 function rotationDimension(editor: SketchEditor): DimensionValue[] {
   const selection = selectionFrame(editor),
     sketch = editor.sketch;
-  if (!selection || !sketch) return [];
+  if (!selection || !sketch || (editor.moveMode && !editor.transformRotation)) return [];
   const handle = editor.world.projectLocal(sketch.plane, selection.handle);
   return [
     {
       quantity: "angle",
       label: "Angle",
       unit: "°",
-      value: orientation(editor),
+      value: editor.rotationPreview ?? orientation(editor),
       screen: { x: handle.x + (transformHandles(editor) ? 65 : -68), y: handle.y },
     },
   ];

@@ -119,6 +119,7 @@ export function updateDrag(
     delta = snapRotation(drag.pose + delta, bypass, drag.symmetric) - drag.pose;
     if (drag.quantities.angle !== undefined) delta = drag.quantities.angle - drag.pose;
     drag.angle = delta;
+    editor.rotationPreview = drag.pose + delta;
     editor.snap = null;
     candidate = editor.moveMode
       ? transformSelected(editor, candidate, (p) => rotatedPoint(p, drag.pivot, delta))
