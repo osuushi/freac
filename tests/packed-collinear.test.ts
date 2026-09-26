@@ -61,3 +61,32 @@ test("duplicate packed vertices are joined before a neighboring collinear facet 
   assert.deepEqual(result.vertices, mesh.vertices);
   assert.equal(result.triangles.length, 6);
 });
+
+test("packing cancels the opposing faces of a collapsed zero-thickness sheet", () => {
+  const mesh: ExportMesh = {
+    vertices: [
+      [0, 0, 0],
+      [2, 0, 0],
+      [0, 2, 0],
+      [0, 0, 2],
+      [10, 0, 0],
+      [10 + 1e-8, 0, 0],
+      [10 + 2e-8, 0, 0],
+      [10, 0, 2],
+    ],
+    triangles: [
+      [0, 2, 1],
+      [0, 1, 3],
+      [1, 2, 3],
+      [2, 0, 3],
+      [4, 6, 5],
+      [4, 5, 7],
+      [5, 6, 7],
+      [6, 4, 7],
+    ],
+  };
+  const result = packedMesh(mesh, 1e-7);
+  validateMesh(result);
+  assert.deepEqual(result.vertices, mesh.vertices);
+  assert.equal(result.triangles.length, 4);
+});

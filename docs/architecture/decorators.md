@@ -431,6 +431,8 @@ short edges of actually collapsed facets are normalized within the existing
 rounding bound. An exactly collinear facet with distinct vertices is re-triangulated
 against its adjacent face at the existing middle vertex, without moving vertices
 or changing the represented surface. Duplicate packed vertices are resolved first.
+If a collapsed zero-thickness sheet leaves exact coincident facets with opposite
+winding, those facet pairs cancel; unmatched or nonmanifold facets still fail.
 The result must still pass closure/orientation/nondegeneracy checks. STL conversion gets a separate bounded packing check. If world coordinates
 exceed that format's float precision, STL rejects with a 3MF alternative; 3MF keeps
 the restored world positions. No larger general-purpose weld tolerance is used.

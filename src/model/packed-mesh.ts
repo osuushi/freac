@@ -1,6 +1,31 @@
 import { facetArea, retriangulateCollinear } from "./collinear-facets.js";
 import type { ExportMesh } from "./export-mesh.js";
 
+/** Collapsed zero-thickness sheets leave identical facets with opposite winding. */
+function cancelOppositeFacets(triangles: number[][]): number[][] {
+  const waiting = new Map<string, number[]>();
+  const cancelled = new Set<number>();
+  const key = (triangle: number[]) => {
+    const start = triangle.indexOf(Math.min(...triangle));
+    return [0, 1, 2].map((offset) => triangle[(start + offset) % 3]).join("/");
+  };
+  for (let index = 0; index < triangles.length; index++) {
+    const triangle = triangles[index];
+    const reversed = key([triangle[0], triangle[2], triangle[1]]);
+    const opposite = waiting.get(reversed)?.pop();
+    if (opposite !== undefined) {
+      cancelled.add(opposite);
+      cancelled.add(index);
+      continue;
+    }
+    const oriented = key(triangle);
+    const candidates = waiting.get(oriented) ?? [];
+    candidates.push(index);
+    waiting.set(oriented, candidates);
+  }
+  return triangles.filter((_, index) => !cancelled.has(index));
+}
+
 /** Float packing can collapse Boolean slivers. Join short edges within the existing
  * rounding bound, then re-triangulate exact collinearity without moving vertices. */
 export function packedMesh(mesh: ExportMesh, rounding: number): ExportMesh {
@@ -35,7 +60,11 @@ export function packedMesh(mesh: ExportMesh, rounding: number): ExportMesh {
   const triangles = mesh.triangles
     .map((triangle) => triangle.map(root))
     .filter((ids) => new Set(ids).size === 3);
-  const result = retriangulateCollinear({ vertices: mesh.vertices, triangles }, rounding);
+  const retriangulated = retriangulateCollinear({ vertices: mesh.vertices, triangles }, rounding);
+  const result = {
+    ...retriangulated,
+    triangles: cancelOppositeFacets(retriangulated.triangles),
+  };
   if (result.triangles.some((triangle) => facetArea(result, triangle) === 0))
     throw new Error("A collapsed mesh facet exceeds numerical precision");
   return result;
