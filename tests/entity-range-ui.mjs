@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { mkdir } from "node:fs/promises";
 import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
+import { launchElectron } from "./native-documents.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { drag, inspect } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -59,9 +60,24 @@ async function rangeSelectionRoute(page) {
   assert.equal(deleted.bodies.length, 0);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, before, "Range deletion is one geometry Undo");
+  await chooseTool(page, "redo", "redo");
+  assert.deepEqual((await inspect(page)).document, deleted, "Redo deletes the same range");
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, before);
   await row("Sketch 1").click({ modifiers: ["Shift"] });
   assert.deepEqual(await selected(), ["Sketch 1"], "Deleted anchor falls back to clicked row");
   await page.getByRole("button", { name: "Show Sketch 2", exact: true }).click();
+  await row("Sketch 2").click();
+  await page.keyboard.press("Enter");
+  assert.ok((await inspect(page)).activeSketch, "Reselected sketch remains editable");
+  await page.keyboard.press("l");
+  await drag(page, [35, 20], [40, 30]);
+  const edited = await inspect(page);
+  assert.equal(
+    edited.document.sketches.find((sketch) => sketch.id === edited.activeSketch).curves.length,
+    2,
+  );
+  await chooseTool(page, "return to modeling", "modeling");
 }
 async function route(page, name) {
   page.setDefaultTimeout(15000);
@@ -80,10 +96,12 @@ async function route(page, name) {
   );
 }
 await mkdir(".cache/sketch-review", { recursive: true });
+const runtime = process.env.FREAC_TEST_BROWSER;
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
   for (const [name, type] of Object.entries({ chromium, webkit })) {
+    if (runtime && runtime !== name) continue;
     const browser = await type.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
@@ -91,6 +109,22 @@ try {
       await route(page, name);
     } finally {
       await browser.close();
+    }
+  }
+  if (!runtime || runtime === "electron") {
+    const app = await launchElectron({
+      args: ["."],
+      env: { ...process.env, FREAC_DEV_URL: server.resolvedUrls.local[0], FREAC_TEST_HIDDEN: "1" },
+    });
+    try {
+      const page = await app.firstWindow();
+      assert.equal(
+        await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),
+        false,
+      );
+      await route(page, "electron");
+    } finally {
+      await app.close();
     }
   }
 } finally {
