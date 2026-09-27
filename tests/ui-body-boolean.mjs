@@ -7,7 +7,7 @@ async function select(page, numbers) {
   for (const [i, number] of numbers.entries())
     await page
       .getByRole("button", { name: `Select Body ${number}`, exact: true })
-      .click({ modifiers: i ? ["Shift"] : [] });
+      .click({ modifiers: i ? ["Meta"] : [] });
 }
 async function begin(page, operation, numbers) {
   await select(page, numbers);

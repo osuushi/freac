@@ -35,12 +35,12 @@ export async function extrusionPreviewRoute(page) {
     await page.mouse.move(x, y);
     await page.mouse.down();
     await page.mouse.move(x, y - 50);
-    await gates[0].reached.promise;
+    await reachedPreview(gates[0], "first drag");
     gates[0].release.resolve();
     await settled(page);
     close((await inspect(page)).preview.bodies[0].volume, requests[0].distance * 600);
     await page.mouse.move(x, y - 100);
-    await gates[1].reached.promise;
+    await reachedPreview(gates[1], "second drag");
     const intermediate = await page.evaluate(() => window.freacInspect());
     assert.ok(
       intermediate.preview,
@@ -70,7 +70,7 @@ async function invalidatedPreview(page, pick, gate) {
   if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
     await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
   await page.getByRole("textbox", { name: "Extrusion distance" }).fill("5");
-  await gate.reached.promise;
+  await reachedPreview(gate, "invalidated preview");
   if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
     await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
   await page.getByRole("textbox", { name: "Extrusion distance" }).fill("0");
@@ -110,7 +110,7 @@ export async function extrusionCancelRoute(page) {
   try {
     await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
     await page.getByRole("textbox", { name: "Extrusion distance" }).fill("5");
-    await reached.promise;
+    await reachedPreview({ reached }, "cancel preview");
     await page.keyboard.press("Escape");
     for (let i = 0; i < 50 && !cancelled; i++) await new Promise((r) => setTimeout(r, 20));
     assert.ok(cancelled, "Escape must send cancellation without waiting for the preview reply");
@@ -130,4 +130,18 @@ export async function extrusionCancelRoute(page) {
   await page.keyboard.press("Enter");
   await page.keyboard.press("Enter");
   close((await inspect(page)).document.bodies[0].volume, 4200);
+}
+
+async function reachedPreview(gate, label) {
+  let timer;
+  try {
+    await Promise.race([
+      gate.reached.promise,
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`No extrusion request: ${label}`)), 30000);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
 }

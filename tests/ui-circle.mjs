@@ -96,6 +96,8 @@ async function mixedAndSnaps(page) {
   pointEquals(sketch.curves[1].b, [beforeMove[1].b.x + dx, beforeMove[1].b.y + dy]);
   pointEquals(sketch.curves[2].a, [beforeMove[2].a.x + dx, beforeMove[2].a.y + dy]);
   close(sketch.curves[0].radius, initialRadius);
+  const rotation = (await inspect(page)).rotationHandle;
+  await page.mouse.click(rotation.x, rotation.y);
   await page.getByRole("textbox", { name: "Angle", exact: true }).fill("90");
   await page.keyboard.press("Enter");
   close((await circles(page))[0].radius, initialRadius);
