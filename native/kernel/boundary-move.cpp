@@ -3,6 +3,7 @@
 #include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepBuilderAPI_Sewing.hxx>
 #include <BRepLib.hxx>
+#include <algorithm>
 #include <TopoDS_Solid.hxx>
 
 namespace boundary_move {
@@ -36,12 +37,15 @@ void matchEdges(Result& result, const Edit& edit, const TopTools_IndexedMapOfSha
     require(assigned.Extent() == candidates.Extent(), "Reconnection changed edge topology");
 }
 }
-Result reconstruct(const Edit& edit) {
+Result reconstruct(const Edit& edit, const std::vector<SourceEntity>& replacements) {
     BRepBuilderAPI_Sewing sewing(tolerance);
     std::vector<SourceEntity> expected;
     for (const auto& entity : edit.body->entities) {
         if (entity.shape.ShapeType() != TopAbs_FACE) continue;
-        const auto face = rebuildFace(TopoDS::Face(entity.shape), edit);
+        const auto replacement = std::find_if(replacements.begin(), replacements.end(),
+            [&](const auto& r) { return r.id == entity.id; });
+        const auto face = replacement == replacements.end()
+            ? rebuildFace(TopoDS::Face(entity.shape), edit) : TopoDS::Face(replacement->shape);
         require(BRepCheck_Analyzer(face).IsValid(), "Reconstructed face is invalid");
         sewing.Add(face);
         expected.push_back({entity.id, face});

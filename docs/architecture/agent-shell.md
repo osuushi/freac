@@ -535,3 +535,10 @@ Behavioral agent evaluations run ad hoc, outside CI. Keep dated cases, model/eff
 interface/prompt versions, outcomes, command counts and timing with limitations.
 Cases may evolve; historical results are evidence, not permanent acceptance priorities.
 Deterministic API, host-boundary and interaction checks remain in the ordinary tests.
+
+## Composable topology editing
+
+`freac.topology` and `freac.replaceFace` operate on the script candidate; their
+[geometry and reconstruction contract](topology-editing.md) defines the current
+analytic replacement domain. These are lower-level inspection/support inputs,
+not a named taper command. They retain ordinary script atomicity and stable IDs.

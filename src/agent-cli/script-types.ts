@@ -1,7 +1,9 @@
 import { decoratorTypes } from "./decorator-types.js";
+import { topologyTypes } from "./topology-types.js";
 /** Public script declarations, included in the actual pre-execution typecheck. */
 export const scriptTypes = `
 ${decoratorTypes}
+${topologyTypes}
 export type Point = { x: number; y: number };
 export type ScriptCurve =
   | { kind: "segment"; a: Point; b: Point }
@@ -17,6 +19,10 @@ export interface SolidResult {
 }
 /** Distances mm, angles degrees. Await each call; parallel edits reject. */
 export interface FreacScript extends DecoratorScriptApi {
+  /** Candidate topology, including analytic supports, trimmed loops and adjacency; no geometry edit. */
+  topology(input: { body: string }): Promise<BodyTopology>;
+  /** Coaxial complete cylinder/cone wall with two circular rims and perpendicular planar neighbors. */
+  replaceFace(input: FaceReplacement): Promise<SolidResult>;
   /** Omit id to create, or provide an existing plane id to reposition it. */
   constructionPlane(input: { id?: string; frame: Plane }): Promise<{ plane: string; frame: Plane }>;
   deleteConstructionPlane(input: { id: string }): Promise<{ removed: string }>;

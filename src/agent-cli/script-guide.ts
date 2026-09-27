@@ -1,10 +1,12 @@
 import { decoratorGuide } from "./decorator-guide.js";
+import { topologyGuide } from "./topology-guide.js";
 export const scriptGuide = `
 ## Typed modeling scripts
 
 Write a single .ts file in this workspace and run freac run script.ts. The installed
 TypeScript compiler checks a source snapshot before execution; no separate Node or
 TypeScript install is needed. The global freac object has the API printed by freac types.
+Topology calls are topology and replaceFace; see the topology section below.
 Available modeling calls are createSketch, extrude, revolve, offsetFaces, transformBodies,
 constructionPlane, deleteConstructionPlane, splitBody, imprint, scale, sweep, booleanBodies, finishEdges and shell.
 Decorator calls are decorators, inspectDecorator, editDecorator, editDecoratorDefinition and enableDecorator.
@@ -152,5 +154,6 @@ its source sketch. Offset requests that cannot achieve the requested distance re
 the script does not silently accept a clamped offset. Run freac inspect/render after
 completion to check the accepted result.
 
+${topologyGuide}
 ${decoratorGuide}
 `;

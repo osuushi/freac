@@ -45,6 +45,12 @@ Modeling example with freac run file.ts:
 const s = await freac.createSketch({plane: "XY", curves: [{kind: "circle", center: {x: 0, y: 0}, radius: 10}]});
 await freac.extrude({sources: s.profiles, distance: 8, mode: "new"});
 \`\`\`
+For geometry edits, freac.topology({body}) reads candidate face supports, boundary
+loops and edge adjacency. freac.replaceFace({body,face,surface}) reconnects a supplied
+coaxial cylinder/cone support to a full wall’s perpendicular planar neighbors. Compose
+inspection, geometry construction and edits when no single named tool matches the task;
+consult the relevant primitive’s domain when needed. These methods use freac run.
+
 Modeling calls are sequential and share one transaction: failure/cancellation discards
 geometry changes. Use current/returned IDs and profile keys; do not construct them.
 Distances are mm, angles degrees; cylinder/plane data describe support surfaces,

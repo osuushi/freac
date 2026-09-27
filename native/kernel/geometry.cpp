@@ -80,6 +80,9 @@ TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies) {
 }
 std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bodies,
                              std::string& mode, std::vector<std::string>& participants) {
+    if (input.get<std::string>("kind", "") == "replace-face") {
+        mode = "new"; return replaceFace(input, bodies, participants);
+    }
     if (input.get<std::string>("kind", "") == "plane-cut") {
         mode = "new"; return cutWithPlane(input, bodies, participants);
     }

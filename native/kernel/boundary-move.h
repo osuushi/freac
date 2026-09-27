@@ -22,7 +22,7 @@ Edit selection(const Tree&, const std::vector<Operand>&);
 void buildEdges(Edit&);
 TopoDS_Face rebuildFace(const TopoDS_Face&, const Edit&);
 TopoDS_Face cylinderFace(const TopoDS_Face&, const Edit&);
-Result reconstruct(const Edit&);
+Result reconstruct(const Edit&, const std::vector<SourceEntity>& replacements = {});
 bool sameBoundary(const TopoDS_Edge&, const TopoDS_Edge&);
 }
 std::vector<Result> reconnectBoundaries(const Tree&, const std::vector<Operand>&,

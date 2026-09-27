@@ -3,6 +3,7 @@ import { type Curve, newId } from "../sketch/document.js";
 
 type Descendant<T> = Omit<T, "id"> & { predecessors: string[] };
 export interface KernelResult {
+  topology?: import("../model/topology-edit.js").BodyTopology;
   sections?: import("../model/sketch-section.js").SketchSection[];
   measurement?: import("../model/measurement.js").Measurement;
   curves?: Curve[];

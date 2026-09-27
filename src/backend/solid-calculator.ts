@@ -24,6 +24,11 @@ export class SolidCalculator extends NativeCalculator<
   | (import("../model/plane-cut.js").PlaneCut & { kind: "plane-cut"; bodies: readonly Body[] })
   | { kind: "cleanup" | "delete-topology"; selection: CleanupSelection[]; bodies: readonly Body[] }
   | { kind: "sections"; frame: import("../sketch/planes.js").PlaneFrame; bodies: readonly Body[] }
+  | { kind: "topology"; body: string; bodies: readonly Body[] }
+  | (import("../model/topology-edit.js").FaceReplacement & {
+      kind: "replace-face";
+      bodies: readonly Body[];
+    })
   | { kind: "inspect"; bodies: readonly Body[]; deflection?: number }
   | {
       kind: "scale";
