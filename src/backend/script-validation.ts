@@ -3,7 +3,7 @@ import type { SketchDocument } from "../sketch/document.js";
 
 type SolidOperation = Extract<
   ScriptOperation,
-  { kind: "extrude" | "revolve" | "sweep" | "offsetFaces" | "transformBodies" }
+  { kind: "extrude" | "revolve" | "sweep" | "offsetFaces" | "moveFaces" | "transformBodies" }
 >;
 export function validateScriptSolid(document: SketchDocument, operation: SolidOperation): void {
   const ids = (values: unknown): values is string[] =>
@@ -26,6 +26,27 @@ export function validateScriptSolid(document: SketchDocument, operation: SolidOp
     for (const t of o.faces)
       if (!t || !document.bodies?.find((b) => b.id === t.body)?.faces.some((f) => f.id === t.face))
         throw new Error("Unknown face target");
+  } else if (operation.kind === "moveFaces") {
+    const m = operation.input;
+    if (
+      !Array.isArray(m.faces) ||
+      !m.faces.length ||
+      m.faces.length > 1000 ||
+      new Set(m.faces.map((f) => `${f?.body}:${f?.face}`)).size !== m.faces.length ||
+      !m.faces.every(
+        (f) =>
+          f &&
+          document.bodies?.find((b) => b.id === f.body)?.faces.some((face) => face.id === f.face),
+      ) ||
+      (m.bodyIds !== undefined &&
+        (!ids(m.bodyIds) || m.bodyIds.some((id) => m.faces.some((f) => f.body === id)))) ||
+      ![m.translation, m.pivot, m.axis].every(
+        (v) => Array.isArray(v) && v.length === 3 && v.every(Number.isFinite),
+      ) ||
+      !Number.isFinite(m.angle) ||
+      Math.hypot(...m.axis) < 1e-8
+    )
+      throw new Error("Invalid script face movement");
   } else if (operation.kind === "transformBodies") {
     const t = operation.input;
     if (

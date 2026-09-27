@@ -66,7 +66,7 @@ async function calculateScriptSolid(
   document: SketchDocument,
   operation: Extract<
     ScriptOperation,
-    { kind: "sweep" | "extrude" | "revolve" | "offsetFaces" | "transformBodies" }
+    { kind: "sweep" | "extrude" | "revolve" | "offsetFaces" | "moveFaces" | "transformBodies" }
   >,
   solids: SolidEdits,
   kernel: SolidCalculator,
@@ -86,6 +86,8 @@ async function calculateScriptSolid(
     next = await solids.calculate(document, { kind: "offset-faces", operation: o });
     if (solids.offsetEdit.view.offsetDistance !== o.distance)
       throw new Error("Requested offset could not be achieved exactly");
+  } else if (operation.kind === "moveFaces") {
+    next = await solids.calculate(document, { kind: "move-faces", operation: operation.input });
   } else if (operation.kind === "transformBodies") {
     const t = operation.input;
     next = await solids.calculate(document, { kind: "transform-bodies", transform: t });

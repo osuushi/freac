@@ -67,6 +67,10 @@ export interface FreacScript extends DecoratorScriptApi {
     targets?: string[]; eligibleTargets?: string[];
   }): Promise<SolidResult>;
   offsetFaces(input: { faces: { body: string; face: string }[]; distance: number; radius?: number }): Promise<SolidResult>;
+  moveFaces(input: {
+    faces: { body: string; face: string }[]; bodyIds?: string[];
+    translation: Vector; pivot: Vector; axis: Vector; angle: number;
+  }): Promise<SolidResult>;
   transformBodies(input: {
     ids: string[]; translation: Vector; pivot: Vector; axis: Vector; angle: number; duplicate: boolean;
   }): Promise<SolidResult>;

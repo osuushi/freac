@@ -332,12 +332,15 @@ stays in the portable workspace; compiler output lives in a temporary directory.
 Additional source files/relative imports are outside this first API.
 
 The global `freac` API exposes awaited `createSketch`, `extrude`, `revolve`,
-`offsetFaces`, `transformBodies`, `constructionPlane`, `deleteConstructionPlane`,
+`moveFaces`, `offsetFaces`, `transformBodies`, `constructionPlane`, `deleteConstructionPlane`,
 `splitBody`, `imprint`, `scale`, `sweep`, `booleanBodies`, `finishEdges` and `shell`. It returns explicit generated sketch/profile/body/topology IDs
 for later calls. Sketch creation accepts ordinary segments, circles, arcs and cubic
 Béziers on an explicit plane; it infers no constraints. Runtime validation and the
 existing solver/kernel validate every operation. Unachievable face offsets reject
 instead of silently accepting a smaller value.
+`moveFaces` takes stable body/face IDs and a world transform, then uses the same
+shared boundary reconnection as manual Move. An existing hole can translate by
+moving its cylindrical wall; rejected boundaries abort the script transaction.
 
 Construction planes take an evaluated frame and optional existing ID; omit the ID
 for a new plane. Deletion and repositioning do not affect sketches that copied the

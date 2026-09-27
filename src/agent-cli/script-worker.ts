@@ -71,6 +71,8 @@ process.on(
         revolve: (input) => call({ kind: "revolve", input }) as ReturnType<ScriptApi["revolve"]>,
         offsetFaces: (input) =>
           call({ kind: "offsetFaces", input }) as ReturnType<ScriptApi["offsetFaces"]>,
+        moveFaces: (input) =>
+          call({ kind: "moveFaces", input }) as ReturnType<ScriptApi["moveFaces"]>,
         transformBodies: (input) =>
           call({ kind: "transformBodies", input }) as ReturnType<ScriptApi["transformBodies"]>,
       };

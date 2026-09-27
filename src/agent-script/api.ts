@@ -6,6 +6,7 @@ import type {
   BodyShell,
   BodyTransform,
   Extrusion,
+  FaceMovement,
   Revolution,
 } from "../model/body.js";
 import type { PathSweep } from "../model/path-sweep.js";
@@ -78,6 +79,8 @@ export interface ScriptApi extends DecoratorScriptApi {
   revolve(input: Revolution): Promise<SolidResult>;
   /** Normal face offset. Unsupported or limited distances reject the whole script. */
   offsetFaces(input: BodyFaceOffset): Promise<SolidResult>;
+  /** Translate/rotate selected solid faces with shared boundary reconnection. */
+  moveFaces(input: FaceMovement): Promise<SolidResult>;
   /** Rigid movement/rotation or duplication of explicit bodies. */
   transformBodies(input: BodyTransform): Promise<SolidResult>;
 }
@@ -98,6 +101,7 @@ export type ScriptOperation =
   | { kind: "extrude"; input: Extrusion }
   | { kind: "revolve"; input: Revolution }
   | { kind: "offsetFaces"; input: BodyFaceOffset }
+  | { kind: "moveFaces"; input: FaceMovement }
   | { kind: "transformBodies"; input: BodyTransform };
 export interface ScriptRequest {
   action: "begin" | "step" | "finish" | "cancel" | "poll";

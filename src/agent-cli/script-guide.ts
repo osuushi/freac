@@ -7,7 +7,7 @@ Write a single .ts file in this workspace and run freac run script.ts. The insta
 TypeScript compiler checks a source snapshot before execution; no separate Node or
 TypeScript install is needed. The global freac object has the API printed by freac types.
 Topology calls are topology and replaceFace; see the topology section below.
-Available modeling calls are createSketch, extrude, revolve, offsetFaces, transformBodies,
+Available modeling calls are createSketch, extrude, revolve, moveFaces, offsetFaces, transformBodies,
 constructionPlane, deleteConstructionPlane, splitBody, imprint, scale, sweep, booleanBodies, finishEdges and shell.
 Decorator calls are decorators, inspectDecorator, editDecorator, editDecoratorDefinition and enableDecorator.
 Revolve already includes constant-pitch helical sweeps; it is not limited to rings.
@@ -132,6 +132,22 @@ const faces = freac.selection.filter(target => target.kind === "face");
 if (!faces.length || faces.length !== freac.selection.length) throw new Error("Select faces first");
 await freac.offsetFaces({ faces, distance: 2 });
 \`\`\`
+
+Example: move one existing cylindrical hole wall 3 mm in world X without adding
+sketches or Boolean features. Choose the wall from the current selection or inspect
+its face ID; verify the intended center and clearance before applying:
+\`\`\`typescript
+const faces = freac.selection.filter(target => target.kind === "face");
+if (faces.length !== 1 || faces.length !== freac.selection.length)
+  throw new Error("Select exactly one hole wall");
+await freac.moveFaces({ faces, translation: [3, 0, 0], pivot: [0, 0, 0],
+  axis: [0, 0, 1], angle: 0 });
+\`\`\`
+Face movement reconnects adjacent boundaries using the manual Move kernel. A
+translation can move a hole axis; some boundary configurations still reject. For
+multiple holes, pass their walls together for one atomic edit, or make sequential
+calls in one script when their displacements differ. Each call returns current
+topology IDs; inspect the candidate again before using IDs after an edit.
 
 Example: a continuous right-handed triangular helix about the positive Z axis:
 \`\`\`typescript
