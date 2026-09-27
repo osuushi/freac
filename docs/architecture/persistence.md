@@ -62,9 +62,10 @@ is not implemented by this native-host increment.
 
 ## Mesh export
 
-STL and 3MF export all accepted solid bodies, including hidden bodies, at their
-current world positions. Sketches and temporary operation previews are excluded;
-export is disabled during active interactions and with no bodies. No document or
+STL and 3MF export visible accepted solid bodies at their current world positions.
+Both individual body visibility and the global body visibility toggle apply.
+Sketches and temporary operation previews are excluded;
+export is disabled during active interactions and with no visible bodies. No document or
 Undo mutation occurs. Conversion/compression runs in a disposable browser worker,
 shared by web and Electron; download uses the same host route as Save.
 

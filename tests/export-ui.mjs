@@ -34,16 +34,18 @@ try {
   page.on("pageerror", (error) => {
     throw error;
   });
+  await inspect(page);
   await exportCapture(page, name, app);
   await reset(page);
   assert.equal(!(await toolEnabled(page, "export 3mf", "export-3mf")), true);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
-  // Exact odd-millimeter bounds are independent of the current adaptive grid spacing.
-  await chooseTool(page, "grid snap", "grid");
+  // Grid-aligned dimensions avoid browser pointer-coordinate rounding.
   await page.keyboard.press("r");
-  await drag(page, [-15, -10], [15, 10]);
+  await drag(page, [-20, -10], [20, 10]);
+  await drag(page, [30, -10], [40, 10]);
   assert.equal(!(await toolEnabled(page, "export 3mf", "export-3mf")), true);
   const pick = await at(page, 5, 3);
+  const second = await at(page, 35, 0);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(pick.x, pick.y);
   await page.getByRole("textbox", { name: "Extrusion distance" }).fill("5");
@@ -56,6 +58,27 @@ try {
   await page.keyboard.press("Enter");
   await inspect(page);
   assert.equal(await toolEnabled(page, "export 3mf", "export-3mf"), true);
+  await page.mouse.click(second.x, second.y);
+  await page.getByRole("textbox", { name: "Extrusion distance" }).fill("10");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
+  assert.equal((await inspect(page)).document.bodies.length, 2);
+  await page.getByRole("button", { name: "Hide Body 2", exact: true }).click();
+  for (const format of ["3mf", "stl"]) {
+    assert.equal(await toolEnabled(page, `export ${format}`, `export-${format}`), true);
+  }
+  for (const [hide, show] of [
+    ["Hide Body 1", "Show Body 1"],
+    ["Hide bodies", "Show bodies"],
+  ]) {
+    if (hide === "Hide bodies") await chooseTool(page, hide, "hide-bodies");
+    else await page.getByRole("button", { name: hide, exact: true }).click();
+    for (const format of ["3mf", "stl"]) {
+      assert.equal(await toolEnabled(page, `export ${format}`, `export-${format}`), false);
+    }
+    if (show === "Show bodies") await chooseTool(page, show, "show-bodies");
+    else await page.getByRole("button", { name: show, exact: true }).click();
+  }
   const before = await inspect(page);
   for (const format of ["3mf", "stl"]) {
     const path = resolve(`.cache/sketch-review/${name}-export.${format}`);
@@ -88,8 +111,8 @@ try {
         bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
       );
       geometry.computeBoundingBox();
-      assert.deepEqual(geometry.boundingBox.min.toArray(), [-15, -10, 0]);
-      assert.deepEqual(geometry.boundingBox.max.toArray(), [15, 10, 5]);
+      assert.deepEqual(geometry.boundingBox.min.toArray(), [-20, -10, 0]);
+      assert.deepEqual(geometry.boundingBox.max.toArray(), [20, 10, 5]);
       assert.equal(geometry.attributes.position.count, 36);
       geometry.dispose();
     } else {
@@ -113,15 +136,15 @@ try {
       assert.equal(parsed.vertices.length, 8);
       assert.equal(parsed.triangles, 12);
       for (const axis of [0, 1, 2]) {
-        close(Math.min(...parsed.vertices.map((v) => v[axis])), [-15, -10, 0][axis]);
-        close(Math.max(...parsed.vertices.map((v) => v[axis])), [15, 10, 5][axis]);
+        close(Math.min(...parsed.vertices.map((v) => v[axis])), [-20, -10, 0][axis]);
+        close(Math.max(...parsed.vertices.map((v) => v[axis])), [20, 10, 5][axis]);
       }
     }
     assert.deepEqual((await inspect(page)).document, before.document);
   }
   await chooseTool(page, "undo", "undo");
-  assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
-  assert.equal(!(await toolEnabled(page, "export 3mf", "export-3mf")), true);
+  assert.equal((await inspect(page)).document.bodies?.length, 1);
+  assert.equal(await toolEnabled(page, "export 3mf", "export-3mf"), true);
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, before.document);
   await bodyArchiveRoute(page, `${name}-export`, app);

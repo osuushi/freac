@@ -4,6 +4,10 @@ import type { ExportFormat } from "./mesh-export.js";
 
 export function exportControls(editor: SketchEditor): () => void {
   let worker: Worker | null = null;
+  const visibleBodies = () =>
+    (editor.store.data.bodies ?? []).filter(
+      (body) => editor.bodiesVisible && editor.visibility.visible(body.id),
+    );
   const blocked = () => editor.blocked || !!editor.interactions.current || !!worker;
   const finish = (error?: string) => {
     worker?.terminate();
@@ -15,7 +19,8 @@ export function exportControls(editor: SketchEditor): () => void {
     editor.refresh();
   };
   const run = (extension: ExportFormat) => {
-    if (blocked() || !editor.store.data.bodies?.length) return;
+    const bodies = visibleBodies();
+    if (blocked() || !bodies.length) return;
     try {
       worker = new Worker(new URL("./export-worker.ts", import.meta.url), { type: "module" });
       worker.onmessage = (
@@ -33,7 +38,7 @@ export function exportControls(editor: SketchEditor): () => void {
         finish(event.data.error);
       };
       worker.onerror = () => finish("Could not export the solid mesh");
-      worker.postMessage({ bodies: editor.store.data.bodies, format: extension });
+      worker.postMessage({ bodies, format: extension });
       editor.refresh();
     } catch (error) {
       finish(error instanceof Error ? error.message : String(error));
@@ -44,13 +49,13 @@ export function exportControls(editor: SketchEditor): () => void {
       id: `export-${format}`,
       label: `Export ${format.toUpperCase()}`,
       category: "Document & Edit",
-      description: "All accepted bodies, including hidden bodies, in millimeters",
+      description: "Visible accepted bodies in millimeters",
       reason: () =>
         idleReason(editor) ??
         (worker
           ? "Exporting…"
-          : !editor.store.data.bodies?.length
-            ? "Create a solid body first"
+          : !visibleBodies().length
+            ? "Create or show a solid body first"
             : null),
       run: () => run(format),
     }),
