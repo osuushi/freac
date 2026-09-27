@@ -46,6 +46,7 @@ export function installViewInspection(editor: SketchEditor, sections: SectionCon
           height: world.height,
           moving: world.cameraMoving,
           orbitActive: world.orbit.active,
+          orbitPivot: world.orbit.active ? world.currentOrbitPivot.toArray() : null,
         },
         selection: [...editor.selectionOwners],
         selectionTargets: editor.selected.targets,

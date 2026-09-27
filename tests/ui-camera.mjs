@@ -42,7 +42,11 @@ export async function cameraRoute(page, name) {
   await orbitDrag(page, 80, -60);
   await page.waitForFunction(() => window.freacInspect().activePlane === null);
   const rotated = await inspect(page);
-  assert.deepEqual(rotated.camera.target, scrollPan.camera.target);
+  assert.notDeepEqual(
+    rotated.camera.target,
+    scrollPan.camera.target,
+    "Off-center pivot rotates the view target too",
+  );
   assert.equal(rotated.camera.height, before.camera.height);
   assert.notDeepEqual(
     [rotated.camera.position, rotated.camera.up],

@@ -27,6 +27,8 @@ export class Arcball {
     point: THREE.Vector3;
     orientation: THREE.Quaternion;
     offset: THREE.Vector3;
+    targetOffset: THREE.Vector3;
+    pivot: THREE.Vector3;
   } | null = null;
   get active(): boolean {
     return this.start !== null;
@@ -34,19 +36,21 @@ export class Arcball {
   end(): void {
     this.start = null;
   }
-  begin(view: OrbitView, from: OrbitPointer): void {
+  begin(view: OrbitView, from: OrbitPointer, pivot = view.target): void {
     view.camera.lookAt(view.target);
     view.camera.updateMatrixWorld();
     const point = spherePoint(from);
     this.start = {
       point,
       orientation: view.camera.quaternion.clone(),
-      offset: view.camera.position.clone().sub(view.target),
+      offset: view.camera.position.clone().sub(pivot),
+      targetOffset: view.target.clone().sub(pivot),
+      pivot: pivot.clone(),
     };
   }
   drag(view: OrbitView, to: OrbitPointer): void {
     if (!this.start) return;
-    const { point, orientation, offset } = this.start;
+    const { point, orientation, offset, targetOffset, pivot } = this.start;
     const destination = spherePoint(to);
     const cross = point.clone().cross(destination);
     // Half-angle arc convention: quaternion vector=cross, scalar=dot.
@@ -60,7 +64,8 @@ export class Arcball {
       .clone()
       .multiply(rotation.invert())
       .multiply(orientation.clone().invert());
-    view.camera.position.copy(offset).applyQuaternion(worldRotation).add(view.target);
+    view.target.copy(targetOffset).applyQuaternion(worldRotation).add(pivot);
+    view.camera.position.copy(offset).applyQuaternion(worldRotation).add(pivot);
     view.camera.up
       .set(0, 1, 0)
       .applyQuaternion(orientation)

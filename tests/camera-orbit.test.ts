@@ -124,3 +124,25 @@ test("rounded rim joins the sphere and pure-roll region with continuous angular 
   assert.ok(Math.abs(angle(0.5) - Math.asin(0.5)) < 1e-12);
   assert.equal(angle(1.2), Math.PI / 2);
 });
+
+test("off-center pivot stays at its screen position without a starting jump", () => {
+  const state = view(),
+    orbit = new Arcball();
+  const pivot = new THREE.Vector3(23, -7, -30);
+  state.camera.updateMatrixWorld();
+  const projected = pivot.clone().project(state.camera);
+  const originalPosition = state.camera.position.clone(),
+    originalTarget = state.target.clone();
+  const start = { x: 0.2, y: -0.4 };
+  orbit.begin(state, start, pivot);
+  assert.ok(state.camera.position.equals(originalPosition));
+  assert.ok(state.target.equals(originalTarget));
+  orbit.drag(state, { x: -0.4, y: 0.3 });
+  state.camera.lookAt(state.target);
+  state.camera.updateMatrixWorld();
+  assert.ok(pivot.clone().project(state.camera).distanceTo(projected) < 1e-10);
+  assert.ok(state.target.distanceTo(originalTarget) > 1);
+  orbit.drag(state, start);
+  assert.ok(state.camera.position.distanceTo(originalPosition) < 1e-10);
+  assert.ok(state.target.distanceTo(originalTarget) < 1e-10);
+});

@@ -24,6 +24,29 @@ a 0.0001 mm rendering tolerance retains coplanar geometry.
 The cutaway follows the current workspace frame and camera side, and clears on
 workspace exit. It changes no accepted geometry, selection identity or Undo.
 
+### Rotation pivot
+
+At the start of a Command-drag, cube drag or tablet orbit, capture the union
+bounding-box center of the actual selection before workspace exit clears it.
+This includes bodies, faces, edges, sketches, regions, sketch curves/groups and
+explicit sketch points; point owners do not imply whole-curve selection. Body
+bounds are authoritative; face/edge bounds use display geometry and curved sketch
+bounds use fine curve samples. Selecting a pivot never recenters the view.
+
+Without selection, cast a 21 × 21 grid of rays across the central 20% of viewport
+width and height. The orthographic camera makes this a straight viewing column.
+Average the nearest visible surface/edge hit at each sample, weighting screen
+coverage rather than triangle count or physical mass. Thin edges receive a
+half-cell-diagonal picking footprint. Hidden entities, grids, plane widgets and clipped
+geometry do not contribute. An empty central column retains the current target.
+This is a sampled visual heuristic; very small geometry can fall between samples.
+
+Freeze the pivot throughout the drag and rotate both camera position and view
+target about it, preserving the pivot's screen location and reversibility. Release
+leveling retains the existing view-axis roll behavior described below. Cube face
+clicks retain their existing view target. These are transient camera decisions,
+with no model edits or document Undo entries.
+
 ### Arcball with release leveling
 
 Command/Meta + primary drag uses a screen-centered virtual hemisphere with radius
@@ -37,7 +60,8 @@ rounded-Arcball idea in [Shambaugh’s taxonomy](https://theshamblog.com/virtual
 not its source code. It smooths the radial response without time filtering or lag.
 The pointer-down point and camera pose stay fixed throughout the drag. The free
 rotation uses Shoemake's half-angle arc quaternion (cross product, dot product),
-applied inversely to the camera. No model raycast, axis inference or constraints.
+applied inversely to the camera. Pivot acquisition is separate from this rotation
+mapping; there is no axis inference or rotation constraint.
 This is an independent implementation of the mathematics in
 [Shoemake, Arcball (1992), pp. 152–155](https://graphicsinterface.org/wp-content/uploads/gi1992-18.pdf);
 no upstream code is copied. Returning to the starting pointer restores the starting pose.

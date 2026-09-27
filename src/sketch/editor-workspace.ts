@@ -1,10 +1,12 @@
 import { samePlane } from "./document.js";
 import type { SketchEditor } from "./editor.js";
+import { orbitPivot } from "./orbit-pivot.js";
 import { type PlaneId, planes } from "./planes.js";
 
 /** Changing editing context clears curve intent; history also restores placement. */
 export function installWorkspaceSync(editor: SketchEditor): void {
   const world = editor.world;
+  world.orbitPivot = () => orbitPivot(editor);
   world.canNavigate = () => !editor.isDragging;
   world.canEnterSketch = () =>
     world.canNavigate() &&

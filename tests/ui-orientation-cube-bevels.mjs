@@ -32,7 +32,7 @@ export async function bevelViewsRoute(page, name) {
       assert.ok(Math.abs(offset[i] / distance - v / Math.hypot(...normal)) < 1e-8, label);
     });
     assert.equal(state.camera.height, before.camera.height);
-    assert.deepEqual(state.camera.target, before.camera.target);
+    assert.deepEqual(state.camera.target, start.target);
     assert.ok(
       Math.abs(distance - Math.hypot(...start.position.map((v, i) => v - start.target[i]))) < 1e-8,
     );
