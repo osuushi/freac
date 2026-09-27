@@ -6,6 +6,7 @@ import { launchElectron } from "./native-documents.mjs";
 import { cameraRoute } from "./ui-camera.mjs";
 import { redrawRoute } from "./ui-camera-redraw.mjs";
 import { trackballRoute } from "./ui-camera-trackball.mjs";
+import { orbitPivotRoute, surfacePivotRoute } from "./ui-orbit-pivot.mjs";
 import { orientationCubeRoute } from "./ui-orientation-cube.mjs";
 import { bevelViewsRoute } from "./ui-orientation-cube-bevels.mjs";
 import { planeTargetsRoute } from "./ui-plane-targets.mjs";
@@ -32,6 +33,8 @@ try {
   page.on("pageerror", (error) => {
     throw error;
   });
+  await orbitPivotRoute(page, name);
+  await surfacePivotRoute(page, name);
   await orientationCubeRoute(page, name);
   await bevelViewsRoute(page, name);
   await cameraRoute(page, name);

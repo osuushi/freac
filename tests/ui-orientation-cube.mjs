@@ -36,6 +36,7 @@ export async function orientationCubeRoute(page, name) {
       await inspect(page);
     }
     await assertFaceLabel(target);
+    const beforeAlignment = await inspect(page);
     await target.locator("polygon").click();
     const state = await inspect(page);
     const offset = state.camera.position.map((v, i) => v - state.camera.target[i]);
@@ -43,7 +44,7 @@ export async function orientationCubeRoute(page, name) {
     offset.forEach((v, i) => {
       assert.ok(Math.abs(v / distance - normal[i]) < 1e-8);
     });
-    assert.deepEqual(state.camera.target, before.camera.target);
+    assert.deepEqual(state.camera.target, beforeAlignment.camera.target);
     assert.equal(state.camera.height, before.camera.height);
     assert.deepEqual(state.document, before.document);
     await target.locator("polygon").click();

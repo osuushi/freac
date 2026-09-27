@@ -31,6 +31,43 @@ a 0.0001 mm rendering tolerance retains coplanar geometry.
 The cutaway follows the current workspace frame and camera side, and clears on
 workspace exit. It changes no accepted geometry, selection identity or Undo.
 
+### Orthographic camera depth
+
+Zoom changes the orthographic view size. Before rendering and queued navigation
+picking, place the finite camera behind the bounds of visible document/preview
+geometry, with a small depth margin, and extend the far limit when necessary.
+Retreat only along the viewing direction: screen positions, view size, orientation,
+target and rotation pivot stay unchanged. Keeping geometry ahead of the camera
+also preserves forward ray picking; a negative near limit alone would not do that.
+Bounds cache by displayed document and visibility, conservatively enclosing body
+bounds and sketch curves on tilted planes. World origin and visible construction
+plane origins also participate. Infinite grids do not determine scene bounds.
+Intentional sketch cutaway and cross-section planes remain independent.
+Camera-to-target distance is rendering placement, not the orthographic zoom scale.
+
+### Rotation pivot
+
+Mouse-down, cube press and the initial one-finger touch contact supply viewport
+coordinates. Hover and selection do not drive acquisition. At drag activation,
+ray-cast through that press location and use the frontmost visible surface hit.
+If the ray misses, find the nearest projected point on a visible surface, then
+cast a new ray there to resolve occlusion. Distance is in screen pixels, including
+non-square viewports. Projected body bounds order and prune the search; clipped
+render triangles supply the actual nearest point, so holes are not filled by
+bounding-box approximations. A subpixel inward offset stabilizes contour rays.
+
+Hidden entities, clipped geometry, offscreen portions, grids and plane widgets
+cannot attract the pivot. Resolve before leaving the sketch workspace. If there
+are no visible surfaces, use the closest visible curve/edge point for wire-only
+work; a completely empty view retains its target. This replaces the earlier
+selection-bounds and central-20% sampling rules.
+
+Freeze the pivot throughout the drag and rotate both camera position and view
+target about it, preserving the pivot's screen location and reversibility. Release
+leveling retains the existing view-axis roll behavior described below. Cube face
+clicks retain their existing view target. These are transient camera decisions,
+with no model edits or document Undo entries.
+
 ### Arcball with release leveling
 
 Command/Meta + primary drag uses a screen-centered virtual hemisphere with radius
@@ -44,7 +81,8 @@ rounded-Arcball idea in [Shambaugh’s taxonomy](https://theshamblog.com/virtual
 not its source code. It smooths the radial response without time filtering or lag.
 The pointer-down point and camera pose stay fixed throughout the drag. The free
 rotation uses Shoemake's half-angle arc quaternion (cross product, dot product),
-applied inversely to the camera. No model raycast, axis inference or constraints.
+applied inversely to the camera. Pivot acquisition is separate from this rotation
+mapping; there is no axis inference or rotation constraint.
 This is an independent implementation of the mathematics in
 [Shoemake, Arcball (1992), pp. 152–155](https://graphicsinterface.org/wp-content/uploads/gi1992-18.pdf);
 no upstream code is copied. Returning to the starting pointer restores the starting pose.
@@ -59,8 +97,9 @@ Animate over 280 ms with cubic ease-out, or immediately with reduced motion. Vie
 and zoom stay fixed; only roll changes. New navigation interrupts the animation.
 Cancellation, Escape and focus loss end the drag without snapping. Releasing Command
 mid-drag retains capture. Capture blocks editing, trailing clicks and wheel/pinch.
-Camera changes never modify the document or Undo. Native trackpad/iPad rotation
-remain deferred. Sketch entry retains its existing transition.
+Camera changes never modify the document or Undo. Native trackpad rotation gestures
+remain deferred; tablet one-finger orbit uses the same press-based pivot through
+pointer events. Sketch entry retains its existing transition.
 
 The temporary Arcball circle, endpoint markers and diagnostic caption are hidden.
 
