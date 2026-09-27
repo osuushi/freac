@@ -51,7 +51,7 @@ try {
   await waitFile(join(first.workspace, "paste-check.txt"));
   assert.equal(await readFile(join(first.workspace, "paste-check.txt"), "utf8"), "paste worked");
   await chooseTool(page, "Sketch on XY", "sketch-xy");
-  await page.keyboard.press("r");
+  await chooseTool(page, "rectangle", "rectangle");
   await drag(page, [-10, -6], [10, 6]);
   pointEquals((await corners(page))[2], [10, 6]);
   await page.getByRole("textbox", { name: "Width", exact: true }).fill("24");

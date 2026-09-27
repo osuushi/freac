@@ -20,6 +20,7 @@ npm run setup:kernel
 npm run package:mac
 node scripts/release/verify.mjs
 node tests/release-package.mjs
+FREAC_TEST_EXECUTABLE="$PWD/.build/packages/Freac-darwin-arm64/Freac.app/Contents/MacOS/Freac" node tests/agent-finder-launch.mjs
 ```
 
 The app is `.build/packages/Freac-darwin-arm64/Freac.app`. `npm run make:mac`
@@ -38,6 +39,10 @@ and restricted PATH. It exercises sketch/solid geometry, Undo, save/reopen, the 
 and shipped CLI, and offline notices. It does not establish clean-device
 Gatekeeper behavior. Verify the signed DMG downloaded through a browser on a
 separate Mac before sending it to recipients.
+
+The Finder agent test launches the packaged app with a minimal PATH and an isolated
+shell configuration. It checks agent discovery, child-tool PATH inheritance and
+explicit PATH precedence. The release workflow runs it before and after signing.
 
 ## GitHub signing setup
 

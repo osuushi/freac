@@ -124,6 +124,7 @@ jobs:
           node tests/app-updates.mjs
           node scripts/release/verify.mjs
           node tests/release-package.mjs
+          FREAC_TEST_EXECUTABLE="$PWD/.build/packages/Freac-darwin-arm64/Freac.app/Contents/MacOS/Freac" node tests/agent-finder-launch.mjs
           ccache --show-stats
       - name: Import certificate, sign and notarize
         env:
@@ -141,6 +142,7 @@ jobs:
         run: |
           node scripts/release/verify.mjs
           node tests/release-package.mjs
+          FREAC_TEST_EXECUTABLE="$PWD/.build/packages/Freac-darwin-arm64/Freac.app/Contents/MacOS/Freac" node tests/agent-finder-launch.mjs
           node scripts/release/sources.mjs
           node scripts/release/assets.mjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
