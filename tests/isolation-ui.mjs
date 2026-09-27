@@ -9,14 +9,21 @@ import { chooseTool } from "./ui-tools.mjs";
 async function route(page, name) {
   page.setDefaultTimeout(15000);
   await plate(page);
+  const exitButton = page.getByRole("button", { name: "Exit isolation", exact: true });
+  assert.equal(await exitButton.isVisible(), false, "Exit button is hidden outside isolation");
   assert.ok(
     (await inspect(page)).modelingSelection.every((target) => target.kind === "edge"),
     "Plate leaves body edges selected",
   );
   await chooseTool(page, "isolate selection", "isolate");
+  const cube = await page.locator(".orientation-cube").boundingBox();
+  const exitBounds = await exitButton.boundingBox();
+  assert.ok(cube && exitBounds && exitBounds.y >= cube.y + cube.height);
+  assert.ok(Math.abs(exitBounds.x + exitBounds.width / 2 - (cube.x + cube.width / 2)) < 2);
   assert.equal(await page.getByRole("button", { name: "Hide Body 1", exact: true }).count(), 1);
   assert.equal(await page.getByRole("button", { name: "Show Sketch 1", exact: true }).count(), 1);
-  await chooseTool(page, "exit isolation", "end-isolation");
+  await exitButton.click();
+  assert.equal(await exitButton.isVisible(), false);
   await chooseTool(page, "Sketch on XZ", "sketch-xz");
   await page.keyboard.press("l");
   await drag(page, [20, 20], [30, 30]);

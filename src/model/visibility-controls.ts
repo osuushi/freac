@@ -5,8 +5,20 @@ export function visibilityControls(
   editor: SketchEditor,
   selectedPlane: () => string | undefined,
 ): () => void {
+  const catalog = toolCatalog(editor);
+  const exitButton = document.createElement("button");
+  exitButton.className = "exit-isolation";
+  exitButton.textContent = "Exit isolation";
+  exitButton.hidden = true;
+  exitButton.onclick = () => void catalog.invoke("end-isolation");
+  editor.world.host.append(exitButton);
+  const updateButton = () => {
+    exitButton.hidden = !editor.visibility.isolating;
+    exitButton.disabled = editor.blocked || editor.isDragging || !!editor.interactions.current;
+  };
+  editor.world.changed.add(updateButton);
   const dispose = [true, false].map((visible) =>
-    toolCatalog(editor).register({
+    catalog.register({
       id: visible ? "show-bodies" : "hide-bodies",
       label: visible ? "Show bodies" : "Hide bodies",
       category: "View",
@@ -28,7 +40,7 @@ export function visibilityControls(
     }),
   );
   dispose.push(
-    toolCatalog(editor).register({
+    catalog.register({
       id: "isolate",
       label: "Isolate selection",
       category: "View",
@@ -45,7 +57,7 @@ export function visibilityControls(
         editor.refresh();
       },
     }),
-    toolCatalog(editor).register({
+    catalog.register({
       id: "end-isolation",
       label: "Exit isolation",
       category: "View",
@@ -59,6 +71,8 @@ export function visibilityControls(
     }),
   );
   return () => {
+    editor.world.changed.delete(updateButton);
+    exitButton.remove();
     for (const remove of dispose) remove();
   };
 }

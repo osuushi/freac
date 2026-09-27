@@ -20,6 +20,8 @@ founder feedback update these contracts before further tools depend on them.
   reveal additional entities during isolation. Exiting isolation removes only its
   temporary hiding, so it never hides an entity; entities revealed during isolation
   remain revealed. Isolation does not change the document or geometry Undo.
+  An Exit isolation button appears below the orientation cube while isolation is
+  active and performs the same action as the View tool.
 
 - Sketch mode is an aligned editing view of the same 3D world, not a separate
   canvas. Use one world origin and coordinate mapping for both. Display a clear

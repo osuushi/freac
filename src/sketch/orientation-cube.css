@@ -33,3 +33,15 @@
   dominant-baseline: central;
   pointer-events: none;
 }
+.exit-isolation {
+  position: absolute;
+  top: 168px;
+  right: 26px;
+  width: 128px;
+  padding: 7px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.exit-isolation[hidden] {
+  display: none;
+}
