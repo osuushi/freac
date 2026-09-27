@@ -111,18 +111,20 @@ for (const [x, radius] of [[0, 2], [30, 8]]) {
         workspace,
         task.prompt,
       ];
+      console.log(`Starting ${variant}: ${task.name} (${model}, ${effort})`);
       const start = performance.now();
       let stdout = "",
         error = null;
       try {
-        stdout = (
-          await run(process.env.FREAC_CODEX_EXECUTABLE ?? "codex", args, {
-            env,
-            cwd: workspace,
-            timeout: 180000,
-            maxBuffer: 8 * 1024 * 1024,
-          })
-        ).stdout;
+        const execution = run(process.env.FREAC_CODEX_EXECUTABLE ?? "codex", args, {
+          env,
+          cwd: workspace,
+          timeout: 180000,
+          maxBuffer: 8 * 1024 * 1024,
+        });
+        // exec reads piped stdin even when the prompt is supplied as an argument.
+        execution.child.stdin.end();
+        stdout = (await execution).stdout;
       } catch (e) {
         stdout = e.stdout ?? "";
         error = e.stderr?.slice(-2000) || e.message;

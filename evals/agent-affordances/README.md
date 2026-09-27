@@ -11,9 +11,9 @@ Each prompt starts a fresh ephemeral Codex session. Prompts are “Select all th
 cylindrical faces” and “Select all cylindrical faces with radius below 5 mm.”
 The harness checks actual selected IDs and records elapsed time, commands and final
 messages. Raw JSONL stays in the ignored `.cache/agent-eval` directory. No assertions
-on model latency or behavior enter CI. No result has been obtained yet.
+on model latency or behavior enter CI. See [2026-09-27](2026-09-27.md) for the first results.
 
-Planned invocation, after approval for authenticated model execution:
+Invocation (authenticated model execution requires authorization):
 
 ```sh
 source /Users/adacohen/.nvm/nvm.sh && nvm use

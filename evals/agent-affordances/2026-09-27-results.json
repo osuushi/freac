@@ -1,0 +1,111 @@
+[
+  {
+    "variant": "old-launch",
+    "task": "Select all the cylindrical faces.",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "elapsedMs": 7485,
+    "passed": true,
+    "commands": [
+      "/opt/homebrew/bin/zsh -lc 'freac select --surface cylinder'"
+    ],
+    "final": [
+      "I’ll select every cylindrical face in the drawing, including faces on hidden bodies.",
+      "Selected the 2 cylindrical faces."
+    ],
+    "error": null,
+    "usage": {
+      "input_tokens": 30604,
+      "cached_input_tokens": 19968,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 72,
+      "reasoning_output_tokens": 0
+    },
+    "traceSha256": "e3a188021e82c8f66154071dd17c635e14cf4af2b4774c67a5d786c2488b8996",
+    "shellCalls": 1
+  },
+  {
+    "variant": "old-launch",
+    "task": "Select all cylindrical faces with radius below 5 mm.",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "elapsedMs": 18659,
+    "passed": true,
+    "commands": [
+      "/opt/homebrew/bin/zsh -lc 'freac select --surface cylinder'",
+      "/opt/homebrew/bin/zsh -lc 'freac help && freac types'",
+      "/opt/homebrew/bin/zsh -lc 'freac docs'",
+      "/opt/homebrew/bin/zsh -lc 'freac status && freac select --surface cylinder'",
+      "/opt/homebrew/bin/zsh -lc \"cat > select_small_cylinders.ts <<'EOF'\nconst faces = await freac.faces();\nawait freac.select(faces.filter(f => f.surface === \\\"cylinder\\\" && f.cylinder.radius < 5).map(f => f.id));\nEOF\nfreac view select_small_cylinders.ts && freac selection\""
+    ],
+    "final": [
+      "I’ll select cylindrical faces by their analytic radius using Freac’s face query.",
+      "The cylinder filter found two faces. I’m narrowing that set to radii strictly below 5 mm.",
+      "Selected the cylindrical face with a 2 mm radius."
+    ],
+    "error": null,
+    "usage": {
+      "input_tokens": 113955,
+      "cached_input_tokens": 94720,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 323,
+      "reasoning_output_tokens": 0
+    },
+    "traceSha256": "474d4ffb7a2f97d88472f55a7c8a17b6b62a235e061c27bd460a4d4825c11f00",
+    "shellCalls": 5
+  },
+  {
+    "variant": "new-launch",
+    "task": "Select all the cylindrical faces.",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "elapsedMs": 5905,
+    "passed": true,
+    "commands": [
+      "/opt/homebrew/bin/zsh -lc 'freac select --surface cylinder'"
+    ],
+    "final": [
+      "I’ll select every cylindrical face in the drawing, including those on hidden bodies.",
+      "Selected 2 cylindrical faces."
+    ],
+    "error": null,
+    "usage": {
+      "input_tokens": 31150,
+      "cached_input_tokens": 25088,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 71,
+      "reasoning_output_tokens": 0
+    },
+    "traceSha256": "66b5205ed36f9b5cb93c6fcab94b7be75e294e7e64304e0fb031eaba7a05e80a",
+    "shellCalls": 1
+  },
+  {
+    "variant": "new-launch",
+    "task": "Select all cylindrical faces with radius below 5 mm.",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "elapsedMs": 14234,
+    "passed": true,
+    "commands": [
+      "/opt/homebrew/bin/zsh -lc 'freac select --surface cylinder'",
+      "/opt/homebrew/bin/zsh -lc 'freac selection'",
+      "/opt/homebrew/bin/zsh -lc 'freac faces'",
+      "/opt/homebrew/bin/zsh -lc 'freac select e24eb586-f359-49fe-ac87-a523c2d3863f'"
+    ],
+    "final": [
+      "I’ll select cylindrical faces under 5 mm radius across the drawing.",
+      "The cylindrical-face selection found two faces, with radii 2 mm and 8 mm. I’m narrowing it to the one below 5 mm.",
+      "Selected the cylindrical face with a 2 mm radius. The other cylindrical face has an 8 mm radius."
+    ],
+    "error": null,
+    "usage": {
+      "input_tokens": 85819,
+      "cached_input_tokens": 74496,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 247,
+      "reasoning_output_tokens": 0
+    },
+    "traceSha256": "759bcfbf5c56e8f4cd8b7d284323d491d02975ab5602cbc85e5af21005929677",
+    "shellCalls": 4
+  }
+]
