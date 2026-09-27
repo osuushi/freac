@@ -14,6 +14,8 @@
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <gp_Pln.hxx>
+#include <GeomProjLib.hxx>
+#include <BRep_Builder.hxx>
 #include <TopoDS_Wire.hxx>
 
 namespace boundary_move {
@@ -53,6 +55,23 @@ TopoDS_Face band(const TopoDS_Face& face, const Edit& edit) {
     // after movement. This also works when either closed boundary is no longer circular.
     return BRepFill::Face(boundaries[0], boundaries[1]);
 }
+TopoDS_Face trimRuled(const TopoDS_Face& face, const std::vector<TopoDS_Edge>& edges) {
+    const auto surface = BRep_Tool::Surface(face);
+    BRepBuilderAPI_MakeWire outline;
+    for (const auto& edge : edges) {
+        double first, last, precision = 1e-7;
+        const auto curve = BRep_Tool::Curve(edge, first, last);
+        const auto pcurve = GeomProjLib::Curve2d(curve, first, last, surface, precision);
+        require(!pcurve.IsNull() && std::isfinite(precision) && precision <= tolerance,
+                "Cannot trim the ruled surface within boundary tolerance");
+        BRep_Builder().UpdateEdge(edge, pcurve, face, 1e-7);
+        outline.Add(edge);
+    }
+    require(outline.IsDone(), "Cannot connect the ruled surface boundary");
+    BRepBuilderAPI_MakeFace trimmed(surface, outline.Wire(), true);
+    require(trimmed.IsDone(), "Cannot trim the ruled surface");
+    return trimmed.Face();
+}
 TopoDS_Face ruledQuad(const TopoDS_Face& source, const std::vector<TopoDS_Edge>& edges) {
     // A narrow warped strip can have exact ruled boundaries even when a plate
     // approximation would need loose endpoint bounds. Verify every boundary.
@@ -75,8 +94,11 @@ TopoDS_Face ruledQuad(const TopoDS_Face& source, const std::vector<TopoDS_Edge>&
             assigned.Add(generated(match));
         }
         if (!matches) continue;
-        offset_geometry::tightenGeneratedBoundaries(result, source, false);
-        return result;
+        // Keep requested analytic edges; the generator's isocurves can be
+        // geometrically straight B-splines, which would lose ordinary line edits.
+        const auto trimmed = trimRuled(result, edges);
+        offset_geometry::tightenGeneratedBoundaries(trimmed, source, false);
+        return trimmed;
     }
     return {};
 }

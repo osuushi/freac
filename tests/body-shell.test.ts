@@ -115,7 +115,7 @@ test("shell is atomic across bodies and retains rejected intent in history", asy
   }
 });
 
-test("shell rejects invalid boundaries on materialized warped geometry", async () => {
+test("shell preserves precise boundaries after an individual shoulder edge moves", async () => {
   const owner = new DocumentOwner();
   try {
     const { body } = await shoulder(owner, false);
@@ -141,12 +141,24 @@ test("shell rejects invalid boundaries on materialized warped geometry", async (
         thickness: -0.5,
       },
     });
-    assert.match(
-      result.error ?? "",
-      /invalid boundaries or surface geometry|boundary does not meet its incident surfaces/,
-    );
-    assert.equal(result.view.candidate, null);
-    assert.equal(result.view.data, before);
+    assert.equal(result.error, undefined);
+    const warped = before.bodies?.[0];
+    const hollow = result.view.candidate?.bodies?.[0];
+    assert.ok(warped && hollow);
+    assert.ok(hollow.volume > 0 && hollow.volume < warped.volume);
+    for (const face of warped.faces) {
+      const retained = hollow.faces.find((candidate) => candidate.id === face.id);
+      assert.ok(retained);
+      for (let i = 2; i < face.signature.length; i++)
+        assert.ok(Math.abs(retained.signature[i] - face.signature[i]) < 1e-6);
+    }
+    assert.deepEqual(result.view.data, before);
+    assert.equal((await owner.call({ kind: "accept" })).error, undefined);
+    const accepted = owner.view.data;
+    assert.equal((await owner.call({ kind: "undo" })).error, undefined);
+    assert.deepEqual(owner.view.data, before);
+    assert.equal((await owner.call({ kind: "redo" })).error, undefined);
+    assert.deepEqual(owner.view.data, accepted);
   } finally {
     owner.close();
   }

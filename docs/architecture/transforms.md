@@ -275,7 +275,8 @@ stored feature recipe or a new persistent tangency relationship. Selected faces
 and their boundaries still undergo the exact requested rigid transform.
 
 Four-edge reconnections first use a ruled surface when all four resulting
-boundaries match the requested curves one-to-one. Otherwise surface fitting
+boundaries match the requested curves one-to-one, retaining the requested analytic
+edges when trimming that support. Otherwise surface fitting
 remains available. Generated fitted boundaries must meet their incident surfaces
 within 1e-6 mm; vertex bounds are reduced to at most 2e-6 mm only after checking
 actual endpoint agreement, before sewing. This prevents conservative or inaccurate
