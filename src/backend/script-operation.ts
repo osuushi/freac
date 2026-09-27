@@ -8,6 +8,7 @@ import { materialize } from "./kernel-result.js";
 import type { NativeSolver } from "./native-solver.js";
 import { scriptModelingOperation } from "./script-modeling-operation.js";
 import { scriptSolidTool } from "./script-solid-tools.js";
+import { scriptTopology } from "./script-topology.js";
 import { validateScriptSolid } from "./script-validation.js";
 import type { SolidCalculator } from "./solid-calculator.js";
 import type { SolidEdits } from "./solid-edits.js";
@@ -26,6 +27,8 @@ export async function scriptOperation(
 ): Promise<{ document: SketchDocument; result: ScriptResult }> {
   if (!operation || typeof operation !== "object" || !operation.input)
     throw new Error("Invalid script operation");
+  if (operation.kind === "topology" || operation.kind === "replaceFace")
+    return scriptTopology(document, operation, kernel);
   if (operation.kind === "createSketch") return createScriptSketch(document, operation, solver);
   if (
     operation.kind === "constructionPlane" ||

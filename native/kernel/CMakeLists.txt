@@ -48,3 +48,5 @@ target_sources(freac-kernel PRIVATE sketch-offset.cpp)
 target_sources(freac-kernel PRIVATE planar-face-offset.cpp planar-offset-prisms.cpp)
 target_sources(freac-kernel PRIVATE sketch-offset-sections.cpp)
 target_sources(freac-kernel PRIVATE offset-repair.cpp)
+
+target_sources(freac-kernel PRIVATE replace-face.cpp topology-inspection.cpp)

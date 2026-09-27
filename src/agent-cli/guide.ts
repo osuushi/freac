@@ -1,55 +1,10 @@
 import { scriptGuide } from "./script-guide.js";
+import { startupGuide } from "./startup-guide.js";
 
 export { types } from "./api-types.js";
 
-export const guide = `# Working in Freac
-
-You are helping with the drawing open in Freac, a direct CAD application.
-Start with freac help and freac status. freac docs prints the current interface
-guide; freac types prints its TypeScript declarations. Use plain freac commands:
-the launcher is already on PATH. Only if freac is not found, use the quoted absolute
-path in FREAC_CLI. No fallback shell expression is needed for ordinary calls.
-Help/docs/types/status can run in parallel with inspection. Concurrent selection/inspect/render
-requests wait their turn on the shared measurement worker. Await modeling operations
-sequentially. FREAC_DOCS and FREAC_API_TYPES locate
-the same generated files. Read these afresh rather than assuming older capabilities.
-FREAC_WORKSPACE is the current portable working directory. Put scripts/notes inside
-it, preferably with relative paths. Never reuse absolute paths from an older session;
-the parent directory holds application state and is not the portable workspace.
-
-When the user says "this", "these", or similar, normally interpret it as the specific
-current selection unless the user explicitly gives another scope. First run freac selection.
-The scope can be sketch parts (points, curves, regions), whole sketches, faces,
-edges, bodies, or any combination. Preserve each selected target's type and extent.
-Do not silently expand a selected face/edge to its entire body, sketch parts to a
-whole sketch, or filter out members of a mixed selection to fit an available tool.
-Selection is a reference aid, not a prerequisite for editing. For a follow-up or
-correction, carry forward the target established by the conversation, previous
-inspection, and your own scripts/results. Empty live selection does not erase that
-context or require reselection. Re-inspect current geometry to verify IDs and the
-boundaries needed for the requested edit; do not blindly reuse stale topology IDs.
-An explicit correction can change the earlier scope: "the thread doesn't reach the
-end of the rod" refers to the thread you just made. Inspect that thread, its rod,
-and the script's start/end limits to find and fix the missing thread coverage. Multiple axial
-sections alone are not a reason to stop or ask the user to select it again.
-Proceed when context and geometry identify the intended edit. Ask a specific
-clarifying question only if materially different targets, endpoints or operations
-remain plausible after inspection, or essential information cannot be established.
-A fresh "thread this" request with a cylindrical face selected normally means that
-bounded face. Body dimensions alone do not establish the selected face's dimensions.
-A later request to extend that thread should be interpreted using the new request
-and established target, rather than mechanically enforcing the initial bounds.
-
-freac select ID... replaces selection using stable IDs from inspect. --add or --remove
-before IDs preserves unrelated targets and ordering. freac select --clear clears it.
-freac select --surface cylinder selects all cylindrical faces in the document; plane
-and other are also supported, optionally preceded by --add or --remove. This includes
-hidden bodies without revealing them. For a narrower scope, inspect faces and pass IDs.
-Selection changes no geometry, camera or visibility and uses ordinary selection history.
-Modeling accepts faces, edges, bodies and whole sketches. While editing a sketch,
-only that sketch’s curve/group IDs are accepted. Exit/enter the workspace manually
-for a different scope. Points, regions and planes cannot be set by this command yet.
-Invalid IDs or busy edits reject the whole request. The result contains the new context.
+export const guide = `${startupGuide}
+## Inspection reference
 
 freac selection returns ordered explicit targets, selected point coordinates, geometry summaries,
 and kernel measurements for one or two measurable face/edge/curve/region targets.
@@ -93,12 +48,14 @@ with automatic approval review; explicit user arguments can override those defau
 ${scriptGuide}`;
 
 export const help = `Freac — document-bound CAD assistant interface
-Usage: freac [help | docs | types | status | selection | select [OPTIONS] [ID...] | inspect [ID] | render | run script.ts]
+Usage: freac [help | docs | types | status | selection | select [OPTIONS] [ID...] | inspect [ID] | render | run script.ts | view script.ts | faces | context]
 
   help     Show available commands
   docs     Print the current interface and workspace guide
   types    Print TypeScript declarations for CLI JSON results
   status   Read this drawing's current name, saved/edited state and capabilities
+  context  Read view context without measurements
+  faces    Query all accepted faces with typed surface metadata and visibility
   selection  Read ordered selection, geometry and available measurements
   select [--add|--remove] ID...  Change ordered selection (default: replace)
   select [--add|--remove] --surface cylinder|plane|other  Select matching faces
@@ -106,6 +63,7 @@ Usage: freac [help | docs | types | status | selection | select [OPTIONS] [ID...
   inspect [ID]  List geometry, or describe one current geometry ID
   render   Capture the current geometry viewport; return PNG path and view metadata
 
+  view script.ts  Typecheck and run face queries/selection outside geometry Undo
   run script.ts  Typecheck and run a script; apply all changes as one Undo step
 
 Inspection, selection control and typed modeling scripts.

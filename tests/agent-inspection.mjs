@@ -3,6 +3,7 @@ import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
+import { checkViewPrograms } from "./agent-view-programs.mjs";
 import { launchElectron } from "./native-documents.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { at, drag, inspect, settled } from "./ui-helpers.mjs";
@@ -191,6 +192,12 @@ try {
   assert.deepEqual(selectedCylinders.context.selection, cylinders);
   assert.deepEqual((await inspect(page)).modelingSelection, cylinders);
   assert.deepEqual((await inspect(page)).document, curved);
+  const faceRows = (await query("faces")).faces;
+  const filtered = faceRows.filter((f) => f.surface === "cylinder" && f.cylinder.radius < 5);
+  assert.equal(filtered.length, cylinders.length);
+  assert(filtered.every((f) => Math.abs(f.cylinder.radius - 1) < 1e-6));
+  assert.deepEqual((await query("context")).context.selection, cylinders);
+  if (app) await checkViewPrograms({ page, workspace, query, unchanged, cylinders });
   await page.screenshot({ path: `.cache/sketch-review/${name}-agent-selected-cylinders.png` });
   await query("select", "--clear");
   await settled(page);
@@ -236,8 +243,14 @@ async function query(command, entity) {
           false,
           command === "select" ? JSON.stringify(entity.split(" ")) : undefined,
         );
-        if (command === "select") return { units: "mm", context };
+        if (command === "select" || command === "context") return { units: "mm", context };
         const document = window.freacInspect().document;
+        if (command === "faces") {
+          const { queryFaces } = await import(
+            modulePath.replace("inspection-geometry.ts", "face-query.ts")
+          );
+          return { units: "mm", faces: queryFaces(document, context) };
+        }
         const { inspectionOverview, findInspectionTarget, targetGeometry, measurable } =
           await import(modulePath);
         if (command === "render")

@@ -33,6 +33,9 @@ process.on(
       } else waiting?.resolve(message.value);
     } else if (message.kind === "start") {
       const api: ScriptApi = {
+        topology: (input) => call({ kind: "topology", input }) as ReturnType<ScriptApi["topology"]>,
+        replaceFace: (input) =>
+          call({ kind: "replaceFace", input }) as ReturnType<ScriptApi["replaceFace"]>,
         selection: structuredClone(message.selection ?? []),
         decorators: () =>
           call({ kind: "decorators", input: {} }) as ReturnType<ScriptApi["decorators"]>,

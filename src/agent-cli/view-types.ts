@@ -1,0 +1,17 @@
+export const viewTypes = `
+interface FaceBase { kind: "face"; id: string; body: string; edges: readonly string[]; visible: boolean }
+/** Analytic support, not trimmed extent. All distances are mm. Other includes unclassified surfaces. */
+export type FaceInfo = FaceBase & (
+  | { surface: "plane"; plane: Plane; cylinder: null }
+  | { surface: "cylinder"; plane: null; cylinder: { origin: Vector; axis: Vector; radius: number; outward: 1 | -1 } }
+  | { surface: "other"; plane: null; cylinder: null }
+);
+export interface FreacView {
+  /** All accepted faces, including hidden bodies. Filter visible when requested. */
+  faces(): Promise<FaceInfo[]>;
+  /** Current view and ordered explicit targets, without kernel measurements. */
+  context(): Promise<ViewContext>;
+  /** Immediate selection change; outside geometry Undo. Empty replacement clears. */
+  select(ids: readonly string[], mode?: "replace" | "add" | "remove"): Promise<FreacSelect>;
+}
+`;

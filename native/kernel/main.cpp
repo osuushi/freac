@@ -133,6 +133,11 @@ int main() {
             timing.operation(input.get<std::string>("kind")); timing.phase("parse");
             const auto bodies = operands(input); std::string mode;
             timing.phase("operands");
+            if (input.get<std::string>("kind") == "topology") {
+                std::ostringstream output; output << std::setprecision(17);
+                inspectTopology(output, input, bodies);
+                std::cout << output.str() << std::endl; continue;
+            }
             if (input.get<std::string>("kind") == "measure") {
                 std::ostringstream output; measureSelection(output, input, bodies);
                 std::cout << output.str() << std::endl; continue;

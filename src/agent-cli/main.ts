@@ -1,10 +1,11 @@
 import { guide, help, types } from "./guide.js";
 import { request } from "./request.js";
 import { runScript } from "./run-script.js";
+import { runView } from "./run-view.js";
 
 try {
   const args = process.argv.slice(2);
-  if (args[0] !== "select" && args.length > (["inspect", "run"].includes(args[0]) ? 2 : 1))
+  if (args[0] !== "select" && args.length > (["inspect", "run", "view"].includes(args[0]) ? 2 : 1))
     throw new Error("Unexpected arguments; run freac help.");
   switch (args[0] ?? "help") {
     case "help":
@@ -18,6 +19,10 @@ try {
     case "types":
       console.log(types);
       break;
+    case "view":
+      if (!args[1]) throw new Error("Usage: freac view script.ts");
+      console.log(JSON.stringify(await runView(args[1]), null, 2));
+      break;
     case "run":
       if (!args[1]) throw new Error("Usage: freac run script.ts");
       console.log(JSON.stringify(await runScript(args[1]), null, 2));
@@ -26,6 +31,8 @@ try {
       console.log(JSON.stringify(await request("select", JSON.stringify(args.slice(1))), null, 2));
       break;
     case "status":
+    case "faces":
+    case "context":
     case "selection":
     case "inspect":
     case "render":

@@ -4,6 +4,8 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
+import { guide as referenceGuide } from "../.build/host/agent-cli/guide.js";
+import { startupGuide } from "../.build/host/agent-cli/startup-guide.js";
 import { orientationOverrides } from "../.build/host/host/agent-orientation.js";
 import { workspaceTrustOverride } from "../.build/host/host/agent-settings.js";
 import { readPortableArchive } from "../.build/host/model/portable-archive.js";
@@ -34,7 +36,7 @@ try {
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   const first = await environment(page);
   const guide = await readFile(join(first.cwd, "AGENTS.md"), "utf8");
-  assert.match(guide, /freac status/);
+  assert.equal(guide, startupGuide);
   await terminal(
     page,
     "freac help > help.txt; freac docs > docs.txt; freac types > types.txt; freac status > status.json",
@@ -44,10 +46,13 @@ try {
     JSON.parse(await readFile(join(first.cwd, "status.json"), "utf8")).application,
     "Freac",
   );
-  assert.match(await readFile(join(first.cwd, "help.txt"), "utf8"), /Read-only inspection/);
-  assert.equal(await readFile(join(first.cwd, "docs.txt"), "utf8"), `${guide}\n`);
+  assert.match(
+    await readFile(join(first.cwd, "help.txt"), "utf8"),
+    /Inspection, selection control/,
+  );
+  assert.equal(await readFile(join(first.cwd, "docs.txt"), "utf8"), `${referenceGuide}\n`);
   assert.match(await readFile(join(first.cwd, "types.txt"), "utf8"), /interface FreacStatus/);
-  assert.equal(await readFile(first.env.FREAC_DOCS, "utf8"), guide);
+  assert.equal(await readFile(first.env.FREAC_DOCS, "utf8"), referenceGuide);
   assert.equal(first.env.FREAC_WORKSPACE, first.cwd);
 
   // Actual sandbox, real bundled Electron-as-Node launcher, no network exception.
@@ -108,8 +113,8 @@ throw new Error("sandbox script rollback");
   );
   assert.match(prompt.stdout, /You are running inside Freac/);
   assert.match(prompt.stdout, /Working in Freac/);
-  assert.match(prompt.stdout, /Old absolute workspace paths in resumed conversations are stale/);
-  assert.match(prompt.stdout, /freac.revolve supports continuous helical sweeps/);
+  assert.match(prompt.stdout, /older absolute workspace paths are stale/);
+  assert.match(prompt.stdout, /Execute a known operation directly/);
   console.log(
     "PASS actual Codex: guidance in model-visible input; bundled CLI works inside workspace-write sandbox (no model prompt sent)",
   );

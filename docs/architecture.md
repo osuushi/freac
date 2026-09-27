@@ -45,6 +45,7 @@ is a later operation on current geometry, through ordinary Undo.
 | Trim, offset, regions | [Curve modification](architecture/curve-modification.md) |
 | Native solving and drag targets | [Solver integration](architecture/solver.md) |
 | Bodies, modeling selection, tool switching | [Materialized solids](architecture/solids.md), [modeling tools](architecture/modeling-tools.md), [solid-loop design](sketch-solid-loop.md) |
+| Topology inspection and surface replacement | [Composable topology editing](architecture/topology-editing.md) |
 | Shell | [Shell interaction and validation](architecture/shell.md) |
 | Selection measurements | [Distances, gaps and relationships](architecture/measurements.md) |
 | Draft and cleanup | [Extrusion draft](architecture/extrusion-draft.md), [solid cleanup](architecture/solid-cleanup.md) |

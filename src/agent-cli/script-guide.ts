@@ -1,10 +1,12 @@
 import { decoratorGuide } from "./decorator-guide.js";
+import { topologyGuide } from "./topology-guide.js";
 export const scriptGuide = `
 ## Typed modeling scripts
 
 Write a single .ts file in this workspace and run freac run script.ts. The installed
 TypeScript compiler checks a source snapshot before execution; no separate Node or
 TypeScript install is needed. The global freac object has the API printed by freac types.
+Topology calls are topology and replaceFace; see the topology section below.
 Available modeling calls are createSketch, extrude, revolve, offsetFaces, transformBodies,
 constructionPlane, deleteConstructionPlane, splitBody, imprint, scale, sweep, booleanBodies, finishEdges and shell.
 Decorator calls are decorators, inspectDecorator, editDecorator, editDecoratorDefinition and enableDecorator.
@@ -40,12 +42,8 @@ Use returned topology IDs after each edit; consumed edges and openings may disap
 Top-level await works. Relative imports and additional source files are not supported
 in this first increment. Use console.error for diagnostic text; stdout is CLI JSON.
 
-Await every modeling call. Selection is captured once at script start and is available
-as freac.selection. Preserve the intended selection scope, including mixed targets;
-do not silently filter unsupported targets or expand them to their owners. If that
-scope seems incompatible, inspect the established target and conversation first;
-clarify only unresolved ambiguity. An empty freac.selection does not prevent a
-follow-up edit using verified explicit IDs from the established task.
+Await every modeling call. Selection is captured once at script start as freac.selection. Resolve intended targets
+using the request, conversation and relevant current geometry, preserving their scope.
 Whole-sketch selection geometry and freac inspect (overview or sketch ID) include
 profiles containing {sketch, profile} source fields plus area (mm²) and outer/hole
 boundary spans referencing existing curve IDs. Span parameters are radians for
@@ -147,9 +145,7 @@ helix. The axis must lie in the section plane. A triangular section overlapping 
 shaft can use mode "subtract" and explicit target body IDs to cut a continuous
 helical groove, or "union" to add a ridge. Choose the section, pitch, extent and
 handedness from the user's request; this is not an automatic standard-thread tool.
-Do not substitute disconnected rings for a helix or claim a manual tool can be
-enabled without evidence. A missing script method is an interface limitation,
-not proof that Freac lacks the corresponding manual CAD operation.
+A missing script method is an interface limitation, not evidence about manual tool availability.
 
 createSketch supports ordinary segments, circles, arcs and cubic Beziers. It creates
 an independent sketch with no inferred constraints. Sketches and solids can then be
@@ -158,5 +154,6 @@ its source sketch. Offset requests that cannot achieve the requested distance re
 the script does not silently accept a clamped offset. Run freac inspect/render after
 completion to check the accepted result.
 
+${topologyGuide}
 ${decoratorGuide}
 `;
