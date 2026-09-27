@@ -1,3 +1,4 @@
+import { continueDecorators } from "../decorators/continuation.js";
 import type { MirrorOperation } from "../model/mirror.js";
 import { type SketchDocument, withSketch } from "../sketch/document.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
@@ -32,8 +33,12 @@ export async function mirrorDocument(
   });
   const result = await kernel.calculate({ ...operation, kind: "mirror", bodies: operands });
   const reflected = materialize(bodies, result);
-  return {
-    ...document,
-    bodies: operation.keepOriginal ? reflected : continuingBodies(bodies, reflected),
-  };
+  return continueDecorators(
+    document,
+    {
+      ...document,
+      bodies: operation.keepOriginal ? reflected : continuingBodies(bodies, reflected),
+    },
+    { kind: "mirror", operation },
+  );
 }

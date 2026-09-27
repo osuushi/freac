@@ -1,0 +1,49 @@
+import type { ExportMesh } from "../model/export-mesh.js";
+import type { PlaneFrame } from "../sketch/planes.js";
+
+export type Settings = Record<string, string | number | boolean>;
+export interface FaceReference {
+  body: string;
+  face: string;
+}
+export interface DecoratorInstance {
+  readonly id: string;
+  readonly definition: string;
+  readonly version: number;
+  readonly faces: readonly FaceReference[];
+  readonly settings: Settings;
+  /** Persistent local coordinates keep a helix continuous across face changes. */
+  readonly frame: PlaneFrame;
+  /** Original axial reference retained when coverage is split or partially removed. */
+  readonly axialReference?: [number, number];
+  readonly problem?: string;
+  readonly state?: unknown;
+}
+export interface DecoratorField {
+  key: string;
+  label: string;
+  type: "number" | "enum";
+  unit?: string;
+  min?: number;
+  max?: number;
+  default?: string | number | boolean;
+  visibleWhen?: { key: string; values: readonly (string | number | boolean)[] };
+  options?: readonly { value: string; label: string }[];
+}
+export interface MeshModification {
+  operation: "add" | "subtract";
+  mesh: ExportMesh;
+}
+export type DecoratorEdit =
+  | {
+      action: "apply";
+      definition: string;
+      version?: number;
+      faces: FaceReference[];
+      settings?: Settings;
+    }
+  | { action: "settings"; ids: string[]; patch: Settings }
+  | { action: "continue"; id: string; faces: FaceReference[] }
+  | { action: "reassign"; id: string; faces: FaceReference[] }
+  | { action: "discard"; id: string }
+  | { action: "remove"; faces: FaceReference[] };

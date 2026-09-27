@@ -1,9 +1,10 @@
 import type { ModelReply, ModelRequest, ModelView } from "../sketch/model-api.js";
 import { validateFrame } from "../sketch/planes.js";
+import { exportGeometry } from "./export-geometry.js";
 import { measurementInput } from "./measurement-input.js";
 import { SolidCalculator } from "./solid-calculator.js";
 
-type Query = Extract<ModelRequest, { kind: "sections" | "measure" }>;
+type Query = Extract<ModelRequest, { kind: "sections" | "measure" | "export-geometry" }>;
 
 /** Section refresh and selection readouts share one serialized read-only worker. */
 export class GeometryQueries {
@@ -21,6 +22,11 @@ export class GeometryQueries {
   private async calculate(view: ModelView, request: Query): Promise<ModelReply> {
     try {
       if (this.closed) throw new Error("Geometry query cancelled");
+      if (request.kind === "export-geometry")
+        return {
+          view,
+          exportDocument: await exportGeometry(view.data, this.kernel, request.bodyIds),
+        };
       if (request.kind === "measure") {
         const result = await this.kernel.calculate(measurementInput(view.data, request.targets));
         return { view, measurement: result.measurement };

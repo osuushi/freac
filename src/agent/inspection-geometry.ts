@@ -1,3 +1,4 @@
+import { threadDefinition, threadFields } from "../decorators/thread-settings.js";
 import type { Body } from "../model/body.js";
 import type { MeasurementTarget } from "../model/measurement.js";
 import { arcCircle } from "../sketch/arc-geometry.js";
@@ -60,6 +61,9 @@ export function targetGeometry(document: SketchDocument, target: InspectionTarge
         plane: face.plane,
         cylinder: face.cylinder ?? null,
         blend: face.blend ?? null,
+        decorators: (document.decorators ?? []).filter((d) =>
+          d.faces.some((f) => f.body === body.id && f.face === face.id),
+        ),
       };
     }
     const edge = required(body.edges.find((e) => e.id === target.edge));
@@ -122,6 +126,11 @@ export function findInspectionTarget(document: SketchDocument, id: string): Insp
 export function inspectionOverview(document: SketchDocument, view: InspectionView) {
   return {
     units: document.units,
+    decorators: document.decorators ?? [],
+    decoratorDefinitions: document.decoratorDefinitions ?? [],
+    builtinDecorators: [
+      { id: threadDefinition, version: 1, name: "Threads", fields: threadFields },
+    ],
     constructionPlanes: (document.constructionPlanes ?? []).map((p) => ({
       kind: "plane",
       ...p,

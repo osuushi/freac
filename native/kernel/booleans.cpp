@@ -70,19 +70,20 @@ std::vector<Result> booleanBodies(const Tree& input, const std::vector<Operand>&
         selected.push_back(&*found);
     }
     if (selected.size() < 2) throw std::runtime_error("Select at least two bodies");
-    // Only consumed entities may pass on their identities: retained originals must
-    // never share document-local IDs with the independently editable result.
+    // Keep correspondence for attachments even when originals survive. Materialization
+    // gives descendants of retained originals new document-local identities.
     for (std::size_t i = 0; i < selected.size(); ++i)
         if (!keep || (mode == "subtract" && i == 0)) participants.push_back(selected[i]->id);
     auto shape = selected.front()->shape;
-    std::vector<SourceEntity> origins;
-    if (!keep || mode == "subtract") origins = selected.front()->entities;
+    std::vector<SourceEntity> origins = selected.front()->entities;
     for (std::size_t i = 1; i < selected.size(); ++i) {
-        if (!keep) origins.insert(origins.end(), selected[i]->entities.begin(), selected[i]->entities.end());
+        origins.insert(origins.end(), selected[i]->entities.begin(), selected[i]->entities.end());
         shape = booleanShape(shape, selected[i]->shape, mode, origins);
     }
     std::vector<Result> results;
-    const auto predecessors = mode == "subtract" ? std::vector<std::string>{selected.front()->id} : participants;
+    std::vector<std::string> predecessors;
+    if (mode == "subtract") predecessors.push_back(selected.front()->id);
+    else for (const auto* body : selected) predecessors.push_back(body->id);
     solids(results, shape, origins, predecessors);
     return results;
 }

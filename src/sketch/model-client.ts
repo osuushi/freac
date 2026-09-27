@@ -87,6 +87,9 @@ export class ModelClient {
   get data() {
     return this.view.data;
   }
+  get decoratorSources() {
+    return this.view.decoratorSources ?? [];
+  }
   get canUndo() {
     return this.selectionInFlight || !!this.selectionHistory?.pending || this.view.canUndo;
   }
@@ -137,6 +140,26 @@ export class ModelClient {
     if (reply.error) throw new Error(reply.error);
     if (!reply.sections) throw new Error("Cross sections unavailable");
     return reply.sections;
+  }
+  async exportGeometry(bodyIds?: string[]) {
+    const reply = await call({ kind: "export-geometry", bodyIds });
+    if (reply.error) throw new Error(reply.error);
+    if (!reply.exportDocument) throw new Error("Export geometry unavailable");
+    return reply.exportDocument;
+  }
+  async draftDecorator(
+    edit: Extract<import("../decorators/types.js").DecoratorEdit, { action: "settings" }>,
+  ) {
+    const reply = await call({ kind: "decorator-draft", edit });
+    if (reply.error || !reply.decoratorDraft)
+      throw new Error(reply.error ?? "Decorator draft unavailable");
+    return reply.decoratorDraft;
+  }
+  async inspectDecorator(query: import("../decorators/inspection.js").DecoratorInspectionRequest) {
+    const reply = await call({ kind: "decorator-inspect", query });
+    if (reply.error || !reply.decoratorInspection)
+      throw new Error(reply.error ?? "Decorator inspection unavailable");
+    return reply.decoratorInspection;
   }
   async measure(targets: import("../model/measurement.js").MeasurementTarget[]) {
     const reply = await call({ kind: "measure", targets });

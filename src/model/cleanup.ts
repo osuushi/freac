@@ -1,3 +1,4 @@
+import type { SketchDocument } from "../sketch/document.js";
 import type { ModelingTarget } from "../sketch/model-selection.js";
 import type { Body } from "./body.js";
 
@@ -6,6 +7,38 @@ export interface CleanupSelection {
   whole: boolean;
   faces: string[];
   edges: string[];
+  /** Boundaries between distinct active decorator instances, supplied to the kernel. */
+  protectedEdges?: string[];
+}
+
+/** Keep only seams whose incident faces have different active decorator owners. */
+export function protectDecorationBoundaries(
+  document: SketchDocument,
+  selection: CleanupSelection[],
+): CleanupSelection[] {
+  const groups = new Map<string, string>();
+  for (const instance of document.decorators ?? []) {
+    if (instance.problem) continue;
+    for (const face of instance.faces) groups.set(`${face.body}/${face.face}`, instance.id);
+  }
+  if (!groups.size) return selection;
+  return selection.map((item) => {
+    const body = document.bodies?.find((candidate) => candidate.id === item.body);
+    if (!body) return item;
+    const incident = new Map<string, Set<string>>();
+    for (const face of body.faces) {
+      const group = groups.get(`${body.id}/${face.id}`) ?? "";
+      for (const edge of face.edges) {
+        const owners = incident.get(edge) ?? new Set<string>();
+        owners.add(group);
+        incident.set(edge, owners);
+      }
+    }
+    const protectedEdges = body.edges
+      .filter((edge) => (incident.get(edge.id)?.size ?? 0) > 1)
+      .map((edge) => edge.id);
+    return protectedEdges.length ? { ...item, protectedEdges } : item;
+  });
 }
 export function cleanupSelection(targets: readonly ModelingTarget[]): CleanupSelection[] {
   const selected = new Map<string, CleanupSelection>();

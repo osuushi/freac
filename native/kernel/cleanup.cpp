@@ -32,8 +32,23 @@ TopTools_MapOfShape eligibleEdges(const Tree& selection, const Operand& body) {
     }
     return eligible;
 }
+TopTools_MapOfShape protectedEdges(const Tree& selection, const Operand& body) {
+    TopTools_MapOfShape protectedBoundaries;
+    const auto ids = selection.get_child_optional("protectedEdges");
+    if (!ids) return protectedBoundaries;
+    for (const auto& item : *ids) {
+        const auto id = item.second.get_value<std::string>();
+        const auto found = std::find_if(body.entities.begin(), body.entities.end(), [&](const SourceEntity& e) {
+            return e.id == id && e.shape.ShapeType() == TopAbs_EDGE;
+        });
+        if (found == body.entities.end()) throw std::runtime_error("Cleanup boundary no longer exists");
+        protectedBoundaries.Add(found->shape);
+    }
+    return protectedBoundaries;
 }
-Result cleanupEdges(const Operand& body, const TopTools_MapOfShape& eligible) {
+}
+Result cleanupEdges(const Operand& body, const TopTools_MapOfShape& eligible,
+                    const TopTools_MapOfShape& protectedBoundaries) {
     ShapeUpgrade_UnifySameDomain unify(body.shape, true, true, false);
     unify.SetSafeInputMode(true);
     TopTools_MapOfShape seams, touchedVertices;
@@ -47,6 +62,13 @@ Result cleanupEdges(const Operand& body, const TopTools_MapOfShape& eligible) {
     // Preserve unselected face boundaries. Only selected-edge endpoints may be
     // absorbed into a continuous neighboring edge; remote breakpoints stay put.
     for (TopExp_Explorer e(body.shape, TopAbs_EDGE); e.More(); e.Next()) {
+        // Decoration ownership takes precedence over selected edges and seam reconnection.
+        if (protectedBoundaries.Contains(e.Current())) {
+            unify.KeepShape(e.Current());
+            for (TopExp_Explorer v(e.Current(), TopAbs_VERTEX); v.More(); v.Next())
+                unify.KeepShape(v.Current());
+            continue;
+        }
         if (eligible.Contains(e.Current()) || seams.Contains(e.Current())) continue;
         unify.KeepShape(e.Current());
         for (TopExp_Explorer v(e.Current(), TopAbs_VERTEX); v.More(); v.Next())
@@ -78,7 +100,8 @@ std::vector<Result> cleanupBodies(const Tree& input, const std::vector<Operand>&
         if (!seen.insert(id).second) throw std::runtime_error("Duplicate cleanup body");
         const auto found = std::find_if(bodies.begin(), bodies.end(), [&](const Operand& b) { return b.id == id; });
         if (found == bodies.end()) throw std::runtime_error("Cleanup body no longer exists");
-        const auto result = cleanupEdges(*found, eligibleEdges(item.second, *found));
+        const auto result = cleanupEdges(*found, eligibleEdges(item.second, *found),
+                                         protectedEdges(item.second, *found));
         TopTools_IndexedMapOfShape before, after;
         TopExp::MapShapes(found->shape, before); TopExp::MapShapes(result.shape, after);
         // A no-op must not remesh/reorder accepted data or add an Undo step.

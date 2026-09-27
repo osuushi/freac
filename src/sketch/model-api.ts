@@ -19,6 +19,18 @@ import type { OperationHistoryEntry } from "./operation-history.js";
 import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
+  | { kind: "export-geometry"; bodyIds?: string[] }
+  | {
+      kind: "decorator-draft";
+      edit: Extract<import("../decorators/types.js").DecoratorEdit, { action: "settings" }>;
+    }
+  | { kind: "decorator"; edit: import("../decorators/types.js").DecoratorEdit }
+  | { kind: "decorator-definition"; edit: import("../decorators/definition.js").DefinitionEdit }
+  | { kind: "decorator-enable"; id: string; version: number; enabled: boolean }
+  | {
+      kind: "decorator-inspect";
+      query: import("../decorators/inspection.js").DecoratorInspectionRequest;
+    }
   | { kind: "offset-sketch"; sketchId: string; curves: string[]; amount: number }
   | { kind: "sections"; frame: PlaneFrame; bodies: string[] }
   | { kind: "selection"; changes: import("./history-selection.js").SelectionChanges }
@@ -70,6 +82,7 @@ export type ModelRequest =
   | { kind: "preview" | "edit"; sketch: Sketch; intent?: EditIntent }
   | { kind: "remove" | "clear"; sketchId: string; ids?: string[] };
 export interface ModelView {
+  decoratorSources?: readonly import("../decorators/javascript-hooks.js").EnabledDefinition[];
   historySelection?: import("./history-selection.js").HistorySelection;
   planeCutAvailable?: boolean;
   data: SketchDocument;
@@ -87,6 +100,9 @@ export interface ModelView {
   solveMs: number;
 }
 export type ModelReply = {
+  decoratorDraft?: readonly import("../decorators/types.js").DecoratorInstance[];
+  decoratorInspection?: import("../decorators/inspection.js").DecoratorInspection;
+  exportDocument?: SketchDocument;
   sections?: import("../model/sketch-section.js").SketchSection[];
   documentChanged?: boolean;
   view: ModelView;

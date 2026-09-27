@@ -3,26 +3,36 @@ import { idleReason, toolCatalog } from "../tools/catalog.js";
 import type { ExportFormat } from "./mesh-export.js";
 
 export function exportControls(editor: SketchEditor): () => void {
-  let worker: Worker | null = null;
+  let job: { worker?: Worker } | null = null;
   const visibleBodies = () =>
     (editor.store.data.bodies ?? []).filter(
       (body) => editor.bodiesVisible && editor.visibility.visible(body.id),
     );
-  const blocked = () => editor.blocked || !!editor.interactions.current || !!worker;
+  const blocked = () => editor.blocked || !!editor.interactions.current || !!job;
   const finish = (error?: string) => {
-    worker?.terminate();
-    worker = null;
+    job?.worker?.terminate();
+    job = null;
+    if (editor.notice === "Preparing export…" || editor.notice === "Generating export mesh…")
+      editor.notice = "";
     if (error) {
       editor.message = error;
       editor.refresh();
     }
     editor.refresh();
   };
-  const run = (extension: ExportFormat) => {
-    const bodies = visibleBodies();
-    if (blocked() || !bodies.length) return;
+  const run = async (extension: ExportFormat) => {
+    const bodyIds = visibleBodies().map((body) => body.id);
+    if (blocked() || !bodyIds.length) return;
+    const current = {};
+    job = current;
+    editor.notice = "Preparing export…";
+    editor.refresh();
     try {
-      worker = new Worker(new URL("./export-worker.ts", import.meta.url), { type: "module" });
+      const sources = editor.store.decoratorSources;
+      const snapshot = await editor.store.exportGeometry(bodyIds);
+      if (job !== current) return;
+      const worker = new Worker(new URL("./export-worker.ts", import.meta.url), { type: "module" });
+      job.worker = worker;
       worker.onmessage = (
         event: MessageEvent<{ bytes?: Uint8Array<ArrayBuffer>; error?: string }>,
       ) => {
@@ -38,10 +48,11 @@ export function exportControls(editor: SketchEditor): () => void {
         finish(event.data.error);
       };
       worker.onerror = () => finish("Could not export the solid mesh");
-      worker.postMessage({ bodies, format: extension });
+      worker.postMessage({ document: snapshot, format: extension, sources });
+      editor.notice = "Generating export mesh…";
       editor.refresh();
     } catch (error) {
-      finish(error instanceof Error ? error.message : String(error));
+      if (job === current) finish(error instanceof Error ? error.message : String(error));
     }
   };
   const disposers = (["stl", "3mf"] as const).map((format) =>
@@ -52,16 +63,21 @@ export function exportControls(editor: SketchEditor): () => void {
       description: "Visible accepted bodies in millimeters",
       reason: () =>
         idleReason(editor) ??
-        (worker
-          ? "Exporting…"
-          : !visibleBodies().length
-            ? "Create or show a solid body first"
-            : null),
+        (job ? "Exporting…" : !visibleBodies().length ? "Create or show a solid body first" : null),
       run: () => run(format),
     }),
   );
+  disposers.push(
+    toolCatalog(editor).register({
+      id: "cancel-export",
+      label: "Cancel export",
+      category: "Document & Edit",
+      reason: () => (job ? null : "No export is running"),
+      run: () => finish(),
+    }),
+  );
   return () => {
-    worker?.terminate();
+    finish();
     for (const dispose of disposers) dispose();
   };
 }

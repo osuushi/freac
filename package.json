@@ -33,9 +33,11 @@
     "test:release": "node --test tests/release-metadata.mjs"
   },
   "dependencies": {
+    "@jitl/quickjs-wasmfile-release-sync": "0.32.0",
     "ghostty-web": "0.4.0",
     "node-pty": "1.1.0",
     "qrcode": "1.5.4",
+    "quickjs-emscripten-core": "0.32.0",
     "three": "0.186.0",
     "typescript": "7.0.2",
     "ws": "8.21.3"
@@ -49,6 +51,7 @@
     "@types/three": "0.186.0",
     "@types/ws": "8.18.1",
     "electron": "44.3.0",
+    "manifold-3d": "3.5.3",
     "playwright": "1.62.1",
     "vite": "8.3.0"
   },

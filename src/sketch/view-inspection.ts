@@ -1,7 +1,36 @@
+import { decoratorPreviewLayer } from "../decorators/preview-compositor.js";
 import type { SectionControls } from "../model/section-controls.js";
 import type { SketchEditor } from "./editor.js";
 import { inspectPlaneTargets } from "./plane-target-inspection.js";
 import { selectionFrame } from "./selection-frame.js";
+
+function decoratorPreviewBounds(world: SketchEditor["world"]) {
+  const bounds: { body: string; mesh: string; min: number[]; max: number[]; triangles: number }[] =
+    [];
+  world.scene.traverse((object) => {
+    if (
+      typeof object.userData.body !== "string" ||
+      object.userData.previewCurrent === false ||
+      !object.layers.isEnabled(decoratorPreviewLayer)
+    )
+      return;
+    const geometry = (object as import("three").Mesh).geometry;
+    if (!geometry?.isBufferGeometry) return;
+    geometry.computeBoundingBox();
+    const box = geometry.boundingBox;
+    if (box)
+      bounds.push({
+        body: object.userData.body,
+        mesh: object.uuid,
+        min: box.min.toArray(),
+        max: box.max.toArray(),
+        triangles: geometry.index
+          ? geometry.index.count / 3
+          : geometry.attributes.position.count / 3,
+      });
+  });
+  return bounds;
+}
 
 export function installViewInspection(editor: SketchEditor, sections: SectionControls): void {
   const world = editor.world;
@@ -16,6 +45,7 @@ export function installViewInspection(editor: SketchEditor, sections: SectionCon
         solving: editor.store.working,
         solver: editor.store.statistics,
         preview: editor.candidate,
+        decoratorPreviewBounds: decoratorPreviewBounds(world),
         interaction: editor.interactions.current
           ? { kind: editor.interactions.current.kind, phase: editor.interactions.current.phase }
           : null,

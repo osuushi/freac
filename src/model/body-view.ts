@@ -3,6 +3,7 @@ import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
+import { decoratorPreviewLayer, previewFaceKey } from "../decorators/preview-compositor.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { coplanar, type PlaneFrame, type Point } from "../sketch/planes.js";
 import { stableClipping } from "../sketch/stable-clipping.js";
@@ -41,6 +42,8 @@ export function bodyView(editor: SketchEditor): () => void {
   const light = new THREE.DirectionalLight(0xffffff, 2);
   ambient.layers.enable(foregroundBodyLayer);
   light.layers.enable(foregroundBodyLayer);
+  ambient.layers.enable(decoratorPreviewLayer);
+  light.layers.enable(decoratorPreviewLayer);
   light.position.set(40, -60, 90);
   editor.world.scene.add(group, ambient, light);
   let previous = "",
@@ -92,7 +95,9 @@ export function bodyView(editor: SketchEditor): () => void {
         const material = bodyMaterial(color);
         material.stencilRef = stencil(face.plane);
         faceMaterials.push({ plane: face.plane, material });
-        group.add(new THREE.Mesh(faceGeometry(face.vertices), material));
+        const mesh = new THREE.Mesh(faceGeometry(face.vertices), material);
+        mesh.userData.decoratorFace = previewFaceKey(body.id, face.id);
+        group.add(mesh);
       }
       addBodyEdges(group, body, editor, selectedEdges);
     }
