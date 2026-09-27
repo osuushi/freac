@@ -99,7 +99,7 @@ async function animatedEntry(page, name) {
     document
       .querySelector("canvas")
       .dispatchEvent(
-        new MouseEvent("click", { bubbles: true, clientX: point.x, clientY: point.y }),
+        new MouseEvent("dblclick", { bubbles: true, clientX: point.x, clientY: point.y }),
       );
     return { before, after: window.freacInspect().camera };
   }, target);
@@ -148,7 +148,7 @@ async function animatedEntry(page, name) {
     document
       .querySelector("canvas")
       .dispatchEvent(
-        new MouseEvent("click", { bubbles: true, clientX: point.x, clientY: point.y }),
+        new MouseEvent("dblclick", { bubbles: true, clientX: point.x, clientY: point.y }),
       );
     return window.freacInspect().camera.moving;
   }, nextTarget);

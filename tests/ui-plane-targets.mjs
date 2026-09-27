@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { inspect, reset } from "./ui-helpers.mjs";
+import { orient } from "./ui-blend-edit.mjs";
+import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function planeTargetsRoute(page, name) {
@@ -12,9 +13,13 @@ export async function planeTargetsRoute(page, name) {
     if (id === "XY")
       await page.screenshot({ path: `.cache/sketch-review/${name}-plane-target-hover.png` });
     await page.mouse.click(hit.x, hit.y);
-    assert.equal((await inspect(page)).activePlane, id, "Raycast click enters its plane");
+    assert.equal((await inspect(page)).activePlane, null, "Single-click stays in Modeling");
+    await page.mouse.dblclick(hit.x, hit.y);
+    assert.equal((await inspect(page)).activePlane, id, "Double-click enters its plane");
     assert.deepEqual((await inspect(page)).document, before.document);
   }
+  await reset(page);
+  await pickMirrorPlane(page, await deselectOnPlane(page));
   await reset(page);
   await assertEditorTabOrder(page);
   await reset(page);
@@ -28,7 +33,7 @@ export async function planeTargetsRoute(page, name) {
     assert.equal((await inspect(page)).activePlane, id, `${id} accessible target activates`);
     await reset(page);
   }
-  console.log(`${name}: camera-raycast plane target hover and click passed`);
+  console.log(`${name}: camera-raycast plane target hover, deselection and double-click passed`);
 }
 
 async function assertEditorTabOrder(page) {
@@ -145,4 +150,41 @@ export async function pickPlane(page, id) {
       }
     }
   assert.fail(`No unambiguous exposed patch for ${id}; orient the camera before picking`);
+}
+
+async function deselectOnPlane(page) {
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
+  await page.keyboard.press("r");
+  await drag(page, [24, 18], [36, 26]);
+  const region = await at(page, 30, 22);
+  await chooseTool(page, "return to modeling", "modeling");
+  await page.mouse.click(region.x, region.y);
+  const before = await inspect(page);
+  assert.equal(before.modelingSelection[0]?.kind, "profile");
+  const target = await findRaycastPoint(page, "XY");
+  await page.mouse.click(target.x, target.y);
+  const after = await inspect(page);
+  assert.equal(after.activePlane, null);
+  assert.deepEqual(after.modelingSelection, [], "Plane single-click deselects geometry");
+  assert.deepEqual(after.document, before.document);
+  return region;
+}
+
+async function pickMirrorPlane(page, region) {
+  await page.mouse.click(region.x, region.y);
+  await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
+  await page.getByRole("textbox", { name: "Extrusion distance" }).fill("6");
+  await page.keyboard.press("Enter");
+  await inspect(page);
+  await page.keyboard.press("Enter");
+  await inspect(page);
+  await orient(page, [1, 1, 1]);
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await chooseTool(page, "mirror", "mirror");
+  const target = await findRaycastPoint(page, "YZ");
+  await page.mouse.click(target.x, target.y);
+  const state = await inspect(page);
+  assert.equal(state.activePlane, null, "Plane picking stays in Modeling");
+  assert.equal(state.preview?.bodies.length, 2, "Single-click chooses the mirror plane");
+  await page.keyboard.press("Escape");
 }

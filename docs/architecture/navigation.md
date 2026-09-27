@@ -4,6 +4,13 @@ Read for work in this area, not on every resume. [Architecture index](../archite
 Later founder decisions override earlier proposals.
 Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.
 
+### Canonical plane entry
+
+In Modeling, a single click on an implicit canonical plane clears selection through
+the ordinary canvas selection route. Double-click enters its sketch workspace.
+Explicit plane-selection modes continue to accept a plane on a single click.
+Keyboard/tool-menu plane entry remains available.
+
 ### Sketch tool lifetime
 
 Leaving a sketch workspace resets its tool to Select and clears armed creation

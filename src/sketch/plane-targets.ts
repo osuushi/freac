@@ -39,6 +39,7 @@ class PlaneTargetInteraction {
     world.canvas.addEventListener("pointermove", this.move, options);
     world.canvas.addEventListener("pointerleave", () => this.highlight(null), options);
     world.canvas.addEventListener("click", this.click, options);
+    world.canvas.addEventListener("dblclick", this.click, options);
   }
   update = (): void => {
     for (const target of this.targets) {
@@ -83,6 +84,7 @@ class PlaneTargetInteraction {
   };
   private click = (event: MouseEvent): void => {
     if (event.button || event.metaKey || event.ctrlKey || this.world.planePickerAccept) return;
+    if (event.type !== (this.world.planePicker ? "click" : "dblclick")) return;
     const target = this.hit({ x: event.clientX, y: event.clientY });
     if (!target) return;
     event.preventDefault();
