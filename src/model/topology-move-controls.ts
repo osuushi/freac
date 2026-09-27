@@ -174,15 +174,11 @@ export class TopologyMoveControls {
     if (!pointer || pointer.id !== event.pointerId) return;
     pointer.moved ||= Math.hypot(event.clientX - pointer.x, event.clientY - pointer.y) > 3;
     if (!pointer.moved) return;
+    const step = this.editor.world.spacing / (event.shiftKey ? 10 : 1);
     let value = this.rotate
-      ? snapRotation(
-          pointer.frame.angle(event.clientX, event.clientY),
-          event.shiftKey,
-          event.altKey,
-        )
+      ? snapRotation(pointer.frame.angle(event.clientX, event.clientY), event.shiftKey)
       : pointer.frame.translation(event.clientX, event.clientY);
-    if (!this.rotate && this.editor.gridSnap)
-      value = Math.round(value / this.editor.world.spacing) * this.editor.world.spacing;
+    if (!this.rotate && this.editor.gridSnap) value = Math.round(value / step) * step;
     this.queue(value);
   };
   private async finish(): Promise<boolean> {

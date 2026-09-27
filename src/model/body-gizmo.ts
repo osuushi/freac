@@ -34,7 +34,7 @@ export class BodyGizmo {
           "aria-label",
           `${rotate ? "Rotate" : "Move"} ${target} ${axis === "N" ? "normal" : axis}`,
         );
-        button.title = `${rotate ? "Rotate around" : "Move along"} ${axis === "N" ? "boundary normal" : axis} · drag or click to type`;
+        button.title = `${rotate ? "Rotate around" : "Move along"} ${axis === "N" ? "boundary normal" : axis} · ${rotate ? "5° · Shift: 0.5°" : "Shift: finer grid"} · drag or click to type`;
         button.addEventListener("pointerdown", (event) => start(event, axis, rotate));
         button.addEventListener("transform-numeric-tap", () =>
           start(new PointerEvent("pointerdown", { pointerId: -1 }), axis, rotate),

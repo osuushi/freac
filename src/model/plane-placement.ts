@@ -36,15 +36,11 @@ export class PlanePlacement {
     const move = (event: PointerEvent) => {
       const d = this.drag;
       if (!d?.held || d.pointer !== event.pointerId) return;
+      const step = editor.world.spacing / (event.shiftKey ? 10 : 1);
       let value = d.rotate
-        ? snapRotation(
-            d.measurement.angle(event.clientX, event.clientY),
-            event.shiftKey,
-            event.altKey,
-          )
+        ? snapRotation(d.measurement.angle(event.clientX, event.clientY), event.shiftKey)
         : d.measurement.translation(event.clientX, event.clientY);
-      if (!d.rotate && editor.gridSnap)
-        value = Math.round(value / editor.world.spacing) * editor.world.spacing;
+      if (!d.rotate && editor.gridSnap) value = Math.round(value / step) * step;
       this.gizmo.input.value = String(Number(value.toFixed(4)));
       this.preview(value);
     };

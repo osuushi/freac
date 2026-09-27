@@ -201,11 +201,11 @@ export class BodyMoveControls {
     s.edit.duplicate = !s.pivotOnly && (s.explicitCopy || event.altKey);
     p.moved ||= Math.hypot(event.clientX - p.x, event.clientY - p.y) > 3;
     if (!p.moved) return;
+    const step = this.editor.world.spacing / (event.shiftKey ? 10 : 1);
     let value = s.rotate
-      ? snapRotation(p.frame.angle(event.clientX, event.clientY), event.shiftKey, event.altKey)
+      ? snapRotation(p.frame.angle(event.clientX, event.clientY), event.shiftKey)
       : p.frame.translation(event.clientX, event.clientY);
-    if (!s.rotate && this.editor.gridSnap)
-      value = Math.round(value / this.editor.world.spacing) * this.editor.world.spacing;
+    if (!s.rotate && this.editor.gridSnap) value = Math.round(value / step) * step;
     const snap =
       !s.rotate && !event.shiftKey
         ? bodySnap(this.editor, s.pivotOnly ? [] : s.edit.ids, s.edit.pivot, s.axis, value)

@@ -1,6 +1,5 @@
-/** Quantize a rotation angle in degrees only while Shift is held. */
-export function snapRotation(angle: number, shift: boolean, option: boolean): number {
-  if (!shift) return angle;
-  const step = option ? 0.5 : 5;
+/** Quantize pointer rotation in degrees; numeric entry remains exact. */
+export function snapRotation(angle: number, shift: boolean): number {
+  const step = shift ? 0.5 : 5;
   return Math.round(angle / step) * step;
 }

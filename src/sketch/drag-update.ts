@@ -116,7 +116,7 @@ export function updateDrag(
     const from = subtract(drag.start, drag.pivot),
       to = subtract(point, drag.pivot);
     let delta = ((Math.atan2(to.y, to.x) - Math.atan2(from.y, from.x)) * 180) / Math.PI;
-    delta = snapRotation(drag.pose + delta, bypass, drag.symmetric) - drag.pose;
+    delta = snapRotation(drag.pose + delta, bypass) - drag.pose;
     if (drag.quantities.angle !== undefined) delta = drag.quantities.angle - drag.pose;
     drag.angle = delta;
     editor.rotationPreview = drag.pose + delta;
@@ -140,7 +140,7 @@ function axisDrag(editor: SketchEditor, drag: Drag, point: Point, bypass: boolea
   const axis = drag.axis;
   if (!axis) return drag.sketch;
   const desired = translatedPoint(drag.pivot, axis, point[axis] - drag.start[axis]);
-  const target = snapped(editor, desired, drag.ids, bypass, drag.pivot);
+  const target = snapped(editor, desired, drag.ids, bypass, drag.pivot, bypass ? 0.1 : 1);
   const value = drag.quantities[axisQuantity(axis)] ?? target[axis] - drag.pivot[axis];
   const other = axis === "x" ? "y" : "x";
   if (drag.quantities[axisQuantity(axis)] !== undefined) editor.snap = null;

@@ -14,7 +14,7 @@ so pressing near an edge does not introduce an initial jump.
 
 For whole-object and plane-axis movement, grid snapping quantizes translation
 relative to the original anchor/pivot, not that anchor's absolute position. Existing
-geometry targets and alignment guides still override grid coordinates; Option
+geometry targets and alignment guides still override grid coordinates; Shift
 bypasses geometry attraction while leaving displacement snapping active. Endpoint
 and resize edits continue to snap their destination geometry to the world grid.
 

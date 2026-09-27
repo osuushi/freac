@@ -41,7 +41,7 @@ export async function cameraFacingMove(page, project, body) {
     starting,
   );
   await page.screenshot({
-    path: `.cache/sketch-review/${page.context().browser().browserType().name()}-movement-shadows.png`,
+    path: `.cache/sketch-review/${page.context().browser()?.browserType().name() ?? "electron"}-movement-shadows.png`,
   });
   await page.mouse.up();
   await page.keyboard.up("Meta");

@@ -119,7 +119,10 @@ export class ScaleGestures {
         y = q.y - p.y,
         length = x * x + y * y;
       if (length < 1) return;
-      const ratio = 1 + (dx * x + dy * y) / length;
+      let ratio = 1 + (dx * x + dy * y) / length;
+      const reference = d.factors[d.handle.axes[0]];
+      if (event.shiftKey && reference > 0)
+        ratio = Math.round(reference * ratio * 10) / 10 / reference;
       for (let i = 0; i < (d.box.frame ? 2 : 3); i++) values[i] *= ratio;
     } else {
       const delta = projectedDelta(d.directions, axes, dx, dy);

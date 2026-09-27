@@ -41,9 +41,11 @@ Snap to endpoints, midpoints, centers, intersections, nearest positions on edges
 and alignment guides; add tangent inference with curved tools. Shift bypasses
 geometry snapping. Grid snapping is a separate, initially enabled toolbar toggle:
 Shift leaves it enabled, and disabling the grid leaves geometry attraction active.
-During rotation, Shift snaps to 5° and Shift+Option to 0.5°; rotation is otherwise
-free. Option retains symmetric sizing/creation and Move duplication. Shift-click selection and Shift-hover inspection
-retain their meanings outside a captured geometry gesture.
+Pointer rotation snaps to 5° by default and 0.5° with Shift. Move arrows use
+one tenth of the grid spacing with Shift; see [transform precision](transforms.md).
+Option retains symmetric sizing/creation and Move duplication. Shift-click
+selection and Shift-hover inspection retain their meanings outside a captured
+geometry gesture.
 Use visible screen-space acquisition distances with stable
 priority; the cue, preview and accepted location agree. Explicit numeric input
 takes precedence over snapping. A snap alone does not create an invisible

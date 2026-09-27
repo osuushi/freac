@@ -207,7 +207,8 @@ export class ScaleWidget {
         "aria-label",
         `Scale ${handle.axes.map((i) => ["X", "Y", "Z"][i]).join(" ")} ${handle.key}`,
       );
-      button.title = "Drag to resize · Option: about anchor · Shift: uniform · click to type";
+      button.title =
+        "Drag to resize · Option: about anchor · Shift: uniform 0.1 steps · click to type";
     }
   }
   update(visible: boolean, active: boolean, valid: boolean, busy: boolean, closing: boolean): void {

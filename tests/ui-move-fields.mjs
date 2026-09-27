@@ -38,7 +38,7 @@ export async function moveFieldsRoute(page, name) {
     dy = from.y - origin.y;
   await page.mouse.move(from.x, from.y);
   await page.mouse.down();
-  for (const degrees of [17, 32]) {
+  for (const degrees of [16, 31]) {
     const radians = (-degrees * Math.PI) / 180;
     await page.mouse.move(
       origin.x + dx * Math.cos(radians) - dy * Math.sin(radians),
@@ -48,7 +48,7 @@ export async function moveFieldsRoute(page, name) {
     const state = await inspect(page);
     const line = state.preview.sketches[0].curves[0];
     const actual = (Math.atan2(line.b.y - line.a.y, line.b.x - line.a.x) * 180) / Math.PI;
-    assert.ok(Math.abs(actual - degrees) < 0.6);
+    assert.ok(Math.abs(actual - Math.round(degrees / 5) * 5) < 1e-6);
     assert.ok(Math.abs(Number(await angle.inputValue()) - actual) < 0.001);
   }
   await page.mouse.up();

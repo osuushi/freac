@@ -83,9 +83,9 @@ export async function sketchPlacementWidgetRoute(page, name) {
   await orient(page, [1, 1, 1]);
   assert.equal(await root.getAttribute("data-mode"), "3d");
   assert.equal(await root.locator(".body-axis-handle:visible").count(), 6);
-  await value(page, "Rotate", "X", 30);
+  await value(page, "Rotate", "X", 0.073);
   const oblique = (await inspect(page)).document.sketches[0];
-  close(oblique.plane.v[2], 0.5);
+  close(oblique.plane.v[2], Math.sin((0.073 * Math.PI) / 180));
   await page.screenshot({ path: `.cache/sketch-review/${name}-whole-sketch-widget.png` });
   await reopen(page, name, oblique);
   await chooseTool(page, "edit sketch", "edit-sketch");

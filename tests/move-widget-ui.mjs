@@ -9,6 +9,7 @@ import { moveToolRoute } from "./ui-move-tool.mjs";
 import { moveWidgetRoute } from "./ui-move-widget.mjs";
 import { rotationSnappingRoute } from "./ui-rotation-snapping.mjs";
 import { sketchPlacementWidgetRoute } from "./ui-sketch-placement-widget.mjs";
+import { transformPrecisionRoute } from "./ui-transform-precision.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
 const name = process.env.FREAC_TEST_BROWSER ?? "chromium";
@@ -35,6 +36,7 @@ try {
   page.on("pageerror", (error) => {
     throw error;
   });
+  await transformPrecisionRoute(page, name);
   await moveFieldsRoute(page, name);
   await rotationSnappingRoute(page, name);
   await sketchPlacementWidgetRoute(page, name);

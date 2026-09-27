@@ -49,11 +49,13 @@ uniform scale and linear/circular copies use the same selection/edit lifecycle;
 their pivot/axis/distance/count controls are local. An impossible transform must
 not silently change locked dimensions. Exact gestures are specified per increment.
 
-Rotation handles turn freely by default. Holding Shift snaps to 5° increments;
-Shift+Option/Alt snaps to 0.5°. Held previews respond to modifier changes without
-pointer movement. Sketch rotation snaps the displayed orientation; world rotation
+Rotation handles snap to 5° increments by default. Holding Shift refines this to
+0.5°; Option/Alt does not change precision. Held previews respond to modifier
+changes without pointer movement. Sketch rotation snaps the displayed orientation; world rotation
 handles snap their gesture angle. Numeric entry remains exact, and Option retains
-its Move duplication behavior.
+its Move duplication behavior. Move arrows snap displacement to the current grid
+spacing; Shift uses one tenth of that spacing while bypassing geometry attraction.
+The grid toggle still controls translation grid snapping.
 
 ### Option-Move duplication (founder-directed, 2026-09-21)
 
@@ -176,7 +178,10 @@ By default, dragging a box edge or corner keeps its opposite side or corner
 fixed. Option/Alt instead resizes symmetrically about the sphere anchor. Shift
 makes scaling uniform across the available axes, including axes not directly
 dragged by an edge handle; without Option, their lower bounds remain fixed.
-Shift also bypasses point attraction. Held modifiers update the preview during
+Shift also bypasses point attraction and snaps the handle’s first-axis scale factor to 0.1
+increments, applying the same multiplier to every axis to preserve proportions
+after an earlier nonuniform preview. Nonuniform scaling retains destination grid snapping; numeric scale
+entry remains exact. Held modifiers update the preview during
 the drag. The scale card stays hidden until a resize handle is used; clicking a handle
 opens exact entry without requiring a drag. It hides again on acceptance or cancellation.
 In sketch Move, Tab reveals and focuses X translation, Y translation, then rotation

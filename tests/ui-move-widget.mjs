@@ -276,9 +276,7 @@ async function sketchRotationDrag(page, anchor, before) {
     y: (pivot.y - origin.y) / (unit.y - origin.y),
   };
   const from = await center(page.locator('[data-move-marker="rotation"] > svg'));
-  await page.keyboard.down("Shift");
   await pointerDrag(page, from, { x: pivot.x + from.y - pivot.y, y: pivot.y - from.x + pivot.x });
-  await page.keyboard.up("Shift");
   const curve = (await inspect(page)).document.sketches[0].curves[0];
   const source = before.document.sketches[0].curves[0];
   for (const end of ["a", "b"]) {
