@@ -3,6 +3,7 @@
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Vertex.hxx>
+#include <TopoDS_Wire.hxx>
 #include <gp_GTrsf.hxx>
 
 // Boundary neighborhood model shared by edge and face selection.
@@ -22,6 +23,8 @@ Edit selection(const Tree&, const std::vector<Operand>&);
 void buildEdges(Edit&);
 TopoDS_Face rebuildFace(const TopoDS_Face&, const Edit&);
 TopoDS_Face cylinderFace(const TopoDS_Face&, const Edit&);
+TopoDS_Face fillFace(const TopoDS_Face&, const std::vector<TopoDS_Edge>&,
+                     const std::vector<TopoDS_Wire>&);
 Result reconstruct(const Edit&);
 bool sameBoundary(const TopoDS_Edge&, const TopoDS_Edge&);
 }

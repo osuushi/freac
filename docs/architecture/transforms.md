@@ -254,3 +254,25 @@ foreground surfaces. This uses the same presentation triangles as the solid view
 labels and anchor guides remain overlay annotations. World
 planes remain fixed at the origin; an offscreen projection can consequently be outside
 the viewport. No extra camera view, persistent object or Undo entry is introduced.
+
+Boundary reconnection can fit nonplanar faces with holes. Outer edges constrain
+its boundary; each inner wire constrains the same support and then trims a hole.
+The spatial curves remain authoritative. Projected hole parameters, all resulting
+curve/surface distances and edge tolerances must pass 1e-6 mm checks before the
+existing closed-solid, self-interference and topology-correspondence checks.
+This permits world-axis movement on a slightly tilted perforated plate without
+silently projecting the requested movement into its original plane. Surface
+fitting remains bounded and may reject larger or more complex deformations.
+Unselected straight or cubic connectors between tangent curved rims preserve
+those endpoint tangent directions while reconnecting moved ends. They can become
+ordinary cubic edges; when the current endpoints and tangents line up again,
+reconnection restores a straight edge. This uses current geometry, without a
+stored feature recipe or a new persistent tangency relationship. Selected faces
+and their boundaries still undergo the exact requested rigid transform.
+
+Four-edge reconnections first use a ruled surface when all four resulting
+boundaries match the requested curves one-to-one. Otherwise surface fitting
+remains available. Generated fitted boundaries must meet their incident surfaces
+within 1e-6 mm; vertex bounds are reduced to at most 2e-6 mm only after checking
+actual endpoint agreement, before sewing. This prevents conservative or inaccurate
+fill tolerances from merging nearby endpoints on a subsequent edit.

@@ -4,6 +4,7 @@
 #include <BRepAdaptor_Surface.hxx>
 #include <Standard_Failure.hxx>
 #include <TopoDS.hxx>
+#include <TopExp_Explorer.hxx>
 #include <algorithm>
 
 std::optional<Result> planarFaceOffset(const Operand& body,
@@ -35,6 +36,8 @@ std::optional<Result> planarFaceOffset(const Operand& body,
         // In particular, this must not silently adopt Move's neighboring-face warping.
         for (const auto& entity : body.entities) {
             if (entity.shape.ShapeType() != TopAbs_FACE) continue;
+            // Reconstruction copies unaffected faces without changing their support.
+            if (!edit.affected(entity.shape)) continue;
             const auto next = std::find_if(result.predecessors.begin(), result.predecessors.end(),
                 [&](const auto& e) { return e.id == entity.id; });
             if (next == result.predecessors.end()) return std::nullopt;
@@ -45,7 +48,10 @@ std::optional<Result> planarFaceOffset(const Operand& body,
                 result.selectedFaces.push_back(face);
             } else checkUnselectedSupport(TopoDS::Face(entity.shape), face);
         }
-        checkOffsetVolume(body.shape, result.shape, distance);
+        std::vector<TopoDS_Shape> preservedVertices;
+        for (TopExp_Explorer it(body.shape, TopAbs_VERTEX); it.More(); it.Next())
+            if (!edit.movedVertices.Contains(it.Current())) preservedVertices.push_back(it.Current());
+        checkOffsetVolume(body.shape, result.shape, distance, preservedVertices);
         return result;
     } catch (const Standard_Failure&) {
         return std::nullopt;

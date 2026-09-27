@@ -284,3 +284,10 @@ The captured notched cylinder now shells inward/outward, but subsequently offset
 its filleted interior floor by +0.2 mm still clamps to zero: the expanded tangent-face
 chain fails the current check against joining distinct boundary endpoints. This remains a face-offset
 limitation, separate from the shell's solid/boundary and export validation.
+
+A local planar face Offset can preserve untouched geometry with inherited loose
+vertex tolerances. Only vertices outside the edited boundary qualify: their
+positions must remain within 1e-12 mm of the originals and their recorded bounds
+must not increase. New or moved vertices keep the existing 2e-6 mm limit. This
+is preservation of accepted geometry, not precision recovery; the usual support,
+closed-solid, self-interference and boundary correspondence checks still apply.

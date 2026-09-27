@@ -6,7 +6,7 @@ find_package(OpenCASCADE 7.9.3 EXACT CONFIG REQUIRED COMPONENTS FoundationClasse
 find_path(BOOST_INCLUDE_DIR boost/property_tree/json_parser.hpp REQUIRED)
 add_executable(freac-kernel main.cpp shell.cpp shell-validation.cpp shell-canonical.cpp extrude-draft.cpp cleanup.cpp delete-topology.cpp projection.cpp geometry.cpp revolve.cpp screw-sweep.cpp axial-sections.cpp presentation.cpp transform.cpp booleans.cpp edge-finishes.cpp face-offset.cpp offset-contacts.cpp face-chains.cpp offset-validation.cpp blend-recognition.cpp blend-resize.cpp)
 target_include_directories(freac-kernel SYSTEM PRIVATE ${OpenCASCADE_INCLUDE_DIR} ${BOOST_INCLUDE_DIR})
-target_sources(freac-kernel PRIVATE boundary-move.cpp boundary-selection.cpp boundary-edges.cpp boundary-faces.cpp boundary-cylinder.cpp)
+target_sources(freac-kernel PRIVATE boundary-move.cpp boundary-selection.cpp boundary-edges.cpp boundary-faces.cpp boundary-cylinder.cpp boundary-filling.cpp)
 target_sources(freac-kernel PRIVATE offset-collapse.cpp)
 target_sources(freac-kernel PRIVATE offset-thickness.cpp)
 target_sources(freac-kernel PRIVATE spherical-face-offset.cpp)

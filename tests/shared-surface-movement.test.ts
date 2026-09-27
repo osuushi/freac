@@ -75,7 +75,7 @@ for (const angle of [0, 20])
     }
   });
 
-test("through-hole tilt rejects unsupported nonplanar multi-loop reconnection atomically", async () => {
+test("through-hole tilt reconnects perforated faces and rejects disconnection atomically", async () => {
   const fixture: { document: SketchDocument; operation: FaceMovement } = JSON.parse(
     readFileSync("tests/fixtures/hole-in-cylinder.json", "utf8"),
   );
@@ -90,8 +90,44 @@ test("through-hole tilt rejects unsupported nonplanar multi-loop reconnection at
       translation: [0, 0, 0],
     };
     const reply = await owner.call({ kind: "move-faces", operation });
-    assert.match(reply.error ?? "", /multiple boundary loops/);
-    assert.equal(reply.view.candidate, null);
+    assert.equal(reply.error, undefined);
+    const source = original.bodies?.[0],
+      moved = reply.view.candidate?.bodies?.[0];
+    assert.ok(source && moved);
+    assert.deepEqual(
+      moved.faces.map((face) => face.id).sort(),
+      source.faces.map((face) => face.id).sort(),
+    );
+    for (const target of operation.faces) {
+      const before = source.faces.find((face) => face.id === target.face);
+      const after = moved.faces.find((face) => face.id === target.face);
+      assert.ok(before && after);
+      const angle = (5 * Math.PI) / 180;
+      const y = before.signature[4] - operation.pivot[1];
+      const z = before.signature[5] - operation.pivot[2];
+      assert.ok(Math.abs(after.signature[2] - before.signature[2]) < 1e-6);
+      assert.ok(Math.abs(after.signature[3] - before.signature[3]) < 1e-6);
+      assert.ok(
+        Math.abs(
+          after.signature[4] - operation.pivot[1] - y * Math.cos(angle) + z * Math.sin(angle),
+        ) < 1e-6,
+      );
+      assert.ok(
+        Math.abs(
+          after.signature[5] - operation.pivot[2] - y * Math.sin(angle) - z * Math.cos(angle),
+        ) < 1e-6,
+      );
+    }
+    assert.deepEqual(owner.view.data, original);
+    assert.equal((await owner.call({ kind: "accept" })).error, undefined);
+    assert.equal((await owner.call({ kind: "undo" })).error, undefined);
+    assert.deepEqual(owner.view.data, original);
+    const rejected = await owner.call({
+      kind: "move-faces",
+      operation: { ...operation, translation: [100, 0, 0] },
+    });
+    assert.ok(rejected.error);
+    assert.equal(rejected.view.candidate, null);
     assert.deepEqual(owner.view.data, original);
     assert.ok((await owner.call({ kind: "accept" })).error);
     assert.equal(

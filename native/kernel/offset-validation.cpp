@@ -7,8 +7,10 @@
 #include <GeomAPI_ProjectPointOnSurf.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopoDS.hxx>
+#include <TopoDS_Vertex.hxx>
 #include <TopExp_Explorer.hxx>
 #include <cmath>
+#include <algorithm>
 #include <stdexcept>
 
 void checkOffsetFace(const TopoDS_Face& face, double distance) {
@@ -42,12 +44,25 @@ void checkUnselectedSupport(const TopoDS_Face& source, const TopoDS_Face& result
     }
 }
 
-void checkOffsetVolume(const TopoDS_Shape& before, const TopoDS_Shape& after, double distance) {
+void checkOffsetVolume(const TopoDS_Shape& before, const TopoDS_Shape& after, double distance,
+                       const std::vector<TopoDS_Shape>& preservedVertices) {
     GProp_GProps props; BRepGProp::VolumeProperties(after, props);
     const double oldVolume = volume(before), next = props.Mass();
     if (next <= 1e-9 || (next - oldVolume) * (distance > 0 ? 1 : -1) < -1e-6)
         throw std::runtime_error("Kernel produced invalid geometry: offset inverted material");
-    for (TopExp_Explorer v(after, TopAbs_VERTEX); v.More(); v.Next())
-        if (BRep_Tool::Tolerance(TopoDS::Vertex(v.Current())) > 2e-6)
+    for (TopExp_Explorer v(after, TopAbs_VERTEX); v.More(); v.Next()) {
+        const auto vertex = TopoDS::Vertex(v.Current());
+        const double precision = BRep_Tool::Tolerance(vertex);
+        if (precision <= 2e-6) continue;
+        // A local reconstruction may carry an untouched, already accepted vertex.
+        // Its position and tolerance must be preserved, never enlarged to admit an edit.
+        const bool inherited = std::any_of(preservedVertices.begin(), preservedVertices.end(),
+            [&](const auto& source) {
+                const auto old = TopoDS::Vertex(source);
+                return BRep_Tool::Pnt(old).Distance(BRep_Tool::Pnt(vertex)) <= 1e-12 &&
+                       precision <= BRep_Tool::Tolerance(old);
+            });
+        if (!inherited)
             throw std::runtime_error("Kernel produced invalid geometry: offset merged distinct vertices");
+    }
 }

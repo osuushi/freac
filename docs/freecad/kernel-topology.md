@@ -1016,3 +1016,39 @@ all-parallel intersection fallback, and bounded generated-vertex fitting permit
 both -2/+2 mm Shell results under the existing strict checks. The capture tests
 also run STL and 3MF mesh closure/orientation validation. This is specific runtime
 evidence, not a claim of general constrained-surface repair.
+
+## Perforated boundary reconstruction (2026-09-27)
+
+Source observation at configured OCCT commit
+`a016080bf6738d6aeae020badee4e888ad1540a5`:
+[`BRepOffsetAPI_MakeFilling::Add`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepOffsetAPI/BRepOffsetAPI_MakeFilling.hxx)
+accepts interior curve constraints through `IsBound=false`.
+[`BRepFill_Filling::Build`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepFill/BRepFill_Filling.cxx#L669-L695)
+approximates its plate surface with a separate B-spline approximation;
+`G0Error()` reports the plate builder's constraint error, not a certificate for
+all final boundary points. These local source observations informed use of the
+public API; no upstream implementation was copied.
+
+Freac inference: constrain inner wires, trim them on the resulting support, and
+independently validate final spatial/parameter boundary agreement. A tiny
+out-of-plane movement can require substantially more approximation pieces than
+a single-loop fill. Increasing representation capacity must not increase the
+accepted geometric tolerance.
+
+Runtime observation on the captured tilted capsule: its microscopic straight
+spans and tangent arc joins make a straight connecting edge introduce a kink
+when one end moves out of the original plane. Keeping tangent directions on
+unselected connecting edges permits the perforated support to reconstruct within
+the unchanged boundary tolerance. Curve-point correspondence also supplies a
+direct distance witness when the nearest-point solver misses a copied spline's
+zero-distance solution; length checks and both sampling directions remain.
+
+Source observation: pinned
+[`BRepFill::Face`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepFill/BRepFill.cxx#L210)
+constructs a ruled support between oriented edges. Freac uses this public API for
+four-sided reconnections only when all four output boundaries match the requested
+curves. Runtime verification of moving an individual capsule quarter-face exposed
+an inaccurate neighboring single-loop fill carrying a roughly 0.0059 mm vertex
+bound; reversing the edit then merged endpoints around a 0.0006 mm span. The ruled
+construction and measured boundary precision checks allow that move and its
+reverse after reopening, without increasing tolerances or relying on edit history.
