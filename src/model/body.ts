@@ -16,6 +16,7 @@ export interface Face {
   readonly blend?: { radius: number; outward: 1 | -1; faces: readonly string[] } | null;
   /** Derived analytic measurement; other surface classes remain ordinary faces. */
   readonly cylinder?: { origin: Vector; axis: Vector; radius: number; outward: 1 | -1 } | null;
+  readonly sphere?: { radius: number; outward: 1 | -1 } | null;
 }
 export type EdgeCurve =
   | { kind: "line"; a: Vector; b: Vector }

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { sharedThickness } from "../src/model/face-offset-targets.js";
+import { OffsetQuantity } from "../src/model/offset-quantity.js";
 import { emptySketch } from "../src/sketch/document.js";
 import { planes } from "../src/sketch/planes.js";
 import { profilesFor } from "../src/sketch/profiles.js";
@@ -126,11 +127,16 @@ test("spherical thickness offsets the radius with a fixed concentric reference",
     const hollow = await shell(owner, sphere, -1);
     await owner.call({ kind: "accept" });
     for (const face of hollow.faces) {
+      assert.ok(face.sphere);
+      const quantity = new OffsetQuantity();
+      quantity.configure([face], [{ body: hollow.id, face: face.id }], null);
+      quantity.setMode("radius");
+      const requestedRadius = face.sphere.radius + 0.25 * face.sphere.outward;
       const reply = await owner.call({
         kind: "offset-faces",
         operation: {
           faces: [{ body: hollow.id, face: face.id }],
-          distance: 0.25,
+          distance: quantity.distance(requestedRadius),
         },
       });
       assert.equal(reply.error, undefined);

@@ -50,9 +50,9 @@ export async function planarThicknessRoute(page) {
   const expected = plate.volume + cap.signature[2];
   close(state.preview.bodies.find((b) => b.id === plate.id).volume, expected);
   assert.deepEqual(state.document, original);
-  await page.getByRole("button", { name: "Switch offset measurement" }).click();
+  await page.getByRole("combobox", { name: "Offset mode" }).selectOption("offset");
   close(Number(await page.getByRole("textbox", { name: "Face offset distance" }).inputValue()), 1);
-  await page.getByRole("button", { name: "Switch offset measurement" }).click();
+  await page.getByRole("combobox", { name: "Offset mode" }).selectOption("thickness");
   close(Number(await field.inputValue()), 5);
   await page.keyboard.press("Enter");
   state = await inspect(page);

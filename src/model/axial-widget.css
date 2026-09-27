@@ -41,6 +41,12 @@
   width: auto;
   min-width: 28px;
   padding-inline: 6px;
+  height: 28px;
+  border: 1px solid #bdccdc;
+  border-radius: 5px;
+  background: white;
+  color: #31506b;
+  font: inherit;
 }
 .axial-panel button[aria-pressed="true"] {
   background: #e2edfc;

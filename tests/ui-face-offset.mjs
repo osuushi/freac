@@ -111,12 +111,12 @@ async function holeOffset(page, name, electron, cleanup = false) {
   const hole = original.bodies[0].faces.find((f) => f.cylinder);
   assert.equal(state.modelingSelection[0]?.face, hole.id, "Pick the actual inner cylindrical wall");
   await page.getByRole("button", { name: "Offset faces", exact: true }).click();
+  const radius = page.getByRole("textbox", { name: "Face radius", exact: true });
+  close(Number(await radius.inputValue()), 1.5);
+  await radius.fill("2.5");
+  close((await inspect(page)).preview.bodies[0].volume, (400 - Math.PI * 2.5 ** 2) * 5);
   const distance = await relativeOffsetInput(page);
-  close(Number(await distance.inputValue()), 0);
-  assert.equal(
-    await page.getByRole("button", { name: "Switch offset measurement" }).isVisible(),
-    false,
-  );
+  close(Number(await distance.inputValue()), -1);
   await distance.fill("-1");
   state = await inspect(page);
   close(state.preview.bodies[0].faces.find((f) => f.id === hole.id).cylinder.radius, 2.5);

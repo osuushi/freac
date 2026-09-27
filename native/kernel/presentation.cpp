@@ -62,6 +62,12 @@ void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMap
         out << ",\"radius\":" << cylinder.Radius();
         out << ",\"outward\":" << ((shape.Orientation() == TopAbs_REVERSED ? -1 : 1) * (cylinder.Direct() ? 1 : -1)) << '}';
     } else out << "null";
+    out << ",\"sphere\":";
+    if (surface.GetType() == GeomAbs_Sphere) {
+        const auto sphere = surface.Sphere();
+        out << "{\"radius\":" << sphere.Radius();
+        out << ",\"outward\":" << ((shape.Orientation() == TopAbs_REVERSED ? -1 : 1) * (sphere.Direct() ? 1 : -1)) << '}';
+    } else out << "null";
     presentOffsetThickness(out, shape, faces, body);
     const auto blend = std::find_if(blends.begin(), blends.end(), [&](const BlendFace& b) { return b.face.IsSame(shape); });
     out << ",\"offsetFaceIndexes\":[";

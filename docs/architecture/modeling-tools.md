@@ -98,9 +98,12 @@ holds its starting projection and scale. Distance fields remain visible at zero;
 extrusion retains its draft row and fixed Boolean mode icons, followed by accept,
 cancel and cleanup. Offset defaults to absolute thickness for planar walls with a
 directly reachable parallel face, or cylindrical/spherical walls with a directly
-reachable concentric face in the same body. Its local switch
-changes between thickness and signed relative distance without changing the preview.
-Without a qualifying reference it offers relative distance only. Recognized fillet
+reachable concentric face in the same body. A labeled mode dropdown offers Thickness,
+Radius and Offset where applicable; switching units preserves the preview. Radius
+sets the absolute cylindrical/spherical radius and defaults when no thickness reference
+exists. Offset is the signed material-outward change. Multiple radius targets must
+share a radius and orientation response. Positive radii/thicknesses are required.
+Faces with neither measurement offer Offset only. Recognized fillet
 resizing retains its radius control. Parallel non-concentric cylinders do not qualify.
 The kernel sorts matching supports by normal separation, then checks exact trimmed
 ray intersections from 11×11 parameter grids on both faces, excluding intervening faces.

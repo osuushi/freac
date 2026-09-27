@@ -4,7 +4,7 @@ import { worldClick } from "./ui-face-offset.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-export async function offsetThicknessRoute(page) {
+async function makeTube(page) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   for (const radius of [8, 3]) {
@@ -24,6 +24,10 @@ export async function offsetThicknessRoute(page) {
   await page.keyboard.press("Enter");
   const original = (await inspect(page)).document;
   close(original.bodies[0].volume, Math.PI * 55 * 10);
+  return original;
+}
+export async function offsetThicknessRoute(page) {
+  const original = await makeTube(page);
   await orient(page, [0, -0.4, 1]);
   await worldClick(page, [0, -8, 5]);
   const thickness = page.getByRole("textbox", { name: "Face thickness", exact: true });
@@ -33,14 +37,38 @@ export async function offsetThicknessRoute(page) {
   close(state.preview.bodies[0].volume, Math.PI * 72 * 10);
   assert.deepEqual(state.document, original);
   await page.screenshot({ path: ".cache/sketch-review/offset-thickness.png" });
-  const toggle = page.getByRole("button", { name: "Switch offset measurement" });
-  await toggle.click();
+  const toggle = page.getByRole("combobox", { name: "Offset mode" });
+  await page.waitForFunction(() => !document.querySelector('[aria-label="Offset mode"]').disabled);
+  await toggle.focus();
+  await toggle.press("r");
+  assert.equal(
+    await toggle.inputValue(),
+    "radius",
+    JSON.stringify(
+      await toggle.evaluate((element) => ({
+        focused: document.activeElement?.outerHTML,
+        disabled: element.disabled,
+        value: element.value,
+      })),
+    ),
+  );
+  const radius = page.getByRole("textbox", { name: "Face radius", exact: true });
+  close(Number(await radius.inputValue()), 9);
+  close((await inspect(page)).preview.bodies[0].volume, Math.PI * 72 * 10);
+  await radius.fill("0");
+  await inspect(page);
+  assert.equal(await page.getByRole("button", { name: "Accept face offset" }).isEnabled(), false);
+  await radius.fill("10");
+  close((await inspect(page)).preview.bodies[0].volume, Math.PI * 91 * 10);
+  await radius.fill("9");
+  await inspect(page);
+  await toggle.selectOption("offset");
   const relative = page.getByRole("textbox", { name: "Face offset distance" });
   close(Number(await relative.inputValue()), 1);
   close((await inspect(page)).preview.bodies[0].volume, Math.PI * 72 * 10);
   await relative.fill("-1");
   await inspect(page);
-  await toggle.click();
+  await toggle.selectOption("thickness");
   close(Number(await thickness.inputValue()), 4);
   await thickness.fill("0");
   await inspect(page);
@@ -63,9 +91,13 @@ export async function offsetThicknessRoute(page) {
     state.document.bodies[0].faces.find((face) => face.cylinder?.radius === 3)?.id,
   );
   close(Number(await thickness.inputValue()), 6);
-  await thickness.fill("7");
+  await toggle.selectOption("radius");
+  close(Number(await radius.inputValue()), 3);
+  await radius.fill("2");
   state = await inspect(page);
   close(state.preview.bodies[0].volume, Math.PI * 77 * 10);
+  await toggle.selectOption("thickness");
+  close(Number(await thickness.inputValue()), 7);
   await page.keyboard.press("Escape");
   close((await inspect(page)).document.bodies[0].volume, Math.PI * 72 * 10);
   console.log(

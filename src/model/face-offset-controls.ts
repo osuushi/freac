@@ -9,10 +9,10 @@ import {
   offsetHandle,
   offsetTargets,
   sharedBlend,
-  sharedThickness,
 } from "./face-offset-targets.js";
 import { FaceOffsetWidget } from "./face-offset-widget.js";
 import { OffsetPlacement } from "./offset-placement.js";
+import { OffsetQuantity } from "./offset-quantity.js";
 
 export class FaceOffsetControls {
   private widget: FaceOffsetWidget;
@@ -21,8 +21,7 @@ export class FaceOffsetControls {
   private faces: BodyFaceOffset["faces"] = [];
   private axis: ReturnType<typeof offsetHandle> | null = null;
   private placement = new OffsetPlacement();
-  private thickness: Face["thickness"] = null;
-  private absolute = false;
+  private quantity = new OffsetQuantity();
   private blend: Face["blend"] = null;
   private distance = 0;
   private valid = false;
@@ -70,27 +69,26 @@ export class FaceOffsetControls {
     this.widget.input.addEventListener(
       "input",
       () => {
-        let value = this.widget.input.value.trim() ? Number(this.widget.input.value) : NaN;
-        if (this.blend) value = (this.blend.radius - value) * this.blend.outward;
-        else if (this.absolute && this.thickness)
-          value = value > 0 ? (value - this.thickness.distance) * this.thickness.slope : NaN;
-        this.queue(value);
+        const value = this.widget.input.value.trim() ? Number(this.widget.input.value) : NaN;
+        this.queue(this.quantity.distance(value));
       },
       options,
     );
+    this.widget.quantity.addEventListener("keydown", (event) => event.stopPropagation(), options);
     this.widget.quantity.addEventListener(
-      "click",
+      "change",
       () => {
+        const mode = this.widget.quantity.value;
         if (!this.begin()) return;
-        this.absolute = !this.absolute;
+        this.quantity.setMode(mode);
         this.widget.input.blur();
         editor.refresh();
-        this.focus();
       },
       options,
     );
     onModelKeydown(
       (event) => {
+        if (event.target === this.widget.quantity) return;
         if (!this.lease || !["Enter", "Escape"].includes(event.key)) return;
         event.preventDefault();
         event.stopImmediatePropagation();
@@ -115,8 +113,7 @@ export class FaceOffsetControls {
     this.blend = sharedBlend(selected.faces);
     this.faces = expandFaceTargets(this.editor, selected.targets, !!this.blend);
     this.editor.modeling.targets = this.faces.map((t) => ({ kind: "face", ...t }));
-    this.thickness = this.blend ? null : sharedThickness(selected.faces, this.faces);
-    this.absolute = !!this.thickness;
+    this.quantity.configure(selected.faces, this.faces, this.blend);
     this.distance = 0;
     this.valid = true;
     this.latest = this.pending = null;
@@ -257,10 +254,11 @@ export class FaceOffsetControls {
         this.placement.choose(selected.faces[0], this.editor.world.camera) ??
         offsetHandle(this.editor, selected.faces[0]);
       this.blend = sharedBlend(selected.faces);
-      this.thickness = this.blend
-        ? null
-        : sharedThickness(selected.faces, expandFaceTargets(this.editor, selected.targets, false));
-      this.absolute = !!this.thickness;
+      this.quantity.configure(
+        selected.faces,
+        expandFaceTargets(this.editor, selected.targets, !!this.blend),
+        this.blend,
+      );
     }
     if (this.axis)
       this.widget.update(
@@ -268,8 +266,7 @@ export class FaceOffsetControls {
         this.axis,
         !!this.lease,
         this.distance,
-        this.thickness,
-        this.absolute,
+        this.quantity,
         this.valid,
         this.blend,
         this.invalid,
