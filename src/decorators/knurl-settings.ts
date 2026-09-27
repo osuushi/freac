@@ -1,26 +1,24 @@
 import type { DecoratorField, Settings } from "./types.js";
 
 export type KnurlSettings = Settings & {
-  preset: "fdm-fine" | "fdm-coarse" | "resin" | "custom";
+  preset: "fine" | "coarse" | "custom";
   mode: "recessed" | "raised";
   spacing: number;
   depth: number;
 };
 const presets = {
-  "fdm-fine": { spacing: 2.4, depth: 0.4 },
-  "fdm-coarse": { spacing: 3.6, depth: 0.6 },
-  resin: { spacing: 1.2, depth: 0.2 },
+  fine: { spacing: 2.4, depth: 0.4 },
+  coarse: { spacing: 3.6, depth: 0.6 },
 };
 export const knurlFields: readonly DecoratorField[] = [
   {
     key: "preset",
     label: "Knurl preset",
     type: "enum",
-    default: "fdm-fine",
+    default: "fine",
     options: [
-      { value: "fdm-fine", label: "FDM fine · 0.4 mm nozzle" },
-      { value: "fdm-coarse", label: "FDM coarse · 0.6 mm nozzle" },
-      { value: "resin", label: "Resin" },
+      { value: "fine", label: "Fine" },
+      { value: "coarse", label: "Coarse" },
       { value: "custom", label: "Custom" },
     ],
   },
@@ -54,7 +52,7 @@ export const knurlFields: readonly DecoratorField[] = [
   },
 ];
 export function knurlSettings(input: Settings): KnurlSettings {
-  const result = { preset: "fdm-fine", mode: "recessed", ...presets["fdm-fine"], ...input };
+  const result = { preset: "fine", mode: "recessed", ...presets.fine, ...input };
   for (const field of knurlFields) {
     const value = result[field.key as keyof typeof result];
     if (

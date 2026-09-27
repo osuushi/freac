@@ -35,21 +35,21 @@ through its center. The peak-to-valley radial depth is explicit.
 
 | Preset | Requested spacing | Depth | Starting assumption |
 | --- | --- | --- | --- |
-| FDM fine (default) | 2.4 mm | 0.4 mm | 0.4 mm nozzle, 0.2 mm layers, upright cylinder |
-| FDM coarse | 3.6 mm | 0.6 mm | 0.6 mm nozzle, 0.2 mm layers, upright cylinder |
-| Resin | 1.2 mm | 0.2 mm | Fine-detail resin starting point; tune to process |
+| Fine (default) | 2.4 mm | 0.4 mm | 0.4 mm nozzle, 0.2 mm layers, upright cylinder |
+| Coarse | 3.6 mm | 0.6 mm | 0.6 mm nozzle, 0.2 mm layers, upright cylinder |
 
-These are Freac design heuristics, not published printer qualifications. FDM flat
+These are Freac design heuristics, not published printer qualifications. The flat
 tops are approximately two nozzle widths across before seam adjustment, with
-radial depth spanning two/three assumed layers. Resin halves the fine FDM dimensions.
+radial depth spanning two/three assumed layers.
 [Prusa's modeling guidance](https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind_164135)
-explains nozzle/extrusion-width limits; [Formlabs' design guidance](https://formlabs.com/support/Design-Specs/)
-is specific to printer, resin and layer settings. Neither validates these knurls.
+explains nozzle/extrusion-width limits. It does not validate these knurls.
 Use a printed sample, especially for horizontal axes or different materials.
 
 Presets save concrete values. Choosing a preset resets spacing/depth; explicit
 values in the same edit win. Editing either dimension marks Custom. Changing
 relief keeps the preset. Geometry edits do not silently reapply presets.
+Older files using `fdm-fine` or `fdm-coarse` reopen as Fine or Coarse. The
+retired resin preset reopens as Custom with its saved dimensions unchanged.
 Recessed removes material and keeps the nominal cylinder envelope. Raised adds
 material into the free side: outward on rods, inward on holes. Neither shifts
 or offsets the original BRep. Deep recesses can pierce thin walls; this first

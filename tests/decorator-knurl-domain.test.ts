@@ -8,7 +8,7 @@ import { validateMesh } from "../src/model/export-mesh.js";
 import type { Vector } from "../src/sketch/planes.js";
 import { retainHalf, roundBody } from "./decorator-domain-fixtures.js";
 
-for (const preset of ["fdm-fine", "fdm-coarse", "resin"]) {
+for (const preset of ["fine", "coarse"]) {
   test(`${preset} knurling respects a sloped trimmed cap`, async () => {
     const owner = new DocumentOwner();
     try {

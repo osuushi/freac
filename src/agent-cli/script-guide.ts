@@ -82,7 +82,7 @@ editDecorator accepts apply, settings, continue, reassign, remove (selected face
 and discard (whole instance). It uses the same validated edits as the UI. Threads
 use definition "freac.threads", version 1; diameter comes from the modeled cylinder.
 Knurling uses "freac.knurling", version 1, on full/partial cylindrical faces.
-Settings: preset (fdm-fine, fdm-coarse, resin, custom), mode (recessed, raised),
+Settings: preset (fine, coarse, custom), mode (recessed, raised),
 spacing (0.4–50 mm), depth (0.05–5 mm). Presets resolve explicit spacing/depth;
 custom dimension edits mark Custom. Actual spacing closes an integral cylinder repeat.
 Apply accepts settings such as preset, pitch, hand, cut, clearance, start/end and

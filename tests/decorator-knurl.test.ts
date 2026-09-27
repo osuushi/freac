@@ -16,11 +16,12 @@ import { planes } from "../src/sketch/planes.js";
 import { retainHalf, roundBody } from "./decorator-domain-fixtures.js";
 
 test("knurl presets resolve explicit dimensions and diamond closes its seam", () => {
-  const settings = patchKnurlSettings({}, { preset: "fdm-coarse" });
+  const settings = patchKnurlSettings({}, { preset: "coarse" });
   assert.equal(settings.spacing, 3.6);
   assert.equal(settings.depth, 0.6);
   assert.equal(patchKnurlSettings(settings, { depth: 0.3 }).preset, "custom");
-  assert.equal(patchKnurlSettings(settings, { mode: "raised" }).preset, "fdm-coarse");
+  assert.equal(patchKnurlSettings(settings, { mode: "raised" }).preset, "coarse");
+  assert.throws(() => patchKnurlSettings(settings, { preset: "resin" }), /Knurl preset/);
   const { pitch } = knurlDimensions(5, settings);
   assert.equal(knurlRadius(5, 0, 0, settings, 1), 4.4);
   assert.equal(knurlRadius(5, 0, pitch / 2, settings, 1), 5);
@@ -52,12 +53,12 @@ test("knurling persists settings, owner Undo/Redo and split continuation", async
       (
         await owner.call({
           kind: "decorator",
-          edit: { action: "settings", ids: [original.id], patch: { preset: "resin" } },
+          edit: { action: "settings", ids: [original.id], patch: { preset: "coarse" } },
         })
       ).error,
       undefined,
     );
-    assert.equal(owner.view.data.decorators?.[0].settings.depth, 0.2);
+    assert.equal(owner.view.data.decorators?.[0].settings.depth, 0.6);
     await owner.call({ kind: "undo" });
     assert.deepEqual(owner.view.data.decorators?.[0], original);
     await owner.call({ kind: "redo" });
@@ -76,6 +77,52 @@ test("knurling persists settings, owner Undo/Redo and split continuation", async
     assert.equal(owner.view.data.decorators?.length, 1);
     assert.equal(owner.view.data.decorators?.[0].problem, undefined);
     assert.deepEqual(owner.view.data.decorators?.[0].frame, original.frame);
+  } finally {
+    owner.close();
+  }
+});
+
+test("older knurl presets reopen with their dimensions intact", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const body = await roundBody(owner);
+    const faces = body.faces
+      .filter((face) => face.cylinder)
+      .map((face) => ({ body: body.id, face: face.id }));
+    assert.equal(
+      (
+        await owner.call({
+          kind: "decorator",
+          edit: { action: "apply", definition: knurlDefinition, faces },
+        })
+      ).error,
+      undefined,
+    );
+    const current = owner.view.data;
+    for (const [previous, next, spacing, depth] of [
+      ["fdm-fine", "fine", 2.4, 0.4],
+      ["fdm-coarse", "coarse", 3.6, 0.6],
+      ["resin", "custom", 1.2, 0.2],
+    ] as const) {
+      const old = {
+        ...current,
+        decorators: current.decorators?.map((instance) => ({
+          ...instance,
+          settings: { ...instance.settings, preset: previous, spacing, depth },
+        })),
+      };
+      assert.equal(
+        (await owner.call({ kind: "open", document: readArchive(documentArchive(old)) })).error,
+        undefined,
+      );
+      assert.deepEqual(owner.view.data.decorators?.[0].settings, {
+        preset: next,
+        mode: "recessed",
+        spacing,
+        depth,
+      });
+      assert.equal(owner.view.data.bodies?.[0].id, body.id);
+    }
   } finally {
     owner.close();
   }

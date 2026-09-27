@@ -1,3 +1,4 @@
+import { knurlDefinition } from "../decorators/builtins.js";
 import { validateDefinitions } from "../decorators/definition-edits.js";
 import { validateDecorators } from "../decorators/edits.js";
 import type { SketchDocument } from "../sketch/document.js";
@@ -10,9 +11,27 @@ export async function openDocument(
   source: SketchDocument,
   kernel: SolidCalculator,
 ): Promise<SketchDocument> {
-  validateDocument(source);
-  const result = await kernel.calculate({ kind: "inspect", bodies: source.bodies ?? [] });
-  const document = { ...source, bodies: materialize([], result) };
+  const decorators = Array.isArray(source.decorators)
+    ? source.decorators.map((instance) => {
+        if (instance?.definition !== knurlDefinition || !instance.settings) return instance;
+        const previous = instance.settings.preset;
+        const preset =
+          previous === "fdm-fine"
+            ? "fine"
+            : previous === "fdm-coarse"
+              ? "coarse"
+              : previous === "resin"
+                ? "custom"
+                : previous;
+        return preset === previous
+          ? instance
+          : { ...instance, settings: { ...instance.settings, preset } };
+      })
+    : source.decorators;
+  const migrated = { ...source, decorators };
+  validateDocument(migrated);
+  const result = await kernel.calculate({ kind: "inspect", bodies: migrated.bodies ?? [] });
+  const document = { ...migrated, bodies: materialize([], result) };
   validateDocument(document);
   return document;
 }

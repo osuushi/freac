@@ -245,7 +245,7 @@ export class DecoratorPanel {
         );
       const note = document.createElement("p");
       note.textContent =
-        "Diamond pattern with flat tops. Recessed preserves the original envelope; raised adds material. FDM presets assume an upright cylinder and 0.2 mm layers. Print a sample; orientation and material affect detail.";
+        "Diamond pattern with flat tops. Recessed preserves the original envelope; raised adds material. Fine assumes a 0.4 mm nozzle, Coarse a 0.6 mm nozzle; both assume an upright cylinder and 0.2 mm layers. Print a sample for your material and orientation.";
       this.root.append(note);
       for (const instance of instances) {
         const cylinder = resolveFaces(this.editor.store.data.bodies ?? [], instance.faces)[0]

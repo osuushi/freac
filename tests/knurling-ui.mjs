@@ -55,9 +55,13 @@ try {
       await chooseTool(page, "knurling", "knurling");
       assert.equal((await inspect(page)).document.decorators[0].definition, "freac.knurling");
       await recessedPreviewRoute(page, `${name}-knurling`);
-      await page
-        .getByRole("combobox", { name: "Knurl preset", exact: true })
-        .selectOption("fdm-coarse");
+      const presets = page.getByRole("combobox", { name: "Knurl preset", exact: true });
+      assert.deepEqual(await presets.locator("option").allTextContents(), [
+        "Fine",
+        "Coarse",
+        "Custom",
+      ]);
+      await presets.selectOption("coarse");
       assert.equal((await inspect(page)).document.decorators[0].settings.spacing, 3.6);
       const depth = page.getByRole("spinbutton", { name: "Knurl depth", exact: true });
       await depth.fill("0.5");
