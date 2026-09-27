@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
+import { startScale } from "./ui-scale.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-5, `${a} != ${b}`);
@@ -18,8 +19,7 @@ export async function scaleWholeSketchRoute(page, name) {
     .click({ modifiers: ["Shift"] });
   const before = (await inspect(page)).document;
   assert.equal((await inspect(page)).modelingSelection.length, 2);
-  await chooseTool(page, "transform", "transform");
-  await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
+  await startScale(page);
   await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("2");
   let state = await inspect(page);
   assert.deepEqual(state.document, before);
@@ -61,8 +61,7 @@ export async function scaleConstraintRoute(page, name) {
   await drag(page, [8, 8], [14, 8]);
   await page.getByRole("button", { name: "Lock Radius", exact: true }).click();
   const before = (await inspect(page)).document;
-  await chooseTool(page, "transform", "transform");
-  await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
+  await startScale(page);
   const input = page.getByRole("textbox", { name: "Transform scale X", exact: true });
   await input.fill("");
   await input.pressSequentially("2", { delay: 40 });
@@ -90,8 +89,7 @@ export async function scaleConstraintRoute(page, name) {
   await chooseTool(page, "select", "select");
   await page.getByRole("button", { name: "Unlock Radius", exact: true }).click();
   await inspect(page);
-  await chooseTool(page, "transform", "transform");
-  await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
+  await startScale(page);
   await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill("2");
   await inspect(page);
   await page.keyboard.press("Enter");

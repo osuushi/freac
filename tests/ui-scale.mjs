@@ -7,11 +7,17 @@ import { clearSelection, pickFace } from "./ui-reconnection-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-5, `${a} != ${b}`);
-async function start(page) {
+export async function startScale(page) {
   await chooseTool(page, "transform", "transform");
+  await openScaleCard(page);
+}
+async function openScaleCard(page) {
+  if (!(await page.getByLabel("Transform scale X", { exact: true }).isVisible()))
+    await page.locator(".transform-box-handle:visible").last().click();
   await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
 }
 async function factor(page, value) {
+  await openScaleCard(page);
   await page.getByRole("textbox", { name: "Transform scale X", exact: true }).fill(String(value));
   return inspect(page);
 }
@@ -54,7 +60,7 @@ export async function scaleSketchRoute(page, name) {
   await page.keyboard.press("r");
   await drag(page, [5, 3], [15, 9]);
   const original = (await inspect(page)).document;
-  await start(page);
+  await startScale(page);
   const pivot = await center(page.locator(".move-anchor:visible"));
   const origin = original.sketches[0].curves[0].a;
   const endpoint = original.sketches[0].curves[0].b;
@@ -77,7 +83,7 @@ export async function scaleSketchRoute(page, name) {
     await page.getByRole("button", { name: "Accept transform scale", exact: true }).isDisabled(),
   );
   await page.getByRole("button", { name: "Cancel transform scale", exact: true }).click();
-  await start(page);
+  await startScale(page);
   assert.equal(
     await page.getByLabel("Transform scale X", { exact: true }).getAttribute("aria-invalid"),
     "false",
@@ -92,7 +98,7 @@ export async function scaleSketchRoute(page, name) {
   );
 }
 async function sketchGestureChecks(page, name, accepted) {
-  await start(page);
+  await startScale(page);
   const camera = (await inspect(page)).camera;
   const anchor = await center(page.locator(".move-anchor:visible"));
   await page.keyboard.down("Meta");
@@ -121,7 +127,7 @@ async function sketchGestureChecks(page, name, accepted) {
   await page.screenshot({ path: `.cache/sketch-review/${name}-scale-sketch.png` });
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, accepted);
-  await start(page);
+  await startScale(page);
   const held = await center(page.locator(".transform-box-handle:visible").last());
   await page.mouse.move(held.x, held.y);
   await page.mouse.down();
@@ -147,7 +153,7 @@ export async function scaleBodyRoute(page, name) {
   await inspect(page);
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   const before = (await inspect(page)).document;
-  await start(page);
+  await startScale(page);
   let state = await factor(page, 1.5);
   close(state.preview.bodies[0].volume, before.bodies[0].volume * 1.5 ** 3);
   await orient(page, [1, 1, 1]);
@@ -179,7 +185,7 @@ export async function scaleBodyRoute(page, name) {
     f.vertices.every((v, i) => i % 3 !== 2 || Math.abs(v - 10) < 1e-6),
   );
   await pickFace(page, cap);
-  await start(page);
+  await startScale(page);
   state = await factor(page, 0.7);
   close(state.preview.bodies[0].volume, (body.volume * (1 + 0.7 + 0.49)) / 3);
   const tapered = (await accept(page)).document;
@@ -189,7 +195,7 @@ export async function scaleBodyRoute(page, name) {
     page,
     (await inspect(page)).document.bodies[0].faces.find((f) => f.id === cap.id),
   );
-  await start(page);
+  await startScale(page);
   await factor(page, 1 / 0.7);
   state = await accept(page);
   close(state.document.bodies[0].volume, body.volume);
@@ -198,7 +204,7 @@ export async function scaleBodyRoute(page, name) {
   const p = await project(page, [0, 10, 10]);
   await page.mouse.click(p.x, p.y);
   assert.equal((await inspect(page)).modelingSelection[0].kind, "edge");
-  await start(page);
+  await startScale(page);
   state = await factor(page, 0.8);
   assert.ok(state.preview.bodies[0].volume < body.volume);
   await page.screenshot({ path: `.cache/sketch-review/${name}-scale-edge.png` });

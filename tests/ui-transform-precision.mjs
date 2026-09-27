@@ -112,3 +112,19 @@ async function scaleAfterNonuniform(page) {
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, original);
 }
+
+export async function transformDeleteRoute(page, name) {
+  await chooseTool(page, "select", "select");
+  const original = (await inspect(page)).document;
+  await page.keyboard.press("ControlOrMeta+a");
+  await page.keyboard.press("Delete");
+  const removed = (await inspect(page)).document;
+  assert.equal(removed.sketches.flatMap((sketch) => sketch.curves).length, 0);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
+  await chooseTool(page, "redo", "redo");
+  assert.deepEqual((await inspect(page)).document, removed);
+  await reset(page);
+  assert.equal((await inspect(page)).document.sketches.length, 0);
+  console.log(`${name}: transform exit, Select All/Delete, Undo/Redo and new document passed`);
+}
