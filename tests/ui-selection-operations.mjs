@@ -118,6 +118,7 @@ export async function selectionOperationsRoute(page, name) {
     "transform-bodies",
   );
   await undo(page, original);
+  await refine(page, "Select owning bodies");
   const restoredFaces = await refine(page, "Only faces");
   assert.ok(restoredFaces.modelingSelection.every((t) => t.kind === "face"));
   assert.equal(restoredFaces.modelingSelection.length, original.bodies[0].faces.length);
