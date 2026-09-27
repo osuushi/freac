@@ -51,7 +51,7 @@ class BrowserConnection {
     window.freacModel = (request) => this.rpc.request("model", request);
     window.freacAgent = { request: (request) => this.rpc.request<AgentReply>("agent", request) };
     window.freacDocument = {
-      command: (command) => this.rpc.request("document-command", command),
+      command: (command, camera) => this.rpc.request("document-command", { command, camera }),
       status: () => this.rpc.request("document-status"),
       onCommand: (callback) => this.subscribe<DocumentCommand>("document-command", callback),
       onStatus: (callback) => this.subscribe<DocumentStatus>("document-status", callback),

@@ -3,6 +3,7 @@ import { basename, dirname, isAbsolute, join } from "node:path";
 import { app, type BrowserWindow } from "electron";
 import type { DocumentOwner } from "../backend/document-owner.js";
 import { validateDocument } from "../backend/open-document.js";
+import { type CameraState, validateCameraState } from "../model/camera-state.js";
 import { documentArchive } from "../model/document-archive.js";
 import type { DocumentStatus } from "../model/document-host.js";
 import { readPortableArchive, writePortableArchive } from "../model/portable-archive.js";
@@ -17,6 +18,7 @@ export class DocumentFiles {
     return this.path ? dirname(this.path) : this.lastDirectory;
   }
   private saved: string;
+  camera: CameraState | undefined;
   private cachedDocument: DocumentOwner["view"]["data"];
   private cachedArchive: string;
   private session = join(app.getPath("userData"), "document-session.json");
@@ -39,6 +41,7 @@ export class DocumentFiles {
       name: this.path ? basename(this.path) : "Untitled",
       path: this.path,
       edited: this.archive !== this.saved || this.workspace.dirty,
+      camera: this.camera,
     };
   }
   async remember(): Promise<void> {
@@ -52,6 +55,7 @@ export class DocumentFiles {
     await this.owner.call({ kind: "new" });
     this.workspace.adopt(null, {});
     this.path = null;
+    this.camera = undefined;
     this.saved = this.archive;
     let path: unknown;
     try {
@@ -93,6 +97,7 @@ export class DocumentFiles {
     if (reply.error) throw new Error(reply.error);
     this.workspace.adopt(archive.root, archive.files);
     this.path = path;
+    this.camera = archive.camera;
     this.lastDirectory = dirname(path);
     this.saved = this.archive;
     await this.remember();
@@ -102,6 +107,7 @@ export class DocumentFiles {
     if (reply.error) throw new Error(reply.error);
     this.workspace.adopt(null, {});
     this.path = null;
+    this.camera = undefined;
     this.saved = this.archive;
     await this.remember();
   }
@@ -109,6 +115,7 @@ export class DocumentFiles {
     window: BrowserWindow,
     saveAs = false,
     beforeCapture?: () => Promise<void>,
+    camera?: CameraState,
   ): Promise<boolean> {
     let path = this.path;
     if (!path || saveAs) {
@@ -121,13 +128,18 @@ export class DocumentFiles {
       path = result.filePath;
     }
     await beforeCapture?.();
-    const archive = this.archive;
+    const model = this.archive;
+    const archive = documentArchive(
+      this.owner.view.data,
+      validateCameraState(camera) ?? this.camera,
+    );
     const files = await this.workspace.snapshot();
     const bytes = writePortableArchive(archive, files);
     await safeWrite(path, bytes);
     this.path = path;
     this.lastDirectory = dirname(path);
-    this.saved = archive;
+    this.saved = model;
+    this.camera = camera ?? this.camera;
     this.workspace.saved(files);
     await this.remember();
     return true;

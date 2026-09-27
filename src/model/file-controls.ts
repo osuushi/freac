@@ -1,6 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { BrowserArchive, downloadArchive } from "./browser-archive.js";
+import { captureCamera, restoreCamera } from "./camera-state.js";
 import { documentArchive } from "./document-archive.js";
 import { exportControls } from "./export-controls.js";
 import { nativeFileControls } from "./native-file-controls.js";
@@ -23,7 +24,11 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
     if (blocked()) return;
     try {
       const data = await codec.run(
-        { kind: "write", model: documentArchive(editor.store.data), files },
+        {
+          kind: "write",
+          model: documentArchive(editor.store.data, captureCamera(editor.world)),
+          files,
+        },
         editor,
       );
       if (!(data instanceof Uint8Array)) throw new Error("Invalid archive result.");
@@ -61,7 +66,10 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
       reason,
       run: () => {
         files = {};
-        return editor.newDocument();
+        return editor.newDocument().then(() => {
+          editor.world.exit();
+          restoreCamera(editor.world, undefined);
+        });
       },
     }),
   ];
@@ -98,6 +106,7 @@ async function openBrowserFile(
       editor.world.crossSection = null;
       editor.modeling.targets = [];
       editor.world.exit();
+      restoreCamera(editor.world, archive.camera);
       editor.refresh();
     }
   } catch (error) {

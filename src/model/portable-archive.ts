@@ -1,6 +1,7 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from "three/addons/libs/fflate.module.js";
 import type { SketchDocument } from "../sketch/document.js";
-import { readArchive } from "./document-archive.js";
+import { type CameraState, validateCameraState } from "./camera-state.js";
+import { readFileArchive } from "./document-archive.js";
 import {
   archiveLimits,
   type PortableFiles,
@@ -11,14 +12,15 @@ import { zipChecksum } from "./zip-integrity.js";
 
 export interface PortableArchive {
   document: SketchDocument;
+  camera?: CameraState;
   files: PortableFiles;
 }
 
 export function writePortableArchive(model: string, files: PortableFiles): Uint8Array {
   validatePortable(files);
   if (!Object.keys(files).length) return strToU8(model);
-  const document = JSON.parse(model).document;
-  const data = strToU8(JSON.stringify({ format: "freac", version: 2, document }));
+  const { document, camera } = JSON.parse(model);
+  const data = strToU8(JSON.stringify({ format: "freac", version: 2, document, camera }));
   if (
     data.length + Object.values(files).reduce((sum, file) => sum + file.length, 0) >
     archiveLimits.bytes
@@ -31,7 +33,7 @@ export function readPortableArchive(data: Uint8Array): PortableArchive {
   if (data.length > archiveLimits.bytes + 8 * 1024 * 1024)
     throw new Error("Document is too large.");
   if (data[0] !== 0x50 || data[1] !== 0x4b)
-    return { document: readArchive(strFromU8(data)), files: {} };
+    return { ...readFileArchive(strFromU8(data)), files: {} };
   const checks = checkZip(data);
   const entries = unzipSync(data);
   for (const [path, check] of checks) {
@@ -46,7 +48,8 @@ export function readPortableArchive(data: Uint8Array): PortableArchive {
     throw new Error("Unsupported Freac file format.");
   delete entries["model.json"];
   validatePortable(entries);
-  return { document: parsed.document, files: entries };
+  const camera = validateCameraState(parsed.camera);
+  return { document: parsed.document, ...(camera ? { camera } : {}), files: entries };
 }
 
 /** Check central metadata before decompression, including symlinks and zip bombs. */

@@ -13,9 +13,13 @@ export interface DocumentStatus {
   path: string | null;
   edited: boolean;
   warning?: string;
+  camera?: CameraState;
 }
 export interface DocumentHost {
-  command(command: DocumentCommand): Promise<{ replaced: boolean; error?: string }>;
+  command(
+    command: DocumentCommand,
+    camera?: CameraState,
+  ): Promise<{ replaced: boolean; camera?: CameraState; error?: string }>;
   status(): Promise<DocumentStatus>;
   onCommand(callback: (command: DocumentCommand) => void): () => void;
   onStatus(callback: (status: DocumentStatus) => void): () => void;
@@ -25,3 +29,5 @@ declare global {
     freacDocument?: DocumentHost;
   }
 }
+
+import type { CameraState } from "./camera-state.js";

@@ -2,6 +2,7 @@ import { type BrowserWindow, ipcMain } from "electron";
 import type { InspectionView } from "../agent/inspection-protocol.js";
 import type { AgentRequest } from "../agent/protocol.js";
 import { captureFixture } from "../backend/fixture-capture.js";
+import type { CameraState } from "../model/camera-state.js";
 import type { DocumentCommand } from "../model/document-host.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import type { AgentSession } from "./agent-session.js";
@@ -78,8 +79,10 @@ export class IPadSession {
         return this.agent.request(value as AgentRequest);
       case "document-status":
         return this.documents.status;
-      case "document-command":
-        return this.documents.command(value as DocumentCommand);
+      case "document-command": {
+        const request = value as { command: DocumentCommand; camera?: CameraState };
+        return this.documents.command(request.command, request.camera);
+      }
       case "script-cancel":
         return this.agent.cancelScript();
       case "directory":

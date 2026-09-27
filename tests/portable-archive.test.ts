@@ -24,6 +24,16 @@ test("portable ZIP and legacy archives retain model, binary files and conversati
   assert.deepEqual(archive.document, document);
   assert.deepEqual(archive.files, files);
   assert.deepEqual(readPortableArchive(strToU8(model)), { document, files: {} });
+  const camera = {
+    position: [10, 20, 30] as [number, number, number],
+    target: [0, 0, 0] as [number, number, number],
+    up: [0, 0, 1] as [number, number, number],
+    height: 55,
+  };
+  assert.deepEqual(
+    readPortableArchive(writePortableArchive(documentArchive(document, camera), files)).camera,
+    camera,
+  );
   const damaged = writePortableArchive(model, files);
   damaged[40] ^= 1;
   assert.throws(() => readPortableArchive(damaged), /Damaged archive/);

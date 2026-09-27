@@ -70,7 +70,8 @@ contextBridge.exposeInMainWorld("freacModel", (request: ModelRequest) =>
 );
 
 contextBridge.exposeInMainWorld("freacDocument", {
-  command: (command: string) => ipcRenderer.invoke("document-command", command),
+  command: (command: string, camera?: unknown) =>
+    ipcRenderer.invoke("document-command", command, camera),
   status: () => ipcRenderer.invoke("document-status"),
   onCommand: (callback: (command: string) => void) => {
     const listener = (_event: Electron.IpcRendererEvent, command: string) => callback(command);

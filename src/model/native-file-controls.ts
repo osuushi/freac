@@ -2,6 +2,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { toolMenuOpen } from "../tools/menu-focus.js";
+import { captureCamera, restoreCamera } from "./camera-state.js";
 import type { DocumentCommand, DocumentHost, DocumentStatus } from "./document-host.js";
 import { exportControls } from "./export-controls.js";
 
@@ -66,7 +67,10 @@ export function nativeFileControls(editor: SketchEditor, host: DocumentHost): ()
   const update = () => {
     if (!initialized && !editor.store.busy) {
       initialized = true;
-      void host.status().then(status);
+      void host.status().then((value) => {
+        status(value);
+        restoreCamera(editor.world, value.camera);
+      });
     }
   };
   editor.world.changed.add(update);
@@ -97,7 +101,7 @@ async function runDocumentCommand(
     return;
   }
   if (editor.store.scriptRunning && leaving) {
-    const result = await host.command(command);
+    const result = await host.command(command, captureCamera(editor.world));
     if (result.error) {
       editor.message = result.error;
       editor.refresh();
@@ -131,7 +135,7 @@ async function runDocumentCommand(
   editor.refresh();
   try {
     await editor.store.settled();
-    const result = await host.command(command);
+    const result = await host.command(command, captureCamera(editor.world));
     if (result.error) throw new Error(result.error);
     if (result.replaced) {
       await editor.store.documentReplaced();
@@ -141,6 +145,7 @@ async function runDocumentCommand(
       editor.selectTargets([]);
       editor.modeling.targets = [];
       editor.world.exit();
+      restoreCamera(editor.world, result.camera);
       editor.notice = "";
     }
     editor.message = "";

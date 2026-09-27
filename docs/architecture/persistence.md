@@ -49,8 +49,12 @@ or cancel first.
 The last successfully opened/saved path is remembered in the Electron user-data
 preferences and reopened at launch. New clears the current-file preference but retains the last successfully used folder.
 Open starts in the current file’s folder; untitled Open/Save use the remembered
-folder, falling back to Documents on first launch. This restores the
-saved file, not unsaved edits, Undo history or camera state. Missing/invalid remembered
+folder, falling back to Documents on first launch. This restores the saved file and
+its last saved camera framing (position, target, up direction and orthographic height),
+but not unsaved edits or Undo history. The camera is a validated file-envelope field,
+outside accepted geometry and Undo. Navigation alone does not mark the document edited;
+Save or Save As captures the current view. Files without a camera use the initial view.
+Missing/invalid remembered
 files open an untitled document with an error message. Closing a macOS window leaves
 the app available; New/Open or Dock activation can open its single window again.
 Quit and window close protect unsaved work. Autosave, crash recovery, file associations,

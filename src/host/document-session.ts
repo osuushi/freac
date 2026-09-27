@@ -2,6 +2,7 @@ import { app, type BrowserWindow, ipcMain } from "electron";
 import type { InspectionView } from "../agent/inspection-protocol.js";
 import type { DocumentOwner } from "../backend/document-owner.js";
 import { ScriptSession } from "../backend/script-session.js";
+import { type CameraState, validateCameraState } from "../model/camera-state.js";
 import type { DocumentCommand } from "../model/document-host.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { inspectDrawing } from "./agent-inspection.js";
@@ -87,11 +88,14 @@ export class DocumentSession {
       }
       return { ...this.files.status, warning: this.warning };
     });
-    ipcMain.handle("document-command", async (event, command: DocumentCommand) => {
-      this.checkSender(event);
-      this.checkDesktop();
-      return this.command(command);
-    });
+    ipcMain.handle(
+      "document-command",
+      async (event, command: DocumentCommand, camera?: CameraState) => {
+        this.checkSender(event);
+        this.checkDesktop();
+        return this.command(command, camera);
+      },
+    );
     app.on("before-quit", (event) => {
       if (this.closing || !this.window) return;
       event.preventDefault();
@@ -208,7 +212,10 @@ export class DocumentSession {
       warning: this.agent.workspace.error ?? this.warning,
     });
   }
-  async command(command: DocumentCommand): Promise<{ replaced: boolean; error?: string }> {
+  async command(
+    command: DocumentCommand,
+    camera?: CameraState,
+  ): Promise<{ replaced: boolean; camera?: CameraState; error?: string }> {
     const window = this.window;
     if (this.busy || !window) return { replaced: false };
     this.busy = true;
@@ -216,8 +223,10 @@ export class DocumentSession {
       if (command === "restart-update" && !this.updates) throw new Error("Updates unavailable");
       const quitting = command === "quit" || command === "restart-update";
       await this.script.cancel();
+      const view = validateCameraState(camera);
       if (command === "save" || command === "save-as") {
-        if (await this.files.save(window, command === "save-as")) this.warning = undefined;
+        if (await this.files.save(window, command === "save-as", undefined, view))
+          this.warning = undefined;
       } else if (command === "new" || command === "open" || command === "close" || quitting) {
         let path: string | undefined;
         if (command === "open") {
@@ -230,7 +239,7 @@ export class DocumentSession {
           path = result.filePaths[0];
         }
         const prepared = path ? await this.files.prepare(path) : undefined;
-        if (!(await this.leaveDocument(window, command === "close" || quitting)))
+        if (!(await this.leaveDocument(window, command === "close" || quitting, view)))
           return { replaced: false };
         if (command === "new") await this.files.new();
         if (path) await this.files.open(path, prepared);
@@ -243,7 +252,7 @@ export class DocumentSession {
           else if (command === "quit") app.quit();
           else window.close();
         }
-        return { replaced: command === "new" || command === "open" };
+        return { replaced: command === "new" || command === "open", camera: this.files.camera };
       } else throw new Error("Unknown document command");
       return { replaced: false };
     } catch (error) {
@@ -255,7 +264,11 @@ export class DocumentSession {
       this.update();
     }
   }
-  private async leaveDocument(window: BrowserWindow, closing: boolean): Promise<boolean> {
+  private async leaveDocument(
+    window: BrowserWindow,
+    closing: boolean,
+    camera?: CameraState,
+  ): Promise<boolean> {
     if (closing) {
       // Stop first so the ordinary unsaved-work choice includes final agent writes.
       await this.agent.stop();
@@ -263,12 +276,12 @@ export class DocumentSession {
       return (
         final === "clean" ||
         final === "discard" ||
-        (final === "save" && (await this.files.save(window)))
+        (final === "save" && (await this.files.save(window, false, undefined, camera)))
       );
     }
     const choice = await this.files.replacementChoice(window);
     if (choice === "cancel" || !(await this.agent.mayReplace())) return false;
-    if (choice === "save") return this.files.save(window, false, () => this.agent.stop());
+    if (choice === "save") return this.files.save(window, false, () => this.agent.stop(), camera);
     await this.agent.stop();
     if (choice === "discard") return true;
     // A process can write while the stop confirmation is visible or during shutdown.
@@ -276,7 +289,7 @@ export class DocumentSession {
     return (
       final === "clean" ||
       final === "discard" ||
-      (final === "save" && (await this.files.save(window)))
+      (final === "save" && (await this.files.save(window, false, undefined, camera)))
     );
   }
 }
