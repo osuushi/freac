@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { orient, outwardDrag, project } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function step(page) {
@@ -36,7 +37,7 @@ export async function offsetContactRoute(page, name, electron) {
   await step(page);
   const original = (await inspect(page)).document;
   await page.getByRole("button", { name: "Offset faces", exact: true }).click();
-  const input = page.getByRole("textbox", { name: "Face offset distance" });
+  const input = await relativeOffsetInput(page);
   for (const [value, volume, faces] of [
     [-5, 2500, 8],
     [-10, 2000, 6],

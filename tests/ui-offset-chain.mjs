@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { orient, outwardDrag, project } from "./ui-blend-edit.mjs";
 import { roundedPlate } from "./ui-edge-chain.mjs";
 import { inspect } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function offsetChainRoute(page, name) {
@@ -37,7 +38,7 @@ export async function offsetChainRoute(page, name) {
     );
     assert.deepEqual(state.document, original);
     assert.equal(state.preview, null);
-    const input = page.getByRole("textbox", { name: "Face offset distance" });
+    const input = await relativeOffsetInput(page);
     await input.fill("0.5");
     state = await inspect(page);
     assert.ok(state.preview.bodies[0].volume > original.bodies[0].volume);
@@ -66,6 +67,7 @@ export async function offsetChainRoute(page, name) {
       },
     });
     assert.equal(state.modelingSelection.length, 3);
+    await relativeOffsetInput(page);
     assert.ok(
       state.preview,
       JSON.stringify({ notice: state.notice, value: await input.inputValue() }),

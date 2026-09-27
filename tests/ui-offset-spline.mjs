@@ -5,6 +5,7 @@ import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { inspect, reset } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const fixture = JSON.parse(await readFile("tests/fixtures/offset-bent-shell.json", "utf8"));
@@ -47,7 +48,7 @@ async function enterOffset(page) {
   await page.keyboard.press("o");
   if (await page.getByRole("textbox", { name: "Face thickness", exact: true }).isVisible())
     await page.getByRole("button", { name: "Switch offset measurement", exact: true }).click();
-  return page.getByRole("textbox", { name: "Face offset distance", exact: true });
+  return await relativeOffsetInput(page);
 }
 export async function offsetSplineRoute(page, name) {
   await reset(page);

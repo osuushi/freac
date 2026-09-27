@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { project } from "./ui-blend-edit.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { clearSelection } from "./ui-reconnection-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -81,7 +82,7 @@ export async function measurementRoute(page, name) {
   assert.deepEqual((await inspect(page)).document, original);
   assert.deepEqual(await page.evaluate(() => window.freacHistory()), history);
   await page.screenshot({ path: `.cache/sketch-review/${name}-measurements.png` });
-  await page.getByRole("textbox", { name: "Face offset distance", exact: true }).fill("1");
+  await (await relativeOffsetInput(page)).fill("1");
   await inspect(page);
   assert.equal(await page.getByRole("region", { name: "Measurements" }).isVisible(), false);
   await page.getByRole("button", { name: "Accept face offset", exact: true }).click();

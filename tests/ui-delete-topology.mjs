@@ -4,6 +4,7 @@ import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { createStack } from "./ui-cleanup.mjs";
 import { makeFeature, pickFeatureFace } from "./ui-face-move-fixtures.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function deleteFeatureRoute(page, name, electron, kind) {
@@ -62,7 +63,7 @@ export async function deleteFeatureRoute(page, name, electron, kind) {
   assert.deepEqual(failure.operation.parameters.selection[0].faces, [top.id]);
   assert.ok(failure.error.length > 0);
   // Reopened healed geometry is still editable through the normal face tool.
-  await page.getByRole("textbox", { name: "Face offset distance", exact: true }).fill("1");
+  await (await relativeOffsetInput(page)).fill("1");
   state = await inspect(page);
   assert.ok(state.preview, await page.getByRole("status").textContent());
   close(state.preview.bodies[0].volume, 2400);

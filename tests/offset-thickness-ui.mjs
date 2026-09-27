@@ -2,6 +2,7 @@ import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { faceOffsetRoute } from "./ui-face-offset.mjs";
 import { offsetThicknessRoute } from "./ui-offset-thickness.mjs";
+import { planarThicknessRoute } from "./ui-planar-thickness.mjs";
 
 const name = process.env.FREAC_TEST_BROWSER ?? "chromium";
 let server, browser;
@@ -16,6 +17,7 @@ try {
   });
   await page.goto(server.resolvedUrls.local[0]);
   await offsetThicknessRoute(page);
+  await planarThicknessRoute(page);
   await faceOffsetRoute(page, name, false);
 } finally {
   await browser?.close();

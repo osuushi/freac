@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function worldClick(page, xyz, shift = false) {
@@ -54,7 +55,7 @@ async function planarOffset(page, name) {
   await worldClick(page, [6, 6, 5]);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await page.getByRole("button", { name: "Offset faces", exact: true }).click();
-  const input = page.getByRole("textbox", { name: "Face offset distance" });
+  const input = await relativeOffsetInput(page);
   await input.fill("2");
   let state = await inspect(page);
   assert.deepEqual(state.document, original);
@@ -87,12 +88,12 @@ async function planarOffset(page, name) {
   state = await inspect(page);
   assert.ok(state.preview.bodies[0].volume > original.bodies[0].volume);
   assert.deepEqual(state.document, original);
-  await input.fill("0");
+  await (await relativeOffsetInput(page)).fill("0");
   await inspect(page);
   await page.keyboard.press("Enter");
   assert.deepEqual((await inspect(page)).document, original);
   await handle.click();
-  await input.fill("2");
+  await (await relativeOffsetInput(page)).fill("2");
   await inspect(page);
   await page.keyboard.press("Enter");
   state = await inspect(page);
@@ -110,7 +111,7 @@ async function holeOffset(page, name, electron, cleanup = false) {
   const hole = original.bodies[0].faces.find((f) => f.cylinder);
   assert.equal(state.modelingSelection[0]?.face, hole.id, "Pick the actual inner cylindrical wall");
   await page.getByRole("button", { name: "Offset faces", exact: true }).click();
-  const distance = page.getByRole("textbox", { name: "Face offset distance" });
+  const distance = await relativeOffsetInput(page);
   close(Number(await distance.inputValue()), 0);
   assert.equal(
     await page.getByRole("button", { name: "Switch offset measurement" }).isVisible(),
@@ -130,10 +131,10 @@ async function holeOffset(page, name, electron, cleanup = false) {
   );
   await distance.fill("-1");
   await inspect(page);
-  close(Number(await page.getByRole("textbox", { name: "Face offset distance" }).inputValue()), -1);
+  close(Number(await (await relativeOffsetInput(page)).inputValue()), -1);
   // Navigation must pass through the widget without applying the edit.
   const before = (await inspect(page)).camera;
-  const field = await page.getByRole("textbox", { name: "Face offset distance" }).boundingBox();
+  const field = await (await relativeOffsetInput(page)).boundingBox();
   await page.mouse.move(field.x + 10, field.y + 10);
   await page.mouse.wheel(20, 10);
   await inspect(page);
@@ -176,7 +177,7 @@ async function sharedOffset(page, name) {
   await worldClick(page, [6, -10, 2.5], true);
   assert.equal((await inspect(page)).modelingSelection.filter((t) => t.kind === "face").length, 2);
   await page.getByRole("button", { name: "Offset faces", exact: true }).click();
-  const input = page.getByRole("textbox", { name: "Face offset distance" });
+  const input = await relativeOffsetInput(page);
   await input.fill("1");
   const preview = (await inspect(page)).preview;
   close(preview.bodies[0].volume, (420 - Math.PI * 1.5 ** 2) * 6);
@@ -188,7 +189,7 @@ async function sharedOffset(page, name) {
   // Reselect the moved top face: the next edit starts from current geometry.
   await worldClick(page, [6, 6, 6]);
   await page.getByRole("button", { name: "Offset faces", exact: true }).click();
-  await input.fill("1");
+  await (await relativeOffsetInput(page)).fill("1");
   await inspect(page);
   await page.keyboard.press("Enter");
   state = await inspect(page);

@@ -1,6 +1,8 @@
 #include "offset-thickness.h"
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
+#include <BRepBuilderAPI_MakeFace.hxx>
+#include <gp_Pln.hxx>
 #include <BRep_Builder.hxx>
 #include <TopExp.hxx>
 #include <TopoDS.hxx>
@@ -41,5 +43,14 @@ int main() {
     expect(measure({wall(3), wall(8), wall(5, 0, 0.2)}), "null");
     // A nearer concentric support without trimmed overlap must not hide a valid one.
     expect(measure({wall(3), wall(5, 20), wall(8)}), "{\"faceIndex\":2,\"distance\":5,\"slope\":-1}");
+    const auto plane = [](double z, double x = 0) {
+        return BRepBuilderAPI_MakeFace(gp_Pln(gp_Pnt(x, 0, z), gp_Dir(0, 0, 1)), -5, 5, -5, 5).Face();
+    };
+    expect(measure({plane(0), plane(4), plane(8)}), "{\"faceIndex\":1,\"distance\":4,\"slope\":-1}");
+    expect(measure({plane(8), plane(0), plane(4)}), "{\"faceIndex\":2,\"distance\":4,\"slope\":1}");
+    expect(measure({plane(0), plane(4, 20)}), "null");
+    expect(measure({plane(0), plane(2, 20), plane(4)}), "{\"faceIndex\":2,\"distance\":4,\"slope\":-1}");
+    const auto tiny = BRepBuilderAPI_MakeFace(gp_Pln(gp_Pnt(4.9, 4.9, 2), gp_Dir(0, 0, 1)), -0.01, 0.01, -0.01, 0.01).Face();
+    expect(measure({plane(0), plane(4), tiny}), "{\"faceIndex\":2,\"distance\":2,\"slope\":-1}");
     std::cout << "Nearest, trimmed overlap and obstructed radial thickness checks passed\n";
 }

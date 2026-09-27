@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { circularFinish, plate } from "./ui-body-fillet.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function project(page, xyz) {
@@ -183,9 +184,7 @@ async function flatChamferDrag(page, name) {
   await selectSurface(page, target);
   const state = await outwardDrag(page, "Offset faces", target, 2);
   assert.ok(state.preview.bodies[0].volume > original.bodies[0].volume);
-  assert.ok(
-    Number(await page.getByRole("textbox", { name: "Face offset distance" }).inputValue()) > 0,
-  );
+  assert.ok(Number(await (await relativeOffsetInput(page)).inputValue()) > 0);
   await page.screenshot({ path: `.cache/sketch-review/${name}-chamfer-outward-drag.png` });
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, original);

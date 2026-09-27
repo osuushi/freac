@@ -5,6 +5,7 @@ import { project } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { inspect, reset } from "./ui-helpers.mjs";
 import { orient, pick } from "./ui-measurement.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const fixture = JSON.parse(await readFile("tests/fixtures/reverse-hole-cut.json", "utf8"));
@@ -77,7 +78,7 @@ export async function reverseHoleRoute(page, name) {
   await pick(page, [0, 0, 54]);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await page.keyboard.press("o");
-  await page.getByRole("textbox", { name: "Face offset distance", exact: true }).fill("-0.2");
+  await (await relativeOffsetInput(page)).fill("-0.2");
   assert.ok((await inspect(page)).preview);
   await page.keyboard.press("Escape");
   console.log(

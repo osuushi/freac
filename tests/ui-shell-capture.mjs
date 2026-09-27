@@ -4,6 +4,7 @@ import { openDocument } from "./native-documents.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { inspect, reset } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { browseTools, chooseTool } from "./ui-tools.mjs";
 
 const fixture = JSON.parse(await readFile("tests/fixtures/shell-cylindrical-splines.json", "utf8"));
@@ -67,7 +68,7 @@ export async function shellCaptureRoute(page, name, electron) {
   await worldClick(page, [-9, -9, 4]);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await page.keyboard.press("o");
-  await page.getByRole("textbox", { name: "Face offset distance", exact: true }).fill("0.2");
+  await (await relativeOffsetInput(page)).fill("0.2");
   assert.ok((await inspect(page)).preview);
   await page.keyboard.press("Enter");
   assert.notEqual((await inspect(page)).document.bodies[0].volume, accepted.bodies[0].volume);

@@ -52,17 +52,17 @@ test("concentric tube walls publish exact thickness and preserve the fixed refer
       ),
       null,
     );
-    assert.ok(body.faces.filter((f) => f.plane).every((f) => !f.thickness));
+    assert.ok(body.faces.filter((f) => f.plane).every((f) => f.thickness?.distance === 10));
   } finally {
     owner.close();
   }
 });
 
-test("planar and unmatched or eccentric cylindrical walls remain relative-only", async () => {
+test("planar walls measure thickness while unmatched or eccentric cylinders remain relative-only", async () => {
   const owner = new DocumentOwner();
   try {
     const box = await prism(owner, square);
-    assert.ok(box.faces.every((f) => !f.thickness));
+    assert.ok(box.faces.every((f) => f.thickness && [10, 20].includes(f.thickness.distance)));
     for (const eccentric of [false, true]) {
       const body = await lift(owner, {
         ...emptySketch(planes.XY),
@@ -74,7 +74,7 @@ test("planar and unmatched or eccentric cylindrical walls remain relative-only",
           construction: false,
         })),
       });
-      assert.ok(body.faces.every((f) => !f.thickness));
+      assert.ok(body.faces.filter((f) => f.cylinder).every((f) => !f.thickness));
     }
   } finally {
     owner.close();

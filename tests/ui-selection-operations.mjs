@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import * as THREE from "three";
 import { plate } from "./ui-body-fillet.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { browseTools, chooseTool, toolEnabled } from "./ui-tools.mjs";
 
 const button = (page, name) => page.getByRole("button", { name, exact: true });
@@ -44,7 +45,7 @@ async function offset(page, original) {
   await page.keyboard.press("o");
   assert.equal((await inspect(page)).modelingTool, "offset");
   await button(page, "Offset faces").click();
-  await page.getByRole("textbox", { name: "Face offset distance", exact: true }).fill("1");
+  await (await relativeOffsetInput(page)).fill("1");
   const state = await inspect(page);
   assert.ok(state.preview.bodies[0].volume > original.bodies[0].volume);
   assert.deepEqual(state.document, original);

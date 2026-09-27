@@ -7,7 +7,7 @@ export interface Face {
   readonly signature: number[];
   readonly vertices: number[];
   readonly plane: PlaneFrame | null;
-  /** Nearest directly reachable concentric wall in this body; transient analytic data. */
+  /** Nearest directly reachable parallel planar or concentric wall in this body. */
   readonly thickness?: { face: string; distance: number; slope: 1 | -1 } | null;
   /** Tangent face closure required for a normal offset (distinct from blend resizing). */
   readonly offsetFaces?: readonly string[];

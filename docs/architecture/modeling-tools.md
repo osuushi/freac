@@ -96,13 +96,16 @@ positive direction is the projected extrusion axis or material-outward face norm
 when viewed end-on, the existing upward drag fallback remains available. Each drag
 holds its starting projection and scale. Distance fields remain visible at zero;
 extrusion retains its draft row and fixed Boolean mode icons, followed by accept,
-cancel and cleanup. Offset defaults to absolute thickness for cylindrical or spherical
-walls with a directly reachable concentric face in the same body. Its local switch
+cancel and cleanup. Offset defaults to absolute thickness for planar walls with a
+directly reachable parallel face, or cylindrical/spherical walls with a directly
+reachable concentric face in the same body. Its local switch
 changes between thickness and signed relative distance without changing the preview.
-Without a qualifying reference it offers relative distance only; planar parallel-wall
-thickness is deferred. Recognized fillet resizing retains its radius control.
-The kernel sorts concentric supports by radial separation, then checks exact trimmed
-ray intersections from an 11×11 source-parameter grid, excluding intervening faces.
+Without a qualifying reference it offers relative distance only. Recognized fillet
+resizing retains its radius control. Parallel non-concentric cylinders do not qualify.
+The kernel sorts matching supports by normal separation, then checks exact trimmed
+ray intersections from 11×11 parameter grids on both faces, excluding intervening faces.
+Sampling the reference as well as the selected face recovers small recessed patches
+that a coarse grid on the larger face can miss; the nearest such patch wins.
 The distance is analytic; narrow facing regions can be missed by this conservative
 sample search. The reference and conversion stay fixed through an edit. Multiple
 selected walls must agree in thickness and signed response, and no reference may

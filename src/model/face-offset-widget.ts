@@ -92,7 +92,7 @@ export class FaceOffsetWidget {
     this.input.title = blend
       ? "Existing fillet radius (mm)"
       : absolute
-        ? "Absolute distance to the concentric wall (mm)"
+        ? "Absolute distance to the reference wall (mm)"
         : "Signed material-outward offset (mm)";
     if (!numericFocus(this.input)) {
       const value = blend
