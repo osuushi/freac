@@ -14,6 +14,12 @@ founder feedback update these contracts before further tools depend on them.
 - Hidden sketches and bodies remain selectable in the Entities panel, including
   when all bodies are hidden. Selection does not reveal them; Delete/Backspace
   removes them through ordinary document history. Viewport picking still skips them.
+- Isolate selection is a per-window view overlay. Selected curves/points resolve to
+  their sketch; selected faces/edges resolve to their body. All owning top-level
+  entities are shown and other entities are hidden. Entities eye controls can
+  reveal additional entities during isolation. Exiting isolation removes only its
+  temporary hiding, so it never hides an entity; entities revealed during isolation
+  remain revealed. Isolation does not change the document or geometry Undo.
 
 - Sketch mode is an aligned editing view of the same 3D world, not a separate
   canvas. Use one world origin and coordinate mapping for both. Display a clear

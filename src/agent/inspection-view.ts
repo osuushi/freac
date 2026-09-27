@@ -47,7 +47,7 @@ export function inspectionView(editor: SketchEditor, render: boolean): Inspectio
               : [];
           })
         : [],
-    hidden: [...editor.visibility.hidden],
+    hidden: editor.visibility.hiddenIds(editor.store.data),
     bodiesVisible: editor.bodiesVisible,
     camera: {
       projection: "orthographic",

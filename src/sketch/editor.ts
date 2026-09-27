@@ -260,7 +260,7 @@ export class SketchEditor {
     await this.interactions.cancel();
     await this.store.request({ kind: "new" });
     this.bodiesVisible = true;
-    this.visibility.hidden.clear();
+    this.visibility.reset();
     this.world.crossSection = null;
     this.clearSelection();
   }

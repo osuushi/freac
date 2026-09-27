@@ -162,9 +162,9 @@ const scaling = new ScaleControls(editor, overlay, () => {
 const projection = new ProjectionControls(editor, overlay);
 const sections = new SectionControls(editor);
 const bodyEdges = new BodyEdgeControls(editor);
-const disposeVisibility = visibilityControls(editor);
 const entities = new EntityViewer(editor, app);
 const constructionPlanes = new ConstructionPlaneControls(editor, overlay, entities.referenceRows);
+const disposeVisibility = visibilityControls(editor, () => constructionPlanes.selected()?.id);
 const crossSection = new CrossSectionControls(
   editor,
   overlay,

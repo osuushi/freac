@@ -94,7 +94,7 @@ async function openBrowserFile(
     if (await editor.store.request({ kind: "open", document: archive.document })) {
       accept(archive.files);
       editor.bodiesVisible = true;
-      editor.visibility.hidden.clear();
+      editor.visibility.reset();
       editor.world.crossSection = null;
       editor.modeling.targets = [];
       editor.world.exit();

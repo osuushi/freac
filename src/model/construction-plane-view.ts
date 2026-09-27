@@ -92,8 +92,8 @@ export class ConstructionPlaneView {
     eye.setAttribute("aria-label", `${visible ? "Hide" : "Show"} ${name}`);
     eye.disabled = e.blocked || !!e.interactions.current;
     eye.onclick = () => {
-      if (visible) e.visibility.hidden.add(plane.id);
-      else e.visibility.hidden.delete(plane.id);
+      if (visible) e.visibility.hide(plane.id);
+      else e.visibility.show(plane.id);
       if (visible && this.selected === plane.id) this.selected = null;
       e.refresh();
     };

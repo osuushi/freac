@@ -239,7 +239,7 @@ export class ModelControls {
     }
     if (!sketch) return;
     const id = fresh ? newId() : sketch.id;
-    if (!fresh) this.editor.visibility.hidden.delete(sketch.id);
+    if (!fresh) this.editor.visibility.show(sketch.id);
     this.editor.world.enterWorkspace(
       {
         key: fresh

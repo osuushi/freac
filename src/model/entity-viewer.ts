@@ -77,8 +77,11 @@ export class EntityViewer {
     eye.onclick = () => {
       if (this.editor.blocked || this.editor.interactions.current) return;
       const visible = this.editor.visibility.visible(id);
-      if (visible) this.editor.visibility.hidden.add(id);
-      else this.editor.visibility.hidden.delete(id);
+      if (visible) this.editor.visibility.hide(id);
+      else {
+        this.editor.visibility.show(id);
+        if (target.kind === "body") this.editor.bodiesVisible = true;
+      }
       if (visible && this.editor.world.workspace?.sketchId === id) this.editor.world.exit();
       this.editor.modeling.targets = this.editor.modeling.targets.filter(
         (t) =>
