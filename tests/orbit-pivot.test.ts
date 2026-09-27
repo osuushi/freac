@@ -2,10 +2,9 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "three";
 import type { Body } from "../src/model/body.js";
-import type { Sketch } from "../src/sketch/document.js";
 import type { SketchEditor } from "../src/sketch/editor.js";
 import { orbitPivot } from "../src/sketch/orbit-pivot.js";
-import { visibleOrbitCenter } from "../src/sketch/orbit-sampling.js";
+import { nearestOrbitSurface } from "../src/sketch/orbit-surface.js";
 import { planes } from "../src/sketch/planes.js";
 
 function camera() {
@@ -15,128 +14,160 @@ function camera() {
   camera.updateMatrixWorld();
   return camera;
 }
-function surface(z: number): Body {
+function surface(x0: number, y0: number, x1: number, y1: number, z: number): Body {
   return {
-    id: `b${z}`,
+    id: `${x0}:${y0}:${z}`,
     brep: "",
     volume: 0,
-    center: [100, 200, z],
-    bounds: [50, 150, z, 150, 250, z],
+    center: [(x0 + x1) / 2, (y0 + y1) / 2, z],
+    bounds: [x0, y0, z, x1, y1, z],
     edges: [],
     faces: [
       {
-        id: `f${z}`,
+        id: "f",
         edges: [],
         signature: [],
         plane: null,
-        vertices: [50, 150, z, 150, 150, z, 150, 250, z, 50, 150, z, 150, 250, z, 50, 250, z],
+        vertices: [x0, y0, z, x1, y0, z, x1, y1, z, x0, y0, z, x1, y1, z, x0, y1, z],
       },
     ],
   };
 }
-test("central sampling finds the nearest surface away from the origin, independent of triangle count", () => {
-  const back = surface(-40),
-    front = surface(30);
-  const center = visibleOrbitCenter(camera(), [back, front], [], () => true);
-  assert.ok(center && center.distanceTo(new THREE.Vector3(100, 200, 30)) < 1e-8);
-  const dense = { ...back, faces: [...back.faces, ...back.faces, ...back.faces] };
-  assert.ok(visibleOrbitCenter(camera(), [dense, front], [], () => true)?.distanceTo(center) === 0);
-});
-test("clipped surfaces are excluded and empty central view has no invented pivot", () => {
-  const center = visibleOrbitCenter(camera(), [surface(30), surface(-40)], [], (p) => p.z < 0);
-  assert.ok(center && Math.abs(center.z + 40) < 1e-8);
-  assert.equal(
-    visibleOrbitCenter(camera(), [], [], () => true),
-    null,
+function close(point: THREE.Vector3 | null, xyz: number[]) {
+  assert.ok(
+    point && point.distanceTo(new THREE.Vector3(...xyz)) < 1e-4,
+    `${point?.toArray()} != ${xyz}`,
+  );
+}
+test("press ray chooses frontmost surface point, not its center or a tessellation average", () => {
+  const front = surface(50, 150, 150, 250, 30),
+    back = surface(50, 150, 150, 250, -40);
+  close(
+    nearestOrbitSurface(camera(), [back, front], new THREE.Vector2(0.2, -0.3), 1, []),
+    [110, 185, 30],
   );
 });
-test("a long sketch edge crossing the center is found even with both endpoints outside", () => {
-  const sketch: Sketch = {
-    id: "s",
-    plane: planes.XY,
-    groups: [],
-    constraints: [],
-    curves: [
-      {
-        id: "c",
-        kind: "segment",
-        construction: false,
-        a: { x: 20, y: 200 },
-        b: { x: 180, y: 200 },
-      },
-    ],
-  };
-  const center = visibleOrbitCenter(camera(), [], [sketch], () => true);
-  assert.ok(center && center.distanceTo(new THREE.Vector3(100, 200, 0)) < 1e-8);
-  assert.equal(
-    visibleOrbitCenter(
-      camera(),
-      [],
-      [{ ...sketch, plane: { ...planes.XY, origin: [0, 100, 0] } }],
-      () => true,
-    ),
-    null,
-  );
+test("empty-space press uses the nearest projected surface and resolves occlusion with a ray", () => {
+  const back = surface(120, 190, 140, 210, -30),
+    front = surface(120, 188, 145, 215, 40);
+  for (const bodies of [
+    [back, front],
+    [front, back],
+  ])
+    close(nearestOrbitSurface(camera(), bodies, new THREE.Vector2(), 1, []), [120, 200, 40]);
 });
-
-test("selected sketches use their combined bounds, not the bounds of their centers", () => {
-  const sketches: Sketch[] = [
-    {
-      id: "small",
-      plane: planes.XY,
-      groups: [],
-      constraints: [],
-      curves: [
-        { id: "a", kind: "segment", construction: false, a: { x: 10, y: 2 }, b: { x: 20, y: 4 } },
-      ],
-    },
-    {
-      id: "large",
-      plane: planes.XY,
-      groups: [],
-      constraints: [],
-      curves: [
-        { id: "b", kind: "segment", construction: false, a: { x: 50, y: 6 }, b: { x: 150, y: 8 } },
-      ],
-    },
+test("nearest is measured in screen pixels, including wide viewports", () => {
+  const c = camera();
+  c.left = -200;
+  c.right = 200;
+  c.updateProjectionMatrix();
+  const x = surface(125, 195, 130, 205, 0),
+    y = surface(95, 210, 105, 215, 0);
+  close(nearestOrbitSurface(c, [x, y], new THREE.Vector2(), 4, []), [100, 210, 0]);
+});
+test("holes do not attract rays to empty box interiors", () => {
+  const frame = [
+    surface(80, 180, 95, 220, 30),
+    surface(105, 180, 120, 220, 30),
+    surface(95, 180, 105, 195, 30),
+    surface(95, 205, 105, 220, 30),
   ];
-  const editor = {
-    world: { active: null },
-    store: { data: { sketches } },
-    modeling: { targets: sketches.map((s) => ({ kind: "sketch", sketch: s.id })) },
-  } as unknown as SketchEditor;
-  assert.deepEqual(orbitPivot(editor).toArray(), [80, 5, 0]);
+  const hit = nearestOrbitSurface(camera(), frame, new THREE.Vector2(), 1, []);
+  assert.ok(hit && Math.abs(hit.distanceTo(new THREE.Vector3(100, 200, 30)) - 5) < 1e-4);
+  close(
+    nearestOrbitSurface(
+      camera(),
+      [...frame, surface(97, 197, 103, 203, -20)],
+      new THREE.Vector2(),
+      1,
+      [],
+    ),
+    [100, 200, -20],
+  );
 });
-
-test("face and body multiselection includes actual bounds, not body centers", () => {
-  const first = surface(30),
-    second = surface(-40);
-  const editor = {
-    world: { active: null },
-    store: { data: { sketches: [], bodies: [first, second] } },
+test("clipped portions and offscreen surfaces cannot attract the pivot", () => {
+  const visible = surface(110, 190, 140, 210, 30),
+    offscreen = surface(151, 195, 160, 205, 60);
+  const clip = new THREE.Plane(new THREE.Vector3(1, 0, 0), -125);
+  close(
+    nearestOrbitSurface(camera(), [visible, offscreen], new THREE.Vector2(), 1, [clip]),
+    [125, 200, 30],
+  );
+  assert.equal(nearestOrbitSurface(camera(), [offscreen], new THREE.Vector2(), 1, []), null);
+  const back = surface(50, 150, 150, 250, -40);
+  close(
+    nearestOrbitSurface(camera(), [visible, back], new THREE.Vector2(0.4, 0), 1, [
+      new THREE.Plane(new THREE.Vector3(0, 0, -1), 0),
+    ]),
+    [120, 200, -40],
+  );
+});
+function editor(bodies: Body[] = []) {
+  return {
+    world: {
+      camera: camera(),
+      target: new THREE.Vector3(100, 200, 0),
+      height: 100,
+      canvas: { getBoundingClientRect: () => ({ left: 10, top: 20, width: 1000, height: 1000 }) },
+      renderer: { clippingPlanes: [] },
+    },
+    display: { sketches: [], bodies },
+    bodiesVisible: true,
+    visibility: { visible: () => true },
     modeling: {
-      targets: [
-        { kind: "body", body: first.id },
-        { kind: "face", body: second.id, face: second.faces[0].id },
-      ],
+      targets: [{ kind: "body", body: "unrelated-selected" }],
+      hover: { kind: "body", body: "stale-hover" },
     },
   } as unknown as SketchEditor;
-  assert.deepEqual(orbitPivot(editor).toArray(), [100, 200, -5]);
+}
+test("mouse/touch coordinates drive acquisition without hover or selection; hidden bodies are excluded", () => {
+  const e = editor([surface(50, 150, 150, 250, 30)]);
+  close(orbitPivot(e, { x: 610, y: 670 }), [110, 185, 30]);
+  e.bodiesVisible = false;
+  close(orbitPivot(e, { x: 610, y: 670 }), [100, 200, 0]);
+});
+test("wire-only fallback uses the closest visible curve point and empty views keep the target", () => {
+  const e = editor();
+  Object.defineProperty(e, "display", {
+    value: {
+      sketches: [
+        {
+          id: "s",
+          plane: planes.XY,
+          groups: [],
+          constraints: [],
+          curves: [
+            {
+              id: "c",
+              kind: "segment",
+              construction: false,
+              a: { x: 80, y: 195 },
+              b: { x: 130, y: 195 },
+            },
+          ],
+        },
+      ],
+    },
+  });
+  close(orbitPivot(e, { x: 610, y: 670 }), [110, 195, 0]);
+  close(orbitPivot(editor(), { x: 610, y: 670 }), [100, 200, 0]);
 });
 
-test("thin vertical edges between ray columns remain discoverable in a wide viewport", () => {
-  const view = camera();
-  view.left = -100;
-  view.right = 100;
-  view.updateProjectionMatrix();
-  const x = 100 + 20 / 21;
-  const sketch: Sketch = {
-    id: "s",
-    plane: planes.XY,
-    groups: [],
-    constraints: [],
-    curves: [{ id: "c", kind: "segment", construction: false, a: { x, y: 170 }, b: { x, y: 230 } }],
+test("an edge-on face cannot hide the nearest actual surface from empty-space search", () => {
+  const edgeOn = surface(105, 190, 105, 210, 0);
+  const wall = {
+    ...edgeOn,
+    bounds: [105, 190, 0, 105, 210, 10],
+    faces: [{ ...edgeOn.faces[0], vertices: [105, 190, 0, 105, 210, 0, 105, 210, 10] }],
   };
-  const center = visibleOrbitCenter(view, [], [sketch], () => true);
-  assert.ok(center && center.distanceTo(new THREE.Vector3(x, 200, 0)) < 1e-5);
+  close(
+    nearestOrbitSurface(
+      camera(),
+      [wall, surface(110, 190, 120, 210, 0)],
+      new THREE.Vector2(),
+      1,
+      [],
+    ),
+    [110, 200, 0],
+  );
 });

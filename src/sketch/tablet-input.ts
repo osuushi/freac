@@ -123,7 +123,7 @@ class TabletInput {
         !this.rotating &&
         Math.hypot(points[0].x - this.origin.x, points[0].y - this.origin.y) >= 6
       ) {
-        this.world.beginOrbit(this.sphere(this.origin));
+        this.world.beginOrbit(this.sphere(this.origin), this.origin);
         this.rotating = true;
       }
       if (this.rotating) this.world.orbit.drag(this.world, this.sphere(points[0]));

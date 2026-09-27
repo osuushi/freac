@@ -66,7 +66,10 @@ class OrbitDrag {
       this.suppressClick = true;
       this.world.cancelCameraMotion();
       this.drag = { id: start.pointerId, bounds: this.world.canvas.getBoundingClientRect() };
-      this.world.beginOrbit(sphereCoordinates(start, this.drag.bounds));
+      this.world.beginOrbit(sphereCoordinates(start, this.drag.bounds), {
+        x: start.clientX,
+        y: start.clientY,
+      });
       this.world.canvas.setPointerCapture(start.pointerId);
     }
     if (!this.drag || event.pointerId !== this.drag.id) return;

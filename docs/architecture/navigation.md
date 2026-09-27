@@ -40,20 +40,20 @@ Camera-to-target distance is rendering placement, not the orthographic zoom scal
 
 ### Rotation pivot
 
-At the start of a Command-drag, cube drag or tablet orbit, capture the union
-bounding-box center of the actual selection before workspace exit clears it.
-This includes bodies, faces, edges, sketches, regions, sketch curves/groups and
-explicit sketch points; point owners do not imply whole-curve selection. Body
-bounds are authoritative; face/edge bounds use display geometry and curved sketch
-bounds use fine curve samples. Selecting a pivot never recenters the view.
+Mouse-down, cube press and the initial one-finger touch contact supply viewport
+coordinates. Hover and selection do not drive acquisition. At drag activation,
+ray-cast through that press location and use the frontmost visible surface hit.
+If the ray misses, find the nearest projected point on a visible surface, then
+cast a new ray there to resolve occlusion. Distance is in screen pixels, including
+non-square viewports. Projected body bounds order and prune the search; clipped
+render triangles supply the actual nearest point, so holes are not filled by
+bounding-box approximations. A subpixel inward offset stabilizes contour rays.
 
-Without selection, cast a 21 × 21 grid of rays across the central 20% of viewport
-width and height. The orthographic camera makes this a straight viewing column.
-Average the nearest visible surface/edge hit at each sample, weighting screen
-coverage rather than triangle count or physical mass. Thin edges receive a
-half-cell-diagonal picking footprint. Hidden entities, grids, plane widgets and clipped
-geometry do not contribute. An empty central column retains the current target.
-This is a sampled visual heuristic; very small geometry can fall between samples.
+Hidden entities, clipped geometry, offscreen portions, grids and plane widgets
+cannot attract the pivot. Resolve before leaving the sketch workspace. If there
+are no visible surfaces, use the closest visible curve/edge point for wire-only
+work; a completely empty view retains its target. This replaces the earlier
+selection-bounds and central-20% sampling rules.
 
 Freeze the pivot throughout the drag and rotate both camera position and view
 target about it, preserving the pivot's screen location and reversibility. Release
@@ -90,8 +90,9 @@ Animate over 280 ms with cubic ease-out, or immediately with reduced motion. Vie
 and zoom stay fixed; only roll changes. New navigation interrupts the animation.
 Cancellation, Escape and focus loss end the drag without snapping. Releasing Command
 mid-drag retains capture. Capture blocks editing, trailing clicks and wheel/pinch.
-Camera changes never modify the document or Undo. Native trackpad/iPad rotation
-remain deferred. Sketch entry retains its existing transition.
+Camera changes never modify the document or Undo. Native trackpad rotation gestures
+remain deferred; tablet one-finger orbit uses the same press-based pivot through
+pointer events. Sketch entry retains its existing transition.
 
 The temporary Arcball circle, endpoint markers and diagnostic caption are hidden.
 

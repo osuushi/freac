@@ -8,7 +8,7 @@ import { type PlaneId, planes } from "./planes.js";
 export function installWorkspaceSync(editor: SketchEditor): void {
   const world = editor.world;
   installCameraDepth(editor);
-  world.orbitPivot = () => orbitPivot(editor);
+  world.orbitPivot = (press) => orbitPivot(editor, press);
   world.canNavigate = () => !editor.isDragging;
   world.canEnterSketch = () =>
     world.canNavigate() &&

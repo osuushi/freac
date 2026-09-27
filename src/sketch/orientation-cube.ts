@@ -94,7 +94,10 @@ class CubeInput {
       )
         return;
       press.dragging = true;
-      this.world.beginOrbit(coordinates(start, press.bounds));
+      this.world.beginOrbit(coordinates(start, press.bounds), {
+        x: start.clientX,
+        y: start.clientY,
+      });
       this.view.cube.classList.add("dragging");
     }
     this.world.orbit.drag(this.world, coordinates(event, press.bounds));

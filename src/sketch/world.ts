@@ -57,14 +57,14 @@ export class World {
   private readonly foreground = new SketchForeground();
   private readonly sketchClip = new THREE.Plane();
   readonly orbit = new Arcball();
-  orbitPivot = (): THREE.Vector3 => this.target.clone();
+  orbitPivot: (press: Point) => THREE.Vector3 = () => this.target.clone();
   private rotationPivot = new THREE.Vector3();
   get currentOrbitPivot(): THREE.Vector3 {
     return this.rotationPivot.clone();
   }
-  beginOrbit(pointer: OrbitPointer): void {
+  beginOrbit(pointer: OrbitPointer, press: Point): void {
     this.cancelCameraMotion();
-    this.rotationPivot.copy(this.orbitPivot());
+    this.rotationPivot.copy(this.orbitPivot(press));
     if (this.active) this.exit();
     this.orbit.begin(this, pointer, this.rotationPivot);
   }
