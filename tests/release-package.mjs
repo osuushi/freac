@@ -75,17 +75,28 @@ try {
 }
 
 async function terminalRoute(page) {
+  // A user's shell may contain Codex even with the app's restricted startup PATH.
+  // Exercise Settings from a deterministic launch failure, never a personal CLI.
+  await page.evaluate(() =>
+    window.freacAgent.request({
+      kind: "configure",
+      preferences: {
+        preset: "custom",
+        executable: "/not-a-freac-executable",
+        args: [],
+        env: {},
+      },
+    }),
+  );
   await page.getByRole("button", { name: "Open agent terminal" }).click();
+  await page.locator(".agent-message").filter({ hasText: "Could not start" }).waitFor();
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await page.getByRole("combobox", { name: "Preset" }).selectOption("custom");
   await page.getByLabel("Executable", { exact: true }).fill("/bin/sh");
   await page.getByLabel("Arguments · one per line").fill("-i");
   await page.getByRole("button", { name: "Save settings", exact: true }).click();
   await page.getByRole("button", { name: "Start", exact: true }).click();
-  await page.waitForFunction(
-    async () => (await window.freacAgent.request({ kind: "settings" })).running,
-  );
-  const { workspace } = await page.evaluate(() => window.freacAgent.request({ kind: "settings" }));
+  const { workspace } = await waitAgent(page, true);
   await page.locator(".agent-screen textarea").focus();
   await page.keyboard.type("freac status > packaged-status.json");
   await page.keyboard.press("Enter");
@@ -118,7 +129,14 @@ async function terminalRoute(page) {
     await readFile(join(workspace, "packaged-script.txt"), "utf8"),
   );
   await page.getByRole("button", { name: "Stop", exact: true }).click();
-  await page.waitForFunction(
-    async () => !(await window.freacAgent.request({ kind: "settings" })).running,
-  );
+  await waitAgent(page, false);
+}
+
+async function waitAgent(page, running) {
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const status = await page.evaluate(() => window.freacAgent.request({ kind: "settings" }));
+    if (!status.error && status.running === running) return status;
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+  throw new Error("Agent did not reach its expected lifecycle state.");
 }
