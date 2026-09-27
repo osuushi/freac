@@ -2,7 +2,7 @@ import type { MeasurementTarget } from "../model/measurement.js";
 import type { PlaneFrame, Vector } from "../sketch/planes.js";
 import type { SelectionTarget } from "../sketch/selected-targets.js";
 
-export type InspectionCommand = "selection" | "inspect" | "render";
+export type InspectionCommand = "selection" | "inspect" | "render" | "select";
 export type InspectionTarget =
   | { kind: "plane"; plane: string }
   | MeasurementTarget
@@ -32,7 +32,9 @@ export interface InspectionView {
 declare global {
   interface Window {
     freacInspection?: {
-      onRequest(callback: (render: boolean, acquireScript?: boolean) => InspectionView): () => void;
+      onRequest(
+        callback: (render: boolean, acquireScript?: boolean, selection?: string) => InspectionView,
+      ): () => void;
     };
   }
 }

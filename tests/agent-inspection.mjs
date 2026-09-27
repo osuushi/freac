@@ -91,7 +91,26 @@ try {
   assert(png.length > 5000, "Rendered geometry image must not be a blank thumbnail");
   assert.deepEqual(await unchanged(), before);
 
+  assert.deepEqual((await query("select", "--clear")).context.selection, []);
+  const faces = (await query("select", "--surface plane")).context.selection;
+  assert.equal(faces.length, 6);
+  await query("select", face);
+  const second = faces.find((t) => t.face !== face);
+  assert.deepEqual((await query("select", `--add ${second.face} ${face}`)).context.selection, [
+    selection.targets[0].target,
+    second,
+  ]);
+  await assert.rejects(() => query("select", `${face} missing-id`), /Unknown geometry ID/);
+  assert.equal((await query("selection")).context.selection.length, 2);
+  assert.deepEqual(
+    (await query("select", `--remove ${second.face}`)).context.selection,
+    selection.context.selection,
+  );
+  assert.deepEqual((await inspect(page)).document, before.document);
+  assert.deepEqual((await query("selection")).context.camera, selection.context.camera);
   await page.getByRole("textbox", { name: "Face offset distance", exact: true }).fill("1");
+  await assert.rejects(() => query("select", "--clear"), /current edit|changed during inspection/);
+
   await settled(page);
   await assert.rejects(() => query("selection"), /current edit|changed during inspection/);
   await page.getByRole("button", { name: "Cancel face offset", exact: true }).click();
@@ -148,8 +167,39 @@ try {
   const cutaway = await query("render");
   assert.equal(cutaway.clipping.kind, "visual");
   assert.equal(cutaway.clipping.equations.length, 1);
+  await query("select", "--clear");
+  const curveId = (await inspect(page)).document.sketches[0].curves[0].id;
+  assert.equal((await query("select", curveId)).context.selection[0].kind, "curve");
+  await assert.rejects(() => query("select", "--surface cylinder"), /Exit sketch editing/);
+  await chooseTool(page, "return to modeling", "modeling");
+  const edgeId = (await inspect(page)).document.bodies[0].edges[0].id;
+  await query("select", edgeId);
+  await page.getByRole("button", { name: "Fillet edges", exact: true }).click();
+  await page.getByRole("textbox", { name: "Fillet radius", exact: true }).fill("1");
+  await settled(page);
+  await page.getByRole("button", { name: "Accept fillet", exact: true }).click();
+  await settled(page);
+  const curved = (await inspect(page)).document;
+  const cylinders = curved.bodies.flatMap((b) =>
+    b.faces.filter((f) => f.cylinder).map((f) => ({ kind: "face", body: b.id, face: f.id })),
+  );
+  assert(cylinders.length > 0);
+  await query("select", "--clear");
+  assert.deepEqual((await query("select", "--surface other")).context.selection, []);
+  const selectedCylinders = await query("select", "--surface cylinder");
+  assert.deepEqual(selectedCylinders.context.selection, cylinders);
+  assert.deepEqual((await inspect(page)).modelingSelection, cylinders);
+  assert.deepEqual((await inspect(page)).document, curved);
+  await page.screenshot({ path: `.cache/sketch-review/${name}-agent-selected-cylinders.png` });
+  await query("select", "--clear");
+  await settled(page);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).modelingSelection, cylinders);
+  await chooseTool(page, "redo", "redo");
+  assert.deepEqual((await inspect(page)).modelingSelection, []);
+  assert.deepEqual((await inspect(page)).document, curved);
   console.log(
-    `PASS ${name}: actual face/body/curve/point/empty selection, geometry/measurements, viewport and cutaway, busy rejection; inspection preserves geometry/history/camera/selection`,
+    `PASS ${name}: agent replace/add/remove/clear, cylinder filter, manual fillet, selection Undo/Redo; actual face/body/curve/point/empty selection, geometry/measurements, viewport and cutaway, busy rejection; inspection preserves geometry/history/camera/selection`,
   );
 } catch (error) {
   await page
@@ -180,7 +230,12 @@ async function query(command, entity) {
   if (!app)
     return page.evaluate(
       async ({ command, entity, modulePath }) => {
-        const context = window.readInspection(command === "render");
+        const context = window.readInspection(
+          command === "render",
+          false,
+          command === "select" ? JSON.stringify(entity.split(" ")) : undefined,
+        );
+        if (command === "select") return { units: "mm", context };
         const document = window.freacInspect().document;
         const { inspectionOverview, findInspectionTarget, targetGeometry, measurable } =
           await import(modulePath);

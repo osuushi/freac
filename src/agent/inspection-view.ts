@@ -3,6 +3,7 @@ import { worldPoint } from "../sketch/planes.js";
 import { selectedPointHits } from "../sketch/point-selection.js";
 import { pointTarget } from "../sketch/selected-targets.js";
 import type { InspectionTarget, InspectionView } from "./inspection-protocol.js";
+import { changeAgentSelection } from "./selection-command.js";
 
 /** Reads UI-owned selection/camera only; geometry is read from the host's owner. */
 export function inspectionView(editor: SketchEditor, render: boolean): InspectionView {
@@ -86,8 +87,12 @@ function captureViewport(editor: SketchEditor): NonNullable<InspectionView["imag
 
 export function installInspection(editor: SketchEditor): () => void {
   return (
-    window.freacInspection?.onRequest((render, acquireScript) => {
-      const view = inspectionView(editor, render);
+    window.freacInspection?.onRequest((render, acquireScript, selection) => {
+      let view = inspectionView(editor, render);
+      if (selection !== undefined) {
+        changeAgentSelection(editor, selection);
+        view = inspectionView(editor, render);
+      }
       if (acquireScript) editor.store.scriptState(true);
       return view;
     }) ?? (() => {})

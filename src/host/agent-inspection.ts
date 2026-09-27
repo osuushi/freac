@@ -19,8 +19,10 @@ export async function inspectDrawing(
   entity: string | undefined,
   directory: string,
   isCurrent: () => boolean,
-  readView: (render: boolean) => Promise<InspectionView> = (render) =>
-    readInspectionView(window, render),
+  readView: (render: boolean, selection?: string) => Promise<InspectionView> = (
+    render,
+    selection,
+  ) => readInspectionView(window, render, false, selection),
 ): Promise<unknown> {
   const document = owner.view.data;
   const check = () => {
@@ -28,9 +30,11 @@ export async function inspectDrawing(
       throw new Error("The drawing changed during inspection. Run the command again.");
   };
   check();
-  const view = await readView(command === "render");
+  if (command === "select" && entity === undefined) throw new Error("Missing selection arguments.");
+  const view = await readView(command === "render", command === "select" ? entity : undefined);
   check();
   const { image, ...context } = view;
+  if (command === "select") return { units: "mm", context };
   if (command === "render") {
     if (!image?.data.startsWith("data:image/png;base64,") || image.data.length > 24 * 1024 * 1024)
       throw new Error("Invalid viewport image.");

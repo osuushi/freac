@@ -7,6 +7,7 @@ export function readInspectionView(
   window: BrowserWindow,
   render: boolean,
   acquireScript = false,
+  selection?: string,
 ): Promise<InspectionView> {
   return new Promise((resolve, reject) => {
     const id = randomUUID();
@@ -39,6 +40,6 @@ export function readInspectionView(
     );
     ipcMain.on("agent-inspection-reply", reply);
     window.webContents.once("destroyed", closed);
-    window.webContents.send("agent-inspection-read", { id, render, acquireScript });
+    window.webContents.send("agent-inspection-read", { id, render, acquireScript, selection });
   });
 }

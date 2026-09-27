@@ -25,7 +25,7 @@ export class DocumentSession {
   remote?: {
     active(): boolean;
     emit(method: string, value: unknown): void;
-    inspect(render: boolean, acquireScript?: boolean): Promise<InspectionView>;
+    inspect(render: boolean, acquireScript?: boolean, selection?: string): Promise<InspectionView>;
     close(): Promise<void>;
   };
   private files: DocumentFiles;
@@ -74,7 +74,7 @@ export class DocumentSession {
         entity,
         directory,
         () => !this.busy && this.window === window && agent.workspace.root === root,
-        (render) => this.readView(render),
+        (render, selection) => this.readView(render, false, selection),
       );
     };
     agent.workspace.changed = () => this.update();
@@ -104,10 +104,14 @@ export class DocumentSession {
   get status() {
     return { ...this.files.status, warning: this.warning };
   }
-  private readView(render: boolean, acquireScript = false): Promise<InspectionView> {
-    if (this.remote?.active()) return this.remote.inspect(render, acquireScript);
+  private readView(
+    render: boolean,
+    acquireScript = false,
+    selection?: string,
+  ): Promise<InspectionView> {
+    if (this.remote?.active()) return this.remote.inspect(render, acquireScript, selection);
     if (!this.window) throw new Error("Drawing window closed");
-    return readInspectionView(this.window, render, acquireScript);
+    return readInspectionView(this.window, render, acquireScript, selection);
   }
   private send(method: string, value: unknown): void {
     if (this.remote?.active()) this.remote.emit(method, value);

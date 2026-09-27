@@ -4,7 +4,7 @@ import { runScript } from "./run-script.js";
 
 try {
   const args = process.argv.slice(2);
-  if (args.length > (["inspect", "run"].includes(args[0]) ? 2 : 1))
+  if (args[0] !== "select" && args.length > (["inspect", "run"].includes(args[0]) ? 2 : 1))
     throw new Error("Unexpected arguments; run freac help.");
   switch (args[0] ?? "help") {
     case "help":
@@ -21,6 +21,9 @@ try {
     case "run":
       if (!args[1]) throw new Error("Usage: freac run script.ts");
       console.log(JSON.stringify(await runScript(args[1]), null, 2));
+      break;
+    case "select":
+      console.log(JSON.stringify(await request("select", JSON.stringify(args.slice(1))), null, 2));
       break;
     case "status":
     case "selection":

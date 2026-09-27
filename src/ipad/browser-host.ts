@@ -18,7 +18,9 @@ export function connectBrowser(): Promise<void> {
 class BrowserConnection {
   private screen = new ConnectionScreen("Connect to Freac", "Reconnect");
   private listeners = new Map<string, Set<(value: never) => void>>();
-  private inspect: ((render: boolean, acquireScript?: boolean) => InspectionView) | null = null;
+  private inspect:
+    | ((render: boolean, acquireScript?: boolean, selection?: string) => InspectionView)
+    | null = null;
   private socket = new WebSocket(
     `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/connect`,
   );
@@ -72,8 +74,8 @@ class BrowserConnection {
     if (method === "dialog") return showRemoteDialog(value as DialogRequest, this.rpc);
     if (method === "inspect") {
       if (!this.inspect) throw new Error("Wait for the iPad editor to finish loading.");
-      const request = value as { render: boolean; acquireScript?: boolean };
-      return this.inspect(request.render, request.acquireScript);
+      const request = value as { render: boolean; acquireScript?: boolean; selection?: string };
+      return this.inspect(request.render, request.acquireScript, request.selection);
     }
     throw new Error("Unknown host request");
   };

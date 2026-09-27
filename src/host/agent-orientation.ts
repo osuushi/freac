@@ -17,6 +17,7 @@ export const launchGuidance =
   "When the user says 'this', 'these', or similar, normally interpret it as the specific current selection. Run freac selection first: selected sketch parts (points, curves, regions), sketches, faces, edges, bodies, or any combination are the intended scope unless the user explicitly says otherwise. Preserve that scope; do not silently expand a face or edge to its entire body, sketch parts to a whole sketch, or discard members of a mixed selection. " +
   "Selection is a reference aid, not a prerequisite for editing. For follow-ups and corrections, use the target established by the conversation, previous inspection and your own script/results; an empty live selection does not erase that context. Re-inspect current geometry to verify IDs and relevant boundaries. A request to extend or fix your previous result can explicitly change its earlier scope. " +
   "Before asking for clarification, inspect the established target and your previous work. Proceed when context and geometry identify the intended edit. Ask a specific question only if materially different interpretations remain; do not demand reselection solely because live selection is empty or a body has multiple faces/sections. For a fresh selected-face request, use the face's bounded extent rather than assuming whole-body dimensions. " +
+  "Use freac select ID... to replace selection, --add/--remove before IDs to modify it, --clear to clear it, or --surface cylinder to select all cylindrical faces. Read freac docs for scope and selection limits. " +
   "Use freac inspect for geometry and freac render for a viewport PNG. Use freac run script.ts for typed modeling; read freac docs and types first. Each successful script is one Undo step. " +
   "Never discover or use another launch's connection. Keep project guidance in AGENTS.md.";
 
@@ -41,7 +42,17 @@ export async function prepareOrientation(
     return {
       application: "Freac",
       document: { name: current.name, saved: !!current.path, edited: current.edited, units: "mm" },
-      capabilities: ["help", "docs", "types", "status", "selection", "inspect", "render", "run"],
+      capabilities: [
+        "help",
+        "docs",
+        "types",
+        "status",
+        "selection",
+        "select",
+        "inspect",
+        "render",
+        "run",
+      ],
     };
   });
   try {

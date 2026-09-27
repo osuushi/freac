@@ -40,6 +40,17 @@ bounded face. Body dimensions alone do not establish the selected face's dimensi
 A later request to extend that thread should be interpreted using the new request
 and established target, rather than mechanically enforcing the initial bounds.
 
+freac select ID... replaces selection using stable IDs from inspect. --add or --remove
+before IDs preserves unrelated targets and ordering. freac select --clear clears it.
+freac select --surface cylinder selects all cylindrical faces in the document; plane
+and other are also supported, optionally preceded by --add or --remove. This includes
+hidden bodies without revealing them. For a narrower scope, inspect faces and pass IDs.
+Selection changes no geometry, camera or visibility and uses ordinary selection history.
+Modeling accepts faces, edges, bodies and whole sketches. While editing a sketch,
+only that sketch’s curve/group IDs are accepted. Exit/enter the workspace manually
+for a different scope. Points, regions and planes cannot be set by this command yet.
+Invalid IDs or busy edits reject the whole request. The result contains the new context.
+
 freac selection returns ordered explicit targets, selected point coordinates, geometry summaries,
 and kernel measurements for one or two measurable face/edge/curve/region targets.
 An empty selection is reported as empty; hover and visible handles are not selection.
@@ -82,18 +93,21 @@ with automatic approval review; explicit user arguments can override those defau
 ${scriptGuide}`;
 
 export const help = `Freac — document-bound CAD assistant interface
-Usage: freac [help | docs | types | status | selection | inspect [ID] | render | run script.ts]
+Usage: freac [help | docs | types | status | selection | select [OPTIONS] [ID...] | inspect [ID] | render | run script.ts]
 
   help     Show available commands
   docs     Print the current interface and workspace guide
   types    Print TypeScript declarations for CLI JSON results
   status   Read this drawing's current name, saved/edited state and capabilities
   selection  Read ordered selection, geometry and available measurements
+  select [--add|--remove] ID...  Change ordered selection (default: replace)
+  select [--add|--remove] --surface cylinder|plane|other  Select matching faces
+  select --clear  Clear selection
   inspect [ID]  List geometry, or describe one current geometry ID
   render   Capture the current geometry viewport; return PNG path and view metadata
 
   run script.ts  Typecheck and run a script; apply all changes as one Undo step
 
-Read-only inspection and typed modeling scripts.
+Inspection, selection control and typed modeling scripts.
 Successful commands exit 0; errors go to stderr and exit 1.
 `;

@@ -37,15 +37,17 @@ contextBridge.exposeInMainWorld("freacScript", {
 });
 
 contextBridge.exposeInMainWorld("freacInspection", {
-  onRequest: (callback: (render: boolean, acquireScript?: boolean) => InspectionView) => {
+  onRequest: (
+    callback: (render: boolean, acquireScript?: boolean, selection?: string) => InspectionView,
+  ) => {
     const listener = (
       _event: Electron.IpcRendererEvent,
-      request: { id: string; render: boolean; acquireScript?: boolean },
+      request: { id: string; render: boolean; acquireScript?: boolean; selection?: string },
     ) => {
       try {
         ipcRenderer.send("agent-inspection-reply", {
           id: request.id,
-          view: callback(request.render, request.acquireScript),
+          view: callback(request.render, request.acquireScript, request.selection),
         });
       } catch (error) {
         ipcRenderer.send("agent-inspection-reply", {

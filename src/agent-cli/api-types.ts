@@ -6,7 +6,7 @@ export interface Plane { origin: Vector; u: Vector; v: Vector }
 export interface FreacStatus {
   application: "Freac";
   document: { name: string; saved: boolean; edited: boolean; units: "mm" };
-  capabilities: readonly ("help" | "docs" | "types" | "status" | "selection" | "inspect" | "render" | "run")[];
+  capabilities: readonly ("help" | "docs" | "types" | "status" | "selection" | "select" | "inspect" | "render" | "run")[];
 }
 export type Target =
   | { kind: "plane"; plane: string }
@@ -30,6 +30,8 @@ export interface ViewContext {
     width: number; height: number; near: number; far: number };
   clipping: { kind: "visual"; plane: Plane; equations: number[][] } | null;
 }
+/** select: resulting UI selection, with no geometry mutation. */
+export interface FreacSelect { units: "mm"; context: ViewContext }
 export interface Distance { value: number; points: [Vector, Vector] }
 export interface Measurement {
   properties: { label: string; value: number; unit: "mm" | "mm²" | "°" }[];

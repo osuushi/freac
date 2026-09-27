@@ -74,14 +74,14 @@ export class AgentConnection {
       if (request?.capability !== this.capability) throw new Error("Invalid Freac connection.");
       if (
         typeof request.command !== "string" ||
-        !["status", "selection", "inspect", "render", "script"].includes(request.command)
+        !["status", "selection", "inspect", "render", "select", "script"].includes(request.command)
       )
         throw new Error("Unknown Freac command; run freac help.");
       if (
         request.entity !== undefined &&
-        (request.command !== "inspect" ||
+        (!["inspect", "select"].includes(request.command as string) ||
           typeof request.entity !== "string" ||
-          request.entity.length > 256)
+          request.entity.length > (request.command === "select" ? 65536 : 256))
       )
         throw new Error("Invalid inspection ID.");
       if (!this.active) return;

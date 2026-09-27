@@ -486,3 +486,19 @@ adapters. Each increment must include actual CLI-to-geometry or CLI-to-control
 acceptance in hidden Electron and applicable Chromium/WebKit routes. Full parity
 is only claimable after every family is migrated and the audit passes; it does
 not promise CAD features absent from the manual application.
+
+## Agent selection control
+
+`freac select ID...` replaces UI selection; `--add` and `--remove` preserve the
+order of unrelated targets, and `--clear` clears it. `--surface cylinder|plane|other`
+selects matching exact face metadata across all bodies, including hidden bodies
+without changing their visibility. Narrower requests use inspected stable IDs.
+The result reports the resulting view context. Selection follows ordinary selection
+history; geometry, camera, visibility and geometry Undo are unchanged.
+
+Validation and application run together in the active renderer, through the same
+bounded desktop/iPad view connection used for inspection. Active edits reject the
+request. Modeling accepts face, edge, body and sketch IDs; sketch mode accepts
+curve/group IDs from its active sketch. Invalid or incompatible targets reject the
+entire request. Workspace changes remain explicit; point, profile and plane targets
+are not yet writable through this CLI command.

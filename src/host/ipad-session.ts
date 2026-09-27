@@ -31,8 +31,8 @@ export class IPadSession {
     documents.remote = {
       active: () => this.server.active || this.switching,
       emit: (method, value) => this.server.emit(method, value),
-      inspect: (render, acquireScript) =>
-        this.server.request<InspectionView>("inspect", { render, acquireScript }),
+      inspect: (render, acquireScript, selection) =>
+        this.server.request<InspectionView>("inspect", { render, acquireScript, selection }),
       close: () => this.stop(),
     };
     agent.canUseDesktop = () => !this.server.active && !this.switching;
