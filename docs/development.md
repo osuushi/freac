@@ -219,6 +219,47 @@ Electron profiles and explicitly discard between cases.
 
 ## Agent terminal checks
 
+### Gear-train behavioral evaluations
+
+`scripts/evals/gear-trains.mjs` runs authenticated Codex against isolated hidden
+Electron documents. It is an ad hoc model experiment, not part of CI. The defaults
+are Astra/low and three cases: a 3:1 pair, a bounded 12:1 compound train, and
+relocating an existing output axis. `oblique` is a separate 2:1 creation case.
+After activating `.nvmrc`, build the app and compile the native test modules:
+
+```sh
+npm run build
+npx tsc -p tsconfig.test.json
+node --test scripts/evals/gear-grade.test.mjs
+node scripts/evals/gear-render.mjs
+FREAC_EVAL_OUTPUT=.cache/gear-eval/my-run node scripts/evals/gear-trains.mjs
+node scripts/evals/gear-grade.mjs .cache/gear-eval/my-run/{pair,compound,revision}
+node scripts/evals/gear-review.mjs .cache/gear-eval/my-run/{pair,compound,revision}
+```
+
+Use `FREAC_EVAL_CASES=oblique`, `FREAC_EVAL_MODEL`, `FREAC_EVAL_EFFORT`, and
+`FREAC_CODEX_EXECUTABLE` to select cases and harness settings. Use a fresh output
+directory for each run. `FREAC_EVAL_VARIANT` labels a guidance experiment;
+`FREAC_EVAL_SKILL=/path/to/skill-folder` copies and explicitly invokes a candidate
+`freac-gear-trains` skill in the isolated document workspace.
+
+Results retain dated prompts, model/effort, CLI version, reference hashes, command
+traces, timing, usage, authored files and `.freac` models. Review the trace and final
+claims as well as `grade.json`: successful commands alone do not establish a good
+result. The grader independently derives ratios, axes, module, width, envelope and
+theoretical contact ratio from accepted geometry. It checks closed decorated export
+meshes and samples every body pair for interference. The UI review reopens each
+model and uses ordinary pointer/settings/Undo/Redo controls. Negative native fixtures
+check that the grader detects bad phase, ratio, spacing and overlapping stages.
+These cases cover unshifted external Z-axis spur trains only. Sampled collision
+checks are not continuous motion, load, manufacture or arbitrary assembly validation.
+The deterministic `gear-render.mjs` check verifies that the agent image includes
+visible teeth while preserving model, camera and selection. It also supports
+`FREAC_TEST_BROWSER=chromium` and `webkit` for the shared capture implementation;
+the default Electron route uses the real CLI/host boundary.
+
+### Terminal and interface checks
+
 After activating `.nvmrc`, `npm ci` installs the pinned Ghostty-web and node-pty
 dependencies and prepares node-pty's macOS helper. After `npm run build`, run
 `node tests/agent-terminal.mjs` for hidden Electron and `node tests/agent-web.mjs`

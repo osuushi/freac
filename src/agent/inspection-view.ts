@@ -10,7 +10,12 @@ export function inspectionView(editor: SketchEditor, render: boolean): Inspectio
   const world = editor.world;
   if (editor.blocked || editor.candidate || editor.isDragging || editor.interactions.current)
     throw new Error("Finish or cancel the current edit before inspecting accepted geometry.");
-  if (world.cameraMoving) throw new Error("Wait for the camera to settle, then inspect again.");
+  // Decorator fades and other queued paints do not move the camera.
+  if (world.cameraTransitioning)
+    throw new Error("Wait for the camera to settle, then inspect again.");
+  // Use the normal composition path, including decorator and sketch foreground
+  // passes, before reading both camera metadata and the transient WebGL buffer.
+  if (render) world.draw();
   const sketch = editor.sketch;
   const clippingFrame = world.activeFrame ?? world.crossSection;
   const selection: InspectionTarget[] = world.active
@@ -68,9 +73,7 @@ export function inspectionView(editor: SketchEditor, render: boolean): Inspectio
 
 function captureViewport(editor: SketchEditor): NonNullable<InspectionView["image"]> {
   const world = editor.world;
-  // Capture directly after rendering because WebGL's drawing buffer is transient.
-  // No camera, viewport or selection changes; HTML controls are deliberately excluded.
-  world.renderer.render(world.scene, world.camera);
+  // inspectionView just composed this frame. HTML controls remain excluded.
   const canvas = document.createElement("canvas");
   const scale = Math.min(1, 2048 / Math.max(world.canvas.width, world.canvas.height));
   canvas.width = Math.max(1, Math.round(world.canvas.width * scale));

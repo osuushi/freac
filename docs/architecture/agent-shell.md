@@ -303,11 +303,13 @@ existing kernel measurement path, including its units, approximation flag and er
 Other selection shapes return geometry with no invented measurement.
 
 A narrow preload request/reply reads renderer-owned selection/camera/visibility.
-Requests reject active edits, camera motion, file operations and a changed accepted
+Requests reject active edits, camera transitions, file operations and a changed accepted
 document during an asynchronous read. Existing per-launch revocation remains in force.
+Queued redraws, including decorator fades, do not count as camera movement.
 No document revisions, retry ledgers or concurrent model mutation are introduced.
 
-`freac render` renders the current geometry scene directly to a PNG, bounded to
+`freac render` uses the normal composed viewport, including available decorator
+previews and sketch foreground passes, to produce a PNG bounded to
 2048 pixels on the longest side, without changing camera, selection or history.
 HTML controls/labels are excluded; geometry selection highlights remain. Its JSON
 includes camera basis/frustum, hidden entity IDs and visual clipping equations.

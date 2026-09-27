@@ -117,6 +117,11 @@ disconnected sectors/axial patches, continuation, copied placement, agent dimens
 inspection and atomic geometry/settings scripts. Engagement tests sample spur,
 opposite-hand helical, internal, rack/pinion and straight-bevel pairs.
 
+The separate [agent gear-train evaluation](../development.md#gear-train-behavioral-evaluations)
+exercises fresh agents building pairs/compound spur trains and relocating an existing
+axis. Its geometric grading and ordinary re-editing checks evaluate the resulting
+models; transcripts separately establish what the agent actually verified.
+
 These checks do not establish arbitrary gear-chain interference, assembly, load
 capacity, physical printer fit, or iPad input. Agents remain responsible for
 choosing and checking a particular arrangement; the tool saves independent gears.

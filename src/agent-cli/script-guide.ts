@@ -39,6 +39,9 @@ shell takes body IDs and explicit opening face arrays. Empty faces means a close
 negative thickness hollows inward and positive outward. Thickness is never clamped.
 The existing analytic-surface limits apply; unsupported shapes reject normally.
 Use returned topology IDs after each edit; consumed edges and openings may disappear.
+SolidResult.bodies contains every body in the current candidate, including unchanged
+bodies. It is not a list of newly created bodies. Compare IDs with the inventory before
+creation, or identify the intended body through topology; do not use bodies[0] as “new”.
 Top-level await works. Relative imports and additional source files are not supported
 in this first increment. Use console.error for diagnostic text; stdout is CLI JSON.
 

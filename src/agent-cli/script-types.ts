@@ -14,6 +14,9 @@ export interface SketchResult {
   sketch: string; curves: string[]; profiles: { sketch: string; profile: string }[];
 }
 export interface ScaleResult extends SolidResult { sketches: SketchResult[] }
+/** All bodies in the candidate, including unchanged bodies; not just created/edited ones.
+ * Identify new bodies by comparing IDs with the pre-operation inventory, or query topology.
+ * Never assume bodies[0] is the body just created. */
 export interface SolidResult {
   bodies: { id: string; volume: number; faces: string[]; edges: string[] }[];
 }
