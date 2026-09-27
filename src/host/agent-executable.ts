@@ -2,7 +2,7 @@ import { constants } from "node:fs";
 import { access, stat } from "node:fs/promises";
 import { delimiter, join, resolve } from "node:path";
 
-/** Resolve without invoking a shell, including Finder launches with a limited PATH. */
+/** Resolve the configured executable directly against the prepared launch PATH. */
 export async function agentExecutable(
   executable: string,
   cwd: string,

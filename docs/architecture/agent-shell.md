@@ -76,6 +76,11 @@ Use a PTY in the desktop host, with a narrow preload interface for bytes, resizi
 and lifecycle. Spawn executable plus argument array directly. Prepend Freac's tool
 directory to PATH and pass a private document-bound endpoint through environment.
 Child CLI calls inherit scope; no document/session identifiers in normal commands.
+On macOS, recover PATH from the user's interactive login shell before resolving
+the executable, so Finder launches find shell-installed tools too. Read only PATH
+from that shell; retain the configured environment isolation and launch the harness
+directly. Explicit PATH preferences bypass discovery. Discovery runs asynchronously
+with a five-second limit and falls back to the inherited PATH on failure.
 The endpoint expires with its document, uses a local capability, and never falls
 back to whichever document is now active. Keep native APIs out of shared frontend.
 

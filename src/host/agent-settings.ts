@@ -2,6 +2,7 @@ import { mkdir, readdir, readFile, realpath, writeFile } from "node:fs/promises"
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { type AgentPreferences, defaultAgentPreferences } from "../agent/protocol.js";
+import { agentShellPath } from "./agent-shell-path.js";
 import { safeWrite } from "./safe-write.js";
 
 export function agentPreferences(value: unknown): AgentPreferences {
@@ -57,6 +58,7 @@ export class AgentSettings {
   }
   async environment(settings: AgentPreferences): Promise<NodeJS.ProcessEnv> {
     const env: NodeJS.ProcessEnv = { ...process.env, TERM: "xterm-256color" };
+    if (settings.env.PATH === undefined) env.PATH = await agentShellPath(env);
     if (settings.preset === "codex") {
       // Do not inherit the embedding agent's own runtime/session overrides.
       for (const key of Object.keys(env))

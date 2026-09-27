@@ -229,6 +229,8 @@ Codex transcript replay check without submitting a prompt. With that variable se
 `node tests/agent-orientation.mjs` checks hidden Electron commands/lifecycle plus
 actual Codex prompt-input discovery and sandbox execution. These tests do not sign in
 or use your browser. Linux/Windows builds and physical iPad input remain unverified.
+On macOS, `node tests/agent-finder-launch.mjs` checks a minimal Finder-style PATH
+in hidden Electron, shell discovery, child-tool lookup and explicit PATH precedence.
 `node tests/codex-permissions.mjs` with the same executable variable checks workspace
 writes, automatic review and the parent-directory boundary using an isolated config.
 `node tests/agent-inspection.mjs` exercises CLI inspection in hidden Electron;
