@@ -1,9 +1,9 @@
 import type { SketchDocument } from "../sketch/document.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import { isBuiltinDecorator } from "./builtins.js";
 import { PreviewOverlaySurfaces } from "./preview-overlay-surfaces.js";
 import { PreviewQueue } from "./preview-queue.js";
 import { previewFingerprint, previewSignatures } from "./preview-signatures.js";
-import { threadDefinition } from "./thread-settings.js";
 
 export function decoratorOverlay(editor: SketchEditor): () => void {
   const surfaces = new PreviewOverlaySurfaces(editor);
@@ -56,7 +56,7 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
       return;
     }
     const hasCustom = document.decorators.some(
-      (instance) => instance.definition !== threadDefinition,
+      (instance) => !isBuiltinDecorator(instance.definition),
     );
     queue.submit(document, editor.store.decoratorSources, live, hasCustom, signatures);
     if (live) {

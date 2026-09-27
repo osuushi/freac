@@ -1,4 +1,6 @@
+import { knurlDefinition } from "../decorators/builtins.js";
 import { gearManifest } from "../decorators/gear-settings.js";
+import { knurlFields } from "../decorators/knurl-settings.js";
 import { threadDefinition, threadFields } from "../decorators/thread-settings.js";
 import type { Body } from "../model/body.js";
 import type { MeasurementTarget } from "../model/measurement.js";
@@ -133,6 +135,7 @@ export function inspectionOverview(document: SketchDocument, view: InspectionVie
     builtinDecorators: [
       { id: threadDefinition, version: 1, name: "Threads", fields: threadFields },
       gearManifest,
+      { id: knurlDefinition, version: 1, name: "Knurling", fields: knurlFields },
     ],
     constructionPlanes: (document.constructionPlanes ?? []).map((p) => ({
       kind: "plane",

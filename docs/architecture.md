@@ -49,7 +49,7 @@ is a later operation on current geometry, through ordinary Undo.
 | Shell | [Shell interaction and validation](architecture/shell.md) |
 | Selection measurements | [Distances, gaps and relationships](architecture/measurements.md) |
 | Draft and cleanup | [Extrusion draft](architecture/extrusion-draft.md), [solid cleanup](architecture/solid-cleanup.md) |
-| Decorators | [Export-time mesh modifiers, threads and JavaScript extensions](architecture/decorators.md) |
+| Decorators | [Export-time mesh modifiers, threads and JavaScript extensions](architecture/decorators.md), [knurling](architecture/knurling.md) |
 | Gear decorator | [Pitch surfaces, gear controls and agent calculations](architecture/gears.md) |
 
 ## Maintaining this index

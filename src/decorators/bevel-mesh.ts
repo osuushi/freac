@@ -5,7 +5,7 @@ import { gearFaces } from "./gear-faces.js";
 import { profileShell } from "./gear-loft.js";
 import { gearTolerance } from "./gear-precision.js";
 import { gearSettings, radians } from "./gear-settings.js";
-import { cylinderGrid, faceMask, radialShell } from "./thread-mesh.js";
+import { cylinderGrid, faceMask, radialShell } from "./radial-mesh.js";
 import type { DecoratorInstance } from "./types.js";
 
 export function bevelMeshes(

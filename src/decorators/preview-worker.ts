@@ -2,6 +2,7 @@ import javascriptWasm from "@jitl/quickjs-wasmfile-release-sync/wasm?url";
 import wasmUrl from "manifold-3d/manifold.wasm?url";
 import type { QuickJSWASMModule } from "quickjs-emscripten-core";
 import type { SketchDocument } from "../sketch/document.js";
+import { isBuiltinDecorator } from "./builtins.js";
 import { gearPreview } from "./gear-runtime.js";
 import { gearDefinition } from "./gear-settings.js";
 import type { EnabledDefinition } from "./javascript-hooks.js";
@@ -13,7 +14,6 @@ import {
 } from "./mesh-runtime.js";
 import { PreviewHistories } from "./preview-feedback.js";
 import { packPreviewMesh } from "./preview-wire.js";
-import { threadDefinition } from "./thread-settings.js";
 import type { DecoratorInstance } from "./types.js";
 
 async function renderGear(document: SketchDocument, instance: DecoratorInstance) {
@@ -58,7 +58,7 @@ async function javascriptDecorators(sources?: EnabledDefinition[]) {
 function liveGroupCount(document: SketchDocument, sources?: EnabledDefinition[]): number {
   return (document.decorators ?? []).filter((instance) => {
     if (instance.problem) return false;
-    if (instance.definition === threadDefinition) return true;
+    if (isBuiltinDecorator(instance.definition)) return true;
     const definition = document.decoratorDefinitions?.find(
       (entry) => entry.id === instance.definition && entry.version === instance.version,
     );
@@ -89,7 +89,7 @@ self.onmessage = async (
     const signatures = new Map(event.data.signatures);
     const hasJavaScript = document.decorators?.some(
       (instance) =>
-        instance.definition !== threadDefinition &&
+        !isBuiltinDecorator(instance.definition) &&
         needsRender(instance.id, nextRenderState(instance.id, signatures.get(instance.id), live)),
     );
     const javascript = hasJavaScript ? await javascriptDecorators(sources) : undefined;
@@ -118,7 +118,7 @@ self.onmessage = async (
           rendered.set(instance.id, next);
           continue;
         }
-        if (instance.definition !== threadDefinition) {
+        if (!isBuiltinDecorator(instance.definition)) {
           const result = javascript?.preview(document, instance, next.live, feedback);
           if (!result) {
             rendered.set(instance.id, next);

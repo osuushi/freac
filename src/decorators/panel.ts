@@ -1,13 +1,16 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { isBuiltinDecorator, knurlDefinition } from "./builtins.js";
 import { appendCustomContinue } from "./custom-continue.js";
 import { appendCustomDecorators } from "./custom-panel.js";
 import { resolveFaces } from "./cylinder.js";
 import { faceKey } from "./edits.js";
+import { appendKnurlSettings } from "./knurl-panel.js";
 import { decoratorLibrary } from "./library.js";
 import { appendThreadInformation } from "./panel-information.js";
 import { appendDecoratorRepairs } from "./repair-panel.js";
 import { DecoratorSettingsDraft } from "./settings-draft.js";
+import { decoratorField } from "./settings-field.js";
 import { threadDefinition, threadFields } from "./thread-settings.js";
 import type { DecoratorEdit, DecoratorInstance, FaceReference, Settings } from "./types.js";
 import "./panel.css";
@@ -18,6 +21,7 @@ export class DecoratorPanel {
   private root = document.createElement("section");
   private unregister: () => void;
   private unregisterGear: () => void;
+  private unregisterKnurl: () => void;
   private disposeLibrary: () => void;
   private key = "";
   private shownDocument: SketchEditor["store"]["data"] | null = null;
@@ -64,6 +68,15 @@ export class DecoratorPanel {
       },
       run: () => this.apply(gearDefinition),
     });
+    this.unregisterKnurl = toolCatalog(editor).register({
+      id: "knurling",
+      label: "Knurling",
+      category: "Solid",
+      aliases: ["knurl", "grip", "diamond texture"],
+      description: "Editable diamond knurling on cylindrical faces; generated at mesh export",
+      reason: () => idleReason(editor) ?? this.eligibility(knurlDefinition),
+      run: () => this.apply(knurlDefinition),
+    });
     editor.world.changed.add(this.update);
     this.update();
   }
@@ -78,13 +91,15 @@ export class DecoratorPanel {
       d.faces.some((f) => keys.has(faceKey(f))),
     );
   }
-  private eligibility(): string | null {
+  private eligibility(definition = threadDefinition): string | null {
     if (this.editor.world.active) return "Return to Modeling and select cylindrical faces";
     const faces = this.selected();
     if (!faces.length || faces.length !== this.editor.modeling.targets.length)
-      return "Threads can only be applied to cylindrical faces";
+      return "Select cylindrical faces";
     try {
       resolveFaces(this.editor.store.data.bodies ?? [], faces);
+      if (this.instances().some((d) => !d.problem && d.definition !== definition))
+        return "Remove the existing decorator before applying another";
       return null;
     } catch (error) {
       return error instanceof Error ? error.message : String(error);
@@ -120,53 +135,6 @@ export class DecoratorPanel {
     if (preview) this.draft.preview(edit);
     else void this.edit(edit);
   }
-  private field(
-    target: HTMLElement,
-    field: (typeof threadFields)[number],
-    instances: DecoratorInstance[],
-  ): void {
-    const values = instances.map((d) => d.settings[field.key] ?? field.default);
-    const mixed = values.some((v) => v !== values[0]);
-    const label = document.createElement("label"),
-      text = document.createElement("span");
-    text.textContent = field.label + (field.unit ? ` (${field.unit})` : "");
-    label.append(text);
-    if (field.type === "enum") {
-      const input = document.createElement("select");
-      input.setAttribute("aria-label", field.label);
-      if (mixed) input.add(new Option("Mixed", ""));
-      for (const option of field.options ?? []) input.add(new Option(option.label, option.value));
-      input.value = mixed ? "" : String(values[0]);
-      input.onchange = () => this.patch({ [field.key]: input.value }, false, instances);
-      label.append(input);
-    } else {
-      const input = document.createElement("input");
-      input.type = "number";
-      input.step = "any";
-      input.setAttribute("aria-label", field.label);
-      input.value = mixed ? "" : String(values[0]);
-      input.placeholder = mixed ? "Mixed" : "";
-      if (field.min !== undefined) input.min = String(field.min);
-      if (field.max !== undefined) input.max = String(field.max);
-      input.oninput = () => this.patch({ [field.key]: input.valueAsNumber }, true, instances);
-      input.onblur = () => {
-        void this.draft.blur();
-      };
-      input.onkeydown = (event) => {
-        event.stopPropagation();
-        if (event.key === "Enter") {
-          event.preventDefault();
-          void this.draft.commit();
-        }
-        if (event.key === "Escape") {
-          event.preventDefault();
-          this.draft.cancel();
-        }
-      };
-      label.append(input);
-    }
-    target.append(label);
-  }
   private update = (): void => {
     const instances = this.instances();
     const problems = (this.editor.store.data.decorators ?? []).filter((d) => d.problem);
@@ -175,7 +143,7 @@ export class DecoratorPanel {
       !!last &&
       !last.problem &&
       !instances.length &&
-      (last.definition === threadDefinition
+      (isBuiltinDecorator(last.definition)
         ? !this.eligibility()
         : this.selected().length > 0 &&
           this.selected().length === this.editor.modeling.targets.length);
@@ -206,23 +174,30 @@ export class DecoratorPanel {
     this.root.append(heading);
     appendDecoratorRepairs(this.root, this.editor, problems);
     if (canContinue && last) {
-      if (last.definition !== threadDefinition) {
+      if (!isBuiltinDecorator(last.definition)) {
         appendCustomContinue(this.root, this.editor, last, this.selected());
         return;
       }
-      this.button("Continue threads onto selection", () => {
-        void this.edit({ action: "continue", id: last.id, faces: this.selected() });
-      });
+      this.button(
+        last.definition === knurlDefinition
+          ? "Continue knurling onto selection"
+          : "Continue threads onto selection",
+        () => {
+          void this.edit({ action: "continue", id: last.id, faces: this.selected() });
+        },
+      );
       return;
     }
     if (!instances.length) return;
     if (instances.length === 1) this.last = instances[0].id;
-    const custom = instances.filter((d) => d.definition !== threadDefinition);
+    const custom = instances.filter((d) => !isBuiltinDecorator(d.definition));
     if (custom.length) {
       appendCustomDecorators(this.root, this.editor, custom, this.draft, (group, patch, preview) =>
         this.patch(patch, preview, group),
       );
     }
+    const knurls = instances.filter((d) => d.definition === knurlDefinition);
+    if (knurls.length) this.appendKnurls(knurls);
     const threads = instances.filter((d) => d.definition === threadDefinition);
     if (threads.length) this.appendThreads(threads);
   };
@@ -248,7 +223,13 @@ export class DecoratorPanel {
         )
           continue;
         const basic = ["preset", "hand", "cut", "clearance"].includes(field.key);
-        this.field(basic ? this.root : advanced, field, instances);
+        decoratorField(
+          basic ? this.root : advanced,
+          field,
+          instances,
+          (patch, preview) => this.patch(patch, preview, instances),
+          this.draft,
+        );
         if (field.key === "clearance") {
           const hint = document.createElement("p");
           hint.className = "thread-clearance-hint";
@@ -271,11 +252,28 @@ export class DecoratorPanel {
       });
     });
   }
+  private appendKnurls(instances: DecoratorInstance[]): void {
+    this.button(`Knurling · ${instances.reduce((n, d) => n + d.faces.length, 0)} faces`, () => {
+      this.expand(instances);
+      this.editor.refresh();
+    });
+    appendKnurlSettings(this.root, this.editor, instances, this.draft, (patch, preview) =>
+      this.patch(patch, preview, instances),
+    );
+    this.button("Remove knurling from selected faces", () => {
+      const keys = new Set(instances.flatMap((d) => d.faces.map(faceKey)));
+      void this.edit({
+        action: "remove",
+        faces: this.selected().filter((f) => keys.has(faceKey(f))),
+      });
+    });
+  }
   dispose(): void {
     this.disposeLibrary();
     this.draft.cancel();
     this.unregister();
     this.unregisterGear();
+    this.unregisterKnurl();
     this.editor.world.changed.delete(this.update);
     this.root.remove();
   }

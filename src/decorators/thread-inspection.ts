@@ -1,27 +1,29 @@
 import type { SketchDocument } from "../sketch/document.js";
+import { knurlDefinition } from "./builtins.js";
 import { cylinderFrame, resolveFaces } from "./cylinder.js";
-import { partitionThreads, validateThread } from "./edits.js";
+import { partitionThreads, validateBuiltin } from "./edits.js";
 import type { DecoratorInspection, DecoratorInspectionRequest } from "./inspection.js";
+import { patchKnurlSettings } from "./knurl-settings.js";
 import { threadInformation } from "./thread-information.js";
-import { patchThreadSettings, threadDefaults, threadDefinition } from "./thread-settings.js";
+import { patchThreadSettings, threadDefaults } from "./thread-settings.js";
 
 export function inspectThreads(
   document: SketchDocument,
   request: DecoratorInspectionRequest,
 ): DecoratorInspection {
   try {
-    if (request.version !== 1) throw new Error("Unsupported Threads version");
+    if (request.version !== 1) throw new Error("Unsupported decorator version");
     const existing = request.instanceId
       ? document.decorators?.find((d) => d.id === request.instanceId)
       : undefined;
-    if (request.instanceId && (!existing || existing.definition !== threadDefinition))
-      throw new Error("Select an existing thread decorator");
+    if (request.instanceId && (!existing || existing.definition !== request.definition))
+      throw new Error("Select an existing decorator");
     if (
       document.decorators?.some(
         (d) =>
           !d.problem &&
           d.id !== existing?.id &&
-          d.definition !== threadDefinition &&
+          d.definition !== request.definition &&
           d.faces.some((f) => request.faces.some((r) => r.body === f.body && r.face === f.face)),
       )
     )
@@ -32,18 +34,22 @@ export function inspectThreads(
       const diameter = cylinder.radius * 2;
       const instance = {
         id: "inspection",
-        definition: threadDefinition,
+        definition: request.definition,
         version: 1,
         frame: cylinderFrame(cylinder),
         ...existing,
         faces,
-        settings: patchThreadSettings(
-          diameter,
-          existing?.settings ?? threadDefaults(diameter),
-          request.settings ?? {},
-        ),
+        settings:
+          request.definition === knurlDefinition
+            ? patchKnurlSettings(existing?.settings ?? {}, request.settings ?? {})
+            : patchThreadSettings(
+                diameter,
+                existing?.settings ?? threadDefaults(diameter),
+                request.settings ?? {},
+              ),
       };
-      validateThread(document, instance);
+      validateBuiltin(document, instance);
+      if (request.definition === knurlDefinition) return [];
       return threadInformation(document.bodies ?? [], instance).warnings.map((w) => ({
         severity: "warning" as const,
         message: w.message,

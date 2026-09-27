@@ -8,7 +8,7 @@ import { gearProfile } from "./gear-profile.js";
 import { gearDimensions, gearSettings, radians } from "./gear-settings.js";
 import { gearDiagnostics } from "./gear-support.js";
 import { rackMeshes } from "./rack-mesh.js";
-import { cylinderGrid, faceMask, radialShell } from "./thread-mesh.js";
+import { cylinderGrid, faceMask, radialShell } from "./radial-mesh.js";
 import type { DecoratorInstance } from "./types.js";
 
 export function gearMeshes(

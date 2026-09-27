@@ -1,7 +1,9 @@
 import type { DecoratorCatalog, DecoratorScriptOperation } from "../agent-script/decorators.js";
+import { knurlDefinition } from "../decorators/builtins.js";
 import { editDefinitions } from "../decorators/definition-edits.js";
 import { editDecorators } from "../decorators/edits.js";
 import { gearManifest } from "../decorators/gear-settings.js";
+import { knurlFields } from "../decorators/knurl-settings.js";
 import { threadDefinition, threadFields } from "../decorators/thread-settings.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { DecoratorSession } from "./decorator-session.js";
@@ -21,6 +23,7 @@ export function decoratorCatalog(
     builtins: [
       { id: threadDefinition, version: 1, name: "Threads", fields: threadFields },
       gearManifest,
+      { id: knurlDefinition, version: 1, name: "Knurling", fields: knurlFields },
     ],
   };
 }
