@@ -96,7 +96,29 @@ positive direction is the projected extrusion axis or material-outward face norm
 when viewed end-on, the existing upward drag fallback remains available. Each drag
 holds its starting projection and scale. Distance fields remain visible at zero;
 extrusion retains its draft row and fixed Boolean mode icons, followed by accept,
-cancel and cleanup. Offset retains its diameter/signed-distance switch for cylinders.
+cancel and cleanup. Offset defaults to absolute thickness for planar walls with a
+directly reachable parallel face, or cylindrical/spherical walls with a directly
+reachable concentric face in the same body. A labeled mode dropdown offers Thickness,
+Radius and Offset where applicable; switching units preserves the preview. Radius
+sets the absolute cylindrical/spherical radius and defaults when no thickness reference
+exists. Offset is the signed material-outward change. Multiple radius targets must
+share a radius and orientation response. Positive radii/thicknesses are required.
+Faces with neither measurement offer Offset only. Recognized fillet
+resizing retains its radius control. Parallel non-concentric cylinders do not qualify.
+The kernel sorts matching supports by normal separation, then checks exact trimmed
+ray intersections from 11×11 parameter grids on both faces, excluding intervening faces.
+Sampling the reference as well as the selected face recovers small recessed patches
+that a coarse grid on the larger face can miss; the nearest such patch wins.
+The distance is analytic; narrow facing regions can be missed by this conservative
+sample search. The reference and conversion stay fixed through an edit. Multiple
+selected walls must agree in thickness and signed response, and no reference may
+belong to the expanded moving face set. Thickness must be positive. Existing kernel
+validation and limit clamping still determine legal geometry; accepted edits and Undo
+use the ordinary signed-offset operation, with no saved thickness constraint.
+A complete one-face spherical shell can change radius through an exact centered
+scale when the ordinary offset builder cannot process its closed shells. Only the
+selected shell changes; stable topology correspondence, signed parallel-surface
+checks, strict solid/interference validation and the existing volume checks apply.
 Draft display rounding does not change the driving value. Both tools probe exact
 cleanup availability after a trailing 250 ms debounce, preserving preview and Undo;
 the broom spins while pending and disables for no-op cleanup. Rejected extrusion

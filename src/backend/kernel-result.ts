@@ -11,7 +11,8 @@ export interface KernelResult {
   participants: string[];
   results: (Omit<Body, "id" | "faces" | "edges"> & {
     predecessorBodies: string[];
-    faces: (Descendant<Omit<Face, "edges" | "blend" | "offsetFaces">> & {
+    faces: (Descendant<Omit<Face, "edges" | "blend" | "offsetFaces" | "thickness">> & {
+      thickness?: { faceIndex: number; distance: number; slope: 1 | -1 } | null;
       edgeIndexes: number[];
       offsetFaceIndexes?: number[];
       offsetSelected?: boolean;
@@ -39,6 +40,9 @@ export function materialize(previous: readonly Body[], result: KernelResult): Bo
       id: identity(predecessors),
     }));
     const faceIds = faces.map(({ predecessors }) => identity(predecessors));
+    for (const { thickness } of faces)
+      if (thickness && (!Number.isInteger(thickness.faceIndex) || !faceIds[thickness.faceIndex]))
+        throw new Error("Kernel thickness references an invalid face");
     return {
       ...body,
       id: identity(predecessorBodies),
@@ -50,12 +54,20 @@ export function materialize(previous: readonly Body[], result: KernelResult): Bo
             offsetFaceIndexes,
             offsetSelected: _offsetSelected,
             blend,
+            thickness,
             ...face
           },
           index,
         ) => ({
           ...face,
           id: faceIds[index],
+          thickness: thickness
+            ? {
+                face: faceIds[thickness.faceIndex],
+                distance: thickness.distance,
+                slope: thickness.slope,
+              }
+            : null,
           offsetFaces: offsetFaceIndexes?.map((i) => {
             if (!Number.isInteger(i) || !faceIds[i])
               throw new Error("Kernel offset references an invalid face");

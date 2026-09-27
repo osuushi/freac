@@ -1,6 +1,7 @@
 #include "kernel.h"
 #include "timing.h"
 #include "blends.h"
+#include "offset-thickness.h"
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBndLib.hxx>
@@ -61,6 +62,13 @@ void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMap
         out << ",\"radius\":" << cylinder.Radius();
         out << ",\"outward\":" << ((shape.Orientation() == TopAbs_REVERSED ? -1 : 1) * (cylinder.Direct() ? 1 : -1)) << '}';
     } else out << "null";
+    out << ",\"sphere\":";
+    if (surface.GetType() == GeomAbs_Sphere) {
+        const auto sphere = surface.Sphere();
+        out << "{\"radius\":" << sphere.Radius();
+        out << ",\"outward\":" << ((shape.Orientation() == TopAbs_REVERSED ? -1 : 1) * (sphere.Direct() ? 1 : -1)) << '}';
+    } else out << "null";
+    presentOffsetThickness(out, shape, faces, body);
     const auto blend = std::find_if(blends.begin(), blends.end(), [&](const BlendFace& b) { return b.face.IsSame(shape); });
     out << ",\"offsetFaceIndexes\":[";
     const auto chain = tangentFaceChain(body, {shape});
@@ -75,7 +83,7 @@ void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMap
         out << "]}";
     }
     out << ",\"offsetHandle\":";
-    if (surface.GetType() == GeomAbs_Cone || blend != blends.end()) {
+    if (surface.GetType() == GeomAbs_Cone || surface.GetType() == GeomAbs_Sphere || blend != blends.end()) {
         gp_Pnt center; gp_Vec du, dv;
         surface.D1((surface.FirstUParameter()+surface.LastUParameter())/2,
                    (surface.FirstVParameter()+surface.LastVParameter())/2, center, du, dv);

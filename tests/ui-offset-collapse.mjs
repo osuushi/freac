@@ -5,6 +5,7 @@ import { orient, outwardDrag } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const fixture = JSON.parse(readFileSync("tests/fixtures/collapsed-offset-wall.json", "utf8"));
@@ -31,7 +32,7 @@ export async function offsetCollapseRoute(page, name, app) {
   for (const bottom of [false, true]) {
     const { original, face } = await captured(page, bottom);
     await page.keyboard.press("o");
-    const input = page.getByRole("textbox", { name: "Face offset distance", exact: true });
+    const input = await relativeOffsetInput(page);
     for (const distance of [-2, -5, 2, -2]) {
       await input.fill(String(distance));
       const state = await inspect(page);
@@ -65,7 +66,7 @@ export async function offsetCollapseRoute(page, name, app) {
     await orient(page, [1, -1, bottom ? -1 : 1]);
     await worldClick(page, [2, 2, bottom ? 2 : 9.00048828125]);
     await page.keyboard.press("o");
-    await input.fill("-1");
+    await (await relativeOffsetInput(page)).fill("-1");
     close((await inspect(page)).preview.bodies[0].volume, area * 8.00048828125);
     await page.keyboard.press("Enter");
   }
@@ -73,7 +74,7 @@ export async function offsetCollapseRoute(page, name, app) {
   const original = (await inspect(page)).document;
   await worldClick(page, [2, 2, 21]);
   await page.keyboard.press("o");
-  const input = page.getByRole("textbox", { name: "Face offset distance", exact: true });
+  const input = await relativeOffsetInput(page);
   for (const distance of [-5, -10, -15, -19, -5]) {
     await input.fill(String(distance));
     const state = await inspect(page);

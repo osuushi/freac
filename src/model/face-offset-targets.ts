@@ -108,3 +108,22 @@ export function sharedBlend(faces: readonly Face[]): Face["blend"] {
     ? first
     : null;
 }
+
+export function sharedThickness(
+  faces: readonly Face[],
+  targets: BodyFaceOffset["faces"],
+): Face["thickness"] {
+  const first = faces[0]?.thickness;
+  return first &&
+    faces.every((face) => {
+      const value = face.thickness;
+      return (
+        value &&
+        Math.abs(value.distance - first.distance) < 1e-7 &&
+        value.slope === first.slope &&
+        !targets.some((target) => target.face === value.face)
+      );
+    })
+    ? first
+    : null;
+}

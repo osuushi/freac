@@ -7,6 +7,8 @@ export interface Face {
   readonly signature: number[];
   readonly vertices: number[];
   readonly plane: PlaneFrame | null;
+  /** Nearest directly reachable parallel planar or concentric wall in this body. */
+  readonly thickness?: { face: string; distance: number; slope: 1 | -1 } | null;
   /** Tangent face closure required for a normal offset (distinct from blend resizing). */
   readonly offsetFaces?: readonly string[];
   readonly offsetHandle?: { center: Vector; normal: Vector } | null;
@@ -14,6 +16,7 @@ export interface Face {
   readonly blend?: { radius: number; outward: 1 | -1; faces: readonly string[] } | null;
   /** Derived analytic measurement; other surface classes remain ordinary faces. */
   readonly cylinder?: { origin: Vector; axis: Vector; radius: number; outward: 1 | -1 } | null;
+  readonly sphere?: { radius: number; outward: 1 | -1 } | null;
 }
 export type EdgeCurve =
   | { kind: "line"; a: Vector; b: Vector }

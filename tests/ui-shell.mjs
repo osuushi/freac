@@ -3,6 +3,7 @@ import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { browseTools, chooseTool } from "./ui-tools.mjs";
 
 export async function shellRoute(page, name, electron) {
@@ -57,7 +58,7 @@ export async function shellRoute(page, name, electron) {
   await page.screenshot({ path: `.cache/sketch-review/${name}-shell-reselect.png` });
   assert.equal((await inspect(page)).modelingSelection[0].kind, "face");
   await page.keyboard.press("o");
-  const offset = page.getByRole("textbox", { name: "Face offset distance", exact: true });
+  const offset = await relativeOffsetInput(page);
   await offset.fill("0.2");
   assert.ok((await inspect(page)).preview);
   await page.keyboard.press("Enter");

@@ -5,6 +5,7 @@ import { exportDocument, openDocument } from "./native-documents.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { click, drag, inspect, reset } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function load(page, name, plane) {
@@ -42,7 +43,7 @@ export async function offsetTopologyRoute(page, name) {
   assert.equal((await inspect(page)).modelingSelection[0]?.face, cup.selection[0].face);
   const before = (await inspect(page)).document;
   await chooseTool(page, "offset faces", "offset");
-  const input = page.getByRole("textbox", { name: "Face offset distance", exact: true });
+  const input = await relativeOffsetInput(page);
   await input.fill("5");
   const state = await inspect(page);
   assert.deepEqual(state.document, before);

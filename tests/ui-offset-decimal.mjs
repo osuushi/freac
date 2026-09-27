@@ -5,6 +5,7 @@ import { exportDocument, openDocument } from "./native-documents.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { inspect, reset } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const gap = 9.78;
@@ -37,7 +38,7 @@ export async function offsetDecimalRoute(page, name) {
   assert.equal((await inspect(page)).modelingSelection[0]?.face, fixture.floor);
   const before = (await inspect(page)).document;
   await chooseTool(page, "offset faces", "offset");
-  const field = page.getByRole("textbox", { name: "Face offset distance", exact: true });
+  const field = await relativeOffsetInput(page);
   await field.fill(String(gap));
   merged((await inspect(page)).preview.bodies[0], 11.78);
   assert.deepEqual((await inspect(page)).document, before);

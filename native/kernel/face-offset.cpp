@@ -7,6 +7,7 @@
 #include "timing.h"
 #include "planar-face-offset.h"
 #include "planar-offset-prisms.h"
+#include "spherical-face-offset.h"
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <BRepOffset_MakeOffset.hxx>
 #include <BRepAdaptor_Surface.hxx>
@@ -135,6 +136,10 @@ std::vector<Result> offsetFaces(const Tree& input, const std::vector<Operand>& b
                 throw std::runtime_error("Kernel produced invalid geometry: offset altered input geometry");
             results.push_back(std::move(result));
         } catch (const std::runtime_error&) {
+            if (auto spherical = sphericalFaceOffset(originalBody, requestedFaces, distance)) {
+                results.push_back(std::move(*spherical));
+                continue;
+            }
             auto planar = planarFaceOffset(originalBody, requestedFaces, distance);
             if (!planar) planar = planarOffsetPrisms(originalBody, requestedFaces, distance);
             if (!planar) throw;

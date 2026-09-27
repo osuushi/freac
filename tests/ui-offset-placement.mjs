@@ -69,9 +69,7 @@ export async function offsetPlacementRoute(page, name) {
     await page.keyboard.press("Escape");
     assert.deepEqual((await inspect(page)).document, original);
     await handle.click();
-    await page
-      .getByRole("textbox", { name: "Face diameter", exact: true })
-      .fill(String(radius * 2));
+    await page.getByRole("textbox", { name: "Face thickness", exact: true }).fill("8");
     await page.keyboard.press("Enter");
     assert.ok((await inspect(page)).document.bodies[0].volume > original.bodies[0].volume);
     await chooseTool(page, "undo", "undo");

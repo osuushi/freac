@@ -10,13 +10,14 @@ import {
 import type { Face } from "./body.js";
 import { cleanupButton } from "./cleanup-button.js";
 import { projectedAxis } from "./extrude-axis.js";
+import type { OffsetQuantity } from "./offset-quantity.js";
 
 export class FaceOffsetWidget {
   readonly cleanup = cleanupButton();
   readonly root = document.createElement("div");
   readonly handle = document.createElement("button");
   readonly input = document.createElement("input");
-  readonly quantity = document.createElement("button");
+  readonly quantity = document.createElement("select");
   private options = document.createElement("div");
   private dismiss = document.createElement("button");
   private accept = document.createElement("button");
@@ -26,8 +27,9 @@ export class FaceOffsetWidget {
     this.handle.className = "face-offset-handle axial-arrow";
     this.input.type = "text";
     this.input.inputMode = "decimal";
-    this.quantity.title = "Switch between diameter and signed face offset";
-    this.quantity.setAttribute("aria-label", "Switch offset measurement");
+    this.quantity.title = "Choose the value to edit";
+    this.quantity.className = "offset-quantity";
+    this.quantity.setAttribute("aria-label", "Offset mode");
     this.accept.innerHTML = '<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>';
     this.accept.setAttribute("aria-label", "Accept face offset");
     this.accept.title = "Accept face offset (Enter)";
@@ -52,8 +54,7 @@ export class FaceOffsetWidget {
     axis: { center: Vector; normal: Vector; width?: Vector },
     active: boolean,
     distance: number,
-    cylinder: Face["cylinder"],
-    diameter: boolean,
+    quantity: OffsetQuantity,
     valid: boolean,
     blend: Face["blend"],
     invalid: boolean,
@@ -81,24 +82,36 @@ export class FaceOffsetWidget {
       axis.width,
     );
     this.options.hidden = false;
-    this.quantity.hidden = !cylinder || !!blend;
-    this.quantity.textContent = diameter ? "Ø" : "±";
-    this.quantity.setAttribute("aria-pressed", String(diameter));
+    this.quantity.hidden = !!blend;
+    const modes = quantity.modes;
+    if (Array.from(this.quantity.options, (option) => option.value).join() !== modes.join())
+      this.quantity.replaceChildren(
+        ...modes.map(
+          (mode) =>
+            new Option({ thickness: "Thickness", radius: "Radius", offset: "Offset" }[mode], mode),
+        ),
+      );
+    this.quantity.value = quantity.mode;
+    this.quantity.disabled = modes.length === 1 || editor.blocked;
     this.input.setAttribute(
       "aria-label",
-      blend ? "Fillet face radius" : diameter ? "Face diameter" : "Face offset distance",
+      blend
+        ? "Fillet face radius"
+        : quantity.mode === "thickness"
+          ? "Face thickness"
+          : quantity.mode === "radius"
+            ? "Face radius"
+            : "Face offset distance",
     );
     this.input.title = blend
       ? "Existing fillet radius (mm)"
-      : diameter
-        ? "Cylinder diameter (mm)"
-        : "Signed material-outward offset (mm)";
+      : quantity.mode === "thickness"
+        ? "Absolute distance to the reference wall (mm)"
+        : quantity.mode === "radius"
+          ? "Absolute face radius (mm)"
+          : "Signed material-outward offset (mm)";
     if (!numericFocus(this.input)) {
-      const value = blend
-        ? blend.radius - distance * blend.outward
-        : diameter && cylinder
-          ? 2 * (cylinder.radius + cylinder.outward * distance)
-          : distance;
+      const value = quantity.value(distance);
       this.input.value = Number.isFinite(value) ? String(Number(value.toPrecision(4))) : "";
     }
     this.input.setAttribute("aria-invalid", String(active && invalid && !valid && !editor.blocked));

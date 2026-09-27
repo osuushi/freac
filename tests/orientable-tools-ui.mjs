@@ -8,7 +8,9 @@ import { bodyChamferRoute } from "./ui-body-chamfer.mjs";
 import { bodyFilletRoute } from "./ui-body-fillet.mjs";
 import { extrusionWidgetRoute } from "./ui-extrude-widget.mjs";
 import { offsetPlacementRoute } from "./ui-offset-placement.mjs";
+import { offsetThicknessRoute } from "./ui-offset-thickness.mjs";
 import { orientableFaceOffsetRoute, orientableSketchOffsetRoute } from "./ui-orientable-offset.mjs";
+import { planarThicknessRoute } from "./ui-planar-thickness.mjs";
 import { revolveRoute } from "./ui-revolve.mjs";
 import { shellRoute } from "./ui-shell.mjs";
 import { standaloneRotationRoute } from "./ui-standalone-rotation.mjs";
@@ -51,6 +53,8 @@ try {
     bodyChamferRoute,
     orientableFaceOffsetRoute,
     offsetPlacementRoute,
+    offsetThicknessRoute,
+    planarThicknessRoute,
     blendEditRoute,
     shellRoute,
     revolveRoute,

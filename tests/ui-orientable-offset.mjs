@@ -3,6 +3,7 @@ import { orient, project } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { orientableArrowViews } from "./ui-orientable-tools.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -19,7 +20,7 @@ export async function orientableFaceOffsetRoute(page, name, app) {
   await page.mouse.click(center.x + 35, center.y + 35);
   const original = (await inspect(page)).document;
   const handle = page.getByRole("button", { name: "Offset faces", exact: true });
-  const input = page.getByRole("textbox", { name: "Face offset distance", exact: true });
+  const input = await relativeOffsetInput(page);
   assert.equal(await handle.locator("svg").getAttribute("data-tool-shape"), "offset");
   await orientableArrowViews(
     page,
@@ -55,7 +56,7 @@ export async function orientableFaceOffsetRoute(page, name, app) {
   await orient(page, [0, 0, 1]);
   const top = await project(page, [4, 4, 12]);
   await page.mouse.click(top.x, top.y);
-  await input.fill("2");
+  await (await relativeOffsetInput(page)).fill("2");
   close((await inspect(page)).preview.bodies[0].volume, 5600);
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, reopened);

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function settledBroom(page, root) {
@@ -63,7 +64,7 @@ export async function axialCleanupRoute(page) {
   await page.getByRole("button", { name: "Accept extrusion", exact: true }).click();
   const original = (await inspect(page)).document;
   await page.mouse.click(center.x, center.y);
-  const offset = page.getByRole("textbox", { name: "Face offset distance", exact: true });
+  const offset = await relativeOffsetInput(page);
   assert.equal(await offset.inputValue(), "0");
   assert.ok(
     await page.getByRole("button", { name: "Accept face offset", exact: true }).isDisabled(),

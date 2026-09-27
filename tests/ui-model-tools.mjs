@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { plate } from "./ui-body-fillet.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const button = (page, name) => page.getByRole("button", { name, exact: true });
@@ -140,7 +141,7 @@ async function faceToolSwitchRoute(page, center) {
   await page.keyboard.press("o");
   await exclusive(page, "offset");
   await button(page, "Offset faces").click();
-  await page.getByRole("textbox", { name: "Face offset distance", exact: true }).fill("2");
+  await (await relativeOffsetInput(page)).fill("2");
   close((await inspect(page)).preview.bodies[0].volume, 4800);
   await page.keyboard.press("Enter");
   close((await inspect(page)).document.bodies[0].volume, 4800);
