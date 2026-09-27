@@ -181,8 +181,7 @@ export function threadDefaults(
     profile: fdm ? "triangle" : print ? "rounded" : "metric",
     hand: "right",
     cut: "rod",
-    clearance:
-      preset === "fdm-fine" ? 0.25 : fdm ? 0.05 : print ? printing.nozzleDiameter / 2 : 0.1,
+    clearance: preset === "fdm-fine" ? 0.25 : fdm ? 0.1 : print ? printing.nozzleDiameter / 2 : 0.1,
     tipTruncation: fdm ? 0.1 : 0,
     start: 0,
     end: 0,

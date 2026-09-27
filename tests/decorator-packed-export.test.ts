@@ -41,6 +41,7 @@ test("a coarse thread at the nut exit exports a closed mesh in both formats", as
       (await owner.call({ kind: "open", document: coarseExit.document })).error,
       undefined,
     );
+    assert.equal(owner.view.data.decorators?.[0].settings.clearance, 0.05);
     const prepared = await owner.call({ kind: "export-geometry" });
     assert.equal(prepared.error, undefined);
     assert.ok(prepared.exportDocument);

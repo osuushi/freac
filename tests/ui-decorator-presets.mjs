@@ -21,7 +21,7 @@ export async function decoratorPresetRoute(page, name) {
   let settings = (await inspect(page)).document.decorators[0].settings;
   assert.equal(settings.pitch, 1.5);
   assert.equal(settings.profile, "triangle");
-  assert.equal(settings.clearance, 0.05);
+  assert.equal(settings.clearance, 0.1);
   assert.equal(settings.tipTruncation, 0.1);
   await clearance.fill("0");
   await clearance.press("Enter");
