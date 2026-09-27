@@ -164,6 +164,16 @@ test("closed spherical and toroidal shells preserve analytic distance and reject
       assert.ok(body);
       for (const thickness of [-1, 1]) {
         const result = await shell(owner, body, thickness);
+        if (kind === "sphere") {
+          assert.equal(result.faces.length, 2);
+          for (const face of result.faces) {
+            assert.ok(face.offsetHandle);
+            assert.ok(face.thickness);
+            assert.ok(Math.abs(face.thickness.distance - 1) < 1e-7);
+            assert.equal(face.thickness.slope, 1);
+            assert.equal(face.thickness.face, result.faces.find((f) => f.id !== face.id)?.id);
+          }
+        }
         const expected =
           kind === "sphere"
             ? ((4 * Math.PI) / 3) * Math.abs((4 + thickness) ** 3 - 64)

@@ -96,7 +96,23 @@ positive direction is the projected extrusion axis or material-outward face norm
 when viewed end-on, the existing upward drag fallback remains available. Each drag
 holds its starting projection and scale. Distance fields remain visible at zero;
 extrusion retains its draft row and fixed Boolean mode icons, followed by accept,
-cancel and cleanup. Offset retains its diameter/signed-distance switch for cylinders.
+cancel and cleanup. Offset defaults to absolute thickness for cylindrical or spherical
+walls with a directly reachable concentric face in the same body. Its local switch
+changes between thickness and signed relative distance without changing the preview.
+Without a qualifying reference it offers relative distance only; planar parallel-wall
+thickness is deferred. Recognized fillet resizing retains its radius control.
+The kernel sorts concentric supports by radial separation, then checks exact trimmed
+ray intersections from an 11×11 source-parameter grid, excluding intervening faces.
+The distance is analytic; narrow facing regions can be missed by this conservative
+sample search. The reference and conversion stay fixed through an edit. Multiple
+selected walls must agree in thickness and signed response, and no reference may
+belong to the expanded moving face set. Thickness must be positive. Existing kernel
+validation and limit clamping still determine legal geometry; accepted edits and Undo
+use the ordinary signed-offset operation, with no saved thickness constraint.
+A complete one-face spherical shell can change radius through an exact centered
+scale when the ordinary offset builder cannot process its closed shells. Only the
+selected shell changes; stable topology correspondence, signed parallel-surface
+checks, strict solid/interference validation and the existing volume checks apply.
 Draft display rounding does not change the driving value. Both tools probe exact
 cleanup availability after a trailing 250 ms debounce, preserving preview and Undo;
 the broom spins while pending and disables for no-op cleanup. Rejected extrusion

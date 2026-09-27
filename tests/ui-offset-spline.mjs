@@ -45,7 +45,7 @@ async function enterOffset(page) {
     `Pick the inner wall: ${JSON.stringify(state.modelingSelection)}`,
   );
   await page.keyboard.press("o");
-  if (await page.getByRole("textbox", { name: "Face diameter", exact: true }).isVisible())
+  if (await page.getByRole("textbox", { name: "Face thickness", exact: true }).isVisible())
     await page.getByRole("button", { name: "Switch offset measurement", exact: true }).click();
   return page.getByRole("textbox", { name: "Face offset distance", exact: true });
 }
@@ -96,7 +96,7 @@ export async function offsetSplineRoute(page, name) {
   await worldClick(page, [21.5, 5.5, -7 / Math.SQRT2]);
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await page.keyboard.press("o");
-  if (await page.getByRole("textbox", { name: "Face diameter", exact: true }).isVisible())
+  if (await page.getByRole("textbox", { name: "Face thickness", exact: true }).isVisible())
     await page.getByRole("button", { name: "Switch offset measurement", exact: true }).click();
   await input.fill("-1");
   let state = await inspect(page);

@@ -37,6 +37,11 @@
 .axial-panel button:hover:not(:disabled) {
   background: #eaf1f8;
 }
+.axial-panel .offset-quantity {
+  width: auto;
+  min-width: 28px;
+  padding-inline: 6px;
+}
 .axial-panel button[aria-pressed="true"] {
   background: #e2edfc;
   color: #2263a4;

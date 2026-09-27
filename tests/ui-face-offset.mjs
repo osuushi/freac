@@ -110,21 +110,26 @@ async function holeOffset(page, name, electron, cleanup = false) {
   const hole = original.bodies[0].faces.find((f) => f.cylinder);
   assert.equal(state.modelingSelection[0]?.face, hole.id, "Pick the actual inner cylindrical wall");
   await page.getByRole("button", { name: "Offset faces", exact: true }).click();
-  const diameter = page.getByRole("textbox", { name: "Face diameter" });
-  close(Number(await diameter.inputValue()), 3);
-  await diameter.fill("5");
+  const distance = page.getByRole("textbox", { name: "Face offset distance" });
+  close(Number(await distance.inputValue()), 0);
+  assert.equal(
+    await page.getByRole("button", { name: "Switch offset measurement" }).isVisible(),
+    false,
+  );
+  await distance.fill("-1");
   state = await inspect(page);
   close(state.preview.bodies[0].faces.find((f) => f.id === hole.id).cylinder.radius, 2.5);
   close(state.preview.bodies[0].volume, (400 - Math.PI * 2.5 ** 2) * 5);
   assert.deepEqual(state.document, original);
   await page.screenshot({ path: `.cache/sketch-review/${name}-hole-diameter.png` });
-  await diameter.fill("0");
+  await distance.fill("1.5");
   await verifiedOffsetReady(page);
   assert.equal(await page.getByRole("button", { name: "Accept face offset" }).isEnabled(), true);
-  assert.ok(Number(await diameter.inputValue()) > 0);
-  await diameter.fill("5");
+  assert.ok(
+    (await inspect(page)).preview.bodies[0].faces.find((f) => f.id === hole.id).cylinder.radius > 0,
+  );
+  await distance.fill("-1");
   await inspect(page);
-  await page.getByRole("button", { name: "Switch offset measurement" }).click();
   close(Number(await page.getByRole("textbox", { name: "Face offset distance" }).inputValue()), -1);
   // Navigation must pass through the widget without applying the edit.
   const before = (await inspect(page)).camera;

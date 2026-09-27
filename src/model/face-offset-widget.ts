@@ -26,7 +26,8 @@ export class FaceOffsetWidget {
     this.handle.className = "face-offset-handle axial-arrow";
     this.input.type = "text";
     this.input.inputMode = "decimal";
-    this.quantity.title = "Switch between diameter and signed face offset";
+    this.quantity.title = "Switch between absolute thickness and relative face offset";
+    this.quantity.className = "offset-quantity";
     this.quantity.setAttribute("aria-label", "Switch offset measurement");
     this.accept.innerHTML = '<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>';
     this.accept.setAttribute("aria-label", "Accept face offset");
@@ -52,8 +53,8 @@ export class FaceOffsetWidget {
     axis: { center: Vector; normal: Vector; width?: Vector },
     active: boolean,
     distance: number,
-    cylinder: Face["cylinder"],
-    diameter: boolean,
+    thickness: Face["thickness"],
+    absolute: boolean,
     valid: boolean,
     blend: Face["blend"],
     invalid: boolean,
@@ -81,23 +82,23 @@ export class FaceOffsetWidget {
       axis.width,
     );
     this.options.hidden = false;
-    this.quantity.hidden = !cylinder || !!blend;
-    this.quantity.textContent = diameter ? "Ø" : "±";
-    this.quantity.setAttribute("aria-pressed", String(diameter));
+    this.quantity.hidden = !thickness || !!blend;
+    this.quantity.textContent = absolute ? "Thickness" : "±";
+    this.quantity.setAttribute("aria-pressed", String(absolute));
     this.input.setAttribute(
       "aria-label",
-      blend ? "Fillet face radius" : diameter ? "Face diameter" : "Face offset distance",
+      blend ? "Fillet face radius" : absolute ? "Face thickness" : "Face offset distance",
     );
     this.input.title = blend
       ? "Existing fillet radius (mm)"
-      : diameter
-        ? "Cylinder diameter (mm)"
+      : absolute
+        ? "Absolute distance to the concentric wall (mm)"
         : "Signed material-outward offset (mm)";
     if (!numericFocus(this.input)) {
       const value = blend
         ? blend.radius - distance * blend.outward
-        : diameter && cylinder
-          ? 2 * (cylinder.radius + cylinder.outward * distance)
+        : absolute && thickness
+          ? thickness.distance + thickness.slope * distance
           : distance;
       this.input.value = Number.isFinite(value) ? String(Number(value.toPrecision(4))) : "";
     }
