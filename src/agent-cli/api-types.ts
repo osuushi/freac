@@ -53,6 +53,9 @@ export interface BodySummary {
 }
 /** inspect without ID. */
 export interface FreacOverview {
+  decorators: readonly DecoratorInstance[];
+  decoratorDefinitions: readonly DecoratorDefinition[];
+  builtinDecorators: DecoratorCatalog["builtins"];
   units: "mm"; context: ViewContext; bodies: BodySummary[];
   constructionPlanes: { kind: "plane"; id: string; frame: Plane; visible: boolean }[];
   sketches: { kind: "sketch"; id: string; plane: Plane; visible: boolean;

@@ -3,13 +3,13 @@ import { cancellableCalculation } from "../sketch/calculation-state.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelReply, ModelRequest, ModelView } from "../sketch/model-api.js";
 import { describeOperation, type HistoryOperation } from "../sketch/operation-history.js";
+import { DecoratorSession } from "./decorator-session.js";
 import { editDocument, isDirectDocumentEdit } from "./document-edits.js";
 import { type PreviewRequest, previewDocument } from "./document-preview.js";
 import { DocumentStore } from "./document-store.js";
 import { GeometryQueries } from "./geometry-queries.js";
-import { materialize } from "./kernel-result.js";
 import { NativeSolver } from "./native-solver.js";
-import { validateDocument } from "./open-document.js";
+import { openDocument } from "./open-document.js";
 import { planeCutAvailable } from "./plane-cut.js";
 import { ScriptEdits } from "./script-edits.js";
 import { SolidCalculator } from "./solid-calculator.js";
@@ -17,6 +17,7 @@ import { SolidEdits } from "./solid-edits.js";
 
 export class DocumentOwner {
   private kernel: SolidCalculator;
+  private decorators = new DecoratorSession();
   private queries: GeometryQueries;
   private solids: SolidEdits;
   private cleanupAvailable = false;
@@ -36,7 +37,13 @@ export class DocumentOwner {
     this.kernel = new SolidCalculator(kernelExecutable);
     this.queries = new GeometryQueries(kernelExecutable);
     this.solids = new SolidEdits(this.kernel);
-    this.scripts = new ScriptEdits(() => this.store, this.solids, this.kernel, solver);
+    this.scripts = new ScriptEdits(
+      () => this.store,
+      this.solids,
+      this.kernel,
+      solver,
+      this.decorators,
+    );
   }
   beginScript(name: string): void {
     if (this.active || this.cancelling || this.candidate)
@@ -46,6 +53,7 @@ export class DocumentOwner {
   get view(): ModelView {
     return {
       data: this.store.data,
+      decoratorSources: this.decorators.sources,
       historySelection: this.store.selection,
       planeCutAvailable: this.planeCutAvailable,
       ...this.solids.offsetEdit.view,
@@ -68,22 +76,25 @@ export class DocumentOwner {
     this.candidate = result.document;
     if (request.kind === "edit") await this.accept();
   }
-  private async open(source: SketchDocument): Promise<void> {
-    validateDocument(source);
-    const result = await this.kernel.calculate({
-      kind: "inspect",
-      bodies: source.bodies ?? [],
-    });
-    const document = { ...source, bodies: materialize([], result) };
-    validateDocument(document);
+  private replaceDocument(document?: SketchDocument): void {
     this.store = new DocumentStore(document);
+    this.decorators.clear();
     this.pendingOperation = null;
     this.candidate = null;
   }
   async call(request: ModelRequest): Promise<ModelReply> {
+    if (request.kind === "decorator-inspect" || request.kind === "decorator-draft")
+      return {
+        view: this.view,
+        ...(await this.decorators.query(this.store.data, request)),
+      };
     if (this.scripts.busy && request.kind !== "read" && request.kind !== "read-history")
       return { view: this.view, error: "Finish or cancel the running script first" };
-    if (request.kind === "sections" || request.kind === "measure")
+    if (
+      request.kind === "sections" ||
+      request.kind === "measure" ||
+      request.kind === "export-geometry"
+    )
       return this.queries.call(this.view, request);
     if (request.kind === "read-history") return { view: this.view, history: this.store.history };
     if (request.kind === "supersede-preview") {
@@ -140,6 +151,7 @@ export class DocumentOwner {
         this.candidate,
         operationCleanup(this.store.data.bodies ?? [], this.candidate.bodies ?? []),
       );
+    this.candidate = await this.decorators.continue(this.candidate);
     this.store.accept(this.candidate, {
       ...(this.pendingOperation ?? describeOperation({ kind: "accept" })),
       ...(cleanup ? { parameters: { ...this.pendingOperation?.parameters, cleanup: true } } : {}),
@@ -163,6 +175,7 @@ export class DocumentOwner {
           this.kernel,
         );
       else await this.dispatch(request, operation);
+      if (this.candidate) this.candidate = await this.decorators.continue(this.candidate);
       return { view: this.view, documentChanged: before !== this.store.data };
     } catch (error) {
       const message = this.kernel.wasSuperseded
@@ -181,10 +194,17 @@ export class DocumentOwner {
   }
   private async dispatch(request: ModelRequest, operation: HistoryOperation): Promise<void> {
     this.cleanupAvailable = false;
-    if (isDirectDocumentEdit(request)) {
+    const decoratorEdit =
+      request.kind === "decorator" || request.kind === "decorator-enable"
+        ? await this.decorators.edit(this.store.data, request)
+        : null;
+    const direct =
+      decoratorEdit ??
+      (isDirectDocumentEdit(request) ? editDocument(this.store.data, request) : null);
+    if (direct) {
       this.pendingOperation = null;
       this.candidate = null;
-      this.store.accept(editDocument(this.store.data, request), operation);
+      this.store.accept(direct, operation);
       return;
     }
     switch (request.kind) {
@@ -203,7 +223,7 @@ export class DocumentOwner {
         if (request.kind === "delete-topology") await this.accept();
         break;
       case "open":
-        await this.open(request.document);
+        this.replaceDocument(await openDocument(request.document, this.kernel));
         break;
       case "edge-finish-selection":
         await this.solids.selectFinishEdges(this.store.data, request.operation);
@@ -248,9 +268,7 @@ export class DocumentOwner {
         this.store[request.kind]();
         break;
       case "new":
-        this.candidate = null;
-        this.store = new DocumentStore();
-        this.pendingOperation = null;
+        this.replaceDocument();
         break;
       case "delete-entities":
         await this.deleteEntities(request, operation);
@@ -271,7 +289,7 @@ export class DocumentOwner {
     const candidate = request.topology?.length
       ? await this.solids.removeTopology(reduced, request.topology, "delete-topology")
       : reduced;
-    this.store.accept(candidate, operation);
+    this.store.accept(await this.decorators.continue(candidate), operation);
   }
   close(): void {
     this.queries.close();

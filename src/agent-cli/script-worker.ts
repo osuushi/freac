@@ -34,6 +34,18 @@ process.on(
     } else if (message.kind === "start") {
       const api: ScriptApi = {
         selection: structuredClone(message.selection ?? []),
+        decorators: () =>
+          call({ kind: "decorators", input: {} }) as ReturnType<ScriptApi["decorators"]>,
+        editDecorator: (input) =>
+          call({ kind: "editDecorator", input }) as ReturnType<ScriptApi["editDecorator"]>,
+        editDecoratorDefinition: (input) =>
+          call({ kind: "editDecoratorDefinition", input }) as ReturnType<
+            ScriptApi["editDecoratorDefinition"]
+          >,
+        enableDecorator: (input) =>
+          call({ kind: "enableDecorator", input }) as ReturnType<ScriptApi["enableDecorator"]>,
+        inspectDecorator: (input) =>
+          call({ kind: "inspectDecorator", input }) as ReturnType<ScriptApi["inspectDecorator"]>,
         booleanBodies: (input) =>
           call({ kind: "booleanBodies", input }) as ReturnType<ScriptApi["booleanBodies"]>,
         finishEdges: (input) =>

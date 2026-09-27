@@ -3,6 +3,8 @@ import type { Body } from "./body.js";
 export interface ExportMesh {
   vertices: number[][];
   triangles: number[][];
+  /** Optional bound on additional numeric error when packing a Boolean result for export. */
+  precision?: number;
 }
 
 // Below kernel modeling tolerance; spatial neighbors avoid rounding-bin seams.
@@ -63,7 +65,7 @@ export function triangleNormal(points: number[][]): number[] {
   return cross.map((value) => value / length);
 }
 
-function validateMesh(mesh: ExportMesh): void {
+export function validateMesh(mesh: ExportMesh): void {
   if (!mesh.triangles.length) throw new Error("There is no solid mesh to export");
   const edges = new Map<string, { count: number; direction: number }>();
   for (const triangle of mesh.triangles) {

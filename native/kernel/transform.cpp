@@ -62,12 +62,11 @@ std::vector<Result> transformBodies(const Tree& input, const std::vector<Operand
         if ((mirror || scale) && volume(operation.Shape()) <= 0)
             throw std::runtime_error("Transform produced a non-positive solid");
         Result result{operation.Shape(), {}, {}};
-        if (!copy) {
-            participants.push_back(body.id);
-            result.bodies.push_back(body.id);
-            for (const auto& entity : body.entities)
-                result.predecessors.push_back({entity.id, operation.ModifiedShape(entity.shape)});
-        }
+        result.copy = copy;
+        if (!copy) participants.push_back(body.id);
+        result.bodies.push_back(body.id);
+        for (const auto& entity : body.entities)
+            result.predecessors.push_back({entity.id, operation.ModifiedShape(entity.shape)});
         results.push_back(std::move(result));
     }
     if (!selected.empty()) throw std::runtime_error("Selected body no longer exists");

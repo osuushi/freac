@@ -1,6 +1,8 @@
 import { installAgentDock } from "../agent/dock.js";
 import { installInspection } from "../agent/inspection-view.js";
 import { installScriptView } from "../agent-script/view.js";
+import { DecoratorPanel } from "../decorators/panel.js";
+import { decoratorOverlay } from "../decorators/preview.js";
 import { installTabletChrome } from "../ipad/connection-screen.js";
 import { installIPadButton } from "../ipad/desktop.js";
 import { BodyActions } from "../model/body-actions.js";
@@ -80,6 +82,8 @@ installPlaneBounds(editor);
 const readouts = document.createElement("div");
 readouts.className = "selection-readouts";
 app.append(readouts);
+const decorators = new DecoratorPanel(editor, app);
+const disposeDecorators = decoratorOverlay(editor);
 const disposeCalculation = calculationControls(editor, app);
 const disposeLabels = worldLabels(
     world,
@@ -190,6 +194,8 @@ void editor.store.request({ kind: "read" });
 window.addEventListener(
   "pagehide",
   () => {
+    decorators.dispose();
+    disposeDecorators();
     disposeAgent();
     disposeInspection();
     disposeScript();

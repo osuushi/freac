@@ -12,7 +12,7 @@
 using Tree = boost::property_tree::ptree;
 struct SourceEntity { std::string id; TopoDS_Shape shape; };
 struct Operand { std::string id; TopoDS_Shape shape; std::vector<SourceEntity> entities; };
-struct Result { TopoDS_Shape shape; std::vector<SourceEntity> predecessors; std::vector<std::string> bodies; std::vector<TopoDS_Face> selectedFaces; };
+struct Result { TopoDS_Shape shape; std::vector<SourceEntity> predecessors; std::vector<std::string> bodies; std::vector<TopoDS_Face> selectedFaces; bool copy = false; };
 gp_Pnt point(const Tree& tree);
 std::string quoted(const std::string& value);
 std::string encode(const TopoDS_Shape& shape);
@@ -20,7 +20,7 @@ TopoDS_Shape decode(const std::string& data);
 std::vector<Operand> operands(const Tree& input);
 TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies);
 std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bodies, std::string& mode, std::vector<std::string>& participants);
-void present(std::ostream& out, const Result& result);
+void present(std::ostream& out, const Result& result, double deflection = 0.05);
 double volume(const TopoDS_Shape& shape);
 void validate(const TopoDS_Shape& shape);
 
@@ -58,7 +58,8 @@ TopoDS_Shape extrudeDraft(const TopoDS_Face&, const gp_Vec&, const Tree&);
 double extrusionDraftOffset(const gp_Vec&, const Tree&);
 TopoDS_Shape extrudeTwist(const TopoDS_Face&, const gp_Vec&, const Tree&);
 
-Result cleanupEdges(const Operand&, const TopTools_MapOfShape&);
+Result cleanupEdges(const Operand&, const TopTools_MapOfShape&,
+                    const TopTools_MapOfShape& protectedEdges = TopTools_MapOfShape());
 std::vector<Result> deleteTopology(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);
 
 std::vector<Result> shellBodies(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);

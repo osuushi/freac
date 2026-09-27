@@ -25,6 +25,13 @@ edges of consumed faces. It does not recursively spread through older subdivisio
 and edges incident to selected faces. Unselected face boundaries are protected;
 redundant neighboring edge breakpoints at eligible endpoints may also disappear.
 Kernel-only periodic seams can reconnect as cylindrical walls merge.
+During Cleanup, an edge between faces with different active decorator instance
+IDs is protected even when that edge or the whole body is selected. An undecorated
+face has no instance, so it cannot merge into a decorated face; distinct instances
+cannot merge even if their settings match. Faces of one instance and undecorated
+neighbors within their own regions remain eligible. Unresolved attachments reserve
+no active face membership. The same boundary rule applies to selection Cleanup,
+Commit and clean up, and the availability probe.
 
 The native kernel unifies coincident supporting surfaces/curves without approximate
 surface fitting or spline concatenation. It validates the solid and volume, returns

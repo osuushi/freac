@@ -28,6 +28,8 @@ export class World {
   readonly canvas = this.renderer.domElement;
   readonly target = new THREE.Vector3();
   readonly changed = new Set<() => void>();
+  readonly renderOverlays = new Set<() => void>();
+  readonly renderForegroundOverlays = new Set<() => void>();
   readonly grids = createGrids(this.scene);
   workspace: { key: string; frame: PlaneFrame; sketchId?: string } | null = null;
   get active(): string | null {
@@ -102,8 +104,15 @@ export class World {
     this.updateClipping();
     for (const listener of this.changed) listener();
     this.renderer.render(this.scene, this.camera);
+    for (const render of this.renderOverlays) render();
     if (this.activeFrame) {
-      this.foreground.render(this.renderer, this.scene, this.camera, this.sketchClip);
+      this.foreground.render(
+        this.renderer,
+        this.scene,
+        this.camera,
+        this.sketchClip,
+        this.renderForegroundOverlays,
+      );
     }
   }
   private updateClipping(): void {

@@ -1,0 +1,34 @@
+import type { SketchEditor } from "../sketch/editor.js";
+import { threadInformation } from "./thread-information.js";
+import type { DecoratorInstance } from "./types.js";
+
+export function appendThreadInformation(
+  root: HTMLElement,
+  editor: SketchEditor,
+  instances: DecoratorInstance[],
+): void {
+  const descriptions = new Set<string>();
+  for (const instance of instances) {
+    if (instance.problem) continue;
+    const { description, warnings } = threadInformation(editor.store.data.bodies ?? [], instance);
+    if (!descriptions.has(description)) {
+      const text = document.createElement("p");
+      text.textContent = description;
+      root.append(text);
+      descriptions.add(description);
+    }
+    for (const warning of warnings) {
+      const text = document.createElement("p");
+      text.className = "decorator-warning";
+      text.textContent = warning.message;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "Show affected faces";
+      button.onclick = () => {
+        editor.modeling.targets = warning.faces.map((f) => ({ kind: "face", ...f }));
+        editor.refresh();
+      };
+      root.append(text, button);
+    }
+  }
+}

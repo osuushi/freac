@@ -1,3 +1,4 @@
+import { continueDecorators } from "../decorators/continuation.js";
 import type { PlaneCut } from "../model/plane-cut.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { validateFrame } from "../sketch/planes.js";
@@ -16,10 +17,10 @@ export async function cutWithPlane(
   const result = await kernel.calculate({ ...operation, kind: "plane-cut", bodies });
   if (!result.participants.length) return document;
   const next = materialize(bodies, result);
-  return {
+  return continueDecorators(document, {
     ...document,
     bodies: operation.mode === "imprint" ? continuingBodies(bodies, next) : next,
-  };
+  });
 }
 
 /** Applicability is exact and read-only: no candidate, IDs, history or selection are changed. */

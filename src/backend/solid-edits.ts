@@ -1,5 +1,10 @@
+import { continueDecorators } from "../decorators/continuation.js";
 import type { BodyEdgeFinish, BooleanMode, EdgeMovement, FaceMovement } from "../model/body.js";
-import { type CleanupSelection, operationCleanup } from "../model/cleanup.js";
+import {
+  type CleanupSelection,
+  operationCleanup,
+  protectDecorationBoundaries,
+} from "../model/cleanup.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { EdgeSizeLimit } from "./edge-size-limit.js";
@@ -35,7 +40,10 @@ export class SolidEdits {
     const result = await this.kernel.calculate({
       kind: "cleanup",
       bodies,
-      selection: operationCleanup(original.bodies ?? [], bodies),
+      selection: protectDecorationBoundaries(
+        candidate,
+        operationCleanup(original.bodies ?? [], bodies),
+      ),
     });
     return result.participants.length > 0;
   }
@@ -45,9 +53,16 @@ export class SolidEdits {
     kind: "cleanup" | "delete-topology" = "cleanup",
   ): Promise<SketchDocument> {
     const bodies = document.bodies ?? [];
-    const result = await this.kernel.calculate({ kind, selection, bodies });
+    const result = await this.kernel.calculate({
+      kind,
+      selection: kind === "cleanup" ? protectDecorationBoundaries(document, selection) : selection,
+      bodies,
+    });
     return result.participants.length
-      ? { ...document, bodies: continuingBodies(bodies, materialize(bodies, result)) }
+      ? continueDecorators(document, {
+          ...document,
+          bodies: continuingBodies(bodies, materialize(bodies, result)),
+        })
       : document;
   }
   private async move(
@@ -156,6 +171,6 @@ export class SolidEdits {
         bodies: next,
       };
     }
-    return candidate;
+    return continueDecorators(document, candidate, request);
   }
 }

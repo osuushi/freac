@@ -1,0 +1,73 @@
+.decorator-panel {
+  position: absolute;
+  top: 145px;
+  right: 20px;
+  z-index: 12;
+  width: 250px;
+  max-width: calc(100% - 40px);
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fffffff5;
+  color: #26364a;
+  pointer-events: auto;
+  font-size: 12px;
+  max-height: calc(100vh - 210px);
+  overflow: auto;
+}
+.decorator-panel[hidden] {
+  display: none;
+}
+.decorator-library {
+  right: 290px;
+}
+.decorator-library pre {
+  max-height: 200px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.decorator-panel h2 {
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+.decorator-panel label {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+}
+.decorator-panel input,
+.decorator-panel select {
+  width: 100%;
+  min-width: 0;
+  padding: 5px;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  background: white;
+  color: inherit;
+}
+.decorator-panel button {
+  width: 100%;
+  font-size: 12px;
+  margin: 4px 0;
+}
+.decorator-panel p {
+  color: #526477;
+  line-height: 1.4;
+}
+.decorator-panel .thread-clearance-hint {
+  margin: -3px 0 10px;
+  font-size: 11px;
+}
+.decorator-panel .thread-advanced {
+  margin: 8px 0;
+  border-top: 1px solid #dbe3ec;
+  padding-top: 8px;
+}
+.decorator-panel .thread-advanced summary {
+  cursor: pointer;
+  color: #526477;
+}
+.decorator-panel .decorator-warning {
+  color: #8a4b0b;
+}
