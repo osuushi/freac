@@ -9,6 +9,8 @@ Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.
 In Modeling, a single click on an implicit canonical plane clears selection through
 the ordinary canvas selection route. Double-click enters its sketch workspace.
 Explicit plane-selection modes continue to accept a plane on a single click.
+In Mirror and Projection, a nearer planar solid face takes precedence over a
+canonical patch behind it; a coplanar face wins the depth tie.
 Keyboard/tool-menu plane entry remains available.
 
 ### Sketch tool lifetime

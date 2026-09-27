@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
 import { openDocument, saveDocument } from "./native-documents.mjs";
-import { orient } from "./ui-blend-edit.mjs";
+import { orient, project } from "./ui-blend-edit.mjs";
 import { at, click, drag, inspect, reset } from "./ui-helpers.mjs";
 import { findRaycastPoint } from "./ui-plane-targets.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -107,6 +107,7 @@ export async function mirrorBodyRoute(page, name) {
   assert.deepEqual((await inspect(page)).document, original);
   assert.equal((await inspect(page)).preview, null, "Face hover does not create a preview");
   await page.screenshot({ path: `.cache/sketch-review/${name}-mirror-face-hover.png` });
+  await orient(page, [1, 1, 1]);
   await pickPlane(page, "YZ");
   let state = await inspect(page);
   assert.equal(state.preview.bodies.length, 2);
@@ -133,8 +134,9 @@ export async function mirrorBodyRoute(page, name) {
   assert.ok(Math.abs(state.document.bodies[1].center[2] - 5) < 1e-7);
   // Pick the original body's planar top as the mirror reference for body 2.
   await orient(page, [0, 0, 1]);
+  const top = await project(page, [10, 6, 6]);
   await chooseTool(page, "mirror", "mirror");
-  await page.mouse.click(center.x, center.y);
+  await page.mouse.click(top.x, top.y);
   state = await inspect(page);
   assert.ok(state.preview, "planar face supplies a reference");
   await page.getByLabel("Keep original", { exact: true }).uncheck();
