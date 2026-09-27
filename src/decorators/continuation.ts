@@ -2,9 +2,10 @@ import { topologyOrigins } from "../backend/kernel-result.js";
 import type { Body } from "../model/body.js";
 import { newId, type SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
+import { isBuiltinDecorator } from "./builtins.js";
 import { pendingCustomContinuation } from "./custom-continuation.js";
 import { cross, sameCylinder, subtract } from "./cylinder.js";
-import { validateThread } from "./edits.js";
+import { validateBuiltin } from "./edits.js";
 import { threadReference } from "./thread-extent.js";
 import { threadDefinition } from "./thread-settings.js";
 import { transformedAxialReference, transformedThreadFrame } from "./transform-frame.js";
@@ -28,7 +29,7 @@ function descendants(
   let problem = instance.problem;
   if (faces.some((face) => origins?.faces.get(face.id)?.some((id) => !oldFaces.has(id))))
     problem = "A face merged with other geometry. Reassign the decoration to the intended faces.";
-  if (instance.definition !== threadDefinition) {
+  if (!isBuiltinDecorator(instance.definition)) {
     return {
       ...instance,
       frame,
@@ -40,17 +41,17 @@ function descendants(
   const originalSide = source.bodies?.flatMap((b) => b.faces).find((f) => oldFaces.has(f.id))
     ?.cylinder?.outward;
   if (!cylinder || faces.some((f) => !f.cylinder || !sameCylinder(cylinder, f.cylinder)))
-    problem = "These faces no longer form one cylindrical thread. Reassign or remove the threads.";
-  else if (originalSide !== cylinder.outward)
     problem =
-      "The thread changed between an outer and inner surface. Reassign or remove the threads.";
+      "These faces no longer form one cylindrical support. Reassign or remove the decoration.";
+  else if (originalSide !== cylinder.outward)
+    problem = "The decoration changed between an outer and inner surface. Reassign or remove it.";
   else {
     const axis = cross(frame.u, frame.v);
     if (
       Math.hypot(...cross(axis, cylinder.axis)) > 1e-7 ||
       Math.hypot(...cross(subtract(frame.origin, cylinder.origin), axis)) > 1e-7
     )
-      problem = "The thread support moved independently. Reassign these threads.";
+      problem = "The cylindrical support moved independently. Reassign the decoration.";
   }
   return {
     ...instance,
@@ -91,14 +92,14 @@ export function continueDecorators(
       if (!next) continue;
       let updated = { ...next, id: count++ === 0 ? instance.id : newId() };
       if (
-        instance.definition !== threadDefinition &&
+        !isBuiltinDecorator(instance.definition) &&
         !updated.problem &&
         !source.bodies?.some((original) => original === body)
       )
         pendingCustomContinuation.add(updated);
-      if (instance.definition === threadDefinition && !updated.problem) {
+      if (isBuiltinDecorator(instance.definition) && !updated.problem) {
         try {
-          validateThread(candidate, updated);
+          validateBuiltin(candidate, updated);
         } catch (error) {
           updated = { ...updated, problem: error instanceof Error ? error.message : String(error) };
         }

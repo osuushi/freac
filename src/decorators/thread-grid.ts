@@ -1,10 +1,10 @@
 import type { ThreadSettings } from "./thread-settings.js";
 import { threadDepth } from "./thread-settings.js";
 
-type Point = { angle: number; z: number };
+export type Point = { angle: number; z: number };
 const tau = 2 * Math.PI;
 
-function split(polygon: Point[], level: number, phase: (p: Point) => number): Point[][] {
+export function split(polygon: Point[], level: number, phase: (p: Point) => number): Point[][] {
   const lower: Point[] = [],
     upper: Point[] = [];
   for (let i = 0; i < polygon.length; i++) {

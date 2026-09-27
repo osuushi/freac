@@ -1,5 +1,5 @@
 import type { SketchDocument } from "../sketch/document.js";
-import { threadDefinition } from "./thread-settings.js";
+import { isBuiltinDecorator } from "./builtins.js";
 
 /** Include the support body: trimmed threads can depend on adjacent faces. */
 export function previewSignatures(
@@ -10,7 +10,7 @@ export function previewSignatures(
   let customDocumentKey: string | undefined;
   for (const instance of document.decorators ?? []) {
     if (instance.problem) continue;
-    if (instance.definition !== threadDefinition) {
+    if (!isBuiltinDecorator(instance.definition)) {
       customDocumentKey ??= JSON.stringify([document, sourcesKey]);
       result.set(instance.id, customDocumentKey);
       continue;

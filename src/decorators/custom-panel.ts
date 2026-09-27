@@ -1,8 +1,9 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { appendCustomDiagnostics } from "./custom-diagnostics.js";
 import type { DecoratorSettingsDraft } from "./settings-draft.js";
+import { decoratorField } from "./settings-field.js";
 import { threadDefinition } from "./thread-settings.js";
-import type { DecoratorField, DecoratorInstance, Settings } from "./types.js";
+import type { DecoratorInstance, Settings } from "./types.js";
 
 function button(root: HTMLElement, label: string, action: () => void) {
   const element = document.createElement("button");
@@ -11,53 +12,6 @@ function button(root: HTMLElement, label: string, action: () => void) {
   element.onclick = action;
   root.append(element);
   return element;
-}
-
-function field(
-  root: HTMLElement,
-  schema: DecoratorField,
-  instances: DecoratorInstance[],
-  patch: (patch: Settings, preview: boolean) => void,
-  draft: DecoratorSettingsDraft,
-) {
-  const values = instances.map((d) => d.settings[schema.key] ?? schema.default);
-  const mixed = values.some((v) => v !== values[0]);
-  const label = document.createElement("label");
-  label.textContent = schema.label + (schema.unit ? ` (${schema.unit})` : "");
-  const input =
-    schema.type === "enum" ? document.createElement("select") : document.createElement("input");
-  input.setAttribute("aria-label", schema.label);
-  if (input instanceof HTMLSelectElement) {
-    if (mixed) input.add(new Option("Mixed", ""));
-    for (const option of schema.options ?? []) input.add(new Option(option.label, option.value));
-  } else {
-    input.type = "number";
-    input.step = "any";
-    input.placeholder = mixed ? "Mixed" : "";
-    if (schema.min !== undefined) input.min = String(schema.min);
-    if (schema.max !== undefined) input.max = String(schema.max);
-  }
-  const original = mixed ? "" : String(values[0]);
-  input.value = original;
-  if (input instanceof HTMLInputElement) {
-    input.oninput = () => patch({ [schema.key]: input.valueAsNumber }, true);
-    input.onblur = () => {
-      void draft.blur();
-    };
-  } else input.onchange = () => patch({ [schema.key]: input.value }, false);
-  input.onkeydown = (event) => {
-    event.stopPropagation();
-    if (event.key === "Escape") {
-      event.preventDefault();
-      draft.cancel();
-    }
-    if (event.key === "Enter") {
-      event.preventDefault();
-      void draft.commit();
-    }
-  };
-  label.append(input);
-  root.append(label);
 }
 
 export function appendCustomDecorators(
@@ -117,7 +71,13 @@ export function appendCustomDecorators(
           )
         )
           continue;
-        field(root, schema, group, (settings, preview) => patch(group, settings, preview), draft);
+        decoratorField(
+          root,
+          schema,
+          group,
+          (settings, preview) => patch(group, settings, preview),
+          draft,
+        );
       }
     }
     button(root, `Remove ${definition?.name ?? first.definition} from selected faces`, () => {

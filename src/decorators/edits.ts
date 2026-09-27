@@ -1,6 +1,8 @@
 import { newId, type SketchDocument } from "../sketch/document.js";
 import { validateFrame } from "../sketch/planes.js";
+import { isBuiltinDecorator, knurlDefinition } from "./builtins.js";
 import { cylinderExtent, cylinderFrame, resolveFaces, sameCylinder } from "./cylinder.js";
+import { knurlSettings, patchKnurlSettings } from "./knurl-settings.js";
 import { threadReference, validateAxialReference } from "./thread-extent.js";
 import {
   patchThreadSettings,
@@ -44,6 +46,22 @@ export function validateThread(document: SketchDocument, instance: DecoratorInst
     throw new Error("Thread profile is too deep for this cylinder");
 }
 
+export function validateBuiltin(document: SketchDocument, instance: DecoratorInstance): void {
+  if (instance.version !== 1) throw new Error("Unsupported decorator version");
+  if (instance.definition === threadDefinition) {
+    validateThread(document, instance);
+    return;
+  }
+  if (instance.definition !== knurlDefinition)
+    throw new Error("Decorator definition is unavailable");
+  const settings = knurlSettings(instance.settings);
+  const faces = resolveFaces(document.bodies ?? [], instance.faces);
+  if (partitionThreads(document, instance.faces).length !== 1)
+    throw new Error("These faces cannot continue the same knurling");
+  if (settings.depth + 0.02 >= faces[0].cylinder.radius)
+    throw new Error("Knurl depth is too large for this cylinder");
+}
+
 function validateReferences(refs: readonly FaceReference[]): void {
   if (
     !Array.isArray(refs) ||
@@ -85,6 +103,7 @@ export function validateDecorators(document: SketchDocument): void {
       }
     }
     if (instance.definition === threadDefinition) threadSettings(instance.settings);
+    if (instance.definition === knurlDefinition) knurlSettings(instance.settings);
   }
 }
 
@@ -93,7 +112,9 @@ function applyDecorator(
   edit: Extract<DecoratorEdit, { action: "apply" }>,
 ): readonly DecoratorInstance[] {
   const previous = document.decorators ?? [];
-  if (edit.definition !== threadDefinition) throw new Error("Decorator definition is unavailable");
+  if (!isBuiltinDecorator(edit.definition)) throw new Error("Decorator definition is unavailable");
+  if (edit.version !== undefined && edit.version !== 1)
+    throw new Error("Unsupported decorator version");
   validateReferences(edit.faces);
   resolveFaces(document.bodies ?? [], edit.faces);
   const occupied = new Map(
@@ -111,19 +132,67 @@ function applyDecorator(
     const cylinder = resolveFaces(document.bodies ?? [], faces)[0].cylinder;
     return {
       id: newId(),
-      definition: threadDefinition,
+      definition: edit.definition,
       version: 1,
       faces,
       frame: cylinderFrame(cylinder),
-      settings: patchThreadSettings(
-        cylinder.radius * 2,
-        threadDefaults(cylinder.radius * 2),
-        edit.settings ?? {},
-      ),
+      settings:
+        edit.definition === knurlDefinition
+          ? patchKnurlSettings({}, edit.settings ?? {})
+          : patchThreadSettings(
+              cylinder.radius * 2,
+              threadDefaults(cylinder.radius * 2),
+              edit.settings ?? {},
+            ),
     };
   });
-  for (const instance of added) validateThread(document, instance);
+  for (const instance of added) validateBuiltin(document, instance);
   return [...previous, ...added];
+}
+
+function continueBuiltin(
+  document: SketchDocument,
+  edit: Extract<DecoratorEdit, { action: "continue" | "reassign" }>,
+): readonly DecoratorInstance[] {
+  const previous = document.decorators ?? [];
+  validateReferences(edit.faces);
+  const original = previous.find((d) => d.id === edit.id);
+  if (!original) throw new Error("Select the decorator to continue");
+  const keys = new Set(edit.faces.map(faceKey));
+  if (
+    previous.some(
+      (d) => !d.problem && d.id !== edit.id && d.faces.some((f) => keys.has(faceKey(f))),
+    )
+  )
+    throw new Error("A selected face already has another decoration");
+  const faces =
+    edit.action === "reassign"
+      ? edit.faces
+      : [
+          ...original.faces,
+          ...edit.faces.filter((f) => !original.faces.some((old) => faceKey(old) === faceKey(f))),
+        ];
+  const cylinder = resolveFaces(document.bodies ?? [], faces)[0].cylinder;
+  const reference = original.axialReference;
+  const extent =
+    edit.action === "continue" && reference
+      ? cylinderExtent(original.frame, resolveFaces(document.bodies ?? [], faces))
+      : [0, 0];
+  const updated = {
+    ...original,
+    faces,
+    problem: undefined,
+    axialReference:
+      edit.action === "reassign" || !reference
+        ? undefined
+        : ([Math.min(reference[0], extent[0]), Math.max(reference[1], extent[1])] as [
+            number,
+            number,
+          ]),
+    frame: edit.action === "reassign" ? cylinderFrame(cylinder) : original.frame,
+  };
+  validateBuiltin(document, updated);
+  return previous.map((d) => (d.id === edit.id ? updated : d));
 }
 
 export function editDecorators(document: SketchDocument, edit: DecoratorEdit): SketchDocument {
@@ -135,55 +204,21 @@ export function editDecorators(document: SketchDocument, edit: DecoratorEdit): S
       throw new Error("Select existing decorators");
     next = previous.map((instance) => {
       if (!edit.ids.includes(instance.id)) return instance;
-      if (instance.definition !== threadDefinition)
+      if (!isBuiltinDecorator(instance.definition))
         throw new Error("Decorator definition is unavailable");
       const radius = resolveFaces(document.bodies ?? [], instance.faces)[0].cylinder.radius;
       const updated = {
         ...instance,
-        settings: patchThreadSettings(radius * 2, instance.settings, edit.patch),
+        settings:
+          instance.definition === knurlDefinition
+            ? patchKnurlSettings(instance.settings, edit.patch)
+            : patchThreadSettings(radius * 2, instance.settings, edit.patch),
       };
-      validateThread(document, updated);
+      validateBuiltin(document, updated);
       return updated;
     });
   } else if (edit.action === "continue" || edit.action === "reassign") {
-    validateReferences(edit.faces);
-    const original = previous.find((d) => d.id === edit.id);
-    if (!original) throw new Error("Select the threads to continue");
-    const keys = new Set(edit.faces.map(faceKey));
-    if (
-      previous.some(
-        (d) => !d.problem && d.id !== edit.id && d.faces.some((f) => keys.has(faceKey(f))),
-      )
-    )
-      throw new Error("A selected face already has another decoration");
-    const faces =
-      edit.action === "reassign"
-        ? edit.faces
-        : [
-            ...original.faces,
-            ...edit.faces.filter((f) => !original.faces.some((old) => faceKey(old) === faceKey(f))),
-          ];
-    const cylinder = resolveFaces(document.bodies ?? [], faces)[0].cylinder;
-    const reference = original.axialReference;
-    const extent =
-      edit.action === "continue" && reference
-        ? cylinderExtent(original.frame, resolveFaces(document.bodies ?? [], faces))
-        : [0, 0];
-    const updated = {
-      ...original,
-      faces,
-      problem: undefined,
-      axialReference:
-        edit.action === "reassign" || !reference
-          ? undefined
-          : ([Math.min(reference[0], extent[0]), Math.max(reference[1], extent[1])] as [
-              number,
-              number,
-            ]),
-      frame: edit.action === "reassign" ? cylinderFrame(cylinder) : original.frame,
-    };
-    validateThread(document, updated);
-    next = previous.map((d) => (d.id === edit.id ? updated : d));
+    next = continueBuiltin(document, edit);
   } else if (edit.action === "discard") {
     if (!previous.some((d) => d.id === edit.id)) throw new Error("Select an existing decorator");
     next = previous.filter((d) => d.id !== edit.id);

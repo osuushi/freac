@@ -16,10 +16,10 @@ export function resolveFaces(
   bodies: readonly Body[],
   refs: readonly FaceReference[],
 ): (Face & { cylinder: Cylinder })[] {
-  if (!refs.length) throw new Error("Select cylindrical faces for threads");
+  if (!refs.length) throw new Error("Select cylindrical faces");
   return refs.map(({ body, face }) => {
     const found = bodies.find((b) => b.id === body)?.faces.find((f) => f.id === face);
-    if (!found?.cylinder) throw new Error("Threads can only be applied to cylindrical faces");
+    if (!found?.cylinder) throw new Error("Decorators require cylindrical faces");
     return { ...found, cylinder: found.cylinder };
   });
 }
@@ -72,6 +72,6 @@ export function cylinderExtent(frame: PlaneFrame, faces: readonly Face[]): [numb
       high = Math.max(high, z);
     }
   if (!Number.isFinite(low) || high - low < 1e-7)
-    throw new Error("Thread faces have no axial extent");
+    throw new Error("Cylindrical faces have no axial extent");
   return [low, high];
 }

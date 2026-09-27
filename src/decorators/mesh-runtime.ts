@@ -1,9 +1,11 @@
 import type { ManifoldToplevel } from "manifold-3d";
 import { type ExportMesh, exportMesh } from "../model/export-mesh.js";
 import type { SketchDocument } from "../sketch/document.js";
+import { isBuiltinDecorator, knurlDefinition } from "./builtins.js";
 import { resolveFaces } from "./cylinder.js";
 import { validateThread } from "./edits.js";
 import type { JavaScriptDecorators } from "./javascript-hooks.js";
+import { knurlOperand, knurlPreview } from "./knurl-runtime.js";
 import { MeshScope } from "./mesh-scope.js";
 import { exportTolerance } from "./precision.js";
 import type { PreviewFeedback } from "./preview-feedback.js";
@@ -77,7 +79,12 @@ export function decoratedMeshes(
       let solid = scope.from(exportMesh(body));
       for (const instance of instances) {
         active = instance;
-        if (instance.definition !== threadDefinition) {
+        if (instance.definition === knurlDefinition) {
+          const { tool, operation } = knurlOperand(scope, document, instance);
+          solid = scope.keep(operation === "add" ? solid.add(tool) : solid.subtract(tool));
+          continue;
+        }
+        if (!isBuiltinDecorator(instance.definition)) {
           if (instance.problem) throw new Error(instance.problem);
           if (!javascript)
             throw new Error(`Enable bundled code for ${instance.definition} before export`);
@@ -129,6 +136,11 @@ export function decoratorPreview(
   document: SketchDocument,
   instance: DecoratorInstance,
 ): ExportMesh {
+  if (instance.definition === knurlDefinition) {
+    const mesh = knurlPreview(runtime, document, instance);
+    if (!mesh) throw new PreviewRuntimeRequired();
+    return mesh;
+  }
   return renderThreadPreview(runtime, document, instance).mesh;
 }
 
@@ -138,6 +150,8 @@ export function decoratorLivePreview(
   instance: DecoratorInstance,
   feedback: PreviewFeedback,
 ): { mesh: ExportMesh; state: ThreadPreviewResolution | null } {
+  if (instance.definition === knurlDefinition)
+    return { mesh: decoratorPreview(runtime, document, instance), state: null };
   return renderThreadPreview(runtime, document, instance, nextThreadResolution(feedback));
 }
 

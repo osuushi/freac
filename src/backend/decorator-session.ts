@@ -1,3 +1,4 @@
+import { isBuiltinDecorator } from "../decorators/builtins.js";
 import {
   pendingCustomContinuation,
   resolveCustomContinuation,
@@ -8,7 +9,6 @@ import { editJavaScriptDecorators, needsJavaScript } from "../decorators/javascr
 import { type EnabledDefinition, JavaScriptDecorators } from "../decorators/javascript-hooks.js";
 import { initializeDecoratorRuntime } from "../decorators/javascript-runtime.js";
 import { inspectThreads } from "../decorators/thread-inspection.js";
-import { threadDefinition } from "../decorators/thread-settings.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 
@@ -36,7 +36,7 @@ export class DecoratorSession {
     return resolveCustomContinuation(document, await this.hooks());
   }
   async inspect(document: SketchDocument, query: DecoratorInspectionRequest) {
-    return query.definition === threadDefinition
+    return isBuiltinDecorator(query.definition)
       ? inspectThreads(document, query)
       : inspectDecorator(document, query, await this.hooks());
   }

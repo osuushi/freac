@@ -1,17 +1,17 @@
 import { newId, type SketchDocument } from "../sketch/document.js";
 import { planes } from "../sketch/planes.js";
+import { isBuiltinDecorator } from "./builtins.js";
 import { definitionSettings } from "./definition.js";
 import { editDecorators, faceKey, validateDecorators } from "./edits.js";
 import type { JavaScriptDecorators } from "./javascript-hooks.js";
-import { threadDefinition } from "./thread-settings.js";
 import type { DecoratorEdit, DecoratorInstance } from "./types.js";
 
 export function needsJavaScript(document: SketchDocument, edit: DecoratorEdit): boolean {
-  if (edit.action === "apply") return edit.definition !== threadDefinition;
+  if (edit.action === "apply") return !isBuiltinDecorator(edit.definition);
   if (edit.action === "remove" || edit.action === "discard") return false;
   const ids = edit.action === "settings" ? edit.ids : [edit.id];
   return !!document.decorators?.some(
-    (d) => ids.includes(d.id) && d.definition !== threadDefinition,
+    (d) => ids.includes(d.id) && !isBuiltinDecorator(d.definition),
   );
 }
 
@@ -61,7 +61,7 @@ export function editJavaScriptDecorators(
       throw new Error("Select existing decorators");
     next = previous.map((instance) => {
       if (!edit.ids.includes(instance.id)) return instance;
-      if (instance.definition === threadDefinition)
+      if (isBuiltinDecorator(instance.definition))
         return (
           editDecorators(document, { ...edit, ids: [instance.id] }).decorators?.find(
             (d) => d.id === instance.id,
@@ -91,7 +91,7 @@ export function editJavaScriptDecorators(
   const candidate = { ...document, decorators: next };
   validateDecorators(candidate);
   for (const instance of next) {
-    if (instance.definition === threadDefinition || previous.includes(instance)) continue;
+    if (isBuiltinDecorator(instance.definition) || previous.includes(instance)) continue;
     const error = hooks.diagnostics(candidate, instance).find((d) => d.severity === "error");
     if (error) throw new Error(error.message);
   }

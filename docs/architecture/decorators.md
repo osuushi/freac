@@ -17,7 +17,7 @@ from different decorated faces may overlap with undefined behavior.
 
 Attach editable settings to selected geometry without replacing that geometry.
 At export, generate mesh modifications using the accepted geometry
-as read-only input. Threads are the first built-in decorator. JavaScript authors
+as read-only input. Threads and [knurling](knurling.md) are built-in decorators. JavaScript authors
 must be able to implement the same hooks. Gears, gear relationships, approximate
 cylinder recognition, shader previews and print-color assignment are later work.
 

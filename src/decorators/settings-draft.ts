@@ -1,7 +1,7 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import { isBuiltinDecorator } from "./builtins.js";
 import { editDecorators } from "./edits.js";
-import { threadDefinition } from "./thread-settings.js";
 import type { DecoratorEdit } from "./types.js";
 
 type SettingsEdit = Extract<DecoratorEdit, { action: "settings" }>;
@@ -40,7 +40,7 @@ export class DecoratorSettingsDraft {
     draft.edit = edit;
     draft.valid = false;
     const custom = this.editor.store.data.decorators?.some(
-      (d) => edit.ids.includes(d.id) && d.definition !== threadDefinition,
+      (d) => edit.ids.includes(d.id) && !isBuiltinDecorator(d.definition),
     );
     if (custom) {
       draft.pending ??= this.compute(draft);
