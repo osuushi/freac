@@ -194,8 +194,12 @@ export class DocumentOwner {
   }
   private async dispatch(request: ModelRequest, operation: HistoryOperation): Promise<void> {
     this.cleanupAvailable = false;
+    const decoratorEdit =
+      request.kind === "decorator" || request.kind === "decorator-enable"
+        ? await this.decorators.edit(this.store.data, request)
+        : null;
     const direct =
-      (await this.decorators.edit(this.store.data, request)) ??
+      decoratorEdit ??
       (isDirectDocumentEdit(request) ? editDocument(this.store.data, request) : null);
     if (direct) {
       this.pendingOperation = null;
