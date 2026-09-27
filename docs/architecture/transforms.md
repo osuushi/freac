@@ -263,6 +263,10 @@ existing closed-solid, self-interference and topology-correspondence checks.
 This permits world-axis movement on a slightly tilted perforated plate without
 silently projecting the requested movement into its original plane. Surface
 fitting remains bounded and may reject larger or more complex deformations.
+Even a small out-of-plane component can make this path take several seconds per
+preview; movement contained in the face plane retains the much faster planar
+reconstruction. Local-plane movement controls and fitting performance remain
+separate follow-up work.
 Unselected straight or cubic connectors between tangent curved rims preserve
 those endpoint tangent directions while reconnecting moved ends. They can become
 ordinary cubic edges; when the current endpoints and tangents line up again,
