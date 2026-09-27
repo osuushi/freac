@@ -339,8 +339,8 @@ Béziers on an explicit plane; it infers no constraints. Runtime validation and 
 existing solver/kernel validate every operation. Unachievable face offsets reject
 instead of silently accepting a smaller value.
 `moveFaces` takes stable body/face IDs and a world transform, then uses the same
-shared boundary reconnection as manual Move. An existing hole can translate by
-moving its cylindrical wall; rejected boundaries abort the script transaction.
+shared boundary reconnection as manual Move. Rejected boundaries abort the script
+transaction.
 
 Construction planes take an evaluated frame and optional existing ID; omit the ID
 for a new plane. Deletion and repositioning do not affect sketches that copied the
@@ -521,7 +521,10 @@ specific missing information, rather than forming a mandatory startup ritual.
 Fresh workspace AGENTS.md contains this operating guide. The same current guide is
 injected at launch, so resumed sessions receive updated capability/workflow guidance
 without overwriting saved user files. Detailed modeling/decorator references remain
-in `freac docs`; examples of historical mistakes do not become universal startup rules.
+in `freac docs`. Guidance describes available operations, target scope and effects
+so the agent can choose from the current request and geometry. Do not add
+incident-specific corrections or examples of historical mistakes to startup prompts;
+put durable operation contracts in the detailed docs and types.
 
 `freac faces` returns all accepted faces with stable face/body IDs, edge IDs,
 body visibility and discriminated plane/cylinder/other support metadata. Cylinders

@@ -50,9 +50,9 @@ loops and edge adjacency. freac.replaceFace({body,face,surface}) reconnects a su
 coaxial cylinder/cone support to a full wall’s perpendicular planar neighbors. Compose
 inspection, geometry construction and edits when no single named tool matches the task;
 consult the relevant primitive’s domain when needed. These methods use freac run.
-To move an existing hole, select its cylindrical wall and use freac.moveFaces with
-its current body/face IDs and a translation. This uses the same boundary reconnection
-as manual Move; do not rebuild a hole with sketches and Boolean extrusions.
+freac.moveFaces transforms selected solid faces and reconnects adjacent boundaries,
+using the manual Move path. freac.transformBodies moves complete bodies. Choose the
+operation whose target and effect match the requested edit.
 
 Modeling calls are sequential and share one transaction: failure/cancellation discards
 geometry changes. Use current/returned IDs and profile keys; do not construct them.

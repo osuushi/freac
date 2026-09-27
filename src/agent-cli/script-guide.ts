@@ -133,21 +133,10 @@ if (!faces.length || faces.length !== freac.selection.length) throw new Error("S
 await freac.offsetFaces({ faces, distance: 2 });
 \`\`\`
 
-Example: move one existing cylindrical hole wall 3 mm in world X without adding
-sketches or Boolean features. Choose the wall from the current selection or inspect
-its face ID; verify the intended center and clearance before applying:
-\`\`\`typescript
-const faces = freac.selection.filter(target => target.kind === "face");
-if (faces.length !== 1 || faces.length !== freac.selection.length)
-  throw new Error("Select exactly one hole wall");
-await freac.moveFaces({ faces, translation: [3, 0, 0], pivot: [0, 0, 0],
-  axis: [0, 0, 1], angle: 0 });
-\`\`\`
-Face movement reconnects adjacent boundaries using the manual Move kernel. A
-translation can move a hole axis; some boundary configurations still reject. For
-multiple holes, pass their walls together for one atomic edit, or make sequential
-calls in one script when their displacements differ. Each call returns current
-topology IDs; inspect the candidate again before using IDs after an edit.
+moveFaces takes body/face IDs, a world translation, pivot, axis and angle. It moves
+the selected faces and reconnects adjacent boundaries using the manual Move kernel.
+Use current face IDs and inspect the returned topology before chaining further edits;
+unsupported boundaries reject the script transaction.
 
 Example: a continuous right-handed triangular helix about the positive Z axis:
 \`\`\`typescript
