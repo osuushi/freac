@@ -24,6 +24,20 @@ a 0.0001 mm rendering tolerance retains coplanar geometry.
 The cutaway follows the current workspace frame and camera side, and clears on
 workspace exit. It changes no accepted geometry, selection identity or Undo.
 
+### Orthographic camera depth
+
+Zoom changes the orthographic view size. Before rendering and queued navigation
+picking, place the finite camera behind the bounds of visible document/preview
+geometry, with a small depth margin, and extend the far limit when necessary.
+Retreat only along the viewing direction: screen positions, view size, orientation,
+target and rotation pivot stay unchanged. Keeping geometry ahead of the camera
+also preserves forward ray picking; a negative near limit alone would not do that.
+Bounds cache by displayed document and visibility, conservatively enclosing body
+bounds and sketch curves on tilted planes. World origin and visible construction
+plane origins also participate. Infinite grids do not determine scene bounds.
+Intentional sketch cutaway and cross-section planes remain independent.
+Camera-to-target distance is rendering placement, not the orthographic zoom scale.
+
 ### Rotation pivot
 
 At the start of a Command-drag, cube drag or tablet orbit, capture the union

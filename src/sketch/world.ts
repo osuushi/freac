@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { fitCameraDepth } from "./camera-depth.js";
 import {
   alignCameraToPlane,
   applyCameraPose,
@@ -27,6 +28,7 @@ export class World {
   readonly renderer = new THREE.WebGLRenderer({ antialias: true, stencil: true });
   readonly canvas = this.renderer.domElement;
   readonly target = new THREE.Vector3();
+  depthBounds = (): THREE.Box3 => new THREE.Box3();
   readonly changed = new Set<() => void>();
   readonly grids = createGrids(this.scene);
   workspace: { key: string; frame: PlaneFrame; sketchId?: string } | null = null;
@@ -100,6 +102,7 @@ export class World {
     this.camera.right = (half * width) / height;
     this.camera.top = half;
     this.camera.bottom = -half;
+    fitCameraDepth(this.camera, this.target, this.height, this.depthBounds());
     this.camera.lookAt(this.target);
     this.camera.updateProjectionMatrix();
     this.camera.updateMatrixWorld();
@@ -136,7 +139,9 @@ export class World {
     return this.renderer.clippingPlanes.every((plane) => plane.distanceToPoint(point) >= 0);
   }
   requestDraw(): void {
-    // Subsequent input events need the latest basis even before the next paint.
+    // Subsequent input events need the latest basis and picking depth before the next paint.
+    fitCameraDepth(this.camera, this.target, this.height, this.depthBounds());
+    this.camera.updateProjectionMatrix();
     this.camera.lookAt(this.target);
     this.camera.updateMatrixWorld();
     if (this.pendingDraw !== null) return;
