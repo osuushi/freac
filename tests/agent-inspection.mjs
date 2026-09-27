@@ -7,6 +7,7 @@ import { launchElectron } from "./native-documents.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { at, drag, inspect, settled } from "./ui-helpers.mjs";
 import { orient, pick, readout } from "./ui-measurement.mjs";
+import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { clearSelection } from "./ui-reconnection-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -108,7 +109,7 @@ try {
   );
   assert.deepEqual((await inspect(page)).document, before.document);
   assert.deepEqual((await query("selection")).context.camera, selection.context.camera);
-  await page.getByRole("textbox", { name: "Face offset distance", exact: true }).fill("1");
+  await (await relativeOffsetInput(page)).fill("1");
   await assert.rejects(() => query("select", "--clear"), /current edit|changed during inspection/);
 
   await settled(page);
