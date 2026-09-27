@@ -32,6 +32,31 @@ void origins(std::ostream& out, const TopoDS_Shape& shape, const Result& result)
     out << '['; bool comma = false;
     for (const auto& id : ids) { if (comma) out << ','; comma = true; out << quoted(id); } out << ']';
 }
+void analyticSurfaces(std::ostream& out, const TopoDS_Face& shape, const BRepAdaptor_Surface& surface) {
+    out << ",\"cylinder\":";
+    if (surface.GetType() == GeomAbs_Cylinder) {
+        const auto cylinder = surface.Cylinder();
+        out << "{\"origin\":"; xyz(out, cylinder.Location().XYZ());
+        out << ",\"axis\":"; xyz(out, cylinder.Axis().Direction().XYZ());
+        out << ",\"radius\":" << cylinder.Radius();
+        out << ",\"outward\":" << ((shape.Orientation() == TopAbs_REVERSED ? -1 : 1) * (cylinder.Direct() ? 1 : -1)) << '}';
+    } else out << "null";
+    out << ",\"cone\":";
+    if (surface.GetType() == GeomAbs_Cone) {
+        const auto cone = surface.Cone();
+        const double sign = cone.SemiAngle() < 0 ? -1 : 1;
+        out << "{\"apex\":"; xyz(out, cone.Apex().XYZ());
+        out << ",\"axis\":"; xyz(out, cone.Axis().Direction().XYZ() * sign);
+        out << ",\"semiAngle\":" << std::abs(cone.SemiAngle()) * 180 / std::acos(-1.0);
+        out << ",\"outward\":" << ((shape.Orientation() == TopAbs_REVERSED ? -1 : 1) * (cone.Direct() ? 1 : -1)) << '}';
+    } else out << "null";
+    out << ",\"sphere\":";
+    if (surface.GetType() == GeomAbs_Sphere) {
+        const auto sphere = surface.Sphere();
+        out << "{\"radius\":" << sphere.Radius();
+        out << ",\"outward\":" << ((shape.Orientation() == TopAbs_REVERSED ? -1 : 1) * (sphere.Direct() ? 1 : -1)) << '}';
+    } else out << "null";
+}
 void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMapOfShape& edges, const std::vector<BlendFace>& blends, const TopTools_IndexedMapOfShape& faces, const TopoDS_Shape& body) {
     out << ",\"edgeIndexes\":[";
     bool first = true;
@@ -53,21 +78,9 @@ void face(std::ostream& out, const TopoDS_Face& shape, const TopTools_IndexedMap
             out << p.X() << ',' << p.Y() << ',' << p.Z();
         }
     }
-    out << "],\"cylinder\":";
+    out << ']';
     BRepAdaptor_Surface surface(shape);
-    if (surface.GetType() == GeomAbs_Cylinder) {
-        const auto cylinder = surface.Cylinder();
-        out << "{\"origin\":"; xyz(out, cylinder.Location().XYZ());
-        out << ",\"axis\":"; xyz(out, cylinder.Axis().Direction().XYZ());
-        out << ",\"radius\":" << cylinder.Radius();
-        out << ",\"outward\":" << ((shape.Orientation() == TopAbs_REVERSED ? -1 : 1) * (cylinder.Direct() ? 1 : -1)) << '}';
-    } else out << "null";
-    out << ",\"sphere\":";
-    if (surface.GetType() == GeomAbs_Sphere) {
-        const auto sphere = surface.Sphere();
-        out << "{\"radius\":" << sphere.Radius();
-        out << ",\"outward\":" << ((shape.Orientation() == TopAbs_REVERSED ? -1 : 1) * (sphere.Direct() ? 1 : -1)) << '}';
-    } else out << "null";
+    analyticSurfaces(out, shape, surface);
     presentOffsetThickness(out, shape, faces, body);
     const auto blend = std::find_if(blends.begin(), blends.end(), [&](const BlendFace& b) { return b.face.IsSame(shape); });
     out << ",\"offsetFaceIndexes\":[";

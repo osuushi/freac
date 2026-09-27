@@ -3,6 +3,8 @@ import { type ExportMesh, exportMesh } from "../model/export-mesh.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { resolveFaces } from "./cylinder.js";
 import { validateThread } from "./edits.js";
+import { gearOperands } from "./gear-runtime.js";
+import { gearDefinition } from "./gear-settings.js";
 import type { JavaScriptDecorators } from "./javascript-hooks.js";
 import { MeshScope } from "./mesh-scope.js";
 import { exportTolerance } from "./precision.js";
@@ -71,12 +73,18 @@ export function decoratedMeshes(
       d.faces.some((f) => f.body === body.id),
     );
     if (!instances.length) return exportMesh(body);
-    const scope = new MeshScope(runtime, body.center, exportTolerance(instances) / 4);
+    const scope = new MeshScope(runtime, body.center, exportTolerance(instances, document) / 4);
     let active: DecoratorInstance | undefined;
     try {
       let solid = scope.from(exportMesh(body));
       for (const instance of instances) {
         active = instance;
+        if (instance.definition === gearDefinition) {
+          const operands = gearOperands(scope, document, instance, "export");
+          solid = scope.keep(solid.subtract(operands.remove()));
+          solid = scope.keep(solid.add(operands.add()));
+          continue;
+        }
         if (instance.definition !== threadDefinition) {
           if (instance.problem) throw new Error(instance.problem);
           if (!javascript)

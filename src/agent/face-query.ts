@@ -14,6 +14,7 @@ export type FaceInfo = FaceBase &
   (
     | { surface: "plane"; plane: NonNullable<Face["plane"]>; cylinder: null }
     | { surface: "cylinder"; plane: null; cylinder: NonNullable<Face["cylinder"]> }
+    | { surface: "cone"; plane: null; cylinder: null; cone: NonNullable<Face["cone"]> }
     | { surface: "other"; plane: null; cylinder: null }
   );
 
@@ -33,6 +34,8 @@ export function queryFaces(
       if (face.plane) return { ...base, surface: "plane", plane: face.plane, cylinder: null };
       if (face.cylinder)
         return { ...base, surface: "cylinder", plane: null, cylinder: face.cylinder };
+      if (face.cone)
+        return { ...base, surface: "cone", plane: null, cylinder: null, cone: face.cone };
       return { ...base, surface: "other", plane: null, cylinder: null };
     }),
   );

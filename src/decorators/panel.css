@@ -71,3 +71,22 @@
 .decorator-panel .decorator-warning {
   color: #8a4b0b;
 }
+.gear-resize {
+  margin: 145px 20px auto auto;
+  width: 270px;
+  padding: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  color: #26364a;
+  background: white;
+}
+.gear-resize label {
+  display: grid;
+  gap: 6px;
+}
+.gear-resize button {
+  margin: 5px 3px;
+}
+.gear-resize::backdrop {
+  background: transparent;
+}

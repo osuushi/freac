@@ -2,6 +2,8 @@ import javascriptWasm from "@jitl/quickjs-wasmfile-release-sync/wasm?url";
 import wasmUrl from "manifold-3d/manifold.wasm?url";
 import type { QuickJSWASMModule } from "quickjs-emscripten-core";
 import type { SketchDocument } from "../sketch/document.js";
+import { gearPreview } from "./gear-runtime.js";
+import { gearDefinition } from "./gear-settings.js";
 import type { EnabledDefinition } from "./javascript-hooks.js";
 import {
   decoratorLivePreview,
@@ -12,6 +14,18 @@ import {
 import { PreviewHistories } from "./preview-feedback.js";
 import { packPreviewMesh } from "./preview-wire.js";
 import { threadDefinition } from "./thread-settings.js";
+import type { DecoratorInstance } from "./types.js";
+
+async function renderGear(document: SketchDocument, instance: DecoratorInstance) {
+  runtime ??= initializeMeshRuntime(wasmUrl);
+  const mesh = gearPreview(await runtime, document, instance);
+  return {
+    id: instance.id,
+    body: instance.faces[0].body,
+    faces: instance.faces,
+    ...packPreviewMesh(mesh),
+  };
+}
 
 const histories = new PreviewHistories();
 type RenderState = { signature?: string; live: boolean };
@@ -99,6 +113,11 @@ self.onmessage = async (
         ]);
         const feedback = histories.feedback(instance.id, signature, targetMs);
         const started = performance.now();
+        if (instance.definition === gearDefinition) {
+          meshes.push(await renderGear(document, instance));
+          rendered.set(instance.id, next);
+          continue;
+        }
         if (instance.definition !== threadDefinition) {
           const result = javascript?.preview(document, instance, next.live, feedback);
           if (!result) {

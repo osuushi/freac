@@ -4,6 +4,7 @@ interface FaceBase { kind: "face"; id: string; body: string; edges: readonly str
 export type FaceInfo = FaceBase & (
   | { surface: "plane"; plane: Plane; cylinder: null }
   | { surface: "cylinder"; plane: null; cylinder: { origin: Vector; axis: Vector; radius: number; outward: 1 | -1 } }
+  | { surface: "cone"; plane: null; cylinder: null; cone: { apex: Vector; axis: Vector; semiAngle: number; outward: 1 | -1 } }
   | { surface: "other"; plane: null; cylinder: null }
 );
 export interface FreacView {

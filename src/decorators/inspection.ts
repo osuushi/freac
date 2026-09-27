@@ -1,6 +1,9 @@
 import type { SketchDocument } from "../sketch/document.js";
 import { planes } from "../sketch/planes.js";
 import { definitionSettings } from "./definition.js";
+import { gearFaces } from "./gear-faces.js";
+import { gearDefinition, gearRadiusForModule, gearSettings } from "./gear-settings.js";
+import { gearPlacement, inspectGear } from "./gear-support.js";
 import type {
   DecoratorDiagnostic,
   DecoratorGroup,
@@ -14,11 +17,16 @@ export interface DecoratorInspectionRequest {
   faces: FaceReference[];
   instanceId?: string;
   settings?: Settings;
+  /** Gear calculator only: report required pitch radius without changing geometry. */
+  normalModule?: number;
+  reassign?: boolean;
 }
 export interface DecoratorInspection {
   reason: string | null;
   groups: DecoratorGroup[];
   diagnostics: DecoratorDiagnostic[];
+  gearDimensions?: ReturnType<typeof inspectGear>[];
+  requiredPitchRadius?: number;
 }
 
 export function inspectDecorator(
@@ -44,6 +52,9 @@ export function inspectDecorator(
           ...existing,
           faces: request.faces,
           settings: definitionSettings(definition, { ...existing.settings, ...request.settings }),
+          ...(request.reassign && definition.id === gearDefinition
+            ? { ...gearPlacement(document, request.faces), state: undefined, problem: undefined }
+            : {}),
         }
       : {
           id: "inspection",
@@ -71,6 +82,24 @@ export function inspectDecorator(
       reason: diagnostics.find((d) => d.severity === "error")?.message ?? null,
       groups,
       diagnostics,
+      ...(request.definition === gearDefinition
+        ? {
+            gearDimensions: groups.flatMap((group) =>
+              gearFaces(document, group.faces)[0].plane
+                ? []
+                : [inspectGear(document, { ...instance, ...group })],
+            ),
+            ...(request.normalModule === undefined
+              ? {}
+              : {
+                  requiredPitchRadius: gearRadiusForModule(
+                    request.normalModule,
+                    gearSettings(instance.settings).teeth,
+                    gearSettings(instance.settings).helix,
+                  ),
+                }),
+          }
+        : {}),
     };
   } catch (error) {
     return {

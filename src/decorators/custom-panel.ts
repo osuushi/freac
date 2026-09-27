@@ -1,5 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { appendCustomDiagnostics } from "./custom-diagnostics.js";
+import { appendGearInformation, gearFieldInstances } from "./gear-panel.js";
+import { gearDefinition, gearManifest } from "./gear-settings.js";
 import type { DecoratorSettingsDraft } from "./settings-draft.js";
 import { threadDefinition } from "./thread-settings.js";
 import type { DecoratorField, DecoratorInstance, Settings } from "./types.js";
@@ -76,9 +78,12 @@ export function appendCustomDecorators(
   }
   for (const group of groups.values()) {
     const first = group[0];
-    const definition = editor.store.data.decoratorDefinitions?.find(
-      (d) => d.id === first.definition && d.version === first.version,
-    );
+    const definition =
+      first.definition === gearDefinition
+        ? gearManifest
+        : editor.store.data.decoratorDefinitions?.find(
+            (d) => d.id === first.definition && d.version === first.version,
+          );
     const expand = () => {
       editor.modeling.targets = group.flatMap((d) =>
         d.faces.map((f) => ({ kind: "face" as const, ...f })),
@@ -92,6 +97,7 @@ export function appendCustomDecorators(
       note.textContent = "Definition unavailable. Import its bundled code to edit or export.";
       root.append(note);
     } else if (
+      first.definition !== gearDefinition &&
       !editor.store.decoratorSources.some(
         (s) =>
           s.id === definition.id &&
@@ -108,8 +114,11 @@ export function appendCustomDecorators(
         });
       });
     } else if (!group.some((d) => d.problem)) {
+      appendGearInformation(root, editor, group);
       for (const instance of group) appendCustomDiagnostics(root, editor, instance);
       for (const schema of definition.fields) {
+        const applicable = gearFieldInstances(editor, group, schema.key);
+        if (!applicable.length) continue;
         if (
           schema.visibleWhen &&
           !group.some((d) =>
@@ -117,7 +126,13 @@ export function appendCustomDecorators(
           )
         )
           continue;
-        field(root, schema, group, (settings, preview) => patch(group, settings, preview), draft);
+        field(
+          root,
+          schema,
+          applicable,
+          (settings, preview) => patch(applicable, settings, preview),
+          draft,
+        );
       }
     }
     button(root, `Remove ${definition?.name ?? first.definition} from selected faces`, () => {

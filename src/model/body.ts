@@ -17,6 +17,8 @@ export interface Face {
   /** Derived analytic measurement; other surface classes remain ordinary faces. */
   readonly cylinder?: { origin: Vector; axis: Vector; radius: number; outward: 1 | -1 } | null;
   readonly sphere?: { radius: number; outward: 1 | -1 } | null;
+  /** Axis points away from the apex along the represented positive-radius nappe. */
+  readonly cone?: { apex: Vector; axis: Vector; semiAngle: number; outward: 1 | -1 } | null;
 }
 export type EdgeCurve =
   | { kind: "line"; a: Vector; b: Vector }

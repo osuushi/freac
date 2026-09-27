@@ -1,6 +1,7 @@
 import { newId, type SketchDocument } from "../sketch/document.js";
 import { validateFrame } from "../sketch/planes.js";
 import { cylinderExtent, cylinderFrame, resolveFaces, sameCylinder } from "./cylinder.js";
+import { gearDefinition, gearSettings } from "./gear-settings.js";
 import { threadReference, validateAxialReference } from "./thread-extent.js";
 import {
   patchThreadSettings,
@@ -85,6 +86,7 @@ export function validateDecorators(document: SketchDocument): void {
       }
     }
     if (instance.definition === threadDefinition) threadSettings(instance.settings);
+    if (instance.definition === gearDefinition) gearSettings(instance.settings);
   }
 }
 

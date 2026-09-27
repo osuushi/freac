@@ -32,6 +32,9 @@ function descendants(
     return {
       ...instance,
       frame,
+      axialReference: unchanged
+        ? instance.axialReference
+        : transformedAxialReference(instance, request),
       problem,
       faces: faces.map((f) => ({ body: body.id, face: f.id })),
     };

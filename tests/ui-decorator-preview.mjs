@@ -4,11 +4,11 @@ import { worldClick } from "./ui-face-offset.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { clearSelection } from "./ui-reconnection-helpers.mjs";
 
-export async function recessedPreviewRoute(page, name) {
+export async function recessedPreviewRoute(page, name, worldPoint = [0, -8, 5]) {
   const before = (await inspect(page)).document;
   await clearSelection(page);
   await page.mouse.move(100, 80);
-  const point = await project(page, [0, -8, 5]);
+  const point = await project(page, worldPoint);
   let count = 0;
   const deadline = Date.now() + 15000;
   do {
@@ -40,7 +40,7 @@ export async function recessedPreviewRoute(page, name) {
     `Recessed preview must fill the interior face sample (${count}/2304 teal pixels)`,
   );
   await page.screenshot({ path: `.cache/sketch-review/${name}-recessed-thread-preview.png` });
-  await worldClick(page, [0, -8, 5]);
+  await worldClick(page, worldPoint);
   const selected = await inspect(page);
   assert.equal(selected.modelingSelection[0]?.kind, "face", "Preview keeps original face picking");
   assert.deepEqual(selected.document, before, "Rendering and picking preserve the document");

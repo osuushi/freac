@@ -1,4 +1,22 @@
 export const decoratorGuide = `
+## Gear design
+
+The built-in freac.gear v1 decorates pitch cylinders (external/internal), cones
+(straight spherical-involute bevel) and planar racks. It never creates gear-set
+relationships or changes exact geometry merely by applying a decoration.
+Read its schema through decorators(). Use inspectDecorator with definition,
+version:1, faces, settings and optional normalModule to obtain resolved rotary
+dimensions and requiredPitchRadius. Tooth counts are integers per full revolution,
+including partial faces. Helix uses the normal module/pressure-angle convention;
+inspection transversePressure and halfWidth are radians. Phase/direction settings
+are degrees. Rack phase and normal module are mm. Helical cones are unsupported.
+For a gear train, calculate matching modules, pressure angles, tooth counts,
+centers and hands; explicitly adjust geometry with replaceFace/offsetFaces and
+placement operations, then editDecorator in the same awaited script transaction.
+The unshifted external reference center distance is r1+r2; an internal pair uses
+rRing-rPinion. Shifted gears require operating-distance calculations. Pairwise
+interference, assembly and load capacity are not inferred from individual gears.
+
 ## Authoring bundled JavaScript decorators
 
 A definition has id, version (positive integer), name, fields, source and optional

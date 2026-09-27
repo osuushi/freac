@@ -1,3 +1,4 @@
+import { gearManifest } from "../decorators/gear-settings.js";
 import { threadDefinition, threadFields } from "../decorators/thread-settings.js";
 import type { Body } from "../model/body.js";
 import type { MeasurementTarget } from "../model/measurement.js";
@@ -57,9 +58,10 @@ export function targetGeometry(document: SketchDocument, target: InspectionTarge
         id: face.id,
         body: body.id,
         edges: face.edges,
-        surface: face.plane ? "plane" : face.cylinder ? "cylinder" : "other",
+        surface: face.plane ? "plane" : face.cylinder ? "cylinder" : face.cone ? "cone" : "other",
         plane: face.plane,
         cylinder: face.cylinder ?? null,
+        cone: face.cone ?? null,
         blend: face.blend ?? null,
         decorators: (document.decorators ?? []).filter((d) =>
           d.faces.some((f) => f.body === body.id && f.face === face.id),
@@ -130,6 +132,7 @@ export function inspectionOverview(document: SketchDocument, view: InspectionVie
     decoratorDefinitions: document.decoratorDefinitions ?? [],
     builtinDecorators: [
       { id: threadDefinition, version: 1, name: "Threads", fields: threadFields },
+      gearManifest,
     ],
     constructionPlanes: (document.constructionPlanes ?? []).map((p) => ({
       kind: "plane",

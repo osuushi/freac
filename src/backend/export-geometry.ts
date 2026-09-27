@@ -29,7 +29,7 @@ export async function exportGeometry(
   const result = await kernel.calculate({
     kind: "inspect",
     bodies: bodies.filter((b) => ids.has(b.id)),
-    deflection: exportTolerance(instances),
+    deflection: exportTolerance(instances, scoped),
   });
   const refined = new Map(materialize([], result).map((b) => [b.id, b]));
   if (ids.size !== refined.size) throw new Error("Export geometry lost a decorated body");

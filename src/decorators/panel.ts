@@ -11,10 +11,13 @@ import { DecoratorSettingsDraft } from "./settings-draft.js";
 import { threadDefinition, threadFields } from "./thread-settings.js";
 import type { DecoratorEdit, DecoratorInstance, FaceReference, Settings } from "./types.js";
 import "./panel.css";
+import { gearFaces } from "./gear-faces.js";
+import { gearDefinition } from "./gear-settings.js";
 
 export class DecoratorPanel {
   private root = document.createElement("section");
   private unregister: () => void;
+  private unregisterGear: () => void;
   private disposeLibrary: () => void;
   private key = "";
   private shownDocument: SketchEditor["store"]["data"] | null = null;
@@ -40,6 +43,26 @@ export class DecoratorPanel {
       description: "Editable threads on cylindrical faces; generated at mesh export",
       reason: () => idleReason(editor) ?? this.eligibility(),
       run: () => this.apply(),
+    });
+    this.unregisterGear = toolCatalog(editor).register({
+      id: "gear",
+      label: "Gear",
+      category: "Solid",
+      aliases: ["involute", "helical", "teeth"],
+      description: "Involute teeth around selected pitch surfaces; generated at mesh export",
+      reason: () => {
+        const reason = idleReason(editor);
+        if (reason) return reason;
+        if (editor.world.active || this.selected().length !== editor.modeling.targets.length)
+          return "Select pitch faces in Modeling";
+        try {
+          gearFaces(editor.store.data, this.selected());
+          return null;
+        } catch (error) {
+          return error instanceof Error ? error.message : String(error);
+        }
+      },
+      run: () => this.apply(gearDefinition),
     });
     editor.world.changed.add(this.update);
     this.update();
@@ -73,9 +96,9 @@ export class DecoratorPanel {
     );
     if (instances.length === 1) this.last = instances[0].id;
   }
-  private async apply(): Promise<void> {
+  private async apply(definition = threadDefinition): Promise<void> {
     const faces = this.selected();
-    if (await this.edit({ action: "apply", definition: threadDefinition, faces })) {
+    if (await this.edit({ action: "apply", definition, faces })) {
       this.expand();
       this.editor.refresh();
     }
@@ -252,6 +275,7 @@ export class DecoratorPanel {
     this.disposeLibrary();
     this.draft.cancel();
     this.unregister();
+    this.unregisterGear();
     this.editor.world.changed.delete(this.update);
     this.root.remove();
   }

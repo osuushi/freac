@@ -61,6 +61,7 @@ export function appendDecoratorRepairs(
           version: instance.version,
           faces: selected(),
           instanceId: instance.id,
+          reassign: true,
         })
         .then((result) => {
           if (!reassign.isConnected) return;

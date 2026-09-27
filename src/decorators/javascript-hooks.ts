@@ -2,6 +2,8 @@ import type { QuickJSWASMModule } from "quickjs-emscripten-core";
 import { type ExportMesh, triangleNormal, validateMesh } from "../model/export-mesh.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { type DecoratorDefinition, definitionSettings } from "./definition.js";
+import { gearDefinition, gearManifest } from "./gear-settings.js";
+import { gearDiagnostics, gearPlacement, partitionGears } from "./gear-support.js";
 import { runDecoratorHook } from "./javascript-runtime.js";
 import { type PreviewFeedback, previewState } from "./preview-feedback.js";
 import type { DecoratorInstance, FaceReference, MeshModification } from "./types.js";
@@ -48,6 +50,7 @@ export class JavaScriptDecorators {
     private enabled: readonly EnabledDefinition[] = [],
   ) {}
   definition(document: SketchDocument, id: string, version: number): DecoratorDefinition {
+    if (id === gearDefinition && version === 1) return gearManifest;
     const definition = document.decoratorDefinitions?.find(
       (d) => d.id === id && d.version === version,
     );
@@ -68,6 +71,11 @@ export class JavaScriptDecorators {
     milliseconds?: number,
   ) {
     const definition = this.definition(document, instance.definition, instance.version);
+    if (instance.definition === gearDefinition) {
+      if (hook === "partition") return { groups: partitionGears(document, instance) };
+      if (hook === "validate") return gearDiagnostics(document, instance);
+      throw new Error(`Unsupported gear hook: ${hook}`);
+    }
     return runDecoratorHook(
       this.runtime,
       definition.source,
@@ -103,6 +111,10 @@ export class JavaScriptDecorators {
     if (remaining.size) throw new Error("Decorator partition omitted selected faces");
     return result.groups.map((group) => ({
       faces: group.faces.map(({ body, face }) => ({ body, face })),
+      ...(instance.definition === gearDefinition &&
+      !document.decorators?.some((d) => d.id === instance.id)
+        ? gearPlacement(document, group.faces)
+        : {}),
       ...(group.state === undefined ? {} : { state: group.state }),
     }));
   }

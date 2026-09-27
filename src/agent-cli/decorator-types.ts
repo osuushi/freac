@@ -51,10 +51,12 @@ export type DecoratorDefinitionEdit =
   | { action: "remove"; id: string; version: number };
 export interface DecoratorInspectionRequest {
   definition: string; version: number; faces: DecoratorFace[];
-  instanceId?: string; settings?: DecoratorSettings;
+  instanceId?: string; settings?: DecoratorSettings; normalModule?: number; reassign?: boolean;
 }
 export interface DecoratorInspection {
   reason: string | null;
+  requiredPitchRadius?: number;
+  gearDimensions?: { pitchRadius: number; normalModule: number; transverseModule: number; transversePressure: number; baseRadius: number; tipRadius: number; rootRadius: number; halfWidth: number; lead: number | null; frame: Plane; support: { origin: Vector; axis: Vector; radius: number; outward: 1 | -1 }; referenceAxial?: number; pitchConeAngle?: number; baseConeAngle?: number }[];
   groups: { faces: DecoratorFace[]; state?: unknown }[];
   diagnostics: { severity: "warning" | "error"; message: string; faces?: DecoratorFace[]; edges?: DecoratorEdge[] }[];
 }

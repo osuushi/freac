@@ -2,6 +2,8 @@ import { newId, type SketchDocument } from "../sketch/document.js";
 import { planes } from "../sketch/planes.js";
 import { definitionSettings } from "./definition.js";
 import { editDecorators, faceKey, validateDecorators } from "./edits.js";
+import { gearDefinition } from "./gear-settings.js";
+import { gearPlacement } from "./gear-support.js";
 import type { JavaScriptDecorators } from "./javascript-hooks.js";
 import { threadDefinition } from "./thread-settings.js";
 import type { DecoratorEdit, DecoratorInstance } from "./types.js";
@@ -25,6 +27,7 @@ export function editJavaScriptDecorators(
   if (edit.action === "apply") {
     const version =
       edit.version ??
+      (edit.definition === gearDefinition ? 1 : undefined) ??
       Math.max(
         ...(document.decoratorDefinitions ?? [])
           .filter((d) => d.id === edit.definition)
@@ -83,7 +86,14 @@ export function editJavaScriptDecorators(
             ...original.faces,
             ...edit.faces.filter((f) => !original.faces.some((old) => faceKey(old) === faceKey(f))),
           ];
-    const candidate = { ...original, faces, problem: undefined };
+    const candidate = {
+      ...original,
+      faces,
+      problem: undefined,
+      ...(edit.action === "reassign" && original.definition === gearDefinition
+        ? { ...gearPlacement(document, faces), state: undefined }
+        : {}),
+    };
     const groups = hooks.partition(document, candidate);
     if (groups.length !== 1) throw new Error("These faces cannot continue one decorator");
     next = previous.map((d) => (d.id === original.id ? { ...candidate, ...groups[0] } : d));

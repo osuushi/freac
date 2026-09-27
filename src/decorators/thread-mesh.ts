@@ -10,6 +10,7 @@ import {
   dot,
   subtract,
 } from "./cylinder.js";
+import { surfaceShell } from "./surface-shell.js";
 import { threadGrid } from "./thread-grid.js";
 import { type ThreadPreviewResolution, threadSampling } from "./thread-sampling.js";
 import { type ThreadSettings, threadDepth } from "./thread-settings.js";
@@ -55,39 +56,25 @@ export function threadRadius(
 }
 
 /** Close the two radial skins using only boundary edges of the shared parameter mesh. */
-function radialShell(
+export function radialShell(
   frame: PlaneFrame,
   coordinates: { angle: number; z: number }[],
   triangles: number[][],
   inner: (a: number, z: number) => number,
   outer: (a: number, z: number) => number,
 ): ExportMesh {
-  const count = coordinates.length;
-  const vertices = [inner, outer].flatMap((radius) =>
-    coordinates.map(({ angle, z }) => cylinderPoint(frame, angle, z, radius(angle, z))),
-  );
-  const result: number[][] = [];
-  const edges = new Map<string, { a: number; b: number; count: number }>();
-  for (const [a, b, c] of triangles) {
-    result.push([c, b, a], [a + count, b + count, c + count]);
-    for (const [x, y] of [
-      [a, b],
-      [b, c],
-      [c, a],
-    ]) {
-      const key = x < y ? `${x}/${y}` : `${y}/${x}`;
-      const edge = edges.get(key);
-      if (edge) edge.count++;
-      else edges.set(key, { a: x, b: y, count: 1 });
-    }
-  }
-  for (const { a, b, count: occurrences } of edges.values())
-    if (occurrences === 1) result.push([a, b, b + count], [a, b + count, a + count]);
-  return { vertices, triangles: result };
+  const points = (radius: (a: number, z: number) => number) =>
+    coordinates.map(({ angle, z }) => cylinderPoint(frame, angle, z, radius(angle, z)));
+  return surfaceShell(points(inner), points(outer), triangles);
 }
 
 /** Radial sweep of the selected tessellated face domains, preserving holes and gaps. */
-function faceMask(frame: PlaneFrame, faces: readonly Face[], low: number, high: number) {
+export function faceMask(
+  frame: PlaneFrame,
+  faces: readonly Face[],
+  low: number | ((z: number) => number),
+  high: number | ((z: number) => number),
+) {
   const coords: { angle: number; z: number }[] = [],
     points: Vector[] = [],
     triangles: number[][] = [];
@@ -116,12 +103,12 @@ function faceMask(frame: PlaneFrame, faces: readonly Face[], low: number, high: 
     frame,
     coords,
     triangles,
-    () => low,
-    () => high,
+    (_, z) => (typeof low === "number" ? low : low(z)),
+    (_, z) => (typeof high === "number" ? high : high(z)),
   );
 }
 
-function cylinderGrid(segments: number, steps: number, bounds: [number, number]) {
+export function cylinderGrid(segments: number, steps: number, bounds: [number, number]) {
   const coords: { angle: number; z: number }[] = [],
     triangles: number[][] = [];
   for (let row = 0; row <= steps; row++)

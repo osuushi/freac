@@ -52,6 +52,9 @@ export function placedBodies(bodies: readonly Body[], edit: BodyTransform): Body
             axis: direction(face.cylinder.axis),
           }
         : null,
+      cone: face.cone
+        ? { ...face.cone, apex: point(face.cone.apex), axis: direction(face.cone.axis) }
+        : null,
     }));
     const box = new THREE.Box3().setFromPoints(
       faces.flatMap((f) =>

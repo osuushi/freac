@@ -18,8 +18,10 @@ from different decorated faces may overlap with undefined behavior.
 Attach editable settings to selected geometry without replacing that geometry.
 At export, generate mesh modifications using the accepted geometry
 as read-only input. Threads are the first built-in decorator. JavaScript authors
-must be able to implement the same hooks. Gears, gear relationships, approximate
-cylinder recognition, shader previews and print-color assignment are later work.
+must be able to implement the same hooks. The built-in [gear decorator](gears.md)
+adds pitch-cylinder, pitch-cone and rack tools using the same owner and mesh pipeline. Gear relationships,
+approximate cylinder recognition, shader previews and print-color assignment remain
+later work.
 
 Apply to multiple cylindrical faces, internal or external. Reject incompatible
 mixed selections with a reason rather than silently dropping targets. Partition
