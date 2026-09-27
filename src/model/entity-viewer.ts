@@ -1,5 +1,5 @@
 import type { SketchEditor } from "../sketch/editor.js";
-import { type ModelingTarget, modelingSketch } from "../sketch/model-selection.js";
+import { type ModelingTarget, modelingKey, modelingSketch } from "../sketch/model-selection.js";
 import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
 import { EntityReorder } from "./entity-reorder.js";
@@ -9,6 +9,8 @@ export class EntityViewer {
   private root = document.createElement("aside");
   private key = "";
   private refreshRows: (() => void)[] = [];
+  private selectionRows: ModelingTarget[] = [];
+  private selectionAnchor: string | null = null;
   constructor(
     private editor: SketchEditor,
     app: HTMLElement,
@@ -23,10 +25,20 @@ export class EntityViewer {
     if (this.editor.blocked) return;
     const interaction = this.editor.interactions.current;
     if (interaction && !(await interaction.finish?.())) return;
-    if (target.kind === "body" && !this.editor.store.data.bodies?.some((b) => b.id === target.body))
-      return;
+    const index = this.selectionRows.findIndex((row) => modelingKey(row) === modelingKey(target));
+    if (index < 0) return;
+    const anchor = this.selectionRows.findIndex((row) => modelingKey(row) === this.selectionAnchor);
+    const toggle = event.metaKey || event.ctrlKey;
     this.editor.world.exit();
-    this.editor.modeling.choose(target, event.shiftKey, event.metaKey || event.ctrlKey);
+    if (event.shiftKey && !toggle && anchor >= 0) {
+      this.editor.modeling.targets = this.selectionRows.slice(
+        Math.min(anchor, index),
+        Math.max(anchor, index) + 1,
+      );
+    } else {
+      this.editor.modeling.choose(target, false, toggle);
+      this.selectionAnchor = modelingKey(target);
+    }
     this.editor.modeling.alternatives = [];
     this.editor.refresh();
   }
@@ -48,6 +60,7 @@ export class EntityViewer {
     this.editor.refresh();
   }
   private row(id: string, name: string, target: ModelingTarget): HTMLElement {
+    this.selectionRows.push(target);
     const row = document.createElement("div");
     row.className = "entity-row";
     const select = document.createElement("button"),
@@ -135,6 +148,7 @@ export class EntityViewer {
     this.key = key;
     this.root.replaceChildren();
     this.refreshRows = [];
+    this.selectionRows = [];
     const title = document.createElement("h2");
     title.textContent = "Entities";
     this.root.append(title);
@@ -161,6 +175,8 @@ export class EntityViewer {
       this.root.append(heading, ...rows);
     }
     for (const refresh of this.refreshRows) refresh();
+    if (!this.selectionRows.some((row) => modelingKey(row) === this.selectionAnchor))
+      this.selectionAnchor = null;
     this.root.append(this.referenceRows);
   };
   dispose(): void {

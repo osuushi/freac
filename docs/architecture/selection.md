@@ -106,7 +106,7 @@ founder feedback update these contracts before further tools depend on them.
   rectangle also has a center handle/interior group target for moving the whole
   rectangle. Double-click connected linework selects its connected component.
 - Shift adds without removing or reordering existing targets; Command/Ctrl toggles
-  (also when Shift is held). This applies to sketch/model canvas picks, Entities,
+  (also when Shift is held). This applies to sketch/model canvas picks,
   overlap choices and the point chooser. Modified double-clicks retain these
   selection rules rather than entering a sketch or selecting a connected component.
   Body face/edge double-clicks promote to whole-body selection: Shift adds and
@@ -117,6 +117,12 @@ founder feedback update these contracts before further tools depend on them.
   Dragging a selection box from empty space
   selects contained geometry. A local overlap chooser resolves coincident targets;
   hover and activation use the same hit result. Picking is not “last array item.”
+- In Entities, Shift-click selects the inclusive body/sketch row range in displayed
+  order, including hidden rows, replacing the previous selection. Plain and
+  Command/Ctrl-clicks establish the anchor; repeated Shift-clicks retain it so the
+  range can grow or shrink. Command/Ctrl takes precedence over Shift and toggles
+  only the clicked entity. A missing anchor falls back to selecting the clicked
+  entity. Saved construction planes retain their separate single-reference selection.
 - Point handles, curves, groups and regions are distinct target types. Picking a
   filled region must not silently move whole curves that extend beyond its boundary.
   Geometry transforms operate on selected entities/groups; region selection is
