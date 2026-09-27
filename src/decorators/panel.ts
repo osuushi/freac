@@ -230,7 +230,7 @@ export class DecoratorPanel {
           const hint = document.createElement("p");
           hint.className = "thread-clearance-hint";
           hint.textContent =
-            "Moves hole threads outward, away from the rod. Try 0.05 mm for vertical prints; 0 mm may suit horizontal holes.";
+            "Moves hole threads outward, away from the rod. FDM fine starts at 0.25 mm; adjust for your printer and orientation.";
           this.root.append(hint);
         }
       }

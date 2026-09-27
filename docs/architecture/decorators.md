@@ -113,10 +113,12 @@ The opposite tips retain the original sharp profile. Relative to the unmodified
 triangle, tip truncation removes material from both parts and increases their
 local gap; it does not replace the separate radial hole clearance. Neither
 preset changes the modeled diameter or depends on layer/nozzle
-dimensions. Both begin with 0.05 mm hole-side radial relief; changing the preset
-explicitly restores that value and the 0.1 mm truncation. The simple panel shows
-preset, handedness, Cut into and a Clearance field for this relief. Its hint
-suggests 0.05 mm for vertical prints and 0 mm as an option for horizontal holes.
+dimensions. FDM fine begins with 0.25 mm hole-side radial relief, based on the
+founder's fit test; FDM coarse remains at 0.05 mm pending its print test. Choosing
+a preset explicitly restores its default clearance and the 0.1 mm truncation.
+Saved explicit clearance values remain unchanged. The simple panel shows preset,
+handedness, Cut into and a Clearance field for this relief. Its hint asks users
+to adjust clearance for their printer and orientation.
 Pitch, profile, tip truncation, the older printer heuristic inputs, insets and
 tapers are in collapsed Advanced controls. Changing an FDM preset's pitch,
 profile or tip truncation marks it Custom; clearance, handedness, cut and

@@ -9,12 +9,12 @@ export async function decoratorPresetRoute(page, name) {
   const nozzle = page.getByRole("spinbutton", { name: "Nozzle diameter", exact: true });
   const advanced = page.locator("details.thread-advanced");
   assert.equal(await preset.inputValue(), "fdm-fine");
-  assert.equal(await clearance.inputValue(), "0.05");
+  assert.equal(await clearance.inputValue(), "0.25");
   assert.equal(await pitch.isVisible(), false);
   assert.equal(await advanced.evaluate((element) => element.open), false);
   assert.match(
     await page.getByRole("region", { name: "Decorators", exact: true }).innerText(),
-    /0\.05 mm for vertical prints.*0 mm may suit horizontal holes/,
+    /FDM fine starts at 0\.25 mm.*adjust for your printer and orientation/,
   );
   await page.screenshot({ path: `.cache/sketch-review/${name}-fdm-fine-controls.png` });
   await preset.selectOption("fdm-coarse");
@@ -29,7 +29,7 @@ export async function decoratorPresetRoute(page, name) {
   await preset.selectOption("fdm-fine");
   settings = (await inspect(page)).document.decorators[0].settings;
   assert.equal(settings.pitch, 1);
-  assert.equal(settings.clearance, 0.05);
+  assert.equal(settings.clearance, 0.25);
   assert.equal(settings.tipTruncation, 0.1);
   await advanced.locator("summary").click();
   const tip = page.getByRole("spinbutton", { name: "Tip truncation", exact: true });

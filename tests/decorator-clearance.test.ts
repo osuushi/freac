@@ -77,7 +77,7 @@ test("FDM clearance removes hole material without enlarging the rod", async () =
           edit: {
             action: "settings",
             ids,
-            patch: { clearance: 0.05, tipTruncation: 0 },
+            patch: { clearance: 0.25, tipTruncation: 0 },
           },
         })
       ).error,

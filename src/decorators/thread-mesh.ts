@@ -150,7 +150,9 @@ function threadToolMeshes(
 ) {
   const { radius, outward } = cylinder;
   const depth = threadDepth(settings);
-  const overlap = Math.min(2 * tolerance, low / 2);
+  // Two tolerances can leave overlapping exit facets after the Boolean; four
+  // keeps auxiliary reference skins clear of the target at thread runout.
+  const overlap = Math.min(4 * tolerance, low / 2);
   const relief = outward < 0 ? settings.clearance : 0;
   const minimum = radius + (settings.cut === "rod" ? -depth : 0) + relief;
   const maximum = radius + (settings.cut === "hole" ? depth : 0) + relief;
