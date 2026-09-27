@@ -74,7 +74,16 @@ export class AgentConnection {
       if (request?.capability !== this.capability) throw new Error("Invalid Freac connection.");
       if (
         typeof request.command !== "string" ||
-        !["status", "selection", "inspect", "render", "select", "script"].includes(request.command)
+        ![
+          "status",
+          "selection",
+          "inspect",
+          "render",
+          "select",
+          "faces",
+          "context",
+          "script",
+        ].includes(request.command)
       )
         throw new Error("Unknown Freac command; run freac help.");
       if (

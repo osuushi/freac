@@ -2,7 +2,7 @@ import type { MeasurementTarget } from "../model/measurement.js";
 import type { PlaneFrame, Vector } from "../sketch/planes.js";
 import type { SelectionTarget } from "../sketch/selected-targets.js";
 
-export type InspectionCommand = "selection" | "inspect" | "render" | "select";
+export type InspectionCommand = "selection" | "inspect" | "render" | "select" | "faces" | "context";
 export type InspectionTarget =
   | { kind: "plane"; plane: string }
   | MeasurementTarget

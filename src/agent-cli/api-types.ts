@@ -1,12 +1,14 @@
 import { scriptTypes } from "./script-types.js";
+import { viewTypes } from "./view-types.js";
+
 /** Standalone declarations distributed with the CLI; no application-private imports. */
-export const types = `/** CLI results and the typed freac scripting API. */
+const declarations = `/** CLI results and the typed freac scripting API. */
 export type Vector = [number, number, number];
 export interface Plane { origin: Vector; u: Vector; v: Vector }
 export interface FreacStatus {
   application: "Freac";
   document: { name: string; saved: boolean; edited: boolean; units: "mm" };
-  capabilities: readonly ("help" | "docs" | "types" | "status" | "selection" | "select" | "inspect" | "render" | "run")[];
+  capabilities: readonly ("help" | "docs" | "types" | "status" | "selection" | "select" | "inspect" | "render" | "run" | "view" | "faces" | "context")[];
 }
 export type Target =
   | { kind: "plane"; plane: string }
@@ -69,4 +71,13 @@ export interface FreacOverview {
 export interface FreacRender extends ViewContext {
   units: "mm"; path: string; width: number; height: number; note: string;
 }
+${viewTypes}
 ${scriptTypes}`;
+
+export function typesFor(mode: "modeling" | "view"): string {
+  return (
+    declarations +
+    `\ndeclare global { const freac: ${mode === "view" ? "FreacView" : "FreacScript"}; }\n`
+  );
+}
+export const types = typesFor("modeling");

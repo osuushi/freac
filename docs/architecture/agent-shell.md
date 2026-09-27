@@ -502,3 +502,36 @@ request. Modeling accepts face, edge, body and sketch IDs; sketch mode accepts
 curve/group IDs from its active sketch. Invalid or incompatible targets reject the
 entire request. Workspace changes remain explicit; point, profile and plane targets
 are not yet writable through this CLI command.
+
+## Direct actions and typed face queries
+
+Startup guidance front-loads common commands, a face filter/selection example and
+basic modeling semantics. Known actions execute directly; help/docs/types resolve
+specific missing information, rather than forming a mandatory startup ritual.
+Fresh workspace AGENTS.md contains this operating guide. The same current guide is
+injected at launch, so resumed sessions receive updated capability/workflow guidance
+without overwriting saved user files. Detailed modeling/decorator references remain
+in `freac docs`; examples of historical mistakes do not become universal startup rules.
+
+`freac faces` returns all accepted faces with stable face/body IDs, edge IDs,
+body visibility and discriminated plane/cylinder/other support metadata. Cylinders
+include radius, origin, oriented axis and outward sign. Support metadata does not
+establish trimmed face extents; `other` is unclassified, not a specific surface class.
+Hidden bodies remain queryable. `freac context` reads view/selection without measurements.
+
+`freac view script.ts` typechecks a single file with `FreacView`: `faces()`, `context()`
+and `select(ids, mode?)`, where mode is replace/add/remove. It runs in a separate
+CLI child with the caller's permissions, using the ordinary inspection/selection
+transport and renderer validation. No geometry transaction is acquired. Calls are
+sequential, bounded to 100 and a 60-second execution limit. Empty replacement clears
+selection; empty add/remove does nothing. Invalid/busy/incompatible selection rejects
+atomically. Successful selection changes apply immediately and retain ordinary
+selection history; a later script failure does not undo earlier selection changes.
+Modeling methods are unavailable in this mode. `freac run` retains its existing
+per-script geometry transaction. Queries read current accepted geometry at each call;
+view programs do not promise a frozen snapshot across calls.
+
+Behavioral agent evaluations run ad hoc, outside CI. Keep dated cases, model/effort,
+interface/prompt versions, outcomes, command counts and timing with limitations.
+Cases may evolve; historical results are evidence, not permanent acceptance priorities.
+Deterministic API, host-boundary and interaction checks remain in the ordinary tests.

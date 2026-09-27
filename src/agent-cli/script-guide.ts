@@ -40,12 +40,8 @@ Use returned topology IDs after each edit; consumed edges and openings may disap
 Top-level await works. Relative imports and additional source files are not supported
 in this first increment. Use console.error for diagnostic text; stdout is CLI JSON.
 
-Await every modeling call. Selection is captured once at script start and is available
-as freac.selection. Preserve the intended selection scope, including mixed targets;
-do not silently filter unsupported targets or expand them to their owners. If that
-scope seems incompatible, inspect the established target and conversation first;
-clarify only unresolved ambiguity. An empty freac.selection does not prevent a
-follow-up edit using verified explicit IDs from the established task.
+Await every modeling call. Selection is captured once at script start as freac.selection. Resolve intended targets
+using the request, conversation and relevant current geometry, preserving their scope.
 Whole-sketch selection geometry and freac inspect (overview or sketch ID) include
 profiles containing {sketch, profile} source fields plus area (mm²) and outer/hole
 boundary spans referencing existing curve IDs. Span parameters are radians for
@@ -147,9 +143,7 @@ helix. The axis must lie in the section plane. A triangular section overlapping 
 shaft can use mode "subtract" and explicit target body IDs to cut a continuous
 helical groove, or "union" to add a ridge. Choose the section, pitch, extent and
 handedness from the user's request; this is not an automatic standard-thread tool.
-Do not substitute disconnected rings for a helix or claim a manual tool can be
-enabled without evidence. A missing script method is an interface limitation,
-not proof that Freac lacks the corresponding manual CAD operation.
+A missing script method is an interface limitation, not evidence about manual tool availability.
 
 createSketch supports ordinary segments, circles, arcs and cubic Beziers. It creates
 an independent sketch with no inferred constraints. Sketches and solids can then be

@@ -3,23 +3,12 @@ import { delimiter, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { InspectionCommand } from "../agent/inspection-protocol.js";
 import { guide, types } from "../agent-cli/guide.js";
+import { startupGuide } from "../agent-cli/startup-guide.js";
 import type { ScriptRequest } from "../agent-script/api.js";
 import type { DocumentStatus } from "../model/document-host.js";
 import { AgentConnection } from "./agent-connection.js";
 
-export const launchGuidance =
-  "You are running inside Freac for one CAD drawing. " +
-  "Run freac help, freac docs and freac status to discover the current interface and drawing. " +
-  "Use plain freac commands; the launcher is already on PATH. Only if freac is not found, invoke the quoted absolute path in FREAC_CLI. Help/docs/types/status can run in parallel with inspection. Concurrent selection/inspect/render requests wait their turn on the shared measurement worker. Await modeling operations sequentially. " +
-  "FREAC_WORKSPACE is the current portable files directory. Write scripts and notes there, using relative paths from that directory. Old absolute workspace paths in resumed conversations are stale; its parent is application state, not the workspace. " +
-  "The installed freac docs and help supersede older capability statements in workspace notes or conversation history. " +
-  "freac.revolve supports continuous helical sweeps using a signed angle and total axial height, including Boolean cuts/unions. Do not infer missing manual tools from an older script API or invent an enable-tool step. " +
-  "When the user says 'this', 'these', or similar, normally interpret it as the specific current selection. Run freac selection first: selected sketch parts (points, curves, regions), sketches, faces, edges, bodies, or any combination are the intended scope unless the user explicitly says otherwise. Preserve that scope; do not silently expand a face or edge to its entire body, sketch parts to a whole sketch, or discard members of a mixed selection. " +
-  "Selection is a reference aid, not a prerequisite for editing. For follow-ups and corrections, use the target established by the conversation, previous inspection and your own script/results; an empty live selection does not erase that context. Re-inspect current geometry to verify IDs and relevant boundaries. A request to extend or fix your previous result can explicitly change its earlier scope. " +
-  "Before asking for clarification, inspect the established target and your previous work. Proceed when context and geometry identify the intended edit. Ask a specific question only if materially different interpretations remain; do not demand reselection solely because live selection is empty or a body has multiple faces/sections. For a fresh selected-face request, use the face's bounded extent rather than assuming whole-body dimensions. " +
-  "Use freac select ID... to replace selection, --add/--remove before IDs to modify it, --clear to clear it, or --surface cylinder to select all cylindrical faces. Read freac docs for scope and selection limits. " +
-  "Use freac inspect for geometry and freac render for a viewport PNG. Use freac run script.ts for typed modeling; read freac docs and types first. Each successful script is one Undo step. " +
-  "Never discover or use another launch's connection. Keep project guidance in AGENTS.md.";
+export const launchGuidance = `You are running inside Freac for one CAD drawing.\n${startupGuide}`;
 
 export async function prepareOrientation(
   cwd: string,
@@ -52,11 +41,14 @@ export async function prepareOrientation(
         "inspect",
         "render",
         "run",
+        "view",
+        "faces",
+        "context",
       ],
     };
   });
   try {
-    await writeFile(join(cwd, "AGENTS.md"), guide, { flag: "wx", mode: 0o600 }).catch(
+    await writeFile(join(cwd, "AGENTS.md"), startupGuide, { flag: "wx", mode: 0o600 }).catch(
       (error: NodeJS.ErrnoException) => {
         if (error.code !== "EEXIST") throw error;
       },

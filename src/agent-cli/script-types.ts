@@ -62,5 +62,4 @@ export interface FreacScript extends DecoratorScriptApi {
     ids: string[]; translation: Vector; pivot: Vector; axis: Vector; angle: number; duplicate: boolean;
   }): Promise<SolidResult>;
 }
-declare global { const freac: FreacScript; }
 `;

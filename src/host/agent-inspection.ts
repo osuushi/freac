@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { BrowserWindow } from "electron";
+import { queryFaces } from "../agent/face-query.js";
 import {
   findInspectionTarget,
   inspectionOverview,
@@ -34,7 +35,8 @@ export async function inspectDrawing(
   const view = await readView(command === "render", command === "select" ? entity : undefined);
   check();
   const { image, ...context } = view;
-  if (command === "select") return { units: "mm", context };
+  if (command === "faces") return { units: "mm", faces: queryFaces(document, view) };
+  if (command === "context" || command === "select") return { units: "mm", context };
   if (command === "render") {
     if (!image?.data.startsWith("data:image/png;base64,") || image.data.length > 24 * 1024 * 1024)
       throw new Error("Invalid viewport image.");
