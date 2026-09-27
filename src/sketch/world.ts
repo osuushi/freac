@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { fitCameraDepth } from "./camera-depth.js";
 import {
   alignCameraToPlane,
   applyCameraPose,
@@ -6,7 +7,7 @@ import {
   type CameraPose,
   planeCameraPose,
 } from "./camera-motion.js";
-import { Arcball, levelOrientation } from "./camera-orbit.js";
+import { Arcball, levelOrientation, type OrbitPointer } from "./camera-orbit.js";
 import { minimumPlaneBounds, type PlaneBounds } from "./plane-bounds.js";
 import {
   type PlaneFrame,
@@ -27,6 +28,7 @@ export class World {
   readonly renderer = new THREE.WebGLRenderer({ antialias: true, stencil: true });
   readonly canvas = this.renderer.domElement;
   readonly target = new THREE.Vector3();
+  depthBounds = (): THREE.Box3 => new THREE.Box3();
   readonly changed = new Set<() => void>();
   readonly renderOverlays = new Set<() => void>();
   readonly renderForegroundOverlays = new Set<() => void>();
@@ -57,6 +59,17 @@ export class World {
   private readonly foreground = new SketchForeground();
   private readonly sketchClip = new THREE.Plane();
   readonly orbit = new Arcball();
+  orbitPivot: (press: Point) => THREE.Vector3 = () => this.target.clone();
+  private rotationPivot = new THREE.Vector3();
+  get currentOrbitPivot(): THREE.Vector3 {
+    return this.rotationPivot.clone();
+  }
+  beginOrbit(pointer: OrbitPointer, press: Point): void {
+    this.cancelCameraMotion();
+    this.rotationPivot.copy(this.orbitPivot(press));
+    if (this.active) this.exit();
+    this.orbit.begin(this, pointer, this.rotationPivot);
+  }
   get cameraTransitioning(): boolean {
     return this.cameraAnimation !== null;
   }
@@ -91,6 +104,7 @@ export class World {
     this.camera.right = (half * width) / height;
     this.camera.top = half;
     this.camera.bottom = -half;
+    fitCameraDepth(this.camera, this.target, this.height, this.depthBounds());
     this.camera.lookAt(this.target);
     this.camera.updateProjectionMatrix();
     this.camera.updateMatrixWorld();
@@ -134,7 +148,9 @@ export class World {
     return this.renderer.clippingPlanes.every((plane) => plane.distanceToPoint(point) >= 0);
   }
   requestDraw(): void {
-    // Subsequent input events need the latest basis even before the next paint.
+    // Subsequent input events need the latest basis and picking depth before the next paint.
+    fitCameraDepth(this.camera, this.target, this.height, this.depthBounds());
+    this.camera.updateProjectionMatrix();
     this.camera.lookAt(this.target);
     this.camera.updateMatrixWorld();
     if (this.pendingDraw !== null) return;

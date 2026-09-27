@@ -31,7 +31,7 @@ import { planeEntryTools } from "./plane-entry-tools.js";
 import { installViewInspection } from "./view-inspection.js";
 import "../model/entity-viewer.css";
 import { BodyEdgeControls } from "../model/body-edge-controls.js";
-import { bodyView } from "../model/body-view.js";
+import { bodyView, pickFace } from "../model/body-view.js";
 import { visibilityControls } from "../model/visibility-controls.js";
 import "./style.css";
 import "./modeling.css";
@@ -88,9 +88,19 @@ const disposeCalculation = calculationControls(editor, app);
 const disposeLabels = worldLabels(
     world,
     overlay,
-    (point, depth) =>
-      (!world.planePicker && pickModels(editor, point).length > 0) ||
-      !!pickSavedPlane(editor, point, depth),
+    (point, depth) => {
+      const hit = world.planePicker ? pickFace(editor, point) : undefined;
+      const face =
+        hit &&
+        editor.display.bodies
+          ?.find((body) => body.id === hit.body)
+          ?.faces.find((face) => face.id === hit.face);
+      return (
+        (!world.planePicker && pickModels(editor, point).length > 0) ||
+        (!!face?.plane && !!hit && hit.depth <= depth + 1e-5) ||
+        !!pickSavedPlane(editor, point, depth)
+      );
+    },
     () => {
       editor.modeling.hover = null;
       editor.refresh();
