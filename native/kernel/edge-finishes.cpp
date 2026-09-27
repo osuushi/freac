@@ -1,6 +1,8 @@
 #include "kernel.h"
 #include <BRepFilletAPI_MakeFillet.hxx>
 #include <BRepFilletAPI_MakeChamfer.hxx>
+#include <BRepCheck_Analyzer.hxx>
+#include <ShapeFix_Shape.hxx>
 #include <Standard_Failure.hxx>
 #include <TopTools_ListIteratorOfListOfShape.hxx>
 #include <TopoDS.hxx>
@@ -11,6 +13,18 @@
 #include <stdexcept>
 
 namespace {
+TopoDS_Shape repairEdgeFinish(const TopoDS_Shape& shape) {
+    if (shape.IsNull()) throw std::runtime_error("Kernel produced invalid geometry");
+    if (BRepCheck_Analyzer(shape).IsValid()) return shape;
+    // OCCT can build a fillet with an invalid contextual wire orientation.
+    // Repair the generated shape once and accept only a validated result.
+    ShapeFix_Shape repair(shape);
+    repair.Perform();
+    const auto fixed = repair.Shape();
+    validate(fixed);
+    return fixed;
+}
+
 template<class Operation>
 void finishBody(const Operand& body, const std::vector<TopoDS_Edge>& edges,
                 double size, std::vector<Result>& results) {
@@ -22,8 +36,7 @@ void finishBody(const Operand& body, const std::vector<TopoDS_Edge>& edges,
     try {
         operation.Build();
         if (!operation.IsDone()) throw std::runtime_error("Edge finish is not feasible at this size");
-        shape = operation.Shape();
-        validate(shape);
+        shape = repairEdgeFinish(operation.Shape());
     } catch (const Standard_Failure&) {
         throw std::runtime_error("Edge finish is not feasible at this size");
     } catch (const std::runtime_error&) {

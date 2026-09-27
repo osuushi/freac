@@ -89,6 +89,9 @@ A white capsule fill and near-black outline follow the
 [orientable widget guide](../design/orientable-widgets.md). Blue hover and red
 geometry-limit/rejection feedback supplement the contours. Legal-size clamping
 retains its valid preview and existing acceptance behavior.
+If OCCT builds an edge finish with invalid topology, the kernel makes one shape
+repair pass and validates the repaired solid before offering a preview. A repair
+that remains invalid still rejects the edit.
 
 Extrude and Offset share the outlined directional drawing and compact control card.
 Extrude uses a lifted circular profile; Offset uses separated curved contours. Their signed
