@@ -93,7 +93,12 @@ export function codexPermissionOverrides(): string[] {
 /** Trust only this Freac-owned workspace, using a launch-local Codex override. */
 export async function workspaceTrustOverride(workspace: string): Promise<string[]> {
   const path = await realpath(workspace);
-  return ["-c", `projects={${JSON.stringify(path)}={trust_level="trusted"}}`];
+  return [
+    "-c",
+    "project_root_markers=[]",
+    "-c",
+    `projects={${JSON.stringify(path)}={trust_level="trusted"}}`,
+  ];
 }
 
 /** Codex also discovers personal skills outside CODEX_HOME. Disable them per launch. */

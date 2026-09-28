@@ -8,6 +8,7 @@ import {
   codexPermissionOverrides,
   workspaceTrustOverride,
 } from "../.build/host/host/agent-settings.js";
+import { prepareAgentSkills } from "../.build/host/host/agent-skills.js";
 
 const codex = process.env.FREAC_CODEX_EXECUTABLE;
 assert(codex, "Set FREAC_CODEX_EXECUTABLE to the installed Codex CLI");
@@ -17,6 +18,17 @@ const workspace = join(root, "workspace"),
 const run = promisify(execFile);
 try {
   await mkdir(workspace);
+  await run("git", ["init", "--quiet", root]);
+  await mkdir(join(root, ".codex"));
+  await mkdir(join(workspace, ".codex"));
+  await writeFile(
+    join(root, ".codex", "config.toml"),
+    'developer_instructions="PARENT_CONFIG_MUST_STAY_OUT"\n',
+  );
+  await writeFile(
+    join(workspace, ".codex", "config.toml"),
+    'developer_instructions="FREAC_WORKSPACE_IS_TRUSTED"\n',
+  );
   await mkdir(home);
   await writeFile(
     join(home, "config.toml"),
@@ -29,6 +41,7 @@ approvals_reviewer="user"
 `,
   );
   await writeFile(join(home, "auth.json"), '{"OPENAI_API_KEY":"sk-test-not-a-real-key"}');
+  await prepareAgentSkills(home, process.cwd());
   const env = { ...process.env };
   for (const key of Object.keys(env))
     if (key.startsWith("CODEX_") || key.startsWith("OPENAI_")) delete env[key];
@@ -36,7 +49,10 @@ approvals_reviewer="user"
   const options = { cwd: workspace, env, timeout: 20000, maxBuffer: 4 * 1024 * 1024 };
   const args = [...codexPermissionOverrides(), ...(await workspaceTrustOverride(workspace))];
   const prompt = await run(codex, ["debug", "prompt-input", ...args], options);
+  assert.match(prompt.stdout, /FREAC_WORKSPACE_IS_TRUSTED/);
+  assert.doesNotMatch(prompt.stdout, /PARENT_CONFIG_MUST_STAY_OUT/);
   assert.match(prompt.stdout, /workspace-write/);
+  assert.match(prompt.stdout, /mesh-recovery/);
   assert.match(prompt.stdout, /auto_review|automatic approval|automatic review/i);
   await run(
     codex,

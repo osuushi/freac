@@ -22,7 +22,11 @@ Founder requested suppressing the directory-trust prompt on 2026-09-20. The Code
 preset passes a launch-local `projects` override marking only the canonical current
 Freac workspace trusted, using the documented
 [project trust setting](https://developers.openai.com/codex/config-reference/).
-Custom launches are unchanged. This does not change sandbox or approval settings.
+The preset also passes `project_root_markers=[]`, which confines project-config
+discovery to the launch directory. This prevents a Git repository above the
+workspace (including a home-directory dotfiles repository) from becoming its
+project boundary. Custom launches are unchanged. Sandbox and approval settings
+remain separate from this trust setting.
 
 The document carries notes, decisions, scripts and optional project skills.
 Freac supplies concise AGENTS.md guidance, API types and discoverable CLI help.
@@ -555,3 +559,24 @@ Deterministic API, host-boundary and interaction checks remain in the ordinary t
 [geometry and reconstruction contract](topology-editing.md) defines the current
 analytic replacement domain. These are lower-level inspection/support inputs,
 not a named taper command. They retain ordinary script atomicity and stable IDs.
+
+## Mesh references and recovery skill
+
+The Agent header's **Attach file…** control and file drop on the pane share one
+route. Each file is copied into `attachments/` in the drawing workspace, with
+numbered names for collisions. The resulting workspace-relative path is pasted
+at the terminal cursor so the agent can reference the portable copy. For a batch
+over 20 MiB, a confirmation explains that the files will enlarge the saved drawing.
+The combined 64 MiB workspace limit still applies. Attachments mark the drawing
+edited and travel with its portable save; attaching leaves geometry unchanged and
+never executes the file. They are workspace files, outside geometry Undo.
+The iPad transport retains its 32 MiB message cap, allowing files up to 23 MiB
+there after base64 encoding; larger attachments use the computer.
+
+Codex launches install the application's `mesh-recovery` skill into the
+document's machine-local Codex home. A 3MF path in an agent request can trigger
+that skill; the attachment control does not prescribe a file type or skill.
+The packaged skill and standard-library
+3MF inspector capture reconstruction and comparison lessons from the pump holder.
+They guide supported modeling operations, including reporting missing operations;
+they do not introduce a general native mesh importer or recover feature history.

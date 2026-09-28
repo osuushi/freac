@@ -96,6 +96,12 @@ an unfinished modeling operation; Undo restores the model after an accepted one.
 Changes to workspace files are outside geometry Undo.
 Run `freac help` in the terminal for the available commands.
 
+Drop files onto the Agent pane, or use **Attach file…** in its header. Freac copies
+them into the drawing's `attachments/` workspace folder and inserts each relative
+path at the terminal cursor. Attached files travel with the saved `.freac` document.
+A batch over 20 MiB triggers a size warning; the workspace has a 64 MiB total
+limit. For a 3MF reference, ask Codex to use `$mesh-recovery` with its path.
+
 Dock the terminal on the right or below the drawing, resize it, or collapse it
 without stopping the agent. **Stop** ends the process. Closing the drawing also
 stops it before the usual unsaved-work prompt.
