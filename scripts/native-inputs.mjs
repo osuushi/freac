@@ -58,10 +58,13 @@ export async function prepareHeaders() {
   ];
 }
 export function nativeFlags() {
+  // Match the runtime even when CMake or an existing cache selects Intel output.
+  // CMake spells Node's x64 architecture x86_64.
+  const architecture =
+    process.env.CMAKE_OSX_ARCHITECTURES ||
+    (process.platform === "darwin" ? (process.arch === "x64" ? "x86_64" : process.arch) : "");
   return [
-    ...(process.env.CMAKE_OSX_ARCHITECTURES
-      ? [`-DCMAKE_OSX_ARCHITECTURES=${process.env.CMAKE_OSX_ARCHITECTURES}`]
-      : []),
+    ...(architecture ? [`-DCMAKE_OSX_ARCHITECTURES=${architecture}`] : []),
     ...(process.env.MACOSX_DEPLOYMENT_TARGET
       ? [`-DCMAKE_OSX_DEPLOYMENT_TARGET=${process.env.MACOSX_DEPLOYMENT_TARGET}`]
       : []),

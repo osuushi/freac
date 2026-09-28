@@ -33,9 +33,13 @@ its source and build caches live in `.cache/solver` and `.build/solver`. Normal
 libraries plus FreAC's separate solid calculator. This initial source build takes
 longer; its cache is `.cache/kernel` and the calculator is `.build/kernel`.
 Alternatively, set `OCCT_ROOT` to an installed OCCT 7.9.3 SDK before running the
-command. The SDK must match the calculator architecture. If CMake selects Intel
-output on Apple Silicon, set `CMAKE_OSX_ARCHITECTURES=arm64` explicitly for
-both `setup:native` and `setup:kernel`.
+command. The SDK must match the calculator architecture. On macOS, both setup
+commands explicitly default to Node's architecture, replacing any stale CMake
+architecture selection. `CMAKE_OSX_ARCHITECTURES` remains an explicit override.
+On Apple Silicon, use an ARM64 Node installation; an Intel Node running under
+Rosetta defaults to Intel native builds. After correcting Node or an architecture
+override, rerun both `setup:native` and `setup:kernel`; ordinary incremental builds
+reuse their existing CMake configuration.
 The installed-SDK and clean source-build routes are verified on macOS arm64.
 Codex worktree setup shares downloaded solver/header inputs and keeps `.build`
 local. It uses the main checkout's installed OCCT SDK through `OCCT_ROOT` when
