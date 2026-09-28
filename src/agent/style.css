@@ -161,7 +161,27 @@
   max-height: calc(100% - 150px);
 }
 
-.agent-attachment {
-  margin-left: 8px;
-  overflow-wrap: anywhere;
+.agent-dock.agent-file-drop::after {
+  content: "Drop files to attach";
+  position: absolute;
+  inset: 4px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  border: 2px dashed #1769aa;
+  background: #eaf4ffed;
+  color: #1769aa;
+  font-weight: 600;
+  pointer-events: none;
+}
+.agent-attachment-warning {
+  max-width: min(420px, 90vw);
+  border: 1px solid #c7cfda;
+  border-radius: 8px;
+  padding: 18px;
+}
+.agent-attachment-warning div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
