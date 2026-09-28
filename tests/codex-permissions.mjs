@@ -17,6 +17,17 @@ const workspace = join(root, "workspace"),
 const run = promisify(execFile);
 try {
   await mkdir(workspace);
+  await run("git", ["init", "--quiet", root]);
+  await mkdir(join(root, ".codex"));
+  await mkdir(join(workspace, ".codex"));
+  await writeFile(
+    join(root, ".codex", "config.toml"),
+    'developer_instructions="PARENT_CONFIG_MUST_STAY_OUT"\n',
+  );
+  await writeFile(
+    join(workspace, ".codex", "config.toml"),
+    'developer_instructions="FREAC_WORKSPACE_IS_TRUSTED"\n',
+  );
   await mkdir(home);
   await writeFile(
     join(home, "config.toml"),
@@ -36,6 +47,8 @@ approvals_reviewer="user"
   const options = { cwd: workspace, env, timeout: 20000, maxBuffer: 4 * 1024 * 1024 };
   const args = [...codexPermissionOverrides(), ...(await workspaceTrustOverride(workspace))];
   const prompt = await run(codex, ["debug", "prompt-input", ...args], options);
+  assert.match(prompt.stdout, /FREAC_WORKSPACE_IS_TRUSTED/);
+  assert.doesNotMatch(prompt.stdout, /PARENT_CONFIG_MUST_STAY_OUT/);
   assert.match(prompt.stdout, /workspace-write/);
   assert.match(prompt.stdout, /auto_review|automatic approval|automatic review/i);
   await run(
