@@ -109,7 +109,8 @@ The temporary rotation circle, endpoint markers and diagnostic caption are hidde
 
 ### Control preference and trackpad navigation
 
-The header Control popover has exclusive Trackpad and Mouse choices, remembered
+The header control dropdown displays the current Trackpad or Mouse choice with a
+downward chevron. Its popover has exclusive Trackpad and Mouse choices, remembered
 locally with Trackpad as the default. Below a separator, Tablet invokes the existing
 desktop handoff; it is an action, never a stored control mode. Browser-only windows
 show that action disabled. These preferences do not enter the document or Undo.

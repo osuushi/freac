@@ -16,7 +16,8 @@ try {
       page.on("pageerror", (error) => errors.push(error.message));
       await page.goto(server.resolvedUrls.local[0]);
       await reset(page);
-      const control = page.getByRole("button", { name: "Control", exact: true });
+      const control = page.locator(".control-selector > button");
+      assert.equal(await control.innerText(), "Trackpad");
       const trackpad = page.getByRole("radio", { name: "Trackpad", exact: true });
       const mouse = page.getByRole("radio", { name: "Mouse", exact: true });
       await control.click();
@@ -24,6 +25,7 @@ try {
       await trackpad.focus();
       await page.keyboard.press("ArrowDown");
       assert.ok(await mouse.isChecked());
+      assert.equal(await control.innerText(), "Mouse");
       assert.equal(await trackpad.isChecked(), false);
       await page.keyboard.press("Escape");
       await page.reload();

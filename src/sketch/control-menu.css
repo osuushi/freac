@@ -1,6 +1,19 @@
 .control-selector {
   pointer-events: auto;
 }
+.control-selector > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.control-selector > button::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+}
 .control-menu {
   position: fixed;
   inset: auto;

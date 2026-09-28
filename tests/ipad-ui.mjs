@@ -19,7 +19,7 @@ const app = await launchElectron({
 try {
   const desktop = await app.firstWindow();
   await settled(desktop);
-  await desktop.getByRole("button", { name: "Control", exact: true }).click();
+  await desktop.getByRole("button", { name: "Trackpad", exact: true }).click();
   await desktop.getByRole("button", { name: "Tablet", exact: true }).click();
   await desktop.getByRole("heading", { name: "Freac on iPad" }).waitFor();
   assert.equal(await desktop.locator("canvas").count(), 0);

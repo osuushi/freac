@@ -5,7 +5,7 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
   const root = document.createElement("div");
   root.className = "control-selector";
   const button = document.createElement("button");
-  button.textContent = "Control";
+  button.title = "Controls";
   button.setAttribute("aria-expanded", "false");
   const panel = document.createElement("div");
   panel.className = "control-menu";
@@ -18,6 +18,7 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
   legend.textContent = "Controls";
   group.append(legend);
   const updateHint = () => {
+    button.textContent = controlMode() === "mouse" ? "Mouse" : "Trackpad";
     const hint = app.querySelector(".navigation-hint");
     if (hint)
       hint.textContent =
