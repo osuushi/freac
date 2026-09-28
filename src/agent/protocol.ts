@@ -15,6 +15,7 @@ export type AgentRequest =
   | { kind: "configure"; preferences: AgentPreferences }
   | { kind: "browse" }
   | { kind: "recover" }
+  | { kind: "attach"; name: string; base64: string }
   | { kind: "start"; cols: number; rows: number }
   | { kind: "read" }
   | { kind: "clipboard" }
@@ -23,12 +24,14 @@ export type AgentRequest =
   | { kind: "focus"; focused: boolean }
   | { kind: "stop" };
 export interface AgentReply extends AgentStatus {
+  attachment?: string;
   output?: string;
   clipboardText?: string;
   preferences?: AgentPreferences;
   executable?: string;
   stateDirectory?: string;
 }
+export const agentAttachmentLimit = 20 * 1024 * 1024;
 export interface AgentHost {
   request(request: AgentRequest): Promise<AgentReply>;
 }

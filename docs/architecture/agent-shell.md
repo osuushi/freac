@@ -549,3 +549,18 @@ Deterministic API, host-boundary and interaction checks remain in the ordinary t
 [geometry and reconstruction contract](topology-editing.md) defines the current
 analytic replacement domain. These are lower-level inspection/support inputs,
 not a named taper command. They retain ordinary script atomicity and stable IDs.
+
+## Mesh references and recovery skill
+
+The Agent panel's **Attach 3MF…** control copies a selected file into a unique
+`attachment-*` directory in the drawing workspace. Attachments are limited to
+20 MiB so the shared desktop/iPad request fits the transport limit. They mark
+the drawing edited and travel with its portable save; attaching leaves geometry
+unchanged and never executes the file. Duplicate filenames receive separate
+directories. The existing combined 64 MiB workspace limit still applies.
+
+Codex launches install the application's `mesh-recovery` skill into the
+document's machine-local Codex home. The packaged skill and standard-library
+3MF inspector capture reconstruction and comparison lessons from the pump holder.
+They guide supported modeling operations, including reporting missing operations;
+they do not introduce a general native mesh importer or recover feature history.

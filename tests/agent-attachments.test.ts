@@ -1,0 +1,63 @@
+import assert from "node:assert/strict";
+import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+import test from "node:test";
+import { attachAgentFile } from "../src/host/agent-attachments.js";
+import { prepareAgentSkills } from "../src/host/agent-skills.js";
+import { AgentWorkspace } from "../src/host/agent-workspace.js";
+
+const reference = Buffer.from("PK\x03\x04reference bytes");
+
+test("attachments preserve bytes, avoid overwrites and survive workspace reopening", async () => {
+  const root = await realpath(await mkdtemp(join(tmpdir(), "freac-attachments-")));
+  const workspace = new AgentWorkspace(root);
+  const reopened = new AgentWorkspace(root);
+  try {
+    const first = await attachAgentFile(workspace, "pump holder.3mf", reference.toString("base64"));
+    const second = await attachAgentFile(
+      workspace,
+      "pump holder.3mf",
+      reference.toString("base64"),
+    );
+    assert.notEqual(first, second);
+    assert.equal(workspace.dirty, true);
+    const files = await workspace.snapshot();
+    assert.deepEqual(Buffer.from(files[`workspace/${first}`]), reference);
+    reopened.adopt(await reopened.prepare(files), files);
+    assert.equal(reopened.dirty, false);
+    assert(reopened.cwd);
+    assert.deepEqual(await readFile(join(reopened.cwd, first)), reference);
+    await assert.rejects(attachAgentFile(workspace, "../escape.3mf", reference.toString("base64")));
+    await assert.rejects(attachAgentFile(workspace, "bad.3mf", "AAAA!"));
+    await assert.rejects(
+      attachAgentFile(workspace, "bad.3mf", Buffer.from("not zip").toString("base64")),
+    );
+  } finally {
+    workspace.adopt(null, {});
+    reopened.adopt(null, {});
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("managed skill is available in the document Codex home without replacing user skills", async () => {
+  const root = await realpath(await mkdtemp(join(tmpdir(), "freac-skills-")));
+  try {
+    await mkdir(join(root, "skills", "personal"), { recursive: true });
+    await writeFile(join(root, "skills", "personal", "SKILL.md"), "keep");
+    await prepareAgentSkills(root, resolve("."));
+    const skill = join(root, "skills", "freac-mesh-recovery", "SKILL.md");
+    assert.match(await readFile(skill, "utf8"), /name: mesh-recovery/);
+    await writeFile(skill, "old generated version");
+    await prepareAgentSkills(root, resolve("."));
+    assert.match(await readFile(skill, "utf8"), /name: mesh-recovery/);
+    assert.equal(await readFile(join(root, "skills", "personal", "SKILL.md"), "utf8"), "keep");
+    if (process.platform !== "win32") {
+      await rm(join(root, "skills", "freac-mesh-recovery"), { recursive: true });
+      await symlink(join(root, "skills", "personal"), join(root, "skills", "freac-mesh-recovery"));
+      await assert.rejects(prepareAgentSkills(root, resolve(".")), /linked path/);
+    }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

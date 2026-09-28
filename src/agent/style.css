@@ -160,3 +160,8 @@
 #app.agent-open .entity-viewer {
   max-height: calc(100% - 150px);
 }
+
+.agent-attachment {
+  margin-left: 8px;
+  overflow-wrap: anywhere;
+}

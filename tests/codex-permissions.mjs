@@ -8,6 +8,7 @@ import {
   codexPermissionOverrides,
   workspaceTrustOverride,
 } from "../.build/host/host/agent-settings.js";
+import { prepareAgentSkills } from "../.build/host/host/agent-skills.js";
 
 const codex = process.env.FREAC_CODEX_EXECUTABLE;
 assert(codex, "Set FREAC_CODEX_EXECUTABLE to the installed Codex CLI");
@@ -29,6 +30,7 @@ approvals_reviewer="user"
 `,
   );
   await writeFile(join(home, "auth.json"), '{"OPENAI_API_KEY":"sk-test-not-a-real-key"}');
+  await prepareAgentSkills(home, process.cwd());
   const env = { ...process.env };
   for (const key of Object.keys(env))
     if (key.startsWith("CODEX_") || key.startsWith("OPENAI_")) delete env[key];
@@ -37,6 +39,7 @@ approvals_reviewer="user"
   const args = [...codexPermissionOverrides(), ...(await workspaceTrustOverride(workspace))];
   const prompt = await run(codex, ["debug", "prompt-input", ...args], options);
   assert.match(prompt.stdout, /workspace-write/);
+  assert.match(prompt.stdout, /mesh-recovery/);
   assert.match(prompt.stdout, /auto_review|automatic approval|automatic review/i);
   await run(
     codex,

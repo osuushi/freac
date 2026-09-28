@@ -38,7 +38,9 @@ export default {
     ],
     ignore: (path) =>
       path !== "" &&
-      !/^\/(package\.json|node_modules(?:\/|$)|\.build(?:$|\/(host|renderer)(?:\/|$)))/.test(path),
+      !/^\/(package\.json|agent-skills(?:\/|$)|node_modules(?:\/|$)|\.build(?:$|\/(host|renderer)(?:\/|$)))/.test(
+        path,
+      ),
     ...(signed
       ? {
           osxSign: {
