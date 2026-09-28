@@ -118,9 +118,8 @@ class OrbitDrag {
     }
     if (!this.drag || event.pointerId !== this.drag.id) return;
     consume(event);
-    const needsLeveling = this.world.orbit.needsLeveling;
     this.stop();
-    if (event.type === "pointerup" && needsLeveling) this.world.levelHorizon();
+    if (event.type === "pointerup") this.world.levelHorizon();
   };
   click = (event: Event): void => {
     if (this.suppressClick && this.onViewport(event.target)) consume(event);

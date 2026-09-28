@@ -86,8 +86,8 @@ center, retaining the outer-ring response of Shoemake's Arcball. Between 55% and
 blend for the whole drag, so moving across the band does not change the grip
 mid-gesture. The pointer-down point, camera pose, upright axis and pivot stay fixed
 throughout the drag. The ring angle unwraps through a full circle without a jump;
-reversing the pointer path restores the starting pose. Pure center drags finish
-without a release-leveling animation; blended and outer-ring drags still level.
+reversing the pointer path restores the starting pose. Every completed orbit drag
+levels on release, including pure center drags.
 The ring angle follows the geometry in [Shoemake, Arcball (1992), pp. 152–155](https://graphicsinterface.org/wp-content/uploads/gi1992-18.pdf);
 the implementation is independent and no upstream code is copied.
 

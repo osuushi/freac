@@ -38,7 +38,6 @@ test("center drags yaw and pitch without tilting the horizon before release", ()
   const state = view(),
     orbit = new SmoothedTurntable();
   orbit.begin(state, { x: 0, y: 0 });
-  assert.equal(orbit.needsLeveling, false);
   orbit.drag(state, { x: 0.3, y: 0.2 });
   state.camera.lookAt(state.target);
   const upright = new THREE.Vector3(0, 1, 0).applyQuaternion(
@@ -49,12 +48,11 @@ test("center drags yaw and pitch without tilting the horizon before release", ()
   assert.ok(state.camera.position.y < state.target.y, "Vertical motion pitches");
   assert.ok(state.camera.quaternion.angleTo(levelOrientation(state)) < 1e-10);
 });
-test("two center drags turn the view through 180 degrees without release leveling", () => {
+test("two center drags turn the view through 180 degrees", () => {
   const state = view(),
     orbit = new SmoothedTurntable();
   for (let i = 0; i < 2; i++) {
     orbit.begin(state, { x: 0, y: 0 });
-    assert.equal(orbit.needsLeveling, false);
     orbit.drag(state, { x: Math.PI / 4, y: 0 });
     orbit.end();
   }
@@ -66,7 +64,6 @@ test("outer ring rolls without changing viewing direction", () => {
     orbit = new SmoothedTurntable(),
     position = state.camera.position.clone();
   orbit.begin(state, { x: 2, y: 0 });
-  assert.equal(orbit.needsLeveling, true);
   orbit.drag(state, { x: 2, y: 2 });
   assert.ok(state.camera.position.distanceTo(position) < 1e-10);
   assert.ok(state.camera.up.distanceTo(new THREE.Vector3(1, 0, 0)) < 1e-10);

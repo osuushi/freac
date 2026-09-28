@@ -106,11 +106,9 @@ class CubeInput {
   private release = (event: PointerEvent): void => {
     const press = this.press;
     if (!press || press.event.pointerId !== event.pointerId) return;
-    const needsLeveling = this.world.orbit.needsLeveling;
     this.stop();
-    if (press.dragging) {
-      if (needsLeveling) this.world.levelHorizon();
-    } else {
+    if (press.dragging) this.world.levelHorizon();
+    else {
       const entry = this.view.entries.find(({ group }) =>
         group.contains(press.event.target as Node),
       );

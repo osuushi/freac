@@ -33,9 +33,6 @@ export class SmoothedTurntable {
   get active(): boolean {
     return this.start !== null;
   }
-  get needsLeveling(): boolean {
-    return this.start !== null && this.start.turntable < 1;
-  }
   end(): void {
     this.start = null;
   }

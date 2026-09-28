@@ -88,13 +88,10 @@ async function centerTurntable(page) {
   assert.ok(Math.abs(right[2]) < 1e-8, "World Z remains vertical during a center drag");
   await page.mouse.up();
   await page.keyboard.up("Meta");
-  await page.evaluate(
-    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
-  );
   assert.equal(
     await page.evaluate(() => window.freacInspect().camera.moving),
-    false,
-    "Center drag ends without a leveling animation",
+    true,
+    "Center drag also starts release leveling",
   );
   await page.waitForTimeout(300);
   const ended = await inspect(page);
