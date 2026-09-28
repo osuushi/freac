@@ -54,14 +54,14 @@ export async function offsetTopologyRoute(page, name) {
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, before);
   await chooseTool(page, "offset faces", "offset");
-  await input.fill("5");
+  await (await relativeOffsetInput(page)).fill("5");
   await inspect(page);
   await page.keyboard.press("Enter");
   const after = (await inspect(page)).document;
   await undoRedo(page, before, after);
   await worldClick(page, [0, 15, 5]);
   await chooseTool(page, "offset faces", "offset");
-  await input.fill("1");
+  await (await relativeOffsetInput(page)).fill("1");
   await inspect(page);
   await page.keyboard.press("Enter");
   assert.ok(
