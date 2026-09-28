@@ -127,7 +127,7 @@ test("broad annulus blends continuously between turntable and roll", () => {
     state.camera.lookAt(state.target);
     return state.camera.quaternion.clone();
   };
-  for (const join of [0.55, 1]) {
+  for (const join of [0.7, 1.15]) {
     const h = 1e-5;
     assert.ok(dragAt(join - h).angleTo(dragAt(join + h)) < 0.0002);
   }

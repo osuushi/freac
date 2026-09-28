@@ -76,13 +76,13 @@ Command/Meta + primary drag uses a screen-centered control radius of half the
 smaller viewport dimension. A press stays pending until movement exceeds the
 selection drag threshold; a completed Command-click toggles selection without
 exiting the sketch. Escape or window blur cancels a pending press. A press inside
-55% of the radius uses a turntable: horizontal motion yaws around the signed
+70% of the radius uses a turntable: horizontal motion yaws around the signed
 world X/Y/Z axis selected by the release-leveling score, and vertical motion
 pitches around the starting camera-right axis. Its horizon stays level during
-small drags from an already level view. A press outside the radius uses pure
+small drags from an already level view. A press beyond 115% of the radius uses pure
 view-axis roll, with twice the angular travel of the pointer around the viewport
-center, retaining the outer-ring response of Shoemake's Arcball. Between 55% and
-100%, cubic smoothstep blends the turntable and roll angles. The press chooses the
+center, retaining the outer-ring response of Shoemake's Arcball. Between 70% and
+115%, cubic smoothstep blends the turntable and roll angles. The press chooses the
 blend for the whole drag, so moving across the band does not change the grip
 mid-gesture. The pointer-down point, camera pose, upright axis and pivot stay fixed
 throughout the drag. The ring angle unwraps through a full circle without a jump;

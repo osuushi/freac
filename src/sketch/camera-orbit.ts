@@ -3,8 +3,8 @@ export type OrbitPointer = { x: number; y: number };
 type OrbitView = { camera: THREE.OrthographicCamera; target: THREE.Vector3 };
 
 // A broad annulus gives a gradual change from level turntable motion to pure roll.
-const turntableInnerRadius = 0.55;
-const rollOuterRadius = 1;
+const turntableInnerRadius = 0.7;
+const rollOuterRadius = 1.15;
 const rotationPerRadius = 2;
 
 function turntableWeight(point: OrbitPointer): number {
