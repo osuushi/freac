@@ -4,6 +4,7 @@ import type { InspectionCommand } from "../agent/inspection-protocol.js";
 import type { AgentReply, AgentRequest } from "../agent/protocol.js";
 import type { ScriptRequest } from "../agent-script/api.js";
 import type { DocumentStatus } from "../model/document-host.js";
+import { attachAgentFile } from "./agent-attachments.js";
 import type { AgentConnection } from "./agent-connection.js";
 import { agentExecutable } from "./agent-executable.js";
 import { orientationOverrides, prepareOrientation } from "./agent-orientation.js";
@@ -14,6 +15,7 @@ import {
   personalSkillOverrides,
   workspaceTrustOverride,
 } from "./agent-settings.js";
+import { prepareAgentSkills } from "./agent-skills.js";
 import { AgentWorkspace } from "./agent-workspace.js";
 import { codexResumeArgs, copyCodexLocalState } from "./codex-workspace.js";
 import { sessionDialogs as dialog } from "./session-dialogs.js";
@@ -122,6 +124,10 @@ export class AgentSession {
       }
       case "recover":
         return this.recover(window);
+      case "attach": {
+        const attachment = await attachAgentFile(this.workspace, request.name, request.base64);
+        return { ...this.status, attachment };
+      }
       case "start":
         return this.start(request);
       case "stop":
@@ -177,6 +183,7 @@ export class AgentSession {
       const home = this.workspace.codexHome;
       if (!home) throw new Error("Codex workspace was not created.");
       await copyCodexLocalState(this.settings.directory, home);
+      await prepareAgentSkills(home, app.getAppPath());
       env.CODEX_HOME = home;
       this.codexHome = home;
       resume = codexResumeArgs(await this.workspace.snapshot(), cwd);

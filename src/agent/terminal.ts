@@ -77,6 +77,11 @@ export class AgentTerminal {
     if (reply.clipboardText !== undefined) this.terminal?.paste(reply.clipboardText);
     else this.terminal?.paste(await navigator.clipboard.readText());
   }
+  insert(value: string): void {
+    if (!this.terminal || this.disposed) throw new Error("Wait for the agent terminal to open.");
+    this.terminal.paste(value);
+    this.terminal.focus();
+  }
   private async poll(): Promise<void> {
     if (this.disposed) return;
     try {

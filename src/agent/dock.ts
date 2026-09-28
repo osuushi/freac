@@ -1,3 +1,4 @@
+import { agentAttachments } from "./attachments.js";
 import { dockLayout } from "./dock-layout.js";
 import type { AgentHost, AgentReply } from "./protocol.js";
 import { agentSettings } from "./settings.js";
@@ -27,6 +28,7 @@ class AgentDock {
   private panel = document.createElement("section");
   private layout: ReturnType<typeof dockLayout>;
   private terminal: AgentTerminal;
+  private attachments: ReturnType<typeof agentAttachments>;
   private collapsed = false;
   private unread = false;
   private pending = false;
@@ -39,7 +41,7 @@ class AgentDock {
   ) {
     this.panel.className = "agent-dock";
     this.panel.setAttribute("aria-label", "Agent terminal");
-    this.panel.innerHTML = `<div class="agent-header"><button data-collapse aria-label="Collapse agent terminal">−</button><strong>Agent</strong><span class="agent-status">Stopped</span><button data-position aria-label="Change agent dock position">Dock</button><button data-settings>Settings</button><button data-start>Start</button><button data-stop disabled>Stop</button></div>
+    this.panel.innerHTML = `<div class="agent-header"><button data-collapse aria-label="Collapse agent terminal">−</button><strong>Agent</strong><span class="agent-status">Stopped</span><button data-attach>Attach file…</button><button data-position aria-label="Change agent dock position">Dock</button><button data-settings>Settings</button><button data-start>Start</button><button data-stop disabled>Stop</button></div>
       <div class="agent-body"><div class="agent-message" aria-live="polite"></div><div class="agent-screen"></div><p class="agent-workspace">Files and Codex conversations are included when you save.</p></div>`;
     document.body.append(this.panel);
     this.layout = dockLayout(this.panel, app);
@@ -52,6 +54,14 @@ class AgentDock {
       }
     });
     this.element(".agent-body").prepend(settings);
+    this.attachments = agentAttachments(
+      this.panel,
+      host,
+      (run) => this.action(run),
+      (value) => this.terminal.insert(value),
+      () => this.status.running,
+    );
+    this.button("attach").onclick = () => this.attachments.choose();
     this.button("recover").onclick = () =>
       void this.action(async () => {
         const reply = await host.request({ kind: "recover" });
@@ -100,6 +110,7 @@ class AgentDock {
     this.button("start").disabled = this.pending || this.configuring || reply.running;
     this.button("stop").disabled = this.pending || this.configuring || !reply.running;
     this.button("settings").disabled = this.pending || this.configuring;
+    this.button("attach").disabled = this.pending || this.configuring || !reply.running;
     this.element(".agent-status").textContent =
       `${reply.running ? "Running" : reply.exitCode === undefined ? "Stopped" : `Exited ${reply.exitCode}`}${this.unread ? " · New output" : ""}`;
     this.element(".agent-workspace").textContent = reply.workspace
@@ -136,6 +147,7 @@ class AgentDock {
       .catch(this.report);
   };
   dispose(): void {
+    this.attachments.dispose();
     this.terminal.dispose();
     this.layout.dispose();
     this.panel.remove();
