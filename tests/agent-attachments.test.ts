@@ -7,20 +7,19 @@ import { attachAgentFile } from "../src/host/agent-attachments.js";
 import { prepareAgentSkills } from "../src/host/agent-skills.js";
 import { AgentWorkspace } from "../src/host/agent-workspace.js";
 
-const reference = Buffer.from("PK\x03\x04reference bytes");
+const reference = Buffer.from("arbitrary file bytes");
 
 test("attachments preserve bytes, avoid overwrites and survive workspace reopening", async () => {
   const root = await realpath(await mkdtemp(join(tmpdir(), "freac-attachments-")));
   const workspace = new AgentWorkspace(root);
   const reopened = new AgentWorkspace(root);
   try {
-    const first = await attachAgentFile(workspace, "pump holder.3mf", reference.toString("base64"));
-    const second = await attachAgentFile(
-      workspace,
-      "pump holder.3mf",
-      reference.toString("base64"),
-    );
-    assert.notEqual(first, second);
+    const first = await attachAgentFile(workspace, "photo one.png", reference.toString("base64"));
+    const second = await attachAgentFile(workspace, "photo one.png", reference.toString("base64"));
+    assert.equal(first, "attachments/photo one.png");
+    assert.equal(second, "attachments/photo one (2).png");
+    const third = await attachAgentFile(workspace, "PHOTO ONE.PNG", reference.toString("base64"));
+    assert.equal(third, "attachments/PHOTO ONE (3).PNG");
     assert.equal(workspace.dirty, true);
     const files = await workspace.snapshot();
     assert.deepEqual(Buffer.from(files[`workspace/${first}`]), reference);
@@ -28,11 +27,9 @@ test("attachments preserve bytes, avoid overwrites and survive workspace reopeni
     assert.equal(reopened.dirty, false);
     assert(reopened.cwd);
     assert.deepEqual(await readFile(join(reopened.cwd, first)), reference);
-    await assert.rejects(attachAgentFile(workspace, "../escape.3mf", reference.toString("base64")));
-    await assert.rejects(attachAgentFile(workspace, "bad.3mf", "AAAA!"));
-    await assert.rejects(
-      attachAgentFile(workspace, "bad.3mf", Buffer.from("not zip").toString("base64")),
-    );
+    await assert.rejects(attachAgentFile(workspace, "../escape.png", reference.toString("base64")));
+    await assert.rejects(attachAgentFile(workspace, "sub/photo.png", reference.toString("base64")));
+    await assert.rejects(attachAgentFile(workspace, "bad.png", "AAAA!"));
   } finally {
     workspace.adopt(null, {});
     reopened.adopt(null, {});

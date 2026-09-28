@@ -31,7 +31,7 @@ export interface AgentReply extends AgentStatus {
   executable?: string;
   stateDirectory?: string;
 }
-export const agentAttachmentLimit = 20 * 1024 * 1024;
+export const attachmentWarningBytes = 20 * 1024 * 1024;
 export interface AgentHost {
   request(request: AgentRequest): Promise<AgentReply>;
 }

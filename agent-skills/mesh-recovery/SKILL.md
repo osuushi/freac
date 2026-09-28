@@ -5,8 +5,9 @@ description: Recover editable CAD solids from an attached 3MF mesh in Freac. Use
 
 # Recover CAD from a 3MF
 
-Attachments are reference copies in `attachment-*/` within this drawing's
-workspace. Read the requested file there and retain it for comparison. Attaching a
+Attachments are reference copies in `attachments/` within this drawing's
+workspace (earlier trial drawings may use `attachment-*/`). Read the requested
+file there and retain it for comparison. Attaching a
 file does not add geometry to the drawing.
 
 Start with `freac status`, `freac inspect`, and `freac types`. These describe the
