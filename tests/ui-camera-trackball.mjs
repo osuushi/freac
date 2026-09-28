@@ -4,6 +4,8 @@ import { chooseTool } from "./ui-tools.mjs";
 
 export async function trackballRoute(page, name) {
   await reset(page);
+  await centerTurntable(page);
+  await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await inspect(page);
   await page.keyboard.press("r");
@@ -62,8 +64,45 @@ export async function trackballRoute(page, name) {
   assert.deepEqual(panned.document, before.document);
   await releaseLeveling(page, bounds);
   console.log(
-    `${name}: Arcball retains start point and levels on release, isolates editing and ends on release/Escape`,
+    `${name}: smoothed turntable stays level in the center, rolls at the rim, isolates editing and ends on release/Escape`,
   );
+}
+
+async function centerTurntable(page) {
+  const bounds = await page.locator("canvas").boundingBox();
+  const x = bounds.x + bounds.width / 2,
+    y = bounds.y + bounds.height / 2;
+  const before = await inspect(page);
+  await page.mouse.move(x, y);
+  await page.keyboard.down("Meta");
+  await page.mouse.down();
+  await page.mouse.move(x + 55, y - 40, { steps: 5 });
+  const during = await inspect(page);
+  assert.equal(during.camera.orbitActive, true);
+  assert.notDeepEqual(during.camera.position, before.camera.position);
+  const direction = during.camera.position.map((v, i) => v - during.camera.target[i]);
+  const length = Math.hypot(...direction);
+  const n = direction.map((v) => v / length),
+    u = during.camera.up;
+  const right = [u[1] * n[2] - u[2] * n[1], u[2] * n[0] - u[0] * n[2], u[0] * n[1] - u[1] * n[0]];
+  assert.ok(Math.abs(right[2]) < 1e-8, "World Z remains vertical during a center drag");
+  await page.mouse.up();
+  await page.keyboard.up("Meta");
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  assert.equal(
+    await page.evaluate(() => window.freacInspect().camera.moving),
+    false,
+    "Center drag ends without a leveling animation",
+  );
+  await page.waitForTimeout(300);
+  const ended = await inspect(page);
+  assert.ok(
+    ended.camera.up.every((value, i) => Math.abs(value - during.camera.up[i]) < 1e-10),
+    "Center drag needs no horizon correction",
+  );
+  assert.deepEqual(ended.document, before.document);
 }
 
 async function releaseLeveling(page, bounds) {

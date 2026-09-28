@@ -1,36 +1,14 @@
 import assert from "node:assert/strict";
-import * as THREE from "three";
 import { project } from "./ui-blend-edit.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
+import { orientWithTurntable } from "./ui-orbit-orient.mjs";
 import { clearSelection } from "./ui-reconnection-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function orient(page, normal) {
-  const { camera } = await inspect(page);
-  const view = new THREE.PerspectiveCamera();
-  view.position.fromArray(camera.position);
-  view.up.fromArray(camera.up);
-  view.lookAt(new THREE.Vector3(...camera.target));
-  const desired = new THREE.Vector3(...normal)
-    .normalize()
-    .applyQuaternion(view.quaternion.clone().invert());
-  const denominator = Math.sqrt(2 * (1 + desired.z));
-  const dx = -desired.x / denominator,
-    dy = -desired.y / denominator;
-  assert.ok(Math.hypot(dx, dy) <= 0.8, "Use the spherical part of Arcball");
-  const bounds = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
-  const x = bounds.x + bounds.width / 2,
-    y = bounds.y + bounds.height / 2,
-    r = Math.min(bounds.width, bounds.height) / 2;
-  await page.mouse.move(x, y);
-  await page.keyboard.down("Meta");
-  await page.mouse.down();
-  await page.mouse.move(x + dx * r, y - dy * r, { steps: 8 });
-  await page.mouse.up();
-  await page.keyboard.up("Meta");
-  await inspect(page);
+  await orientWithTurntable(page, normal);
 }
 
 export async function readout(page, label, value) {

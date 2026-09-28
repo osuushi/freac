@@ -118,7 +118,7 @@ leave a dead editor. Kernel failures must be explained without losing valid work
 
 ### Trackpad navigation
 
-Two-finger scrolling pans. Command-drag orbits using Arcball rotation.
+Two-finger scrolling pans. Command-drag orbits using a smoothed turntable with an outer roll ring.
 Two-finger click-and-drag (secondary-button drag) pans.
 Pinching zooms about the pointer. Pan and zoom retain the current sketch plane;
 orbit exits sketch mode. Camera edits never alter document geometry or Undo.

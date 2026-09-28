@@ -91,7 +91,7 @@ export async function cameraRoute(page, name) {
   await safariPinchEvents(page);
   await blockedDuringDrawing(page);
   console.log(
-    `${name}: scroll pan, Command-drag orbit, secondary-drag pan, ctrl-wheel pinch path, Arcball with release leveling and synthetic Safari gesture-scale handling passed`,
+    `${name}: scroll pan, Command-drag turntable orbit, secondary-drag pan, ctrl-wheel pinch path, release leveling and synthetic Safari gesture-scale handling passed`,
   );
 }
 

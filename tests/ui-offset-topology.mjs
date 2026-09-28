@@ -113,13 +113,15 @@ async function shellRoute(page, name) {
   const box = await page.locator("canvas").boundingBox();
   const x = box.x + box.width / 2,
     y = box.y + box.height / 2;
-  // Turn the ordinary orbit control through 180 degrees to face the open cap.
-  await page.mouse.move(x, y);
-  await page.keyboard.down("Meta");
-  await page.mouse.down();
-  await page.mouse.move(x + Math.min(box.width, box.height) / 2, y, { steps: 12 });
-  await page.mouse.up();
-  await page.keyboard.up("Meta");
+  // Two center-band turntable drags yaw 180 degrees toward the open cap.
+  for (let i = 0; i < 2; i++) {
+    await page.mouse.move(x, y);
+    await page.keyboard.down("Meta");
+    await page.mouse.down();
+    await page.mouse.move(x + (Math.PI * Math.min(box.width, box.height)) / 8, y, { steps: 12 });
+    await page.mouse.up();
+    await page.keyboard.up("Meta");
+  }
   await inspect(page);
   await worldClick(page, [8, 0, 4]);
   assert.equal((await inspect(page)).modelingSelection[0]?.face, fixture.selection[0].faces[0]);

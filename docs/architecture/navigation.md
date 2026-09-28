@@ -66,28 +66,30 @@ selection-bounds and central-20% sampling rules.
 
 Freeze the pivot throughout the drag and rotate both camera position and view
 target about it, preserving the pivot's screen location and reversibility. Release
-leveling retains the existing view-axis roll behavior described below. Cube face
+leveling retains the view-axis roll behavior described below. Cube face
 clicks retain their existing view target. These are transient camera decisions,
 with no model edits or document Undo entries.
 
-### Arcball with release leveling
+### Smoothed Shoemake turntable with release leveling
 
-Command/Meta + primary drag uses a screen-centered virtual hemisphere with radius
-half the smaller viewport dimension. A press stays pending until movement exceeds
-the selection drag threshold; a completed Command-click toggles selection without
-exiting the sketch. Escape or window blur cancels a pending press. The inner 80% uses the hemisphere mapping;
-the outer 20% tapers its polar angle with cubic Hermite interpolation, matching
-the inner slope and reaching the equator with zero slope. Outside points project
-to the equator for pure roll. This independently implemented taper follows the
-rounded-Arcball idea in [Shambaugh’s taxonomy](https://theshamblog.com/virtual-trackballs-a-taxonomy-and-new-method/),
-not its source code. It smooths the radial response without time filtering or lag.
-The pointer-down point and camera pose stay fixed throughout the drag. The free
-rotation uses Shoemake's half-angle arc quaternion (cross product, dot product),
-applied inversely to the camera. Pivot acquisition is separate from this rotation
-mapping; there is no axis inference or rotation constraint.
-This is an independent implementation of the mathematics in
-[Shoemake, Arcball (1992), pp. 152–155](https://graphicsinterface.org/wp-content/uploads/gi1992-18.pdf);
-no upstream code is copied. Returning to the starting pointer restores the starting pose.
+Command/Meta + primary drag uses a screen-centered control radius of half the
+smaller viewport dimension. A press stays pending until movement exceeds the
+selection drag threshold; a completed Command-click toggles selection without
+exiting the sketch. Escape or window blur cancels a pending press. A press inside
+55% of the radius uses a turntable: horizontal motion yaws around the signed
+world X/Y/Z axis selected by the release-leveling score, and vertical motion
+pitches around the starting camera-right axis. Its horizon stays level during
+small drags from an already level view. A press outside the radius uses pure
+view-axis roll, with twice the angular travel of the pointer around the viewport
+center, retaining the outer-ring response of Shoemake's Arcball. Between 55% and
+100%, cubic smoothstep blends the turntable and roll angles. The press chooses the
+blend for the whole drag, so moving across the band does not change the grip
+mid-gesture. The pointer-down point, camera pose, upright axis and pivot stay fixed
+throughout the drag. The ring angle unwraps through a full circle without a jump;
+reversing the pointer path restores the starting pose. Pure center drags finish
+without a release-leveling animation; blended and outer-ring drags still level.
+The ring angle follows the geometry in [Shoemake, Arcball (1992), pp. 152–155](https://graphicsinterface.org/wp-content/uploads/gi1992-18.pdf);
+the implementation is independent and no upstream code is copied.
 
 On pointer-up, score each world X/Y/Z axis by `rollRadians² - 0.25 × ln(projectedLength)`.
 Projection length is that of a unit axis on screen. This smoothly penalizes
@@ -103,12 +105,12 @@ Camera changes never modify the document or Undo. Native trackpad rotation gestu
 remain deferred; tablet one-finger orbit uses the same press-based pivot through
 pointer events. Sketch entry retains its existing transition.
 
-The temporary Arcball circle, endpoint markers and diagnostic caption are hidden.
+The temporary rotation circle, endpoint markers and diagnostic caption are hidden.
 
 ### Trackpad navigation
 
 Two-finger scrolling pans without leaving the sketch plane. Command-click-and-drag
-invokes Arcball rotation and exits sketch mode.
+invokes turntable/ring rotation and exits sketch mode.
 Two-finger click-and-drag (secondary-button drag) pans.
 Pinching zooms about the pointer. Pan and zoom retain the current sketch plane;
 orbit exits sketch mode. Camera edits never alter document geometry or Undo.
@@ -136,7 +138,7 @@ establish physical trackpad or iPad touch behavior.
 ### Orientation cube
 
 The upper-right cube follows the current camera. Drag with the primary pointer to
-use the same Arcball rotation and release leveling as Command-drag; a face click
+use the same turntable/ring rotation and release leveling as Command-drag; a face click
 aligns Front (−Y), Back (+Y), Left (−X), Right (+X), Top (+Z), or Bottom (−Z).
 The white/near-black cube has six inset labeled faces, twelve edge bevels and eight
 corner bevels. Labels are projected in each face plane, rotating and foreshortening

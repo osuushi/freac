@@ -162,7 +162,11 @@ class TabletInput {
     this.world.longPress?.(event);
     consume(event);
     this.suppressClickUntil = performance.now() + 1000;
-    const level = this.rotating && !this.touches.size && event.type === "pointerup";
+    const level =
+      this.rotating &&
+      this.world.orbit.needsLeveling &&
+      !this.touches.size &&
+      event.type === "pointerup";
     if (this.world.canvas.hasPointerCapture(event.pointerId))
       this.world.canvas.releasePointerCapture(event.pointerId);
     this.rebase();

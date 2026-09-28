@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import * as THREE from "three";
-import { Arcball, levelOrientation, spherePoint } from "../src/sketch/camera-orbit.js";
+import { levelOrientation, SmoothedTurntable } from "../src/sketch/camera-orbit.js";
 
 function view() {
   const camera = new THREE.OrthographicCamera(-40, 40, 40, -40);
@@ -11,12 +11,12 @@ function view() {
   camera.lookAt(target);
   return { camera, target };
 }
-test("Arcball uses starting pose independent of intervening events and reverses exactly", () => {
+test("turntable uses starting pose independent of intervening events and reverses exactly", () => {
   const a = view(),
     b = view(),
-    first = new Arcball(),
-    second = new Arcball();
-  const start = { x: 0.1, y: -0.7 },
+    first = new SmoothedTurntable(),
+    second = new SmoothedTurntable();
+  const start = { x: 0.1, y: -0.4 },
     end = { x: 0.6, y: 0.2 };
   const original = a.camera.position.clone();
   first.begin(a, start);
@@ -34,21 +34,39 @@ test("Arcball uses starting pose independent of intervening events and reverses 
   first.drag(a, end);
   assert.ok(a.camera.position.distanceTo(original) < 1e-10);
 });
-test("bottom-center up drag rotates only about screen X and can cross poles", () => {
+test("center drags yaw and pitch without tilting the horizon before release", () => {
   const state = view(),
-    orbit = new Arcball();
-  orbit.begin(state, { x: 0, y: -0.8 });
-  orbit.drag(state, { x: 0, y: 0.8 });
-  assert.ok(Math.abs(state.camera.position.x - state.target.x) < 1e-10);
-  assert.ok(Math.abs(state.camera.up.x) < 1e-10);
-  assert.ok(state.camera.position.z < state.target.z);
+    orbit = new SmoothedTurntable();
+  orbit.begin(state, { x: 0, y: 0 });
+  assert.equal(orbit.needsLeveling, false);
+  orbit.drag(state, { x: 0.3, y: 0.2 });
+  state.camera.lookAt(state.target);
+  const upright = new THREE.Vector3(0, 1, 0).applyQuaternion(
+    state.camera.quaternion.clone().invert(),
+  );
+  assert.ok(Math.abs(upright.x) < 1e-10, "World up stays vertical while dragging");
+  assert.ok(state.camera.position.x < state.target.x, "Horizontal motion yaws");
+  assert.ok(state.camera.position.y < state.target.y, "Vertical motion pitches");
+  assert.ok(state.camera.quaternion.angleTo(levelOrientation(state)) < 1e-10);
 });
-test("outside sphere projects to equator and rolls without changing viewing direction", () => {
-  assert.deepEqual(spherePoint({ x: 2, y: 0 }).toArray(), [1, 0, 0]);
+test("two center drags turn the view through 180 degrees without release leveling", () => {
   const state = view(),
-    orbit = new Arcball(),
+    orbit = new SmoothedTurntable();
+  for (let i = 0; i < 2; i++) {
+    orbit.begin(state, { x: 0, y: 0 });
+    assert.equal(orbit.needsLeveling, false);
+    orbit.drag(state, { x: Math.PI / 4, y: 0 });
+    orbit.end();
+  }
+  assert.ok(Math.abs(state.camera.position.x - state.target.x) < 1e-10);
+  assert.ok(Math.abs(state.camera.position.z - state.target.z + 120) < 1e-10);
+});
+test("outer ring rolls without changing viewing direction", () => {
+  const state = view(),
+    orbit = new SmoothedTurntable(),
     position = state.camera.position.clone();
   orbit.begin(state, { x: 2, y: 0 });
+  assert.equal(orbit.needsLeveling, true);
   orbit.drag(state, { x: 2, y: 2 });
   assert.ok(state.camera.position.distanceTo(position) < 1e-10);
   assert.ok(state.camera.up.distanceTo(new THREE.Vector3(1, 0, 0)) < 1e-10);
@@ -103,31 +121,51 @@ test("a clear already-level horizon stays put, including an exactly end-on other
   assert.ok(before.angleTo(levelOrientation(state)) < 1e-10);
 });
 
-test("rounded rim joins the sphere and pure-roll region with continuous angular speed", () => {
-  const angle = (radius: number) => {
-    const point = spherePoint({ x: radius, y: 0 });
-    assert.ok(Math.abs(point.length() - 1) < 1e-12);
-    return Math.atan2(point.x, point.z);
+test("broad annulus blends continuously between turntable and roll", () => {
+  const dragAt = (radius: number) => {
+    const state = view(),
+      orbit = new SmoothedTurntable();
+    orbit.begin(state, { x: radius, y: 0 });
+    orbit.drag(state, { x: radius + 0.1, y: 0.1 });
+    state.camera.lookAt(state.target);
+    return state.camera.quaternion.clone();
   };
-  const h = 1e-6;
-  for (const join of [0.8, 1]) {
-    const left = (angle(join) - angle(join - h)) / h;
-    const right = (angle(join + h) - angle(join)) / h;
-    assert.ok(Math.abs(left - right) < 0.0002, "No speed discontinuity at either join");
+  for (const join of [0.55, 1]) {
+    const h = 1e-5;
+    assert.ok(dragAt(join - h).angleTo(dragAt(join + h)) < 0.0002);
   }
-  let previous = angle(0);
-  for (let i = 1; i <= 200; i++) {
-    const current = angle(i / 100);
-    assert.ok(current >= previous - 1e-12, "Radial motion never reverses");
-    previous = current;
-  }
-  assert.ok(Math.abs(angle(0.5) - Math.asin(0.5)) < 1e-12);
-  assert.equal(angle(1.2), Math.PI / 2);
+  const inside = view(),
+    outside = view();
+  const innerOrbit = new SmoothedTurntable(),
+    outerOrbit = new SmoothedTurntable();
+  innerOrbit.begin(inside, { x: 0.4, y: 0 });
+  outerOrbit.begin(outside, { x: 1.2, y: 0 });
+  innerOrbit.drag(inside, { x: 0.5, y: 0.1 });
+  outerOrbit.drag(outside, { x: 1.3, y: 0.1 });
+  assert.ok(inside.camera.position.distanceTo(view().camera.position) > 1);
+  assert.ok(outside.camera.position.distanceTo(view().camera.position) < 1e-10);
+});
+
+test("blended ring roll passes the opposite bearing without a jump and unwinds", () => {
+  const state = view(),
+    orbit = new SmoothedTurntable(),
+    original = state.camera.position.clone();
+  orbit.begin(state, { x: 0.8, y: 0 });
+  const point = (angle: number) => ({ x: 0.8 * Math.cos(angle), y: 0.8 * Math.sin(angle) });
+  orbit.drag(state, point(Math.PI / 2));
+  orbit.drag(state, point(Math.PI - 0.001));
+  state.camera.lookAt(state.target);
+  const before = state.camera.quaternion.clone();
+  orbit.drag(state, point(Math.PI + 0.001));
+  state.camera.lookAt(state.target);
+  assert.ok(before.angleTo(state.camera.quaternion) < 0.01);
+  for (const angle of [Math.PI - 0.001, Math.PI / 2, 0]) orbit.drag(state, point(angle));
+  assert.ok(state.camera.position.distanceTo(original) < 1e-10);
 });
 
 test("off-center pivot stays at its screen position without a starting jump", () => {
   const state = view(),
-    orbit = new Arcball();
+    orbit = new SmoothedTurntable();
   const pivot = new THREE.Vector3(23, -7, -30);
   state.camera.updateMatrixWorld();
   const projected = pivot.clone().project(state.camera);

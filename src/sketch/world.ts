@@ -7,7 +7,7 @@ import {
   type CameraPose,
   planeCameraPose,
 } from "./camera-motion.js";
-import { Arcball, levelOrientation, type OrbitPointer } from "./camera-orbit.js";
+import { levelOrientation, type OrbitPointer, SmoothedTurntable } from "./camera-orbit.js";
 import { minimumPlaneBounds, type PlaneBounds } from "./plane-bounds.js";
 import {
   type PlaneFrame,
@@ -58,7 +58,7 @@ export class World {
   private pendingDraw: number | null = null;
   private readonly foreground = new SketchForeground();
   private readonly sketchClip = new THREE.Plane();
-  readonly orbit = new Arcball();
+  readonly orbit = new SmoothedTurntable();
   orbitPivot: (press: Point) => THREE.Vector3 = () => this.target.clone();
   private rotationPivot = new THREE.Vector3();
   get currentOrbitPivot(): THREE.Vector3 {
