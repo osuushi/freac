@@ -1,4 +1,5 @@
 import { panCamera, zoomCamera } from "./camera-motion.js";
+import { controlMode } from "./control-preference.js";
 import type { World } from "./world.js";
 
 // Chromium/Electron report trackpad pinch as ctrl+wheel. WebKit also exposes
@@ -99,8 +100,9 @@ function installWheel(
         if (!world.canNavigate() || world.orbit.active || pinching()) return;
         world.cancelCameraMotion();
         const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientHeight : 1;
-        if (event.ctrlKey) {
-          zoom(Math.exp(event.deltaY * unit * 0.01), event.clientX, event.clientY);
+        if (event.ctrlKey || controlMode() === "mouse") {
+          const speed = event.ctrlKey ? 0.01 : 0.002;
+          zoom(Math.exp(event.deltaY * unit * speed), event.clientX, event.clientY);
         } else {
           if (!event.deltaX && !event.deltaY) return;
           panCamera(world, -event.deltaX * unit, -event.deltaY * unit, canvas.clientHeight);

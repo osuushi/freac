@@ -19,7 +19,8 @@ const app = await launchElectron({
 try {
   const desktop = await app.firstWindow();
   await settled(desktop);
-  await desktop.getByRole("button", { name: "iPad", exact: true }).click();
+  await desktop.getByRole("button", { name: "Control", exact: true }).click();
+  await desktop.getByRole("button", { name: "Tablet", exact: true }).click();
   await desktop.getByRole("heading", { name: "Freac on iPad" }).waitFor();
   assert.equal(await desktop.locator("canvas").count(), 0);
   assert.match(await desktop.locator(".wifi-warning").innerText(), /Only use on secure Wi-Fi/);

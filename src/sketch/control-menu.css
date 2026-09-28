@@ -1,0 +1,53 @@
+.control-selector {
+  pointer-events: auto;
+}
+.control-menu {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: 8px;
+  min-width: 170px;
+  border: 1px solid #d6dfe9;
+  border-radius: 10px;
+  background: #fff;
+  color: #293547;
+  box-shadow: 0 8px 24px #24344b20;
+}
+.control-menu fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.control-menu legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.control-menu label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.control-menu label:hover,
+.control-menu label:focus-within {
+  background: #edf2f8;
+}
+.control-menu input {
+  accent-color: #385979;
+}
+.control-menu hr {
+  border: 0;
+  border-top: 1px solid #d6dfe9;
+  margin: 6px 0;
+}
+.control-menu > button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  padding: 9px;
+}

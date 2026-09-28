@@ -10,6 +10,7 @@ export function onModelKeydown(
       if (event.target instanceof Element && event.target.closest(".agent-dock")) return;
       if (
         toolMenuOpen() ||
+        document.querySelector(".control-menu:popover-open") ||
         ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "f")
       )
         return;

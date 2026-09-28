@@ -107,7 +107,16 @@ pointer events. Sketch entry retains its existing transition.
 
 The temporary rotation circle, endpoint markers and diagnostic caption are hidden.
 
-### Trackpad navigation
+### Control preference and trackpad navigation
+
+The header Control popover has exclusive Trackpad and Mouse choices, remembered
+locally with Trackpad as the default. Below a separator, Tablet invokes the existing
+desktop handoff; it is an action, never a stored control mode. Browser-only windows
+show that action disabled. These preferences do not enter the document or Undo.
+Mouse mode maps ordinary wheel input to pointer-anchored zoom and Shift-middle
+drag to the existing orbit gesture. Middle and secondary drags still pan. Command
+orbit and pinch remain available in either mode. There is no automatic device
+classification. A middle press without a drag never replays a selection click.
 
 Two-finger scrolling pans without leaving the sketch plane. Command-click-and-drag
 invokes turntable/ring rotation and exits sketch mode.

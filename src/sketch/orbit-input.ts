@@ -1,3 +1,4 @@
+import { controlMode } from "./control-preference.js";
 import { onModelKeydown } from "./model-keys.js";
 import { pointerDragThreshold } from "./pointer-intent.js";
 import type { World } from "./world.js";
@@ -48,7 +49,9 @@ class OrbitDrag {
     )
       return;
     if (event.metaKey && this.world.transformBoxContains?.(event.clientX, event.clientY)) return;
-    if (event.button !== 0 || !event.metaKey || !this.onViewport(event.target)) return;
+    const commandOrbit = event.button === 0 && event.metaKey;
+    const mouseOrbit = controlMode() === "mouse" && event.button === 1 && event.shiftKey;
+    if ((!commandOrbit && !mouseOrbit) || !this.onViewport(event.target)) return;
     consume(event);
     if (!this.world.canNavigate() || this.drag || this.pending) return;
     this.pending = event;
@@ -92,7 +95,7 @@ class OrbitDrag {
     const start = this.pending;
     if (start && event.pointerId === start.pointerId) {
       this.pending = null;
-      if (event.type === "pointerup") {
+      if (event.type === "pointerup" && start.button === 0) {
         this.replaying = true;
         try {
           start.target?.dispatchEvent(
