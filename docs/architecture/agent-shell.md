@@ -22,7 +22,11 @@ Founder requested suppressing the directory-trust prompt on 2026-09-20. The Code
 preset passes a launch-local `projects` override marking only the canonical current
 Freac workspace trusted, using the documented
 [project trust setting](https://developers.openai.com/codex/config-reference/).
-Custom launches are unchanged. This does not change sandbox or approval settings.
+The preset also passes `project_root_markers=[]`, which confines project-config
+discovery to the launch directory. This prevents a Git repository above the
+workspace (including a home-directory dotfiles repository) from becoming its
+project boundary. Custom launches are unchanged. Sandbox and approval settings
+remain separate from this trust setting.
 
 The document carries notes, decisions, scripts and optional project skills.
 Freac supplies concise AGENTS.md guidance, API types and discoverable CLI help.
