@@ -95,3 +95,10 @@ This is user-created Freac geometry.
   are omitted. Its floor-to-rim distance is 9.78 mm; continuing beyond contact
   reverses a reconstructed cylinder's parameter axis. Tests require full requested
   travel, exact merging, preserved deliberate tiny shelves and closed exports.
+
+- `offset-move-tilted-plate.json` retains the first two exact bodies and topology
+  IDs/signatures from the founder's `2026-09-27T02-37-31-535Z-7a17bfe7` capture.
+  Sketches, unrelated perforated stock, derived meshes and UI history are omitted.
+  The capsule plate is rotated about 0.073° from the world axes; moving its hole
+  or end along world X makes the surrounding perforated faces nonplanar. The boss
+  sits on a spline-sided base carrying preexisting loose vertex tolerances.

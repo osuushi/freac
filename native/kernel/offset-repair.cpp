@@ -29,7 +29,7 @@ void fitVertex(const TopoDS_Vertex& vertex, const std::vector<gp_Pnt>& points, b
     if (retained || original.Distance(fitted) > shapeTolerance ||
         std::any_of(points.begin(), points.end(), [&](const auto& p) {
             return p.Distance(fitted) > tolerance;
-        })) throw std::runtime_error("Shell boundary endpoints cannot meet within the shape adjustment budget");
+        })) throw std::runtime_error("Solid boundary endpoints cannot meet within the shape adjustment budget");
     BRep_Builder().UpdateVertex(vertex, fitted, tolerance);
 }
 }
@@ -45,7 +45,7 @@ void tightenGeneratedBoundaries(const TopoDS_Shape& shape, const TopoDS_Shape& s
             check.Perform();
             if (!BRep_Tool::SameParameter(edge) || !check.IsDone() ||
                 !std::isfinite(check.MaxDistance()) || check.MaxDistance() > tolerance)
-                throw std::runtime_error("Shell boundary does not meet its incident surfaces");
+                throw std::runtime_error("Solid boundary does not meet its incident surfaces");
         }
     }
     TopTools_IndexedMapOfShape edges, vertices;
@@ -73,14 +73,14 @@ void tightenGeneratedBoundaries(const TopoDS_Shape& shape, const TopoDS_Shape& s
         const auto vertex = TopoDS::Vertex(vertices(i));
         if (BRep_Tool::Tolerance(vertex) <= 2e-6) continue;
         if (retained.Contains(vertex) || !checked.Contains(vertex))
-            throw std::runtime_error("Shell could not establish vertex precision");
+            throw std::runtime_error("Could not establish solid vertex precision");
         ShapeFix_ShapeTolerance().SetTolerance(vertex, 2e-6, TopAbs_VERTEX);
     }
     for (int i = 1; i <= edges.Extent(); ++i) {
         const auto edge = TopoDS::Edge(edges(i));
         if (BRep_Tool::Tolerance(edge) <= 2e-6) continue;
         if (retained.Contains(edge) || BRep_Tool::Degenerated(edge))
-            throw std::runtime_error("Shell could not establish edge precision");
+            throw std::runtime_error("Could not establish solid edge precision");
         ShapeFix_ShapeTolerance().SetTolerance(edge, 2e-6, TopAbs_EDGE);
     }
 }

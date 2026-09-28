@@ -10,11 +10,54 @@
 #include <BRep_Tool.hxx>
 #include <GeomConvert.hxx>
 #include <Geom_BSplineCurve.hxx>
+#include <Geom_BezierCurve.hxx>
+#include <TColgp_Array1OfPnt.hxx>
 #include <Geom_TrimmedCurve.hxx>
 #include <GCPnts_AbscissaPoint.hxx>
 
 namespace boundary_move {
 namespace {
+bool tangentRim(const TopoDS_Edge& line, const TopoDS_Vertex& vertex,
+                const gp_Vec& direction, const Edit& edit) {
+    for (int i = 1; i <= edit.sourceEdges.Extent(); ++i) {
+        const auto edge = TopoDS::Edge(edit.sourceEdges(i));
+        if (edge.IsSame(line)) continue;
+        if (edit.affected(edge) && !edit.rigidEdges.Contains(edge)) continue;
+        BRepAdaptor_Curve curve(edge);
+        if (curve.GetType() == GeomAbs_Line) continue;
+        TopoDS_Vertex a, b; TopExp::Vertices(edge, a, b);
+        if (!vertex.IsSame(a) && !vertex.IsSame(b)) continue;
+        gp_Pnt p; gp_Vec tangent;
+        curve.D1(vertex.IsSame(a) ? curve.FirstParameter() : curve.LastParameter(), p, tangent);
+        if (tangent.SquareMagnitude() > 1e-20 && tangent.IsParallel(direction, 1e-7)) return true;
+    }
+    return false;
+}
+TopoDS_Edge connector(const TopoDS_Edge& edge, const TopoDS_Vertex& a, const TopoDS_Vertex& b,
+                      const gp_Pnt& p, const gp_Pnt& q, const Edit& edit) {
+    BRepAdaptor_Curve curve(edge);
+    const bool cubic = (curve.GetType() == GeomAbs_BezierCurve && curve.Bezier()->Degree() == 3) ||
+        (curve.GetType() == GeomAbs_BSplineCurve && curve.BSpline()->Degree() == 3 && curve.BSpline()->NbPoles() == 4);
+    if (curve.GetType() != GeomAbs_Line && !cubic) return {};
+    gp_Pnt point; gp_Vec start, end;
+    curve.D1(curve.FirstParameter(), point, start);
+    curve.D1(curve.LastParameter(), point, end);
+    if (start.SquareMagnitude() < 1e-20 || end.SquareMagnitude() < 1e-20 ||
+        !tangentRim(edge, a, start, edit) || !tangentRim(edge, b, end, edit)) return {};
+    start.Normalize(); end.Normalize();
+    const gp_Vec chord(p, q);
+    if (edit.movedVertices.Contains(a)) start = gp_Vec(edit.transform.VectorialPart() * start.XYZ()).Normalized();
+    if (edit.movedVertices.Contains(b)) end = gp_Vec(edit.transform.VectorialPart() * end.XYZ()).Normalized();
+    if (start.IsParallel(chord, 1e-10) && end.IsParallel(chord, 1e-10))
+        return BRepBuilderAPI_MakeEdge(p, q).Edge();
+    // Unselected connectors between tangent rims may bend as their ends move.
+    // Preserving their tangents avoids forcing a crease into the neighboring face.
+    const double length = chord.Magnitude() / 3;
+    TColgp_Array1OfPnt poles(1, 4);
+    poles(1) = p; poles(2) = p.Translated(start * length);
+    poles(3) = q.Translated(end * -length); poles(4) = q;
+    return BRepBuilderAPI_MakeEdge(new Geom_BezierCurve(poles)).Edge();
+}
 TopoDS_Edge rebuild(const TopoDS_Edge& source, const Edit& edit) {
     auto edge = source;
     edge.Orientation(TopAbs_FORWARD);
@@ -27,6 +70,8 @@ TopoDS_Edge rebuild(const TopoDS_Edge& source, const Edit& edit) {
         return TopoDS::Edge(affineShape(edge, edit.transform));
     const auto p = edit.moved(a), q = edit.moved(b);
     require(p.Distance(q) > tolerance, "Movement collapses a boundary");
+    const auto smooth = connector(edge, a, b, p, q, edit);
+    if (!smooth.IsNull()) return smooth;
     if (BRepAdaptor_Curve(edge).GetType() == GeomAbs_Line)
         return BRepBuilderAPI_MakeEdge(p, q).Edge();
     Standard_Real first, last;
@@ -42,8 +87,13 @@ TopoDS_Edge rebuild(const TopoDS_Edge& source, const Edit& edit) {
 }
 bool samplesOn(const TopoDS_Edge& a, const TopoDS_Edge& b) {
     BRepAdaptor_Curve curve(a);
+    BRepAdaptor_Curve other(b);
     for (int i = 0; i <= 32; ++i) {
         const double t = curve.FirstParameter() + (curve.LastParameter() - curve.FirstParameter()) * i / 32;
+        const double s = other.FirstParameter() + (other.LastParameter() - other.FirstParameter()) * i / 32;
+        // A corresponding point is a direct distance witness. Extrema can miss
+        // the zero-distance solution even for independently copied spline curves.
+        if (curve.Value(t).Distance(other.Value(s)) <= tolerance) continue;
         BRepExtrema_DistShapeShape distance(BRepBuilderAPI_MakeVertex(curve.Value(t)).Vertex(), b);
         if (!distance.IsDone() || distance.Value() > tolerance) return false;
     }
