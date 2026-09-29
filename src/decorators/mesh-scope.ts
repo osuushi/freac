@@ -15,6 +15,9 @@ export class MeshScope {
     this.handles.push(solid);
     return solid;
   }
+  cylinder(height: number, radius: number, segments: number): Manifold {
+    return this.keep(this.runtime.Manifold.cylinder(height, radius, radius, segments));
+  }
   from(mesh: ExportMesh): Manifold {
     validateMesh(mesh);
     const vertices = new Float32Array(mesh.vertices.length * 3);

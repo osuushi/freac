@@ -60,9 +60,11 @@ jobs:
           path: |
             .cache/release-inputs/eigen.tar.gz
             .cache/release-inputs/boost.tar.bz2
+            .cache/mesh-inputs/manifold.tar.gz
+            .cache/mesh-inputs/tbb.tar.gz
             .cache/kernel/occt.tar.gz
             .cache/solver/source
-          key: native-sources-${{ hashFiles('scripts/native-inputs.mjs', 'scripts/setup-native.mjs', 'scripts/setup-kernel.mjs', 'native/solver/sources.json') }}
+          key: native-sources-${{ hashFiles('scripts/mesh-inputs.mjs', 'scripts/native-inputs.mjs', 'scripts/setup-native.mjs', 'scripts/setup-kernel.mjs', 'native/solver/sources.json') }}
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: .cache/kernel/sdk
@@ -90,15 +92,18 @@ jobs:
           npm ci
           npm run setup:native
           npm run setup:kernel
+          npm run setup:mesh
       - name: Save native sources before packaging
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: |
             .cache/release-inputs/eigen.tar.gz
             .cache/release-inputs/boost.tar.bz2
+            .cache/mesh-inputs/manifold.tar.gz
+            .cache/mesh-inputs/tbb.tar.gz
             .cache/kernel/occt.tar.gz
             .cache/solver/source
-          key: native-sources-${{ hashFiles('scripts/native-inputs.mjs', 'scripts/setup-native.mjs', 'scripts/setup-kernel.mjs', 'native/solver/sources.json') }}
+          key: native-sources-${{ hashFiles('scripts/mesh-inputs.mjs', 'scripts/native-inputs.mjs', 'scripts/setup-native.mjs', 'scripts/setup-kernel.mjs', 'native/solver/sources.json') }}
       - name: Save OCCT SDK before packaging
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
         with:

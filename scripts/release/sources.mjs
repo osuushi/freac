@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { meshInputCache, meshInputs } from "../mesh-inputs.mjs";
 import { inputCache, nativeInputs } from "../native-inputs.mjs";
 
 const metadata = JSON.parse(await readFile(".build/release/build.json", "utf8"));
@@ -30,6 +31,13 @@ for (const input of Object.values(nativeInputs)) {
   await writeFile(join(tree, ".cache/release-inputs", input.archive), bytes);
 }
 await mkdir(join(tree, ".cache/kernel"), { recursive: true });
+await mkdir(join(tree, ".cache/mesh-inputs"), { recursive: true });
+for (const [name, input] of Object.entries(meshInputs)) {
+  const bytes = await readFile(join(meshInputCache, `${name}.tar.gz`));
+  if (createHash("sha256").update(bytes).digest("hex") !== input.sha256)
+    throw new Error("Mesh source checksum mismatch");
+  await writeFile(join(tree, ".cache/mesh-inputs", `${name}.tar.gz`), bytes);
+}
 await cp(".cache/kernel/occt.tar.gz", join(tree, ".cache/kernel/occt.tar.gz"));
 await cp(".cache/solver/source", join(tree, ".cache/solver/source"), { recursive: true });
 await cp(".build/release/build.json", join(tree, "RELEASE.json"));

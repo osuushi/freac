@@ -4,16 +4,35 @@ import { isBuiltinDecorator } from "../decorators/builtins.js";
 import { type EnabledDefinition, JavaScriptDecorators } from "../decorators/javascript-hooks.js";
 import { initializeDecoratorRuntime } from "../decorators/javascript-runtime.js";
 import { decoratedMeshes, initializeMeshRuntime } from "../decorators/mesh-runtime.js";
+import { nativeDecoratedMeshes } from "../decorators/native-export.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { type ExportFormat, encodeMeshes, exportBodies } from "./mesh-export.js";
+
+let pending: { resolve: (output: ArrayBuffer) => void; reject: (error: Error) => void } | undefined;
+function integrate(input: ArrayBuffer): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    pending = { resolve, reject };
+    self.postMessage({ nativeMesh: input }, { transfer: [input] });
+  });
+}
 
 self.onmessage = async (
   event: MessageEvent<{
     document: SketchDocument;
     format: ExportFormat;
     sources?: EnabledDefinition[];
+    native?: boolean;
+    nativeResult?: ArrayBuffer;
+    nativeError?: string;
   }>,
 ) => {
+  if (event.data.nativeResult || event.data.nativeError) {
+    const reply = pending;
+    pending = undefined;
+    if (event.data.nativeResult) reply?.resolve(event.data.nativeResult);
+    else reply?.reject(new Error(event.data.nativeError));
+    return;
+  }
   try {
     const { document, format } = event.data;
     const javascript = document.decorators?.some((d) => !isBuiltinDecorator(d.definition))
@@ -24,7 +43,9 @@ self.onmessage = async (
       : undefined;
     const bytes = document.decorators?.length
       ? encodeMeshes(
-          decoratedMeshes(await initializeMeshRuntime(wasmUrl), document, javascript),
+          event.data.native
+            ? await nativeDecoratedMeshes(document, integrate, javascript)
+            : decoratedMeshes(await initializeMeshRuntime(wasmUrl), document, javascript),
           format,
         )
       : exportBodies(document.bodies ?? [], format);

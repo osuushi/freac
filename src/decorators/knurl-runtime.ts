@@ -4,6 +4,7 @@ import { resolveFaces } from "./cylinder.js";
 import { validateBuiltin } from "./edits.js";
 import { knurlMeshes } from "./knurl-mesh.js";
 import { knurlSettings } from "./knurl-settings.js";
+import type { MeshOperations, MeshSolid } from "./mesh-operations.js";
 import { MeshScope } from "./mesh-scope.js";
 import { threadDomain } from "./thread-domain.js";
 import type { DecoratorInstance } from "./types.js";
@@ -24,8 +25,8 @@ export function prepareKnurl(
     geometry: knurlMeshes(instance.frame, faces, knurlSettings(instance.settings), quality),
   };
 }
-export function knurlOperand(
-  scope: MeshScope,
+export function knurlOperand<S extends MeshSolid<S>>(
+  scope: MeshOperations<S>,
   document: SketchDocument,
   instance: DecoratorInstance,
 ) {

@@ -45,6 +45,7 @@ From a checkout of this repository, activate the Node version in `.nvmrc`
 npm ci
 npm run setup:native
 npm run setup:kernel
+npm run setup:mesh
 npm start
 ```
 
