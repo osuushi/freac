@@ -1,14 +1,16 @@
 import type { ExportMesh } from "./export-mesh.js";
 
 export function facetArea(mesh: ExportMesh, triangle: number[]): number {
-  const [a, b, c] = triangle.map((i) => mesh.vertices[i]);
-  const u = b.map((v, i) => v - a[i]),
-    v = c.map((n, i) => n - a[i]);
-  return Math.hypot(
-    u[1] * v[2] - u[2] * v[1],
-    u[2] * v[0] - u[0] * v[2],
-    u[0] * v[1] - u[1] * v[0],
-  );
+  const a = mesh.vertices[triangle[0]],
+    b = mesh.vertices[triangle[1]],
+    c = mesh.vertices[triangle[2]];
+  const ux = b[0] - a[0],
+    uy = b[1] - a[1],
+    uz = b[2] - a[2];
+  const vx = c[0] - a[0],
+    vy = c[1] - a[1],
+    vz = c[2] - a[2];
+  return Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx);
 }
 const edges = ([a, b, c]: number[]) => [
   [a, b],

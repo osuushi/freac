@@ -17,14 +17,20 @@ export class MeshScope {
   }
   from(mesh: ExportMesh): Manifold {
     validateMesh(mesh);
+    const vertices = new Float32Array(mesh.vertices.length * 3);
+    const triangles = new Uint32Array(mesh.triangles.length * 3);
+    for (let i = 0; i < mesh.vertices.length; i++)
+      for (let axis = 0; axis < 3; axis++)
+        vertices[3 * i + axis] = mesh.vertices[i][axis] - this.origin[axis];
+    for (let i = 0; i < mesh.triangles.length; i++)
+      for (let corner = 0; corner < 3; corner++)
+        triangles[3 * i + corner] = mesh.triangles[i][corner];
     return this.keep(
       new this.runtime.Manifold(
         new this.runtime.Mesh({
           numProp: 3,
-          vertProperties: new Float32Array(
-            mesh.vertices.flatMap((point) => point.map((v, i) => v - this.origin[i])),
-          ),
-          triVerts: new Uint32Array(mesh.triangles.flat()),
+          vertProperties: vertices,
+          triVerts: triangles,
         }),
       ),
     );

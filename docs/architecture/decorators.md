@@ -485,6 +485,11 @@ The reproducible worker benchmark is `node tests/decorator-performance.mjs` afte
 `npm run build` and `npx tsc -p tsconfig.test.json`. It creates real native cylinders,
 prepares read-only export tessellations, and measures first/repeated preview and
 3MF generation in fresh headless Chromium/WebKit contexts. The 2026-09-24 macOS
+arm64 measurements below used the then-current Metric default. The benchmark now
+records the actual resolved settings (currently FDM fine, 1 mm pitch) and supplies
+the preview worker's per-instance signatures. Both first and repeat runs create
+fresh workers; repeat measures warm browser/module caches, not retained mesh results.
+The historical macOS
 arm64 measurements for Ø10 mm, 1.5 mm metric pitch were about 0.57–0.62 s for a
 10 mm thread, 3.8–4.5 s for an 80 mm thread, and 5.4–6.1 s for six 20 mm threads.
 These are approximately 2.5–3× faster than the initial export implementation.

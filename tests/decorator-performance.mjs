@@ -104,9 +104,15 @@ try {
                     worker.postMessage({
                       document: kind === "preview" ? scenario.preview : scenario.document,
                       format: "3mf",
+                      live: false,
+                      signatures: scenario.preview.decorators.map((instance) => [
+                        instance.id,
+                        "benchmark",
+                      ]),
                     });
                   });
                   if (data.error) throw new Error(data.error);
+                  if (data.errors?.length) throw new Error(data.errors.join("; "));
                   if (kind === "export" && !(data.bytes?.length > 100))
                     throw new Error("Missing export bytes");
                   if (kind === "preview" && data.meshes?.length !== scenario.count)
@@ -138,7 +144,7 @@ try {
           browser: browserName,
           name: scenario.name,
           diameter: 10,
-          pitch: 1.5,
+          settings: scenario.document.decorators[0].settings,
           length: scenario.length,
           count: scenario.count,
           preparationMs: scenario.preparationMs,

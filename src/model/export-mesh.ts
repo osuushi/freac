@@ -1,4 +1,5 @@
 import type { Body } from "./body.js";
+import { facetArea } from "./collinear-facets.js";
 
 export interface ExportMesh {
   vertices: number[][];
@@ -67,19 +68,27 @@ export function triangleNormal(points: number[][]): number[] {
 
 export function validateMesh(mesh: ExportMesh): void {
   if (!mesh.triangles.length) throw new Error("There is no solid mesh to export");
-  const edges = new Map<string, { count: number; direction: number }>();
+  const edges = new Map<number | string, { count: number; direction: number }>();
+  const stride = mesh.vertices.length;
+  const numericKeys = Number.isSafeInteger(stride * stride);
   for (const triangle of mesh.triangles) {
-    triangleNormal(triangle.map((index) => mesh.vertices[index]));
+    const area = facetArea(mesh, triangle);
+    if (!Number.isFinite(area) || area === 0)
+      throw new Error("Mesh contains a degenerate triangle");
     for (let i = 0; i < 3; i++) {
       const a = triangle[i],
         b = triangle[(i + 1) % 3];
-      const key = a < b ? `${a},${b}` : `${b},${a}`;
+      const low = Math.min(a, b),
+        high = Math.max(a, b);
+      // Exact integer pairs avoid allocating a string for every triangle edge.
+      const key = numericKeys ? low * stride + high : `${low},${high}`;
       const edge = edges.get(key) ?? { count: 0, direction: 0 };
       edge.count++;
       edge.direction += a < b ? 1 : -1;
       edges.set(key, edge);
     }
   }
-  if ([...edges.values()].some((edge) => edge.count !== 2 || edge.direction !== 0))
-    throw new Error("The solid mesh is not closed and consistently oriented; export was stopped");
+  for (const edge of edges.values())
+    if (edge.count !== 2 || edge.direction !== 0)
+      throw new Error("The solid mesh is not closed and consistently oriented; export was stopped");
 }
