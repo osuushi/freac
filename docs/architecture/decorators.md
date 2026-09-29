@@ -496,6 +496,10 @@ Acceptance uses real geometry and ordinary pointer/keyboard routes.
 Measure preview and export on short/long threads and batches; do not promise
 near-instant generation before measuring cold and warm worker runs.
 
+3MF uses lossless ZIP level 3; compression changes archive size, not mesh precision
+or contents. Set `FREAC_BENCH_COMPRESSION=1` for a level 0/1/3/6 comparison
+on identical exported contents, with decompressed-byte verification.
+
 The reproducible worker benchmark is `node tests/decorator-performance.mjs` after
 `npm run build` and `npx tsc -p tsconfig.test.json`. It creates real native cylinders,
 prepares read-only export tessellations, and measures first/repeated preview and

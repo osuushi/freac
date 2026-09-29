@@ -89,7 +89,8 @@ function threeMF(meshes: ExportMesh[], timing?: ExportTiming): Uint8Array<ArrayB
     ),
   };
   timing?.mark("threeMfUtf8");
-  const bytes = new Uint8Array(zipSync(files));
+  // Level 3 keeps lossless geometry while avoiding expensive high-compression searches.
+  const bytes = new Uint8Array(zipSync(files, { level: 3 }));
   timing?.mark("threeMfZip");
   return bytes;
 }

@@ -1,5 +1,5 @@
 /** Serialized by Playwright into an isolated browser page. Includes worker startup and transport. */
-export async function measureExportWorkers({ scenario, previewPath, exportPath }) {
+export async function measureExportWorkers({ scenario, previewPath, exportPath, compressionPath }) {
   const { default: PreviewWorker } = await import(previewPath);
   const { default: ExportWorker } = await import(exportPath);
   const results = [];
@@ -61,6 +61,10 @@ export async function measureExportWorkers({ scenario, previewPath, exportPath }
             : { bytes: data.bytes.length }),
           ...(kind === "native-export" ? { integrationMs, timings: data.timings } : {}),
         });
+        if (compressionPath && kind === "native-export" && temperature === "warm") {
+          const { measureCompression } = await import(compressionPath);
+          results.at(-1).compression = measureCompression(data.bytes);
+        }
       } finally {
         clearTimeout(timer);
         worker.terminate();
