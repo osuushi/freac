@@ -1,5 +1,6 @@
 import type { Body } from "../model/body.js";
 import { exportMesh } from "../model/export-mesh.js";
+import type { ExportTiming } from "../model/export-timing.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { isBuiltinDecorator, knurlDefinition } from "./builtins.js";
 import { resolveFaces } from "./cylinder.js";
@@ -58,8 +59,10 @@ export function decoratedBody<S extends MeshSolid<S>>(
   body: Body,
   instances: DecoratorInstance[],
   javascript?: JavaScriptDecorators,
+  timing?: ExportTiming,
 ): S {
   let solid = scope.from(exportMesh(body));
+  timing?.mark("baseMesh");
   for (const instance of instances) {
     if (instance.definition === gearDefinition) {
       const operands = gearOperands(scope, document, instance, "export");

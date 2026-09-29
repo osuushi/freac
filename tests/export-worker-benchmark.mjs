@@ -42,6 +42,7 @@ export async function measureExportWorkers({ scenario, previewPath, exportPath }
             format: "3mf",
             native: kind === "native-export",
             live: false,
+            profile: kind === "native-export",
             signatures: scenario.preview.decorators.map((instance) => [instance.id, "benchmark"]),
           });
         });
@@ -58,7 +59,7 @@ export async function measureExportWorkers({ scenario, previewPath, exportPath }
           ...(kind === "preview"
             ? { triangles: data.meshes.reduce((n, m) => n + m.indices.length / 3, 0) }
             : { bytes: data.bytes.length }),
-          ...(kind === "native-export" ? { integrationMs } : {}),
+          ...(kind === "native-export" ? { integrationMs, timings: data.timings } : {}),
         });
       } finally {
         clearTimeout(timer);

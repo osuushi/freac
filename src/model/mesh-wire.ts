@@ -1,6 +1,7 @@
 import type { MeshNode, MeshPlan } from "../decorators/mesh-plan.js";
 import type { Vector } from "../sketch/planes.js";
 import { type ExportMesh, validateMesh } from "./export-mesh.js";
+import type { ExportTiming } from "./export-timing.js";
 import { packedMesh } from "./packed-mesh.js";
 
 const magic = 0x46524d31;
@@ -84,6 +85,7 @@ export function decodeNativeMesh(
   buffer: ArrayBuffer,
   origin: Vector,
   precision: number,
+  timing?: ExportTiming,
 ): ExportMesh {
   if (buffer.byteLength < 20 || buffer.byteLength > meshWireLimit)
     throw new Error("Invalid native export reply");
@@ -109,7 +111,10 @@ export function decodeNativeMesh(
     mesh.triangles.push(triangle);
     offset += 12;
   }
+  timing?.mark("wireDecode");
   const packed = packedMesh(mesh, rounding);
+  timing?.mark("meshPacking");
   validateMesh(packed);
+  timing?.mark("meshValidation");
   return { ...packed, precision };
 }

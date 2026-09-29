@@ -6,6 +6,7 @@ import { initializeDecoratorRuntime } from "../decorators/javascript-runtime.js"
 import { decoratedMeshes, initializeMeshRuntime } from "../decorators/mesh-runtime.js";
 import { nativeDecoratedMeshes } from "../decorators/native-export.js";
 import type { SketchDocument } from "../sketch/document.js";
+import { ExportTiming } from "./export-timing.js";
 import { type ExportFormat, encodeMeshes, exportBodies } from "./mesh-export.js";
 
 let pending: { resolve: (output: ArrayBuffer) => void; reject: (error: Error) => void } | undefined;
@@ -22,6 +23,7 @@ self.onmessage = async (
     format: ExportFormat;
     sources?: EnabledDefinition[];
     native?: boolean;
+    profile?: boolean;
     nativeResult?: ArrayBuffer;
     nativeError?: string;
   }>,
@@ -34,6 +36,7 @@ self.onmessage = async (
     return;
   }
   try {
+    const timing = event.data.profile ? new ExportTiming() : undefined;
     const { document, format } = event.data;
     const javascript = document.decorators?.some((d) => !isBuiltinDecorator(d.definition))
       ? new JavaScriptDecorators(
@@ -41,15 +44,18 @@ self.onmessage = async (
           event.data.sources,
         )
       : undefined;
+    timing?.mark("runtimeSetup");
     const bytes = document.decorators?.length
       ? encodeMeshes(
           event.data.native
-            ? await nativeDecoratedMeshes(document, integrate, javascript)
+            ? await nativeDecoratedMeshes(document, integrate, javascript, timing)
             : decoratedMeshes(await initializeMeshRuntime(wasmUrl), document, javascript),
           format,
+          timing,
         )
       : exportBodies(document.bodies ?? [], format);
-    self.postMessage({ bytes }, { transfer: [bytes.buffer] });
+    timing?.mark("finish");
+    self.postMessage({ bytes, timings: timing?.milliseconds }, { transfer: [bytes.buffer] });
   } catch (error) {
     self.postMessage({ error: error instanceof Error ? error.message : String(error) });
   }
