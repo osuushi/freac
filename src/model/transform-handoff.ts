@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { pick } from "../sketch/picking.js";
+import { BufferedPointer } from "./buffered-pointer.js";
 
 /** Finish a scale preview before handing the same press to an arrow or sphere. */
 export function installTransformHandoff(
@@ -21,39 +22,18 @@ export function installTransformHandoff(
       if (!widget && hit?.kind !== "translate" && hit?.kind !== "rotate") return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      let released = false,
-        last = { x: event.clientX, y: event.clientY };
-      const buffer = new AbortController();
-      const track = (next: PointerEvent) => {
-        if (next.pointerId !== event.pointerId) return;
-        last = { x: next.clientX, y: next.clientY };
-        released ||= next.type === "pointerup";
-      };
-      window.addEventListener("pointermove", track, { signal: buffer.signal, capture: true });
-      window.addEventListener("pointerup", track, { signal: buffer.signal, capture: true });
+      const buffer = new BufferedPointer(event, signal);
       void finish().then(
         (done) => {
-          buffer.abort();
-          if (!done || !(target instanceof Element) || !target.isConnected) return;
-          const replay = (type: string, position: { x: number; y: number }) =>
-            new PointerEvent(type, {
-              bubbles: true,
-              cancelable: true,
-              pointerId: event.pointerId,
-              pointerType: event.pointerType,
-              button: event.button,
-              buttons: type === "pointerup" ? 0 : event.buttons,
-              clientX: position.x,
-              clientY: position.y,
-              metaKey: event.metaKey,
-              shiftKey: event.shiftKey,
-              altKey: event.altKey,
-              ctrlKey: event.ctrlKey,
-            });
+          buffer.dispose();
+          if (!done || !buffer.valid || !(target instanceof Element) || !target.isConnected) return;
+          const { released, position: last } = buffer;
           if (released && Math.hypot(last.x - event.clientX, last.y - event.clientY) > 3) {
-            target.dispatchEvent(replay("pointerdown", { x: event.clientX, y: event.clientY }));
-            window.dispatchEvent(replay("pointermove", last));
-            window.dispatchEvent(replay("pointerup", last));
+            target.dispatchEvent(
+              buffer.event("pointerdown", { x: event.clientX, y: event.clientY }),
+            );
+            window.dispatchEvent(buffer.event("pointermove"));
+            window.dispatchEvent(buffer.event("pointerup"));
             return;
           }
           if (released && target.matches(".move-anchor")) {
@@ -65,10 +45,11 @@ export function installTransformHandoff(
               target.dispatchEvent(new Event("transform-numeric-tap"));
             return;
           }
-          target.dispatchEvent(replay("pointerdown", { x: event.clientX, y: event.clientY }));
+          target.dispatchEvent(buffer.event("pointerdown", { x: event.clientX, y: event.clientY }));
         },
         (error: unknown) => {
-          buffer.abort();
+          buffer.dispose();
+          if (!buffer.valid) return;
           editor.message = error instanceof Error ? error.message : "Transform handoff failed";
           editor.refresh();
         },

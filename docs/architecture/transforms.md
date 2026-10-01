@@ -202,6 +202,12 @@ its established gesture completion rules. Identity and rejected edits preserve
 Redo. Multiple whole sketches can move or rotate together, including Option-copy,
 in one Undo step.
 
+While scale completion is pending, the buffered Move press retains its latest
+coordinates and modifiers. Pointer cancellation, window focus loss or controller
+disposal abandons that press; completed scale geometry remains accepted. A normal
+pointer release retains the gesture endpoint for replay. Leaving a numeric field
+does not count as losing window focus.
+
 DocumentOwner applies the exact requested affine coordinates and validates the
 existing constraints; it does not ask the solver to deform the selection to fit.
 Incompatible locks or external relationships reject visibly without silent removal.
