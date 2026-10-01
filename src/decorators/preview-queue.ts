@@ -1,6 +1,10 @@
 import type { SketchDocument } from "../sketch/document.js";
 import type { EnabledDefinition } from "./javascript-hooks.js";
-import { previewFingerprint, previewSignatures } from "./preview-signatures.js";
+import {
+  PreviewSignatureCache,
+  previewFingerprint,
+  previewSignatures,
+} from "./preview-signatures.js";
 import type { PackedPreviewMesh } from "./preview-wire.js";
 import type { FaceReference } from "./types.js";
 
@@ -26,6 +30,7 @@ export class PreviewQueue {
   private pending: PreviewRequest | null = null;
   private sourcesKey = "";
   private completedFingerprint = "";
+  private signatureCache = new PreviewSignatureCache();
 
   constructor(
     private onResult: (response: PreviewResponse, request: PreviewRequest) => void,
@@ -37,7 +42,7 @@ export class PreviewQueue {
     sources: readonly EnabledDefinition[],
     live: boolean,
     preemptSettled = false,
-    signatures = previewSignatures(document, JSON.stringify(sources)),
+    signatures = previewSignatures(document, JSON.stringify(sources), this.signatureCache),
   ): void {
     const nextSources = JSON.stringify(sources);
     const fingerprint = previewFingerprint(signatures, live);

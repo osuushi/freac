@@ -312,7 +312,12 @@ faces, so moving an unrelated body neither regenerates their mesh nor restarts
 their transition. Live/full-quality state is tracked per group: beginning or ending
 a gesture changes only groups whose support changed or whose own live preview must
 settle. Identical candidate geometry is skipped. Custom previews can
-inspect the full document, so their signature includes it. Each changed group
+inspect the full document, so their signature includes it and the enabled-source
+key. Each view and worker queue memoizes serialized inputs by immutable support
+body/document identity. Multiple thread groups sharing a body serialize its faces
+once; unchanged support objects reuse those bytes through selection and unrelated
+edits. This cache owns only derived strings and keeps the existing signature
+dependencies and bytes. Transport copies may need serialization again. Each changed group
 fades in over 100 ms. A stale preview fades out over 200 ms after its fade-in
 finishes, or immediately when a newer preview replaces it. The sketch foreground
 pass renders the same preview with its complementary clip, keeping it visible
