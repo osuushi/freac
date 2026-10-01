@@ -72,6 +72,21 @@ SDK, the worktree builds its own cache. Old kernel-cache symlinks are unlinked
 without deleting the main cache. Explicit `OCCT_ROOT` overrides are preserved.
 Its macOS defaults use Node's architecture and deployment target `14.0`,
 matching the arm64 release SDK. Explicit environment overrides are preserved.
+The macOS hook runs `bash scripts/setup-worktree.sh` after activating Node.
+Install optional compiler caching with `brew install ccache`. Setup automatically
+uses it when available, with a shared 2 GB cache in the main checkout's
+`.cache/ccache` and checkout-relative compiler paths. The first compilation fills
+the cache; later worktrees can reuse matching compiler outputs while retaining
+independent CMake build directories. `CMAKE_CXX_COMPILER_LAUNCHER`, `CCACHE_DIR`,
+`CCACHE_BASEDIR` and `CCACHE_MAXSIZE` overrides are preserved.
+Mesh archives are shared by SHA-256 under the main checkout's `.cache/mesh-archives`
+(`FREAC_MESH_ARCHIVE_CACHE` overrides this); extraction remains checkout-local.
+Existing local mesh archives seed that cache after checksum verification.
+Setup uses `npm ci --prefer-offline --no-audit`; run `npm audit` separately for
+dependency auditing. It reports npm/native phase durations, total setup duration
+and cumulative compiler cache statistics. Missing ccache is reported and falls
+back to normal compilation. To compare worktrees, use cache-statistics deltas;
+unrelated concurrent builds also contribute to the shared counters.
 Using Node's architecture avoids selecting Intel output under a translated shell.
 The ordinary source-build route still checks its SDK marker against the build
 settings, pinned setup sources and toolchain.
