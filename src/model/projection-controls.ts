@@ -106,7 +106,7 @@ export class ProjectionControls {
     this.sources = projectionSelection(e);
     this.previousSelection = e.selected.targets;
     this.previousModels = e.modeling.targets;
-    await e.commitNumeric();
+    await e.numeric.commit();
     this.lease = e.interactions.acquire("projection", () => this.cancel(), undefined, {
       navigation: "when-released",
     });

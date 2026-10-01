@@ -9,7 +9,6 @@ import {
   type SketchDocument,
   samePlane,
 } from "./document.js";
-import type { Quantity } from "./drag-state.js";
 import { actionIntent, type EditAction } from "./edit-intent.js";
 import { editNotice } from "./edit-notice.js";
 import { performHistory } from "./editor-history.js";
@@ -17,6 +16,7 @@ import { replaceSelection } from "./editor-selection.js";
 import { installWorkspaceSync, WorkspaceEntry } from "./editor-workspace.js";
 import { ModelClient } from "./model-client.js";
 import { ModelSelection, modelingSketch } from "./model-selection.js";
+import type { NumericEdit } from "./numeric-edit.js";
 import { type Hit, hitIds } from "./picking.js";
 import type { Point } from "./planes.js";
 import { type PointMenu, selectedPointHits } from "./point-selection.js";
@@ -69,7 +69,6 @@ export class SketchEditor {
   transformDistance = 0;
   transformRotation = false;
   rotationPreview: number | null = null;
-  focusQuantity: (quantity: Quantity, duplicate?: boolean) => void = () => {};
   creationArmed = false;
   pointMenu: PointMenu | null = null;
   pointHover: Hit | null = null;
@@ -101,10 +100,10 @@ export class SketchEditor {
   }
   activeHandle: RectangleHandle | undefined;
   snap: { x: number; y: number; label: string } | null = null;
-  commitNumeric: () => Promise<void> = async () => {};
-  cancelNumeric: () => void = () => {};
-  editDuringDrag: (quantity: Quantity, value: number) => void = () => {};
-  constructor(readonly world: World) {
+  constructor(
+    readonly world: World,
+    readonly numeric: NumericEdit,
+  ) {
     world.changed.add(() => {
       this.transformAnchor = null;
     });
@@ -151,7 +150,7 @@ export class SketchEditor {
   }
   async setTool(tool: Tool): Promise<void> {
     if (this.blocked || this.isDragging) return;
-    await this.commitNumeric();
+    await this.numeric.commit();
     await this.interactions.cancel();
     this.selected.replacePoints([]);
     this.pointMenu = null;
@@ -171,7 +170,7 @@ export class SketchEditor {
   }
   async activateMove(): Promise<void> {
     if (!this.selectionOwners.size || this.blocked || this.isDragging) return;
-    await this.commitNumeric();
+    await this.numeric.commit();
     this.tool = "select";
     this.creationArmed = false;
     this.moveMode = true;
@@ -236,7 +235,7 @@ export class SketchEditor {
   }
   async remove(): Promise<void> {
     if (this.blocked || this.isDragging) return;
-    this.cancelNumeric();
+    this.numeric.cancel();
     await this.interactions.cancel();
     const sketch = this.sketch;
     if (sketch)
@@ -249,7 +248,7 @@ export class SketchEditor {
   }
   async clear(): Promise<void> {
     if (this.blocked || this.isDragging) return;
-    this.cancelNumeric();
+    this.numeric.cancel();
     await this.interactions.cancel();
     const sketch = this.sketch;
     if (sketch) await this.store.request({ kind: "clear", sketchId: sketch.id });
@@ -257,7 +256,7 @@ export class SketchEditor {
   }
   async newDocument(): Promise<void> {
     if (this.blocked || this.isDragging) return;
-    this.cancelNumeric();
+    this.numeric.cancel();
     await this.interactions.cancel();
     await this.store.request({ kind: "new" });
     this.bodiesVisible = true;
@@ -267,7 +266,7 @@ export class SketchEditor {
   }
   escape(): void {
     if (this.moveMode && !this.isDragging) {
-      this.cancelNumeric();
+      this.numeric.cancel();
       this.moveMode = false;
       this.transformAxis = null;
       this.transformRotation = false;

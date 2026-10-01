@@ -2,21 +2,21 @@ import { fileControls } from "../model/file-controls.js";
 import { fixtureControls } from "../model/fixture-controls.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { sketchTools } from "../tools/sketch-tools.js";
-import type { Dimensions } from "./dimensions.js";
 import type { SketchEditor } from "./editor.js";
 import { onModelKeydown } from "./model-keys.js";
+import type { NumericEdit } from "./numeric-edit.js";
 import { focusNumericField } from "./numeric-focus.js";
 
 export function installControls(
   editor: SketchEditor,
-  dimensions: Dimensions,
+  numeric: NumericEdit,
   app: HTMLElement,
 ): () => void {
   const disposeTools = sketchTools(editor);
   const disposeFiles = fileControls(editor, app);
   const disposeFixtures =
     import.meta.env.DEV || window.freacFixture ? fixtureControls(editor, app) : () => {};
-  const abort = installShortcuts(editor, dimensions, app);
+  const abort = installShortcuts(editor, numeric, app);
   window.addEventListener(
     "blur",
     () => {
@@ -33,7 +33,7 @@ export function installControls(
 }
 function installShortcuts(
   editor: SketchEditor,
-  dimensions: Dimensions,
+  numeric: NumericEdit,
   app: HTMLElement,
 ): AbortController {
   const abort = new AbortController();
@@ -43,7 +43,7 @@ function installShortcuts(
         if (event.defaultPrevented) return;
         if (editor.moveMode && editor.sketch && !editor.interactions.current) {
           event.preventDefault();
-          void dimensions.focusTransform(event.shiftKey);
+          void numeric.focusTransform(event.shiftKey);
         } else if (focusNumericField(app, event.shiftKey)) event.preventDefault();
         return;
       }
@@ -101,7 +101,7 @@ function installShortcuts(
       }
       if (/^[0-9.]$/.test(event.key) && !editor.blocked) {
         event.preventDefault();
-        dimensions.focusFirst(event.key);
+        numeric.focusFirst(event.key);
       }
     },
     { signal: abort.signal },

@@ -8,10 +8,11 @@ import { dimensionLock, dimensionLockTarget, toggleDimensionLock } from "./dimen
 import { changeDimension, dimensionValues } from "./dimension-values.js";
 import type { Quantity } from "./drag-state.js";
 import type { SketchEditor } from "./editor.js";
+import type { NumericFields } from "./numeric-edit.js";
 import { focusNumericField } from "./numeric-focus.js";
 import { sketchIcon } from "./sketch-icons.js";
 
-export class Dimensions {
+export class Dimensions implements NumericFields {
   private key = "";
   private disposeTools: () => void;
   private duplicate = false;
@@ -52,12 +53,6 @@ export class Dimensions {
     );
     this.disposeTools = () => {
       for (const dispose of disposers) dispose();
-    };
-    editor.commitNumeric = () => this.commitFocused();
-    editor.cancelNumeric = () => this.cancel();
-    editor.focusQuantity = (quantity, duplicate = false) => {
-      this.fields.find((f) => f.quantity === quantity)?.input.focus();
-      this.duplicate = duplicate;
     };
     document.addEventListener(
       "pointerdown",
@@ -218,7 +213,7 @@ export class Dimensions {
       this.editor.refresh();
     }
   }
-  private async commitFocused(): Promise<void> {
+  async commitFocused(): Promise<void> {
     const field = this.fields.find((item) => item.input === document.activeElement);
     if (field) await this.commit(field.input, field.quantity);
   }
@@ -259,8 +254,12 @@ export class Dimensions {
     e.transformAxis = next === 0 ? "x" : next === 1 ? "y" : null;
     e.transformRotation = next === 2;
     e.refresh();
-    e.focusQuantity(next === 0 ? "translateX" : next === 1 ? "translateY" : "angle");
+    this.focus(next === 0 ? "translateX" : next === 1 ? "translateY" : "angle");
     return true;
+  }
+  focus(quantity: Quantity, duplicate = false): void {
+    this.fields.find((field) => field.quantity === quantity)?.input.focus();
+    this.duplicate = duplicate;
   }
   focusFirst(initial?: string): void {
     const input = this.fields[0]?.input;

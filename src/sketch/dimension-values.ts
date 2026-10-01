@@ -124,7 +124,7 @@ export async function changeDimension(
   )
     throw new Error("Enter a valid dimension");
   if (editor.isDragging) {
-    editor.editDuringDrag(quantity, value);
+    editor.numeric.duringDrag(quantity, value);
     return;
   }
   const sketch = editor.sketch,

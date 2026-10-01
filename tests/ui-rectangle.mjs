@@ -171,7 +171,7 @@ async function planesAndCancellation(page) {
   assert.equal(JSON.stringify((await inspect(page)).document), beforeCancel);
 }
 
-async function numericDuringDrag(page) {
+export async function numericDuringDrag(page) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");

@@ -117,7 +117,7 @@ async function runDocumentCommand(
     return;
   }
   if (leaving && !editor.isDragging && !editor.finishing) {
-    await editor.commitNumeric();
+    await editor.numeric.commit();
     const interaction = editor.interactions.current;
     if (interaction?.finish) {
       if (!(await interaction.finish())) return;

@@ -15,7 +15,7 @@ export function selectedCorner(editor: SketchEditor): AngleConstraint | null {
 }
 export async function toggleCornerLock(editor: SketchEditor): Promise<void> {
   if (editor.blocked || editor.isDragging) return;
-  await editor.commitNumeric();
+  await editor.numeric.commit();
   const corner = selectedCorner(editor),
     sketch = editor.sketch;
   if (!sketch || !corner) return;

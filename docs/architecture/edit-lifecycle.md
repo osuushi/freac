@@ -50,6 +50,12 @@ Numeric fields acquire an edit while focused. Tab transfers that ownership;
 numeric entry during a held drag belongs to the existing pointer edit. Acceptance
 and discard finish before ownership is released. Waiting for a final calculation
 remains cancellable; an acceptance already sent to the backend completes normally.
+The composition root passes a named NumericEdit collaborator to the editor and
+connects Dimensions and PointerGestures as its field and gesture owners before
+installing input shortcuts. Field focus, commit/cancel and held-drag quantity
+changes use this contract; controllers do not install mutable callback slots on
+the editor. Missing or disposed owners fail explicitly. Each owner retains its
+existing edit lifetime and the composition releases the references on teardown.
 
 This release-time acceptance applies to sketch edits, not to every tool. Extrusion
 retains one candidate across successive drags/parameter edits until the user

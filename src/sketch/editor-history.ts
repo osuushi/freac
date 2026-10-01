@@ -20,7 +20,7 @@ export async function performHistory(
     return;
   }
   if (editor.blocked || editor.isDragging) return;
-  editor.cancelNumeric();
+  editor.numeric.cancel();
   await editor.interactions.cancel();
   await editor.store.settled();
   await editor.store.request({ kind: direction });
