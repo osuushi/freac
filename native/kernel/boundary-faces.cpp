@@ -62,7 +62,7 @@ TopoDS_Face trimRuled(const TopoDS_Face& face, const std::vector<TopoDS_Edge>& e
         double first, last, precision = 1e-7;
         const auto curve = BRep_Tool::Curve(edge, first, last);
         const auto pcurve = GeomProjLib::Curve2d(curve, first, last, surface, precision);
-        require(!pcurve.IsNull() && std::isfinite(precision) && precision <= tolerance,
+        require(!pcurve.IsNull() && std::isfinite(precision) && precision <= boundaryDistanceMm,
                 "Cannot trim the ruled surface within boundary tolerance");
         BRep_Builder().UpdateEdge(edge, pcurve, face, 1e-7);
         outline.Add(edge);

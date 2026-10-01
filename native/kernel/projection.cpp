@@ -1,5 +1,6 @@
 #include "kernel.h"
 #include "sketch-curve.h"
+#include "geometry-policy.h"
 #include <BRep_Tool.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
@@ -29,6 +30,7 @@
 #include <stdexcept>
 
 namespace {
+using namespace geometry_policy;
 
 struct Output {
     std::ostream& out;
@@ -56,7 +58,7 @@ bool linearImage(Output& output, const Handle(Geom_Curve)& source, const Handle(
     GeomAdaptor_Curve curve(source);
     const double first=curve.FirstParameter(), last=curve.LastParameter();
     auto a=onPlane(curve.Value(first),plane), b=onPlane(curve.Value(last),plane);
-    if (curve.GetType()==GeomAbs_Circle && std::abs(curve.Circle().Axis().Direction().Dot(plane->Pln().Axis().Direction()))<1e-12) {
+    if (curve.GetType()==GeomAbs_Circle && std::abs(curve.Circle().Axis().Direction().Dot(plane->Pln().Axis().Direction()))<edgeOnDirectionDot) {
         const auto circle=curve.Circle(); const auto center=onPlane(circle.Location(),plane);
         const gp_Vec u(center,onPlane(circle.Location().Translated(gp_Vec(circle.XAxis().Direction())*circle.Radius()),plane));
         const gp_Vec v(center,onPlane(circle.Location().Translated(gp_Vec(circle.YAxis().Direction())*circle.Radius()),plane));
@@ -70,7 +72,7 @@ bool linearImage(Output& output, const Handle(Geom_Curve)& source, const Handle(
         }
         a=center.Translated(gp_Vec(direction)*low); b=center.Translated(gp_Vec(direction)*high);
     } else if(curve.GetType()!=GeomAbs_Line) return false;
-    if(a.Distance(b)<1e-7) throw std::runtime_error("Selected edge projects to a point");
+    if(a.Distance(b)<projectionCollapsedLengthMm) throw std::runtime_error("Selected edge projects to a point");
     output.begin("segment"); output.point2("a",a); output.point2("b",b); output.out << '}'; return true;
 }
 struct Endpoints { gp_Pnt a, b; };
@@ -84,14 +86,14 @@ void projectCurve(Output& output, const Handle(Geom_Curve)& source, const Handle
     const auto a = joined ? joined->a : curve.Value(first);
     const auto b = joined ? joined->b : curve.Value(last);
     const double correction = std::max(a.Distance(curve.Value(first)), b.Distance(curve.Value(last)));
-    if (correction > 0.0005) throw std::runtime_error("Cross section endpoint tolerance exceeded");
+    if (correction > projectionEndpointMm) throw std::runtime_error("Cross section endpoint tolerance exceeded");
     if (curve.GetType() == GeomAbs_Line) {
-        if (a.Distance(b)<1e-7) throw std::runtime_error("Selected edge projects to a point");
+        if (a.Distance(b)<projectionCollapsedLengthMm) throw std::runtime_error("Selected edge projects to a point");
         output.begin("segment"); output.point2("a",a); output.point2("b",b); output.out << '}'; return;
     }
     if (curve.GetType() == GeomAbs_Circle) {
         const auto circle=curve.Circle(); const double sweep=last-first;
-        if (sweep >= 2*std::acos(-1.0)-1e-9) {
+        if (sweep >= 2*std::acos(-1.0)-fullCircleAngleRad) {
             output.begin("circle"); output.point2("center",circle.Location()); output.out << ",\"radius\":" << circle.Radius() << '}';
         } else {
             const double sign=circle.Axis().Direction().Dot(plane->Pln().Axis().Direction())>0 ? 1 : -1;
@@ -99,7 +101,7 @@ void projectCurve(Output& output, const Handle(Geom_Curve)& source, const Handle
             // Bound the center/radius change caused by joining analytic arc endpoints.
             const double amplification = 1 + std::abs((1-bulge*bulge)/(2*bulge))
                 + std::abs((1+bulge*bulge)/(2*bulge));
-            if (correction*amplification > 0.001) throw std::runtime_error("Cross section arc tolerance exceeded");
+            if (correction*amplification > projectionBudgetMm) throw std::runtime_error("Cross section arc tolerance exceeded");
             output.begin("arc"); output.point2("a",a); output.point2("b",b);
             output.out << ",\"bulge\":" << bulge << '}';
         }
@@ -110,18 +112,18 @@ void projectCurve(Output& output, const Handle(Geom_Curve)& source, const Handle
         part->SetPole(1,a); part->SetPole(part->NbPoles(),b); output.cubic(part); return;
     }
     // Half the 0.001 mm budget is reserved for endpoint correction. Failure is explicit.
-    GeomConvert_ApproxCurve approximate(projected, 0.0005, GeomAbs_C1, 256, 3);
-    if (!approximate.IsDone() || !approximate.HasResult() || approximate.MaxError()>0.0005)
+    GeomConvert_ApproxCurve approximate(projected, projectionFitMm, GeomAbs_C1, 256, 3);
+    if (!approximate.IsDone() || !approximate.HasResult() || approximate.MaxError()>projectionFitMm)
         throw std::runtime_error("Projection exceeds the 0.001 mm approximation tolerance");
     GeomConvert_BSplineCurveToBezierCurve pieces(approximate.Curve());
     for (int i=1; i<=pieces.NbArcs(); ++i) {
         auto piece=pieces.Arc(i);
         if (i==1) {
-            if (piece->StartPoint().Distance(a)>0.0005) throw std::runtime_error("Projection endpoint tolerance exceeded");
+            if (piece->StartPoint().Distance(a)>projectionEndpointMm) throw std::runtime_error("Projection endpoint tolerance exceeded");
             piece->SetPole(1,a);
         }
         if (i==pieces.NbArcs()) {
-            if (piece->EndPoint().Distance(b)>0.0005) throw std::runtime_error("Projection endpoint tolerance exceeded");
+            if (piece->EndPoint().Distance(b)>projectionEndpointMm) throw std::runtime_error("Projection endpoint tolerance exceeded");
             piece->SetPole(piece->NbPoles(),b);
         }
         output.cubic(piece);

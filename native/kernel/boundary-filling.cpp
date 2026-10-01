@@ -26,7 +26,7 @@ TopoDS_Face fillFace(const TopoDS_Face& face, const std::vector<TopoDS_Edge>& ed
         for (TopExp_Explorer it(hole, TopAbs_EDGE); it.More(); it.Next())
             filling.Add(TopoDS::Edge(it.Current()), GeomAbs_C0, false);
     filling.Build();
-    require(filling.IsDone() && filling.G0Error() <= tolerance,
+    require(filling.IsDone() && filling.G0Error() <= boundaryDistanceMm,
             "Cannot fit a surface within the boundary tolerance");
     auto result = TopoDS::Face(filling.Shape());
     if (!perforated) {
@@ -41,7 +41,7 @@ TopoDS_Face fillFace(const TopoDS_Face& face, const std::vector<TopoDS_Edge>& ed
             double first, last, precision = 1e-7;
             const auto spatial = BRep_Tool::Curve(edge, first, last);
             const auto pcurve = GeomProjLib::Curve2d(spatial, first, last, support, precision);
-            require(!pcurve.IsNull() && std::isfinite(precision) && precision <= tolerance,
+            require(!pcurve.IsNull() && std::isfinite(precision) && precision <= boundaryDistanceMm,
                     "Cannot reconnect the hole boundary within tolerance");
             BRep_Builder().UpdateEdge(edge, pcurve, result, 1e-7);
         }
@@ -55,7 +55,7 @@ TopoDS_Face fillFace(const TopoDS_Face& face, const std::vector<TopoDS_Edge>& ed
         BRepLib_CheckCurveOnSurface check(edge, result);
         check.Perform();
         require(check.IsDone() && std::isfinite(check.MaxDistance()) &&
-                check.MaxDistance() <= tolerance && BRep_Tool::Tolerance(edge) <= tolerance,
+                check.MaxDistance() <= boundaryDistanceMm && BRep_Tool::Tolerance(edge) <= boundaryDistanceMm,
                 "Reconnected surface does not meet its boundary within tolerance");
     }
     offset_geometry::tightenGeneratedBoundaries(result, face, false);

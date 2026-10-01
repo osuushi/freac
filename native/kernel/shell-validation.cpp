@@ -77,12 +77,12 @@ void validateWall(const TopoDS_Shape& source, const TopoDS_Shape& wall,
     require(!originalFaces.IsEmpty() && !offsetFaces.IsEmpty(), "Shell lost its offset walls");
     BRepExtrema_DistShapeShape separation(retainedSkin, offsetSkin);
     timing.phase("separation");
-    require(separation.IsDone() && separation.Value() >= std::abs(thickness) - tolerance,
+    require(separation.IsDone() && separation.Value() >= std::abs(thickness) - boundaryDistanceMm,
             "Shell walls collide or are thinner than requested");
     // Every requested opening must lose positive area. Rim strips are allowed.
     for (const auto& face : openings) {
         const auto remaining = compare<BRepAlgoAPI_Common>(face, wall);
-        require(area(remaining) < area(face) - tolerance * tolerance,
+        require(area(remaining) < area(face) - boundaryDistanceMm * boundaryDistanceMm,
                 "Shell could not open every selected face");
     }
     timing.phase("openings");

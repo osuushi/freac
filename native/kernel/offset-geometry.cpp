@@ -76,7 +76,7 @@ Operand prepare(const Operand& original, const char* context, std::vector<TopoDS
         require(index != 0, std::string(context) + " preparation lost a selected face");
         face = TopoDS::Face(copied(index));
     }
-    BRepLib::SameParameter(result.shape, 1e-7, true);
+    BRepLib::SameParameter(result.shape, geometry_policy::parameterCorrespondenceMm, true);
     // Boolean/fillet inputs can retain conservative bounds despite tight geometry.
     // Verify before reducing them on this private copy; no vertex motion is allowed.
     tightenGeneratedBoundaries(result.shape, original.shape, false);
@@ -99,7 +99,7 @@ void checkParallel(const TopoDS_Face& source, const TopoDS_Face& offset, double 
     for (double u : samples(actual, true)) for (double v : samples(actual, false)) {
         const auto p = actual.Value(u, v);
         GeomAPI_ProjectPointOnSurf projection(p, expected);
-        require(projection.IsDone() && projection.NbPoints() && projection.LowerDistance() <= tolerance,
+        require(projection.IsDone() && projection.NbPoints() && projection.LowerDistance() <= boundaryDistanceMm,
                 std::string(context) + " surface does not match the requested thickness");
         if (preserveOrientation) {
             GeomAPI_ProjectPointOnSurf basisProjection(p, support);
@@ -130,27 +130,27 @@ void checkParallel(const TopoDS_Face& source, const TopoDS_Face& offset, double 
 void validSolid(const TopoDS_Shape& shape, const char* context) {
     // Arc joins carry conservative vertex bounds above 1e-6 mm in OCCT.
     // Keep a separate 2e-6 mm topology budget; geometric distance stays at 1e-6.
-    constexpr double topologyTolerance = 2e-6;
+    using geometry_policy::offsetTopologyToleranceMm;
     require(!shape.IsNull() && shape.ShapeType() == TopAbs_SOLID,
             std::string(context) + " must produce exactly one solid per body");
     BRepCheck_Analyzer validity(shape, true, false, true);
     require(validity.IsValid(), std::string(context) + " has invalid boundaries or surface geometry");
     const double v = mass(shape);
-    require(std::isfinite(v) && v > tolerance * tolerance * tolerance,
+    require(std::isfinite(v) && v > geometry_policy::minimumSolidVolumeMm3,
             std::string(context) + " has collapsed or inverted material");
     BRepClass3d_SolidClassifier classifier(shape);
-    classifier.PerformInfinitePoint(tolerance);
+    classifier.PerformInfinitePoint(boundaryDistanceMm);
     require(classifier.State() == TopAbs_OUT, std::string(context) + " has inverted orientation");
     for (TopExp_Explorer it(shape, TopAbs_SHELL); it.More(); it.Next())
         require(BRep_Tool::IsClosed(it.Current()), std::string(context) + " wall has an open boundary");
     for (TopExp_Explorer it(shape, TopAbs_FACE); it.More(); it.Next())
-        require(BRep_Tool::Tolerance(TopoDS::Face(it.Current())) <= topologyTolerance,
+        require(BRep_Tool::Tolerance(TopoDS::Face(it.Current())) <= offsetTopologyToleranceMm,
                 std::string(context) + " exceeds the surface tolerance");
     for (TopExp_Explorer it(shape, TopAbs_EDGE); it.More(); it.Next())
-        require(BRep_Tool::Tolerance(TopoDS::Edge(it.Current())) <= topologyTolerance,
+        require(BRep_Tool::Tolerance(TopoDS::Edge(it.Current())) <= offsetTopologyToleranceMm,
                 std::string(context) + " exceeds the edge tolerance");
     for (TopExp_Explorer it(shape, TopAbs_VERTEX); it.More(); it.Next())
-        require(BRep_Tool::Tolerance(TopoDS::Vertex(it.Current())) <= topologyTolerance,
+        require(BRep_Tool::Tolerance(TopoDS::Vertex(it.Current())) <= offsetTopologyToleranceMm,
                 std::string(context) + " exceeds the vertex tolerance");
     BOPAlgo_ArgumentAnalyzer check;
     check.SetShape1(shape); check.SelfInterMode() = true; check.Perform();

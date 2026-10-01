@@ -1,10 +1,11 @@
 #pragma once
 #include "kernel.h"
+#include "geometry-policy.h"
 
 // Shared numerical geometry checks for Shell and freeform Face Offset.
 namespace offset_geometry {
-constexpr double tolerance = 1e-6;
-constexpr double shapeTolerance = 0.001;
+using geometry_policy::boundaryDistanceMm;
+using geometry_policy::generatedVertexAdjustmentMm;
 bool freeform(const TopoDS_Shape& shape);
 std::string encoding(const TopoDS_Shape& shape);
 Operand prepare(const Operand& source, const char* context,

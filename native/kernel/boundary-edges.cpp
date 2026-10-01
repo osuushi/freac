@@ -69,7 +69,7 @@ TopoDS_Edge rebuild(const TopoDS_Edge& source, const Edit& edit) {
         || (edit.movedVertices.Contains(a) && edit.movedVertices.Contains(b)))
         return TopoDS::Edge(affineShape(edge, edit.transform));
     const auto p = edit.moved(a), q = edit.moved(b);
-    require(p.Distance(q) > tolerance, "Movement collapses a boundary");
+    require(p.Distance(q) > boundaryDistanceMm, "Movement collapses a boundary");
     const auto smooth = connector(edge, a, b, p, q, edit);
     if (!smooth.IsNull()) return smooth;
     if (BRepAdaptor_Curve(edge).GetType() == GeomAbs_Line)
@@ -93,9 +93,9 @@ bool samplesOn(const TopoDS_Edge& a, const TopoDS_Edge& b) {
         const double s = other.FirstParameter() + (other.LastParameter() - other.FirstParameter()) * i / 32;
         // A corresponding point is a direct distance witness. Extrema can miss
         // the zero-distance solution even for independently copied spline curves.
-        if (curve.Value(t).Distance(other.Value(s)) <= tolerance) continue;
+        if (curve.Value(t).Distance(other.Value(s)) <= boundaryDistanceMm) continue;
         BRepExtrema_DistShapeShape distance(BRepBuilderAPI_MakeVertex(curve.Value(t)).Vertex(), b);
-        if (!distance.IsDone() || distance.Value() > tolerance) return false;
+        if (!distance.IsDone() || distance.Value() > boundaryDistanceMm) return false;
     }
     return true;
 }
@@ -108,12 +108,12 @@ void buildEdges(Edit& edit) {
 bool sameBoundary(const TopoDS_Edge& a, const TopoDS_Edge& b) {
     if (a.IsSame(b)) return true;
     BRepAdaptor_Curve x(a), y(b);
-    // Default mass-property quadrature loses more than the matching tolerance
+    // Default mass-property quadrature loses more than the matching boundaryDistanceMm
     // on rational spline seams. Integrate both lengths to explicit accuracy.
     const auto length = [](const BRepAdaptor_Curve& curve) {
         return GCPnts_AbscissaPoint::Length(curve, curve.FirstParameter(),
-                                          curve.LastParameter(), tolerance * 0.1);
+                                          curve.LastParameter(), boundaryDistanceMm * 0.1);
     };
-    return std::abs(length(x) - length(y)) < tolerance && samplesOn(a, b) && samplesOn(b, a);
+    return std::abs(length(x) - length(y)) < boundaryDistanceMm && samplesOn(a, b) && samplesOn(b, a);
 }
 }
