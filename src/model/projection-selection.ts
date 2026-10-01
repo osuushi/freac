@@ -1,20 +1,36 @@
 import { curveDistance, displayPoints } from "../sketch/curve-geometry.js";
+import { boundaryPoints } from "../sketch/curve-spans.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import { pickModels } from "../sketch/model-selection.js";
+import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import type { Point } from "../sketch/planes.js";
 import { worldPoint } from "../sketch/planes.js";
 import { segmentDistance } from "../sketch/point-math.js";
+import { profilesFor } from "../sketch/profiles.js";
 import { BodyPickProbe } from "./body-picking.js";
 import { pickBodyEdge } from "./edge-selection.js";
-import { featureEdges } from "./feature-edges.js";
 import { coverageTargets } from "./operation-selection.js";
 import { type ProjectionSource, projectionCurves } from "./projection.js";
 import { selectionContext } from "./selection-context.js";
-export const projectionKey = (s: ProjectionSource) =>
-  s.kind === "face"
-    ? `face/${s.body}/${s.face}`
-    : s.kind === "edge"
-      ? s.edge
-      : `${s.sketch}/${s.curve}`;
+export const projectionKey = (s: ProjectionSource) => JSON.stringify(s);
+export function projectionSource(target: ModelingTarget): ProjectionSource {
+  if (target.kind === "profile")
+    return { kind: "profile", sketch: target.sketch, profile: target.profile.key };
+  if (target.kind === "edge") return { kind: "edge", body: target.body, edge: target.edge };
+  return target;
+}
+export function projectionTargets(
+  e: SketchEditor,
+  sources: readonly ProjectionSource[],
+): ModelingTarget[] {
+  return sources.flatMap((source): ModelingTarget[] => {
+    if (source.kind === "curve") return [];
+    if (source.kind !== "profile") return [source];
+    const sketch = e.store.data.sketches.find((s) => s.id === source.sketch);
+    const profile = sketch && profilesFor(sketch).find((p) => p.key === source.profile);
+    return profile ? [{ kind: "profile", sketch: source.sketch, profile }] : [];
+  });
+}
 export function projectionSelection(e: SketchEditor): ProjectionSource[] {
   if (e.world.active && e.sketch)
     return [...e.selectedCurves].map((curve) => ({
@@ -22,26 +38,8 @@ export function projectionSelection(e: SketchEditor): ProjectionSource[] {
       sketch: e.sketch?.id ?? "",
       curve,
     }));
-  const sources = coverageTargets(selectionContext(e.modeling.targets, e.store.data)).flatMap(
-    (t): ProjectionSource[] => {
-      if (t.kind === "edge" || t.kind === "face") return [t];
-      if (t.kind === "body") {
-        const body = e.store.data.bodies?.find((b) => b.id === t.body);
-        return body
-          ? featureEdges(body).map((edge) => ({ kind: "edge", body: body.id, edge: edge.id }))
-          : [];
-      }
-      const sketch = e.store.data.sketches.find((s) => s.id === t.sketch);
-      const ids =
-        t.kind === "profile"
-          ? new Set([...t.profile.outer, ...t.profile.holes.flat()].map((s) => s.curve.id))
-          : null;
-      return (
-        sketch?.curves
-          .filter((c) => !c.construction && (!ids || ids.has(c.id)))
-          .map((c) => ({ kind: "curve", sketch: sketch.id, curve: c.id })) ?? []
-      );
-    },
+  const sources = coverageTargets(selectionContext(e.modeling.targets, e.store.data)).map(
+    projectionSource,
   );
   return sources.filter(
     (s, i) => sources.findIndex((p) => projectionKey(p) === projectionKey(s)) === i,
@@ -66,8 +64,15 @@ export function pickProjectionSource(e: SketchEditor, screen: Point): Projection
     }
   }
   if (best) return best.source;
-  const face = probe.faces()[0];
-  return face ? { kind: "face", body: face.body, face: face.face } : null;
+  const target = pickModels(e, screen).find((target) => {
+    if (target.kind !== "profile" && target.kind !== "sketch") return true;
+    const sketch = e.store.data.sketches.find((s) => s.id === target.sketch);
+    return (
+      sketch &&
+      (target.kind === "sketch" || profilesFor(sketch).some((p) => p.key === target.profile.key))
+    );
+  });
+  return target ? projectionSource(target) : null;
 }
 export function projectionLines(e: SketchEditor, sources: readonly ProjectionSource[]): number[][] {
   return projectionCurves(e.store.data, sources).flatMap((s) => {
@@ -77,8 +82,18 @@ export function projectionLines(e: SketchEditor, sources: readonly ProjectionSou
         ?.edges.find((c) => c.id === s.edge);
       return edge ? [[...edge.points]] : [];
     }
-    const sketch = e.store.data.sketches.find((sketch) => sketch.id === s.sketch),
-      curve = sketch?.curves.find((c) => c.id === s.curve);
+    const sketch = e.store.data.sketches.find((sketch) => sketch.id === s.sketch);
+    if (s.kind === "profile") {
+      const profile = sketch && profilesFor(sketch).find((p) => p.key === s.profile);
+      return sketch && profile
+        ? [profile.outer, ...profile.holes].map((loop) =>
+            boundaryPoints(loop, e.world.height / e.world.canvas.clientHeight).flatMap((p) =>
+              worldPoint(sketch.plane, p),
+            ),
+          )
+        : [];
+    }
+    const curve = sketch?.curves.find((c) => c.id === s.curve);
     return sketch && curve
       ? [
           displayPoints(curve, e.world.height / e.world.canvas.clientHeight).flatMap((p) =>

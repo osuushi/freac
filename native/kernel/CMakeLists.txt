@@ -21,6 +21,8 @@ target_sources(freac-kernel PRIVATE extrude-twist.cpp extrude-twist-curves.cpp e
 target_sources(freac-kernel PRIVATE plane-cut.cpp path-sweep.cpp)
 target_sources(freac-kernel PRIVATE affine-planes.cpp)
 target_link_libraries(freac-kernel PRIVATE TKFeat)
+target_sources(freac-kernel PRIVATE projection-contours.cpp projection-junctions.cpp)
+target_link_libraries(freac-kernel PRIVATE TKHLR)
 target_sources(freac-kernel PRIVATE step-export.cpp)
 target_link_libraries(freac-kernel PRIVATE TKDESTEP)
 target_link_libraries(freac-kernel PRIVATE TKShHealing TKOffset TKFillet TKPrim TKBO TKBool TKMesh TKTopAlgo TKGeomAlgo TKGeomBase TKBRep TKG3d TKG2d TKMath TKernel)

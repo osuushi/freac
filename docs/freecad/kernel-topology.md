@@ -43,6 +43,27 @@ seam rejection in Chromium/WebKit/hidden Electron. This is Freac runtime evidenc
 source inference. Stable edge IDs are assigned after kernel presentation and
 face references are regenerated from BRep on archive load.
 
+## Freac projection contour follow-up (2026-10-01)
+
+Exact face-wire boundaries omit apparent contours that are not topology edges.
+Freac now obtains those 3D curves using OCCT 7.9.3 HLR and passes them through the
+same analytic/bounded cubic projection conversion as explicit edges. Native tests
+in `tests/projection-sources.test.ts` independently check cylindrical side bounds,
+a spherical outline with only a periodic seam and degenerate pole edges, collapsed
+implicit box edges, trimmed sketch-region spans/holes and both projection directions.
+The sphere exposed null spatial curves at the poles: implicit degenerate edges
+must be skipped before reading their curves. These are Freac runtime observations;
+no new claim about the pinned FreeCAD source and no upstream code copying is involved.
+The later tilted-cylinder capture exposed another distinction: a side endpoint
+lies on the exact rim's interior, but independent whole-rim cubic fitting can miss
+it within the permitted approximation budget. That opens the middle cell despite
+both rim loops closing. `tests/projection-junctions.test.ts` checks the absent
+captured cell, both body/curved-face reprojection paths, exact junction endpoints,
+independent silhouette/cell areas and downstream extrusion. Splitting exact rims at
+contour contacts before fitting preserves closure without enlarging region tolerance.
+These are additional Freac runtime findings, not upstream source claims.
+Arbitrary freeform contour robustness and large-model HLR performance remain unproven.
+
 ## Bounded face-movement experiment (2026-09-16)
 
 `native/kernel/tests/face-move-probe.cpp` runs independently of the application.

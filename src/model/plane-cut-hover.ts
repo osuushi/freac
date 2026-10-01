@@ -11,7 +11,7 @@ export class PlaneCutHover {
   private visible = false;
   constructor(
     private editor: SketchEditor,
-    private accepts: () => ((frame: PlaneFrame) => boolean) | undefined,
+    private accepts: (event: PointerEvent) => ((frame: PlaneFrame) => boolean) | undefined,
   ) {
     this.view = new MirrorReferenceView(editor, true);
     const options = { capture: true, signal: this.abort.signal };
@@ -22,7 +22,7 @@ export class PlaneCutHover {
     editor.world.changed.add(this.clear);
   }
   private move = (event: PointerEvent): void => {
-    const accepts = this.accepts();
+    const accepts = this.accepts(event);
     if (!accepts || this.editor.blocked || event.buttons || event.metaKey || event.ctrlKey) {
       this.clear();
       return;

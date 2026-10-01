@@ -9,9 +9,12 @@ export class PlaneReferencePicker {
   private hover: PlaneCutHover;
   accepts: ((frame: PlaneFrame) => boolean) | undefined;
   private leave: (() => void) | undefined;
+  private hoverEnabled: ((event: PointerEvent) => boolean) | undefined;
   choose: ((frame: PlaneFrame) => void) | null = null;
   constructor(private editor: SketchEditor) {
-    this.hover = new PlaneCutHover(editor, () => this.accepts);
+    this.hover = new PlaneCutHover(editor, (event) =>
+      this.hoverEnabled && !this.hoverEnabled(event) ? undefined : this.accepts,
+    );
     const options = { signal: this.abort.signal, capture: true };
     editor.world.canvas.addEventListener(
       "pointerdown",
@@ -40,9 +43,11 @@ export class PlaneReferencePicker {
     choose: (frame: PlaneFrame) => void,
     accepts?: (frame: PlaneFrame) => boolean,
     leave?: () => void,
+    hoverEnabled?: (event: PointerEvent) => boolean,
   ): void {
     this.accepts = accepts ?? (() => true);
     this.leave = leave;
+    this.hoverEnabled = hoverEnabled;
     this.editor.world.planePickerAccept = this.accepts;
     this.choose = (frame) => {
       if (this.accepts && !this.accepts(frame)) return;
@@ -56,6 +61,7 @@ export class PlaneReferencePicker {
     this.choose = null;
     this.accepts = undefined;
     this.leave = undefined;
+    this.hoverEnabled = undefined;
     this.editor.world.planePickerAccept = null;
     this.editor.world.planePicker = null;
     this.editor.world.planePickerLabel = "Project onto";

@@ -41,13 +41,14 @@ export async function projectionFacesRoute(page, name) {
   assert.equal(state.activePlane, null);
   assert.equal(state.document.sketches.length, 0);
   assert.equal(state.preview.sketches[0].curves.length, 8);
-  await page.getByRole("button", { name: "Sources (2)", exact: true }).click();
+  await page.keyboard.down("Shift");
   await page.mouse.click(left.x, left.y);
   state = await inspect(page);
   assert.equal(state.preview.sketches[0].curves.length, 4);
   await page.mouse.click(left.x, left.y);
   state = await inspect(page);
   assert.equal(state.preview.sketches[0].curves.length, 8);
+  await page.keyboard.up("Shift");
   await page.getByRole("button", { name: "Cancel projection", exact: true }).click();
   state = await inspect(page);
   assert.equal(state.document.sketches.length, 0);

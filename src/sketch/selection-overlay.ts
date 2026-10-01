@@ -216,9 +216,15 @@ export class SelectionOverlay {
     this.showChoices();
     this.feedback.hidden = !this.editor.message;
     this.feedback.textContent = this.editor.message;
+    const projection = this.editor.interactions.current?.kind === "projection";
+    this.feedback.classList.toggle("projection-feedback", projection);
     const point = this.editor.pointer ?? { x: this.rect.width / 2, y: this.rect.height / 2 };
-    this.feedback.style.left = `${Math.max(10, Math.min(this.rect.width - 260, point.x - this.rect.left + 16))}px`;
-    this.feedback.style.top = `${Math.max(60, Math.min(this.rect.height - 55, point.y - this.rect.top + 26))}px`;
+    this.feedback.style.left = projection
+      ? ""
+      : `${Math.max(10, Math.min(this.rect.width - 260, point.x - this.rect.left + 16))}px`;
+    this.feedback.style.top = projection
+      ? ""
+      : `${Math.max(60, Math.min(this.rect.height - 55, point.y - this.rect.top + 26))}px`;
   };
   dispose(): void {
     this.editor.world.changed.delete(this.update);

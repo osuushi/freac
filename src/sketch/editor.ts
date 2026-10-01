@@ -121,6 +121,7 @@ export class SketchEditor {
         );
   }
   get mergeableSketches(): Sketch[] {
+    if (this.interactions.current?.kind === "projection") return [];
     const selected = modelingSketch(this);
     if (!selected) return [];
     return this.display.sketches.filter(

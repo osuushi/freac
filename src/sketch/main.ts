@@ -174,7 +174,7 @@ const scaling = new ScaleControls(
   },
   () => !!constructionPlanes.selected(),
 );
-const projection = new ProjectionControls(editor, overlay);
+const projection = new ProjectionControls(editor, overlay, constructionPlanes.picker, entities);
 const sections = new SectionControls(editor);
 const bodyEdges = new BodyEdgeControls(editor);
 const disposeVisibility = visibilityControls(editor, () => constructionPlanes.selected()?.id);

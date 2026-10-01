@@ -12,6 +12,23 @@
 .model-actions[hidden] {
   display: none;
 }
+.projection-actions {
+  left: 50%;
+  bottom: 58px;
+}
+.projection-actions button[aria-pressed="true"] {
+  background: #e5efff;
+  border-color: #93b9ee;
+  color: #215797;
+}
+.projection-actions button:disabled {
+  opacity: 0.45;
+}
+.projection-feedback {
+  left: 50%;
+  bottom: 108px;
+  transform: translateX(-50%);
+}
 .extrude-targets {
   position: absolute;
   top: calc(100% + 6px);
