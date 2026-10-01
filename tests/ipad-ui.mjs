@@ -10,9 +10,11 @@ import { installPenClassification } from "./ipad-pen.mjs";
 import { tabletSolidRoute } from "./ipad-solid.mjs";
 import { launchElectron } from "./native-documents.mjs";
 import { drag, inspect, settled } from "./ui-helpers.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 await mkdir(".cache/ipad", { recursive: true });
+const names = runtimeNames(["chromium", "webkit"]);
 const app = await launchElectron({
   args: ["."],
   env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: "" },
@@ -35,7 +37,9 @@ try {
     unauth.on("open", () => unauth.send(JSON.stringify({ token: "wrong" })));
     unauth.on("close", done);
   });
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
+    names.includes(name),
+  )) {
     if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
     const browser = await engine.launch({ headless: true });
     try {

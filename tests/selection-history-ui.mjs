@@ -5,10 +5,11 @@ import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { bodySelectionEntryRoute } from "./ui-body-selection-entry.mjs";
 import { modelFrustumSelectionRoute } from "./ui-model-frustum-selection.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { selectionHistoryRoute } from "./ui-selection-history.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
-const name = process.env.FREAC_TEST_BROWSER ?? "chromium";
+const [name] = runtimeNames(["chromium", "webkit", "electron"], ["chromium"]);
 let server, browser, app, page;
 try {
   if (name === "electron") {

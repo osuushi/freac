@@ -7,14 +7,14 @@ import { bodyFilletRoute } from "./ui-body-fillet.mjs";
 import { cleanupRoute } from "./ui-cleanup.mjs";
 import { faceOffsetRoute } from "./ui-face-offset.mjs";
 import { revolveRoute } from "./ui-revolve.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
+const names = runtimeNames();
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
-  for (const name of ["chromium", "webkit", "electron"].filter(
-    (n) => !process.env.FREAC_TEST_BROWSER || process.env.FREAC_TEST_BROWSER === n,
-  )) {
+  for (const name of names) {
     let browser, app;
     try {
       let page;

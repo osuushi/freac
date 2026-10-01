@@ -6,14 +6,14 @@ import { autoUnionRoute } from "./ui-auto-union.mjs";
 import { extrudeRoute } from "./ui-extrude.mjs";
 import { extrudeDraftRoute } from "./ui-extrude-draft.mjs";
 import { extrusionWidgetRoute } from "./ui-extrude-widget.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
+const names = runtimeNames();
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
-  for (const name of ["chromium", "webkit", "electron"].filter(
-    (n) => !process.env.FREAC_TEST_BROWSER || process.env.FREAC_TEST_BROWSER === n,
-  )) {
+  for (const name of names) {
     let browser, app;
     try {
       let page;

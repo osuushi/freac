@@ -9,10 +9,11 @@ import { launchElectron } from "./native-documents.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { exportCapture } from "./ui-export-capture.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool, toolEnabled } from "./ui-tools.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
-const name = process.env.FREAC_TEST_BROWSER ?? "chromium";
+const [name] = runtimeNames(["chromium", "webkit", "electron"], ["chromium"]);
 let server, browser, app;
 try {
   let page;

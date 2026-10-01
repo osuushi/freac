@@ -3,15 +3,17 @@ import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { inspect } from "./ui-helpers.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { shellSourcePrecisionRoute } from "./ui-shell-source-precision.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
+const names = runtimeNames(["chromium", "webkit", "electron"], ["chromium", "webkit"]);
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
   const engines =
     process.env.FREAC_TEST_BROWSER === "electron" ? { electron: null } : { chromium, webkit };
-  for (const [name, engine] of Object.entries(engines)) {
+  for (const [name, engine] of Object.entries(engines).filter(([name]) => names.includes(name))) {
     const browser = engine ? await engine.launch({ headless: true }) : null;
     const app = engine
       ? null

@@ -88,10 +88,27 @@ npm test
 npx playwright install chromium webkit
 npm run test:ui
 npm run test:electron
+npm run test:setup
+npm run test:current-tools
 ```
 
 Checks target the current `src/` application and honor Git ignores; they do not
 format cached upstream sources.
+
+`test:current-tools` runs a bounded ordinary-control gate in headless Chromium,
+WebKit and hidden Electron. It covers curve creation/editing, point links, Trim,
+Transform, Extrude/Revolve, Face Offset, Fillet/Chamfer, Shell and plane cutting,
+including the history/archive cases in those routes. `test:setup` checks SDK
+receipt rejection and UI runtime selection. `tests/ui-runtime-cleanup.mjs` checks
+resource closure after actual failed routes. The macOS PR/main workflow runs
+these alongside the full unit suite and desktop host checks; it has no signing or
+publication steps. Workflow execution on GitHub is separate from local verification.
+
+Standalone UI launchers use `tests/ui-runtime.mjs` for runtime selection. Set
+`FREAC_TEST_BROWSER=chromium`, `webkit` or `electron` to select one supported
+runtime; a typo or unsupported runtime fails before launch. Existing dedicated
+geometry suites retain their declared defaults. Captured geometry, decorators,
+delayed delivery and physical-device checks remain separate from the ordinary gate.
 
 To repeat setup from committed source, create a separate checkout with
 `git worktree add --detach ../freac-clean HEAD`, enter it, activate `.nvmrc`,

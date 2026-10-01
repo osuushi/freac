@@ -8,6 +8,7 @@ import { launchElectron, openDocument, saveDocument } from "./native-documents.m
 import { plate } from "./ui-body-fillet.mjs";
 import { drag, inspect } from "./ui-helpers.mjs";
 import { pickPlane } from "./ui-plane-targets.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function rename(page, from, to, key = "Enter") {
@@ -143,10 +144,13 @@ async function longDragRoute(page, name) {
   await page.keyboard.press("Escape");
 }
 await mkdir(".cache/sketch-review", { recursive: true });
+const names = runtimeNames(["chromium", "webkit", "electron"]);
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
-  for (const [name, type] of Object.entries({ chromium, webkit })) {
+  for (const [name, type] of Object.entries({ chromium, webkit }).filter(([name]) =>
+    names.includes(name),
+  )) {
     const browser = await type.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
@@ -156,15 +160,17 @@ try {
       await browser.close();
     }
   }
-  const app = await launchElectron({
-    args: ["."],
-    env: { ...process.env, FREAC_DEV_URL: server.resolvedUrls.local[0], FREAC_TEST_HIDDEN: "1" },
-  });
-  try {
-    const page = await app.firstWindow();
-    await route(page, "electron");
-  } finally {
-    await app.close();
+  if (names.includes("electron")) {
+    const app = await launchElectron({
+      args: ["."],
+      env: { ...process.env, FREAC_DEV_URL: server.resolvedUrls.local[0], FREAC_TEST_HIDDEN: "1" },
+    });
+    try {
+      const page = await app.firstWindow();
+      await route(page, "electron");
+    } finally {
+      await app.close();
+    }
   }
 } finally {
   await server.close();

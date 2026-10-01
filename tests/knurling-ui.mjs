@@ -10,14 +10,18 @@ import { recessedPreviewRoute } from "./ui-decorator-preview.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { knurlMembershipRoute, knurlMoveRoute } from "./ui-knurl-membership.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool, toolEnabled } from "./ui-tools.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
+const names = runtimeNames(["chromium", "webkit", "electron"], ["chromium", "webkit"]);
 const native = process.env.FREAC_TEST_BROWSER === "electron";
 const server = native ? null : await createServer({ server: { port: 0 } });
 await server?.listen();
 try {
-  for (const [name, engine] of Object.entries(native ? { electron: null } : { chromium, webkit })) {
+  for (const [name, engine] of Object.entries(
+    native ? { electron: null } : { chromium, webkit },
+  ).filter(([name]) => names.includes(name))) {
     const app = native
       ? await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } })
       : null;

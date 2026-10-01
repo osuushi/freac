@@ -7,6 +7,7 @@ import { orient, project } from "./ui-blend-edit.mjs";
 import { makePlate, worldClick } from "./ui-face-offset.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { pickPlane } from "./ui-plane-targets.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function sample(page, point) {
@@ -88,10 +89,13 @@ async function coplanarSketch(page, name) {
   await page.screenshot({ path: `.cache/section-depth/${name}-sketch.png` });
 }
 await mkdir(".cache/section-depth", { recursive: true });
+const names = runtimeNames(["chromium", "webkit", "electron"]);
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
+    names.includes(name),
+  )) {
     if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
     const browser = await engine.launch({ headless: true });
     try {

@@ -2,13 +2,11 @@ import assert from "node:assert/strict";
 import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { transformFollowupRoute } from "./ui-transform-followup.mjs";
 import { transformHandoffRoute } from "./ui-transform-handoff.mjs";
 
-const names = ["chromium", "webkit", "electron"].filter(
-  (name) => !process.env.FREAC_TEST_BROWSER || process.env.FREAC_TEST_BROWSER === name,
-);
-assert.ok(names.length, `Unsupported FREAC_TEST_BROWSER: ${process.env.FREAC_TEST_BROWSER}`);
+const names = runtimeNames();
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {

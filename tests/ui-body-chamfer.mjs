@@ -27,7 +27,13 @@ export async function bodyChamferRoute(page, name, electron) {
     limited,
     "Repeated oversized input still shows the legal value",
   );
-  assert.ok(await page.getByRole("button", { name: "Accept chamfer" }).isEnabled());
+  const accept = page.getByRole("button", { name: "Accept chamfer", exact: true });
+  // The debounced cleanup query may temporarily disable controls after inspect.
+  await page.waitForFunction(() => {
+    const button = document.querySelector('[aria-label="Accept chamfer"]');
+    return button && !button.disabled;
+  });
+  assert.ok(await accept.isEnabled());
   await page.screenshot({ path: `.cache/sketch-review/${name}-chamfer-limit.png` });
   await input.fill("-5");
   state = await inspect(page);

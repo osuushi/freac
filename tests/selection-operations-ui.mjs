@@ -5,6 +5,7 @@ import { launchElectron } from "./native-documents.mjs";
 import { entityDeleteRoute } from "./ui-entity-delete.mjs";
 import { mixedSelectionRoute } from "./ui-mixed-selection.mjs";
 import { modelToolsRoute } from "./ui-model-tools.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { selectionOperationsRoute } from "./ui-selection-operations.mjs";
 
 async function run(page, name, app) {
@@ -18,10 +19,13 @@ async function run(page, name, app) {
   }
   assert.deepEqual(errors, []);
 }
+const names = runtimeNames(["chromium", "webkit", "electron"]);
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
+    names.includes(name),
+  )) {
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
@@ -31,18 +35,20 @@ try {
       await browser.close();
     }
   }
-  const app = await launchElectron({
-    args: ["."],
-    env: {
-      ...process.env,
-      FREAC_DEV_URL: server.resolvedUrls.local[0],
-      FREAC_TEST_HIDDEN: "1",
-    },
-  });
-  try {
-    await run(await app.firstWindow(), "electron", app);
-  } finally {
-    await app.close();
+  if (names.includes("electron")) {
+    const app = await launchElectron({
+      args: ["."],
+      env: {
+        ...process.env,
+        FREAC_DEV_URL: server.resolvedUrls.local[0],
+        FREAC_TEST_HIDDEN: "1",
+      },
+    });
+    try {
+      await run(await app.firstWindow(), "electron", app);
+    } finally {
+      await app.close();
+    }
   }
 } finally {
   await server.close();

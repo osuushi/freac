@@ -3,8 +3,9 @@ import { createServer } from "vite";
 import { faceOffsetRoute } from "./ui-face-offset.mjs";
 import { offsetThicknessRoute } from "./ui-offset-thickness.mjs";
 import { planarThicknessRoute } from "./ui-planar-thickness.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 
-const name = process.env.FREAC_TEST_BROWSER ?? "chromium";
+const [name] = runtimeNames(["chromium", "webkit", "electron"], ["chromium"]);
 let server, browser;
 try {
   server = await createServer({ server: { port: 0, watch: null, hmr: false } });

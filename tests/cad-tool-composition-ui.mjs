@@ -1,20 +1,37 @@
 import assert from "node:assert/strict";
-import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
-import { chromium, webkit } from "playwright";
-import { createServer } from "vite";
-import { launchElectron, openDocument, saveDocument } from "./native-documents.mjs";
+import { openDocument, saveDocument } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { pickPlane } from "./ui-plane-targets.mjs";
+import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-5, `${a} != ${b}`);
 async function cut(page) {
+  await page.keyboard.press("Escape");
+  await inspect(page);
   await orient(page, [1, -1, 1]);
-  await worldClick(page, [0, -6, 13]);
-  const before = (await inspect(page)).document.bodies[0];
+  const { camera } = await inspect(page);
+  const viewport = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
+  await page.mouse.move(viewport.x + viewport.width / 2, viewport.y + viewport.height / 2);
+  await page.keyboard.down("Control");
+  await page.mouse.wheel(0, Math.log(40 / camera.height) / 0.01);
+  await page.keyboard.up("Control");
+  await inspect(page);
+  // Pick inside the upper side face, away from the symmetric sweep's middle boundary.
+  await worldClick(page, [0, -6, 10.75]);
+  const selected = await inspect(page);
+  assert.equal(
+    selected.modelingSelection[0]?.kind,
+    "face",
+    JSON.stringify({
+      selection: selected.modelingSelection,
+      interaction: selected.interaction,
+    }),
+  );
+  const before = selected.document.bodies[0];
   await chooseTool(page, "imprint", "imprint");
   await pickPlane(page, "YZ");
   await inspect(page);
@@ -49,6 +66,7 @@ async function route(page, name) {
   await page.keyboard.press("r");
   await drag(page, [0, 0], [6, 6], ["Alt"]);
   await chooseTool(page, "transform", "transform");
+  await page.locator(".transform-box-handle:not([hidden])").first().click();
   await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
   await page.getByRole("textbox", { name: "Transform scale X" }).fill("2");
   await inspect(page);
@@ -70,12 +88,15 @@ async function route(page, name) {
   near(extruded.bodies[0].bounds[5], 17);
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await chooseTool(page, "transform", "transform");
+  await page.locator(".transform-box-handle:not([hidden])").first().click();
   await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
   await page.getByRole("textbox", { name: "Transform scale X" }).fill("0.5");
   await inspect(page);
   await page.getByRole("button", { name: "Accept transform scale" }).click();
   const scaledBody = (await inspect(page)).document;
   near(scaledBody.bodies[0].volume, 720);
+  for (const [i, value] of [-6, -6, 7, 6, 6, 12].entries())
+    near(scaledBody.bodies[0].bounds[i], value);
   assert.deepEqual(scaledBody.constructionPlanes, reference);
   await chooseTool(page, "undo", "undo");
   near((await inspect(page)).document.bodies[0].volume, 5760);
@@ -96,32 +117,4 @@ async function route(page, name) {
   );
 }
 
-await mkdir(".cache/sketch-review", { recursive: true });
-const server = await createServer({ server: { port: 0 } });
-await server.listen();
-try {
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
-    if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
-    const browser = await engine.launch({ headless: true });
-    try {
-      const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
-      await page.goto(server.resolvedUrls.local[0]);
-      await route(page, name);
-    } finally {
-      await browser.close();
-    }
-  }
-  if (!process.env.FREAC_TEST_BROWSER || process.env.FREAC_TEST_BROWSER === "electron") {
-    const app = await launchElectron({
-      args: ["."],
-      env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: server.resolvedUrls.local[0] },
-    });
-    try {
-      await route(await app.firstWindow(), "electron");
-    } finally {
-      await app.close();
-    }
-  }
-} finally {
-  await server.close();
-}
+await withUiRuntimes(route, { timeout: 20000 });

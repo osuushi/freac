@@ -4,14 +4,14 @@ import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { filletLossRoute, filletRoute } from "./ui-fillet.mjs";
 import { filletCursorRoute } from "./ui-fillet-cursor.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
+const names = runtimeNames();
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
-  for (const name of ["chromium", "webkit", "electron"].filter(
-    (n) => !process.env.FREAC_TEST_BROWSER || process.env.FREAC_TEST_BROWSER === n,
-  )) {
+  for (const name of names) {
     let browser, app, page;
     try {
       if (name === "electron") {

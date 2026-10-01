@@ -7,8 +7,9 @@ import { agentDecoratorRoute } from "./agent-decorator-route.mjs";
 import { scriptBrowser } from "./agent-script-browser.mjs";
 import { launchElectron } from "./native-documents.mjs";
 import { settled } from "./ui-helpers.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 
-const name = process.env.FREAC_TEST_BROWSER ?? "electron";
+const [name] = runtimeNames(undefined, ["electron"]);
 let app,
   web,
   page,

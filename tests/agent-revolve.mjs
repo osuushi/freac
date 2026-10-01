@@ -8,9 +8,10 @@ import { scriptBrowser } from "./agent-script-browser.mjs";
 import { launchElectron, openDocument, saveDocument } from "./native-documents.mjs";
 import { inspect, reset, settled } from "./ui-helpers.mjs";
 import { orient, pick } from "./ui-measurement.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-const name = process.env.FREAC_TEST_BROWSER ?? "electron";
+const [name] = runtimeNames(undefined, ["electron"]);
 let app,
   web,
   page,

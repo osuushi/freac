@@ -1,14 +1,13 @@
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { chromium, webkit } from "playwright";
-import { createServer } from "vite";
 import { cylindricalAxisFixture } from "../.cache/sketch-tests/tests/cylindrical-axis-fixture.js";
-import { launchElectron, openDocument, saveDocument } from "./native-documents.mjs";
+import { openDocument, saveDocument } from "./native-documents.mjs";
 import { orient, project } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { revolveRoute } from "./ui-revolve.mjs";
+import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const guide = (page) => page.locator('.revolve-guides [data-kind="axis"]');
@@ -127,8 +126,6 @@ for (const partial of [false, true])
     `.cache/cylindrical-axis/${partial}.freac`,
     await cylindricalAxisFixture(partial),
   );
-const server = await createServer({ server: { port: 0 } });
-await server.listen();
 async function check(page, name, electron = false) {
   page.setDefaultTimeout(15000);
   const errors = [];
@@ -137,29 +134,4 @@ async function check(page, name, electron = false) {
   await revolveRoute(page, name, electron);
   assert.deepEqual(errors, []);
 }
-try {
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
-    if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
-    const browser = await engine.launch({ headless: true });
-    try {
-      const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
-      await page.goto(server.resolvedUrls.local[0]);
-      await check(page, name);
-    } finally {
-      await browser.close();
-    }
-  }
-  if (!process.env.FREAC_TEST_BROWSER || process.env.FREAC_TEST_BROWSER === "electron") {
-    const app = await launchElectron({
-      args: ["."],
-      env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: server.resolvedUrls.local[0] },
-    });
-    try {
-      await check(await app.firstWindow(), "electron", true);
-    } finally {
-      await app.close();
-    }
-  }
-} finally {
-  await server.close();
-}
+await withUiRuntimes((page, name) => check(page, name, name === "electron"), { timeout: 30000 });
