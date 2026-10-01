@@ -31,14 +31,16 @@ async function route(page, name) {
   await page.keyboard.press("Enter");
   let s = await inspect(page);
   assert.deepEqual(s.document.constructionPlanes[0].frame.origin, [0, 0, 12]);
-  await page.getByRole("button", { name: "Move plane", exact: true }).click();
+  for (const label of ["Move plane", "Sketch on plane", "Delete plane"])
+    assert.equal(await page.getByRole("button", { name: label, exact: true }).count(), 0);
+  await page.keyboard.press("m");
   await page.getByRole("button", { name: "Move plane X", exact: true }).click();
   await page.getByRole("textbox", { name: "Plane translation X", exact: true }).fill("7");
   await page.keyboard.press("Enter");
   await settled(page);
   s = await inspect(page);
   assert.deepEqual(s.document.constructionPlanes[0].frame.origin, [7, 0, 12]);
-  await page.getByRole("button", { name: "Sketch on plane", exact: true }).click();
+  await page.keyboard.press("Enter");
   await chooseTool(page, "rectangle", "rectangle");
   await drag(page, [0, 0], [10, 10]);
   s = await inspect(page);
@@ -47,7 +49,7 @@ async function route(page, name) {
   await chooseTool(page, "return to modeling", "modeling");
   await settled(page);
   await page.getByRole("button", { name: "Select Plane 1", exact: true }).first().click();
-  await page.getByRole("button", { name: "Move plane", exact: true }).click();
+  await chooseTool(page, "transform", "transform");
   await movePlane(page, "Z", "3");
   await page.keyboard.press("Enter");
   s = await inspect(page);
@@ -57,7 +59,7 @@ async function route(page, name) {
   assert.equal(await page.locator(".construction-plane-labels button").count(), 0);
   await page.getByRole("button", { name: "Show Plane 1", exact: true }).click();
   await page.getByRole("button", { name: "Select Plane 1", exact: true }).first().click();
-  await page.getByRole("button", { name: "Delete plane", exact: true }).click();
+  await page.keyboard.press("Backspace");
   s = await inspect(page);
   assert.equal(s.document.constructionPlanes.length, 0);
   assert.equal(s.document.sketches.length, 1);
@@ -65,7 +67,7 @@ async function route(page, name) {
   await settled(page);
   assert.equal((await inspect(page)).document.constructionPlanes.length, 1);
   await page.getByRole("button", { name: "Select Plane 1", exact: true }).first().click();
-  await page.getByRole("button", { name: "Move plane", exact: true }).click();
+  await chooseTool(page, "transform", "transform");
   await movePlane(page, "Z", "8");
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document.constructionPlanes[0].frame.origin, [7, 0, 15]);
@@ -74,7 +76,10 @@ async function route(page, name) {
   await saveDocument(page, path);
   await openDocument(page, path);
   await settled(page);
-  assert.deepEqual((await inspect(page)).document, { ...saved, bodies: saved.bodies ?? [] });
+  assert.deepEqual(
+    JSON.parse(JSON.stringify((await inspect(page)).document)),
+    JSON.parse(JSON.stringify({ ...saved, bodies: saved.bodies ?? [] })),
+  );
   await planePlacementRoute(page);
   await page
     .locator(".entity-viewer")

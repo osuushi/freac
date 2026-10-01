@@ -8,12 +8,18 @@ import { orient } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { pickPlane } from "./ui-plane-targets.mjs";
+import { clearSelection } from "./ui-reconnection-helpers.mjs";
+import { startScale } from "./ui-scale.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-5, `${a} != ${b}`);
 async function cut(page) {
+  await clearSelection(page);
+  await orient(page, [0, -1, 0]);
+  // Symmetric extrusion retains a middle edge at Z=9.5 after scaling.
+  await worldClick(page, [0, -6, 8.25]);
+  assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await orient(page, [1, -1, 1]);
-  await worldClick(page, [0, -6, 13]);
   const before = (await inspect(page)).document.bodies[0];
   await chooseTool(page, "imprint", "imprint");
   await pickPlane(page, "YZ");
@@ -45,11 +51,10 @@ async function route(page, name) {
   await page.getByRole("textbox", { name: "Plane translation Z", exact: true }).fill("12");
   await page.keyboard.press("Enter");
   const reference = (await inspect(page)).document.constructionPlanes;
-  await page.getByRole("button", { name: "Sketch on plane", exact: true }).click();
+  await page.keyboard.press("Enter");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [6, 6], ["Alt"]);
-  await chooseTool(page, "transform", "transform");
-  await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
+  await startScale(page);
   await page.getByRole("textbox", { name: "Transform scale X" }).fill("2");
   await inspect(page);
   await page.getByRole("button", { name: "Accept transform scale" }).click();
@@ -69,13 +74,14 @@ async function route(page, name) {
   near(extruded.bodies[0].bounds[2], 7);
   near(extruded.bodies[0].bounds[5], 17);
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
-  await chooseTool(page, "transform", "transform");
-  await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
+  await startScale(page);
   await page.getByRole("textbox", { name: "Transform scale X" }).fill("0.5");
   await inspect(page);
   await page.getByRole("button", { name: "Accept transform scale" }).click();
   const scaledBody = (await inspect(page)).document;
   near(scaledBody.bodies[0].volume, 720);
+  near(scaledBody.bodies[0].bounds[2], 7);
+  near(scaledBody.bodies[0].bounds[5], 12);
   assert.deepEqual(scaledBody.constructionPlanes, reference);
   await chooseTool(page, "undo", "undo");
   near((await inspect(page)).document.bodies[0].volume, 5760);

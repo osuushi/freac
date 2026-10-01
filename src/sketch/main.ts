@@ -149,22 +149,30 @@ const bodyActions = new BodyActions(
 );
 const deleteAction = new DeleteTopologyAction(editor);
 const mirror = new MirrorControls(editor, overlay);
-const scaling = new ScaleControls(editor, overlay, () => {
-  if (editor.world.active) return editor.activateMove();
-  else if (
-    editor.modeling.targets.every((target) => target.kind === "sketch" || target.kind === "profile")
-  )
-    modelControls.move();
-  else {
-    editor.modeling.setTool("move");
-    editor.refresh();
-  }
-});
+const entities = new EntityViewer(editor, app);
+const constructionPlanes = new ConstructionPlaneControls(editor, overlay, entities.referenceRows);
+const scaling = new ScaleControls(
+  editor,
+  overlay,
+  () => {
+    if (constructionPlanes.selected()) return constructionPlanes.transform();
+    if (editor.world.active) return editor.activateMove();
+    else if (
+      editor.modeling.targets.every(
+        (target) => target.kind === "sketch" || target.kind === "profile",
+      )
+    )
+      modelControls.move();
+    else {
+      editor.modeling.setTool("move");
+      editor.refresh();
+    }
+  },
+  () => !!constructionPlanes.selected(),
+);
 const projection = new ProjectionControls(editor, overlay);
 const sections = new SectionControls(editor);
 const bodyEdges = new BodyEdgeControls(editor);
-const entities = new EntityViewer(editor, app);
-const constructionPlanes = new ConstructionPlaneControls(editor, overlay, entities.referenceRows);
 const disposeVisibility = visibilityControls(editor, () => constructionPlanes.selected()?.id);
 const crossSection = new CrossSectionControls(
   editor,

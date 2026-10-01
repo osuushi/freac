@@ -47,8 +47,10 @@ async function route(page, name) {
   await hold(page, point);
   await releaseChoice(page, "Plane");
   assert.equal(
-    await page.getByRole("button", { name: "Move plane", exact: true }).isVisible(),
-    true,
+    await page
+      .getByRole("button", { name: "Select Plane 1", exact: true })
+      .getAttribute("aria-pressed"),
+    "true",
   );
   assert.equal((await inspect(page)).modelingSelection.length, 0);
   const front = await project(page, [12, 0, 8]);
@@ -63,7 +65,7 @@ async function route(page, name) {
   await page.getByRole("button", { name: "Show Plane 1", exact: true }).click();
   await hold(page, point);
   await releaseChoice(page, "Plane");
-  await page.getByRole("button", { name: "Sketch on plane", exact: true }).click();
+  await page.keyboard.press("Enter");
   assert.ok((await inspect(page)).activePlane);
   console.log(name, "hollow cylinder plane depth passed", path);
   await planeTargetsRoute(page, name);

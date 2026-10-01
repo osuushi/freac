@@ -15,7 +15,6 @@ export class ConstructionPlaneControls {
   private view: ConstructionPlaneView;
   private placement: PlanePlacement;
   private disposeTool: () => void;
-  private actions = document.createElement("div");
   private abort = new AbortController();
   private lease: InteractionLease | null = null;
   private plane: ConstructionPlane | null = null;
@@ -41,24 +40,6 @@ export class ConstructionPlaneControls {
       reason: () => idleReason(editor) ?? (editor.world.active ? "Return to Modeling first" : null),
       run: () => this.create(),
     });
-    this.actions.className = "construction-plane-actions";
-    for (const [label, run] of [
-      ["Move plane", () => this.begin(this.selected())],
-      [
-        "Sketch on plane",
-        () => {
-          const p = this.selected();
-          if (p) this.sketch(p);
-        },
-      ],
-      ["Delete plane", () => void this.remove()],
-    ] as const) {
-      const b = document.createElement("button");
-      b.textContent = label;
-      b.onclick = run;
-      this.actions.append(b);
-    }
-    overlay.append(this.actions);
     this.placement = new PlanePlacement(
       editor,
       overlay,
@@ -121,6 +102,10 @@ export class ConstructionPlaneControls {
   }
   selected(): ConstructionPlane | undefined {
     return this.editor.store.data.constructionPlanes?.find((p) => p.id === this.view.selected);
+  }
+  transform(): void {
+    const plane = this.selected();
+    if (plane) this.begin(plane);
   }
   private selectedKey(event: KeyboardEvent): void {
     const plane = this.selected();
@@ -271,11 +256,6 @@ export class ConstructionPlaneControls {
     this.view.accepts = this.picker.accepts;
     this.view.update();
     this.placement.update();
-    this.actions.hidden =
-      !!e.world.active ||
-      !!e.interactions.current ||
-      !this.selected() ||
-      !e.visibility.visible(this.view.selected ?? "");
   };
   dispose(): void {
     this.cancel();
@@ -285,6 +265,5 @@ export class ConstructionPlaneControls {
     this.view.dispose();
     this.placement.dispose();
     this.disposeTool();
-    this.actions.remove();
   }
 }

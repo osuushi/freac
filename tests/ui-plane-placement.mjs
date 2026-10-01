@@ -5,7 +5,7 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function planePlacementRoute(page) {
   const original = (await inspect(page)).document;
   await page.getByRole("button", { name: "Select Plane 1", exact: true }).first().click();
-  await page.getByRole("button", { name: "Move plane", exact: true }).click();
+  await chooseTool(page, "transform", "transform");
   const box = await page.getByRole("button", { name: "Move plane X", exact: true }).boundingBox();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
@@ -31,7 +31,7 @@ export async function planePlacementRoute(page) {
   assert.deepEqual((await inspect(page)).document, original);
   await orient(page, [1, 1, 1]);
   await page.getByRole("button", { name: "Select Plane 1", exact: true }).first().click();
-  await page.getByRole("button", { name: "Move plane", exact: true }).click();
+  await chooseTool(page, "transform", "transform");
   await page.getByRole("button", { name: "Rotate plane X", exact: true }).click();
   await page.getByRole("textbox", { name: "Plane rotation X", exact: true }).fill("30");
   await page.keyboard.press("Enter");

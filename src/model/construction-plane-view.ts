@@ -5,7 +5,6 @@ import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
 import { EntityReorder } from "./entity-reorder.js";
 import { SavedPlaneView } from "./saved-plane-view.js";
-import "./construction-plane.css";
 
 export class ConstructionPlaneView {
   private patches: SavedPlaneView;

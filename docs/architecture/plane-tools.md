@@ -9,7 +9,10 @@ creates a plane on that face in one Undo step. Otherwise it picks a world plane,
 planar face or saved plane in the viewport. Local translation/rotation controls
 place the temporary plane; Enter or leaving the tool accepts, Escape cancels.
 There is no plane-offset panel. Reselection supports movement, deletion, visibility
-and sketch entry. Visibility remains view state.
+and sketch entry. Select a saved plane and use Transform/M for placement,
+Enter or viewport double-click for sketch entry, and Delete/Backspace for deletion.
+These use the existing selection affordances; there is no floating plane action bar.
+Visibility remains view state.
 
 A sketch begun on a plane copies its evaluated frame and is created on the first
 completed drawing gesture. Subsequent plane movement or deletion does not move or
