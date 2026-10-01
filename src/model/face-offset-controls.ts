@@ -108,6 +108,7 @@ export class FaceOffsetControls {
       "face-offset",
       () => this.cancel(),
       () => this.finish(),
+      { navigation: "when-released" },
     );
     if (!this.lease) return false;
     this.blend = sharedBlend(selected.faces);

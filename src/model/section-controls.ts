@@ -202,7 +202,9 @@ export class SectionControls {
     await e.commitNumeric();
     if (e.world.workspace !== workspace || !this.regions.includes(region) || !this.eligible())
       return;
-    const lease = e.interactions.acquire("use-edge", () => {});
+    const lease = e.interactions.acquire("use-edge", () => {}, undefined, {
+      navigation: "when-released",
+    });
     if (!lease) return;
     try {
       const sketch = e.sketch ?? {

@@ -140,7 +140,12 @@ export class Dimensions {
     this.fields.push({ quantity, label, input, lock });
     input.addEventListener("focus", () => {
       if (toolMenuOpen()) return;
-      this.interaction ??= this.editor.interactions.acquire("numeric", () => this.cancel());
+      this.interaction ??= this.editor.interactions.acquire(
+        "numeric",
+        () => this.cancel(),
+        undefined,
+        { navigation: "when-released" },
+      );
       input.dataset.original = input.value;
       input.select();
     });

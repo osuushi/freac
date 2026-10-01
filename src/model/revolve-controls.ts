@@ -85,6 +85,7 @@ export class RevolveControls {
       "revolve",
       () => this.cancel(),
       () => this.finish(),
+      { navigation: "when-released" },
     );
     if (!this.lease) return;
     this.axis = this.hover = null;

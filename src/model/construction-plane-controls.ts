@@ -162,10 +162,9 @@ export class ConstructionPlaneControls {
     this.editor.refresh();
   }
   private sketch(plane: ConstructionPlane): void {
-    if (this.editor.blocked || this.editor.interactions.current) return;
+    if (this.editor.workspaceEntry.reason()) return;
     this.view.selected = null;
-    this.editor.modeling.targets = [];
-    this.editor.world.enterWorkspace({
+    this.editor.workspaceEntry.enter({
       key: "Construction plane",
       frame: structuredClone(plane.frame),
     });
@@ -196,6 +195,7 @@ export class ConstructionPlaneControls {
       "construction-plane",
       () => this.cancel(),
       () => this.finish(),
+      { navigation: "when-released" },
     );
     if (!this.lease) return;
     e.modeling.targets = [];

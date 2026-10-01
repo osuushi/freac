@@ -77,6 +77,7 @@ export class MirrorControls {
       "mirror",
       () => this.cancel(),
       () => this.finish(),
+      { navigation: "when-released" },
     );
     if (!this.lease) return;
     this.source = source;

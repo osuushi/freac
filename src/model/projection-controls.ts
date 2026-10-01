@@ -107,7 +107,9 @@ export class ProjectionControls {
     this.previousSelection = e.selected.targets;
     this.previousModels = e.modeling.targets;
     await e.commitNumeric();
-    this.lease = e.interactions.acquire("projection", () => this.cancel());
+    this.lease = e.interactions.acquire("projection", () => this.cancel(), undefined, {
+      navigation: "when-released",
+    });
     if (!this.lease) return;
     this.target = e.world.activeFrame
       ? { frame: e.world.activeFrame, sketchId: e.sketch?.id ?? e.world.workspace?.sketchId }
@@ -207,7 +209,7 @@ export class ProjectionControls {
     const ok = await e.accept();
     this.finish();
     if (ok) {
-      e.world.enterWorkspace({ key: "Projected sketch", frame: result.plane, sketchId: result.id });
+      e.workspaceEntry.enter({ key: "Projected sketch", frame: result.plane, sketchId: result.id });
       e.select(result.curves.filter((c) => !old.has(c.id)).map((c) => c.id));
       e.tool = "select";
       e.notice = "Projected independent curves · cubic approximation within 0.001 mm where needed";

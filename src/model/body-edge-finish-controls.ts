@@ -111,6 +111,7 @@ export class BodyEdgeFinishControls {
       "body-edge-finish",
       () => this.cancel(),
       () => this.finish(),
+      { navigation: "when-released" },
     );
     if (!this.lease) return false;
     this.size = 0;

@@ -14,7 +14,7 @@ import { actionIntent, type EditAction } from "./edit-intent.js";
 import { editNotice } from "./edit-notice.js";
 import { performHistory } from "./editor-history.js";
 import { replaceSelection } from "./editor-selection.js";
-import { installWorkspaceSync } from "./editor-workspace.js";
+import { installWorkspaceSync, WorkspaceEntry } from "./editor-workspace.js";
 import { ModelClient } from "./model-client.js";
 import { ModelSelection, modelingSketch } from "./model-selection.js";
 import { type Hit, hitIds } from "./picking.js";
@@ -83,6 +83,7 @@ export class SketchEditor {
   selectionBox: { a: Point; b: Point } | null = null;
   overlaps: { hits: Hit[]; screen: Point } | null = null;
   readonly interactions = new ActiveInteraction(() => this.refresh());
+  readonly workspaceEntry = new WorkspaceEntry(this);
   get candidate(): SketchDocument | null {
     return this.interactions.candidate;
   }

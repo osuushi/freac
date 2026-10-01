@@ -1,4 +1,4 @@
-import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { toolCatalog } from "../tools/catalog.js";
 import type { SketchEditor } from "./editor.js";
 import { planeIds } from "./planes.js";
 
@@ -9,8 +9,8 @@ export function planeEntryTools(editor: SketchEditor): () => void {
       id: `sketch-${id.toLowerCase()}`,
       label: `Sketch on ${id}`,
       category: "Sketch",
-      reason: () => idleReason(editor),
-      run: () => editor.world.sketchEntry?.(id),
+      reason: () => editor.workspaceEntry.reason(),
+      run: () => editor.workspaceEntry.canonical(id),
     }),
   );
   return () => {

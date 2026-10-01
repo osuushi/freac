@@ -88,6 +88,14 @@ founder feedback update these contracts before further tools depend on them.
   sketch has a local origin distinguishable from the world origin; it does not
   redefine the world axes. Grids and markers must not hide outlines or intercept
   geometry picking; explicit plane-entry targets handle plane selection.
+  Deliberate entry from canonical patches, Tools, selected sketches/faces, saved
+  planes and accepted projections passes through the editor's WorkspaceEntry.
+  It rejects busy, captured or active edits before changing workspace or selection;
+  finish or cancel first. Ordinary modeling clicks may finish a released valid
+  operation before a subsequent entry. History restores its recorded workspace
+  through its existing cancellation/selection route. Navigation capability is
+  declared when each interaction acquires its lease: released modeling tools can
+  pan/orbit, while captured gestures block navigation.
 - R arms Rectangle without choosing a plane. Explicitly enter XY, XZ or YZ.
   Merely viewing a plane does not save an empty sketch. Orbit exits planar editing;
   pan/zoom retain it. Re-entering a plane resumes its first visible coplanar sketch;
