@@ -37,7 +37,7 @@ export function drawSketches(editor: SketchEditor, obscured = false): () => void
     const mergeable = !editor.world.active
       ? editor.mergeableSketches.map((sketch) => sketch.id)
       : [];
-    const key = `${editor.visibility.key}:${modeling.join()}:${mergeable.join()}:${editor.modeling.hover?.sketch}:${[...selected].sort().join(",")}:${[...editor.selectedCurves].join(",")}:${[...hover].join(",")}:${editor.constraintHover}:${editor.selectedPoint}:${[...(editor.pointChoice ?? [])].join()}:${JSON.stringify(editor.pointHover)}:${editor.world.active}:${editor.world.height}:${rect.height}`;
+    const key = `${editor.visibility.key}:${modeling.join()}:${mergeable.join()}:${editor.modeling.hover?.sketch}:${[...selected].sort().join(",")}:${[...editor.selectedCurves].join(",")}:${[...hover].join(",")}:${editor.constraintHover}:${editor.selected.firstPointKey}:${[...(editor.selected.pointKeys ?? [])].join()}:${JSON.stringify(editor.pointHover)}:${editor.world.active}:${editor.world.height}:${rect.height}`;
     material.resolution.set(rect.width, rect.height);
     if (previous !== editor.display || selection !== key) {
       const { positions, colors } = sketchSegments(

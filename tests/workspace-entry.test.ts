@@ -4,7 +4,7 @@ import { ActiveInteraction } from "../src/sketch/active-interaction.js";
 import { emptySketch } from "../src/sketch/document.js";
 import type { SketchEditor } from "../src/sketch/editor.js";
 import { WorkspaceEntry } from "../src/sketch/editor-workspace.js";
-import { ModelSelection } from "../src/sketch/model-selection.js";
+import { ModelSelection } from "../src/sketch/model-selection-state.js";
 import { planes } from "../src/sketch/planes.js";
 import type { World } from "../src/sketch/world.js";
 

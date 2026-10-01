@@ -5,7 +5,8 @@ import { idleReason, toolCatalog } from "../tools/catalog.js";
 import type { SketchEditor } from "./editor.js";
 import { modelDoubleClick } from "./model-double-click.js";
 import { onModelKeydown } from "./model-keys.js";
-import { type ModelingTarget, modelingSketch, pickModel, pickModels } from "./model-selection.js";
+import { modelingSketch, pickModel, pickModels } from "./model-selection.js";
+import type { ModelingTarget } from "./model-selection-state.js";
 import { PlacementControls } from "./placement-controls.js";
 
 export class ModelControls {

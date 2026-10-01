@@ -11,7 +11,7 @@ import { type OffsetTarget, offsetLinks, offsetPreview, prepareOffset } from "./
 import { placeOffsetWidget } from "./offset-widget.js";
 import type { Point } from "./planes.js";
 import { distance } from "./point-math.js";
-import type { SelectionTarget } from "./selected-targets.js";
+import type { SelectionTarget } from "./selection-target.js";
 
 type Session = {
   sketch: Sketch;
@@ -114,9 +114,9 @@ export class OffsetControls {
     if (
       !e.selectionOwners.size ||
       (e.rectangleContext && e.selectionOwners.size !== e.rectangleContext.members.length) ||
-      e.selectedPoint ||
+      e.selected.firstPointKey ||
       e.pointMenu ||
-      e.pointChoice?.size
+      e.selected.pointKeys?.size
     )
       return undefined;
     const curves = e.sketch?.curves.filter((c) => e.selectionOwners.has(c.id));

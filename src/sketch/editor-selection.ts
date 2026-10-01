@@ -1,5 +1,5 @@
 import type { SketchEditor } from "./editor.js";
-import type { SelectionTarget } from "./selected-targets.js";
+import type { SelectionTarget } from "./selection-target.js";
 
 /** Replace ordered intent and reset controls whose meaning depends on that intent. */
 export function replaceSelection(editor: SketchEditor, targets: readonly SelectionTarget[]): void {

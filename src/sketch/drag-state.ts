@@ -11,15 +11,17 @@ import {
 import type { SketchEditor } from "./editor.js";
 import { rectangle } from "./geometry.js";
 import { appendLine } from "./line-edit.js";
-import { type Hit, hitIds, pickCandidates, pointKey } from "./picking.js";
+import { pickCandidates } from "./picking.js";
 import type { Point } from "./planes.js";
 import { add } from "./point-math.js";
+import { pointKey } from "./point-query.js";
 import { chosenPoints } from "./point-selection.js";
 import { pointerDragThreshold } from "./pointer-intent.js";
 import { type RectangleHandle, rectangleFrame } from "./rectangle-edit.js";
-import { pointTarget, type SelectionTarget } from "./selected-targets.js";
 import { selectionFrame } from "./selection-frame.js";
 import { selectHit } from "./selection-input.js";
+import { pointTarget, type SelectionTarget } from "./selection-target.js";
+import { type Hit, hitIds } from "./sketch-hit.js";
 import { snapped } from "./snapping.js";
 
 export type Quantity =
@@ -137,7 +139,7 @@ export function beginDrag(editor: SketchEditor, event: PointerEvent): Drag | nul
   const screen = { x: event.clientX, y: event.clientY },
     base = editor.store.data;
   const hits = pickCandidates(editor, screen);
-  if (hits[0] && pointKey(hits[0]) && editor.pointChoice?.size) {
+  if (hits[0] && pointKey(hits[0]) && editor.selected.pointKeys?.size) {
     const chosen = chosenPoints(editor, hits[0]);
     if (chosen.length) hits[0] = chosen[0];
   }
@@ -181,7 +183,7 @@ export function beginDrag(editor: SketchEditor, event: PointerEvent): Drag | nul
   const selected =
     hit &&
     (key
-      ? editor.selectedPoint === key
+      ? editor.selected.firstPointKey === key
       : hitIds(hit).every((id) => editor.selectionOwners.has(id)));
   if (hit && !drag.additive && (editor.tool === "select" || (selected && !editor.creationArmed))) {
     selectHit(editor, hit, event);

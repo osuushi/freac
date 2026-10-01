@@ -2,13 +2,13 @@ import { selectedCorner } from "./corner-angle-controls.js";
 import type { SketchEditor } from "./editor.js";
 import { type FilletCorner, filletCorner } from "./fillet-geometry.js";
 import { distance } from "./point-math.js";
-import { pointBranches, selectedPointHits } from "./point-selection.js";
+import { pointBranches } from "./point-selection.js";
 import type { RoundingCurve } from "./rounding-curves.js";
 
 export function selectedFilletCorner(editor: SketchEditor): FilletCorner | null {
   const sketch = editor.sketch;
   if (!sketch || editor.isDragging) return null;
-  const selected = selectedPointHits(editor);
+  const selected = editor.selected.pointHits(editor.sketch);
   if (selected.length && selected.every((h) => distance(h.point, selected[0].point) < 1e-7)) {
     const branches = selected
       .flatMap(pointBranches)

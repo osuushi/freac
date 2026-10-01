@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
-import type { ModelingTarget } from "../sketch/model-selection.js";
+import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import { type PlaneFrame, type PlaneId, type Point, planes } from "../sketch/planes.js";
 import { BodyPickProbe } from "./body-picking.js";
 import { edgeRayHits } from "./edge-selection.js";

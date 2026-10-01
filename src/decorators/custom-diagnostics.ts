@@ -1,5 +1,5 @@
 import type { SketchEditor } from "../sketch/editor.js";
-import { type ModelingTarget, modelingKey } from "../sketch/model-selection.js";
+import { type ModelingTarget, modelingKey } from "../sketch/model-selection-state.js";
 import type { DecoratorDiagnostic } from "./javascript-hooks.js";
 import type { DecoratorInstance } from "./types.js";
 

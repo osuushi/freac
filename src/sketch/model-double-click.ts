@@ -1,5 +1,5 @@
 import type { SketchEditor } from "./editor.js";
-import type { ModelingTarget } from "./model-selection.js";
+import type { ModelingTarget } from "./model-selection-state.js";
 import { pointerDragThreshold } from "./pointer-intent.js";
 
 /** Preserve double taps across tip drift and newly displayed modeling widgets. */

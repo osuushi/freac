@@ -1,5 +1,5 @@
 import type { SketchDocument } from "../sketch/document.js";
-import type { ModelingTarget } from "../sketch/model-selection.js";
+import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import { parallelNormals, planeNormal, type Vector } from "../sketch/planes.js";
 import type { Body, BodyEdgeFinish, BodyFaceOffset, BodyShell, Face, LiftSource } from "./body.js";
 import { type CleanupSelection, cleanupSelection } from "./cleanup.js";

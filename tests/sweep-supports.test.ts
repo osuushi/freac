@@ -5,7 +5,7 @@ import { kernelInput, revolveInput } from "../src/backend/kernel-input.js";
 import type { Body } from "../src/model/body.js";
 import { resolveOperation } from "../src/model/operation-selection.js";
 import { emptySketch, type Sketch } from "../src/sketch/document.js";
-import type { ModelingTarget } from "../src/sketch/model-selection.js";
+import type { ModelingTarget } from "../src/sketch/model-selection-state.js";
 import { type PlaneFrame, planeNormal, planes } from "../src/sketch/planes.js";
 import { profilesFor } from "../src/sketch/profiles.js";
 import { prism, square } from "./body-edge-fixtures.js";

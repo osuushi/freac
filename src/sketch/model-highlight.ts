@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { boundaryPoints } from "./curve-spans.js";
 import type { SketchEditor } from "./editor.js";
-import { type ModelingTarget, modelingKey } from "./model-selection.js";
+import { type ModelingTarget, modelingKey } from "./model-selection-state.js";
 import { worldPoint } from "./planes.js";
 import { profilesFor } from "./profiles.js";
 import { stableClipping } from "./stable-clipping.js";

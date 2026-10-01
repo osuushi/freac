@@ -3,8 +3,8 @@ import test from "node:test";
 import { bowThrough } from "../src/sketch/arc-geometry.js";
 import { emptySketch } from "../src/sketch/document.js";
 import { segment } from "../src/sketch/geometry.js";
-import { pointHits } from "../src/sketch/picking.js";
 import { planes } from "../src/sketch/planes.js";
+import { pointHits } from "../src/sketch/point-query.js";
 import { tangentPointPair } from "../src/sketch/point-selection.js";
 
 test("point tangent convenience recognizes only an entire degree-two endpoint junction", () => {

@@ -1,6 +1,7 @@
 import type { SketchEditor } from "./editor.js";
-import { type Hit, hitIds, pointKey } from "./picking.js";
-import { choosePoints, chosenPoints, selectedPointHits, togglePoint } from "./point-selection.js";
+import { pointKey } from "./point-query.js";
+import { choosePoints, chosenPoints, togglePoint } from "./point-selection.js";
+import { type Hit, hitIds } from "./sketch-hit.js";
 
 export function selectHit(
   editor: SketchEditor,
@@ -24,7 +25,7 @@ export function selectHit(
   if (hit.kind === "group") {
     if (
       !additive &&
-      !editor.selectedPoint &&
+      !editor.selected.firstPointKey &&
       hit.group.members.every((id) => editor.selectedCurves.has(id))
     )
       return true; // Clicking within an existing multiselection keeps the other targets.
@@ -55,12 +56,12 @@ export function selectHit(
         if (remove) curves.delete(id);
         else curves.add(id);
       }
-      const points = selectedPointHits(editor);
+      const points = editor.selected.pointHits(editor.sketch);
       if (points.length) choosePoints(editor, points, curves);
       else editor.select(curves);
       return false;
     }
-    if (editor.selectedPoint || !ids.every((id) => editor.selectedCurves.has(id)))
+    if (editor.selected.firstPointKey || !ids.every((id) => editor.selectedCurves.has(id)))
       editor.select(ids);
   }
   if (hit.kind === "handle") editor.activeHandle = hit.handle;

@@ -91,7 +91,7 @@ export function bowGuides(editor: SketchEditor): BowGuide[] {
     editor.moveMode ||
     editor.creationArmed ||
     editor.isDragging ||
-    (editor.selectedPoint && !editor.selectedPoint.endsWith("/midpoint"))
+    (editor.selected.firstPointKey && !editor.selected.firstPointKey.endsWith("/midpoint"))
   )
     return [];
   const curves = selectedBowCurves(editor);

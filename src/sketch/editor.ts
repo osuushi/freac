@@ -15,14 +15,16 @@ import { performHistory } from "./editor-history.js";
 import { replaceSelection } from "./editor-selection.js";
 import { installWorkspaceSync, WorkspaceEntry } from "./editor-workspace.js";
 import { ModelClient } from "./model-client.js";
-import { ModelSelection, modelingSketch } from "./model-selection.js";
+import { modelingSketch } from "./model-selection.js";
+import { ModelSelection } from "./model-selection-state.js";
 import type { NumericEdit } from "./numeric-edit.js";
-import { type Hit, hitIds } from "./picking.js";
 import type { Point } from "./planes.js";
-import { type PointMenu, selectedPointHits } from "./point-selection.js";
+import type { PointMenu } from "./point-selection.js";
 import type { RectangleHandle } from "./rectangle-edit.js";
-import { SelectedTargets, type SelectionTarget, targetKey } from "./selected-targets.js";
+import { SelectedTargets } from "./selected-targets.js";
 import { SelectionHistory } from "./selection-history.js";
+import type { SelectionTarget } from "./selection-target.js";
+import { type Hit, hitIds } from "./sketch-hit.js";
 import type { World } from "./world.js";
 
 export type Tool = "select" | "rectangle" | "line" | "circle" | "bezier" | "trim";
@@ -39,17 +41,8 @@ export class SketchEditor {
   bodiesVisible = true;
   readonly modeling = new ModelSelection();
   readonly selected = new SelectedTargets();
-  get selectionOrder(): string[] {
-    return this.selected.orderedKeys(this.sketch);
-  }
   get selectedCurves(): Set<string> {
     return this.selected.wholeCurves(this.sketch);
-  }
-  get pointChoice(): Set<string> | null {
-    return this.selected.points.length ? new Set(this.selected.points.map(targetKey)) : null;
-  }
-  get selectedPoint(): string | null {
-    return this.selected.points[0] ? targetKey(this.selected.points[0]) : null;
   }
   selectGroup(id: string): void {
     this.selectTargets([{ kind: "group", group: id }]);
@@ -58,7 +51,10 @@ export class SketchEditor {
     replaceSelection(this, targets);
   }
   get selectionOwners(): Set<string> {
-    return new Set([...this.selectedCurves, ...selectedPointHits(this).flatMap(hitIds)]);
+    return new Set([
+      ...this.selectedCurves,
+      ...this.selected.pointHits(this.sketch).flatMap(hitIds),
+    ]);
   }
   moveMode = false;
   tool: Tool = "select";

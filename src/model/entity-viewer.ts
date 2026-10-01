@@ -1,5 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
-import { type ModelingTarget, modelingKey, modelingSketch } from "../sketch/model-selection.js";
+import { modelingSketch } from "../sketch/model-selection.js";
+import { type ModelingTarget, modelingKey } from "../sketch/model-selection-state.js";
 import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
 import { EntityReorder } from "./entity-reorder.js";

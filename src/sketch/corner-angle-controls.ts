@@ -5,8 +5,8 @@ import { selectedLines } from "./line-constraints.js";
 export function selectedCorner(editor: SketchEditor): AngleConstraint | null {
   if (
     editor.selectionOwners.size !== 2 ||
-    editor.selectedPoint ||
-    editor.pointChoice?.size ||
+    editor.selected.firstPointKey ||
+    editor.selected.pointKeys?.size ||
     editor.isDragging
   )
     return null;

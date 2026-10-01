@@ -7,11 +7,13 @@ import type { SketchEditor } from "./editor.js";
 import { connectedSelection } from "./geometry.js";
 import { GestureSolve } from "./gesture-solve.js";
 import type { DragQuantityEdit } from "./numeric-edit.js";
-import { hitIds, pick, pointKey } from "./picking.js";
+import { pick } from "./picking.js";
 import { distance } from "./point-math.js";
-import { choosePoints, chosenPoints, openPointMenu, selectedPointHits } from "./point-selection.js";
-import { pointTarget } from "./selected-targets.js";
+import { pointKey } from "./point-query.js";
+import { choosePoints, chosenPoints, openPointMenu } from "./point-selection.js";
 import { selectHit } from "./selection-input.js";
+import { pointTarget } from "./selection-target.js";
+import { hitIds } from "./sketch-hit.js";
 import { validateSketch } from "./sketch-validation.js";
 import { snapped } from "./snapping.js";
 import { axisQuantity } from "./transform-handles.js";
@@ -138,7 +140,7 @@ export class PointerGestures implements DragQuantityEdit {
           : editor.hover &&
               (editor.tool === "select" ||
                 !pointKey(editor.hover) ||
-                pointKey(editor.hover) === editor.selectedPoint)
+                pointKey(editor.hover) === editor.selected.firstPointKey)
             ? "move"
             : editor.tool === "select"
               ? "default"
@@ -218,7 +220,8 @@ export class PointerGestures implements DragQuantityEdit {
         if (drag.toggle && selected.has(curve.id)) selected.delete(curve.id);
         else selected.add(curve.id);
     }
-    if (drag.additive) choosePoints(this.editor, selectedPointHits(this.editor), selected);
+    if (drag.additive)
+      choosePoints(this.editor, this.editor.selected.pointHits(this.editor.sketch), selected);
     else this.editor.select(selected);
   }
   private release = async (event: PointerEvent): Promise<void> => {

@@ -1,6 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
-import type { ModelingTool } from "../sketch/model-selection.js";
+import type { ModelingTool } from "../sketch/model-selection-state.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { SelectionTools } from "./selection-tools.js";
 

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
-import { pointHits } from "../sketch/picking.js";
 import { type Point, type Vector, worldPoint } from "../sketch/planes.js";
+import { pointHits } from "../sketch/point-query.js";
 import type { Body, Face } from "./body.js";
 import { featureEdges } from "./feature-edges.js";
 

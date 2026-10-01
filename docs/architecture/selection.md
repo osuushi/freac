@@ -159,6 +159,14 @@ founder feedback update these contracts before further tools depend on them.
 
 ### Point disambiguation
 
+`selection-target.ts` defines typed targets and their keys; `SelectedTargets` owns
+ordered state and resolves selected point coordinates from the current sketch.
+`point-query.ts` enumerates intrinsic endpoint, midpoint, center and group-handle
+samples without importing viewport picking or Transform controls. Picking owns
+screen tolerances and precedence. Rendering owner IDs remain separate from whole
+curve selection. Modeling selection state and operation policy similarly live in
+`model-selection-state.ts`, apart from viewport face/edge/sketch hit testing.
+
 Click a coincident point location to open a local chooser of incident-edge diagrams.
 The ordinary default includes all colocated point targets. Each stored coincidence
 component appears as one diagram containing all its incident branches; independent

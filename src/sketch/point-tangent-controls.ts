@@ -1,7 +1,7 @@
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { constraintCurves } from "./constraint-geometry.js";
 import type { SketchEditor } from "./editor.js";
-import { selectedPointHits, tangentPointPair } from "./point-selection.js";
+import { tangentPointPair } from "./point-selection.js";
 import { sketchIcon } from "./sketch-icons.js";
 import { makeTangent } from "./tangency.js";
 
@@ -36,7 +36,7 @@ export class PointTangentControls {
   }
   private pair() {
     const sketch = this.editor.sketch;
-    return sketch ? tangentPointPair(sketch, selectedPointHits(this.editor, sketch)) : null;
+    return sketch ? tangentPointPair(sketch, this.editor.selected.pointHits(sketch)) : null;
   }
   private async apply(): Promise<void> {
     const sketch = this.editor.sketch,

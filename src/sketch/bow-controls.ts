@@ -10,7 +10,7 @@ import { onModelKeydown } from "./model-keys.js";
 import { pick } from "./picking.js";
 import type { Point } from "./planes.js";
 import { distance, midpoint } from "./point-math.js";
-import type { SelectionTarget } from "./selected-targets.js";
+import type { SelectionTarget } from "./selection-target.js";
 
 type Session = {
   sketch: Sketch;

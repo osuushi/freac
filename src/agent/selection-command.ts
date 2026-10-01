@@ -1,6 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
-import { type ModelingTarget, modelingKey } from "../sketch/model-selection.js";
-import { targetKey } from "../sketch/selected-targets.js";
+import { type ModelingTarget, modelingKey } from "../sketch/model-selection-state.js";
+import { targetKey } from "../sketch/selection-target.js";
 import { findInspectionTarget } from "./inspection-geometry.js";
 
 /** Arguments are validated again in the renderer before any UI state changes. */
