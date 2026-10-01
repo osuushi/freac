@@ -1,4 +1,3 @@
-import { continueDecorators } from "../decorators/continuation.js";
 import type { BodyEdgeFinish, BooleanMode, EdgeMovement, FaceMovement } from "../model/body.js";
 import {
   type CleanupSelection,
@@ -7,6 +6,7 @@ import {
 } from "../model/cleanup.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
+import { continueBodyMetadata } from "./body-metadata.js";
 import { EdgeSizeLimit } from "./edge-size-limit.js";
 import { FaceOffsetEdit } from "./face-offset-edit.js";
 import { kernelInput, loftInput, revolveInput } from "./kernel-input.js";
@@ -91,7 +91,7 @@ export class SolidEdits {
       bodies,
     });
     return result.participants.length
-      ? continueDecorators(document, {
+      ? continueBodyMetadata(document, {
           ...document,
           bodies: continuingBodies(bodies, materialize(bodies, result)),
         })
@@ -188,6 +188,6 @@ export class SolidEdits {
         bodies: next,
       };
     }
-    return continueDecorators(document, candidate, request);
+    return continueBodyMetadata(document, candidate, request);
   }
 }

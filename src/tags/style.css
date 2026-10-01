@@ -1,0 +1,64 @@
+.tag-editor {
+  position: absolute;
+  top: 190px;
+  right: 20px;
+  width: 265px;
+  max-height: calc(100vh - 270px);
+  overflow: auto;
+  padding: 16px;
+  border: 1px solid #d7e0ec;
+  border-radius: 12px;
+  background: #fffffff5;
+  box-shadow: 0 4px 20px #243a5218;
+}
+.tag-editor[hidden],
+.tag-children[hidden] {
+  display: none;
+}
+.tag-editor h2 {
+  font-size: 15px;
+  margin: 0 0 12px;
+}
+.tag-editor input,
+.tag-editor textarea {
+  box-sizing: border-box;
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 8px;
+  font: inherit;
+}
+.tag-editor textarea {
+  min-height: 65px;
+  resize: vertical;
+}
+.tag-editor p {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #52647a;
+}
+.tag-editor button {
+  margin: 3px;
+}
+.tag-children {
+  margin-left: 15px;
+  border-left: 1px solid #d7e0ec;
+  padding-left: 5px;
+}
+.tag-row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  font-size: 12px;
+  padding: 7px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tag-row[aria-pressed="true"] {
+  background: #e6f0ff;
+  color: #2863a4;
+}
+.entity-row .tag-disclosure {
+  flex: none;
+  padding: 4px;
+}

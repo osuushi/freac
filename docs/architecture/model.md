@@ -56,6 +56,10 @@ geometry continuations retain their names through their stable IDs.
 
 ## Sketch data model
 
+Named face/edge selections appear as collapsible children of bodies. Their
+[tagged-group contract](tagged-groups.md) defines modal membership editing,
+independent metadata ownership and continuation through topology edits.
+
 | Data | Meaning and lifetime |
 | --- | --- |
 | Document | Units, sketches, materialized bodies, saved planes and attached metadata; one accepted state |

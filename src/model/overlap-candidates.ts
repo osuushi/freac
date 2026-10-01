@@ -84,7 +84,11 @@ export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapC
   );
   const rank = (c: OverlapCandidate) =>
     c.target.kind === "edge" ? 0 : c.target.kind === "face" ? 1 : c.target.kind === "body" ? 2 : 3;
-  return result.sort(
-    (a, b) => a.depth - b.depth || rank(a) - rank(b) || a.key.localeCompare(b.key),
-  );
+  return result
+    .filter(
+      (c) =>
+        !editor.modeling.memberBody ||
+        (c.target.kind !== "plane" && editor.modeling.allows(c.target)),
+    )
+    .sort((a, b) => a.depth - b.depth || rank(a) - rank(b) || a.key.localeCompare(b.key));
 }

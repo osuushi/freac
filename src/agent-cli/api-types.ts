@@ -11,6 +11,7 @@ export interface FreacStatus {
   capabilities: readonly ("help" | "docs" | "types" | "status" | "selection" | "select" | "inspect" | "render" | "run" | "view" | "faces" | "context")[];
 }
 export type Target =
+  | { kind: "tagged-group"; taggedGroup: string }
   | { kind: "plane"; plane: string }
   | { kind: "body"; body: string }
   | { kind: "face"; body: string; face: string }
@@ -55,6 +56,7 @@ export interface BodySummary {
 }
 /** inspect without ID. */
 export interface FreacOverview {
+  taggedGroups: readonly TaggedGroup[];
   decorators: readonly DecoratorInstance[];
   decoratorDefinitions: readonly DecoratorDefinition[];
   builtinDecorators: DecoratorCatalog["builtins"];

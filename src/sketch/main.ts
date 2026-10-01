@@ -25,6 +25,7 @@ import { ScaleControls } from "../model/scale-controls.js";
 import { SectionControls } from "../model/section-controls.js";
 import { ShellControls } from "../model/shell-controls.js";
 import { TopologyMoveControls } from "../model/topology-move-controls.js";
+import { TagControls } from "../tags/controls.js";
 import { ToolMenu } from "../tools/menu.js";
 import { installPlaneBounds } from "./plane-bounds.js";
 import { planeEntryTools } from "./plane-entry-tools.js";
@@ -153,7 +154,8 @@ const bodyActions = new BodyActions(
 );
 const deleteAction = new DeleteTopologyAction(editor);
 const mirror = new MirrorControls(editor, overlay);
-const entities = new EntityViewer(editor, app);
+const tags = new TagControls(editor, app);
+const entities = new EntityViewer(editor, app, tags);
 const constructionPlanes = new ConstructionPlaneControls(editor, overlay, entities.referenceRows);
 const scaling = new ScaleControls(
   editor,
@@ -244,6 +246,7 @@ window.addEventListener(
     mirror.dispose();
     scaling.dispose();
     disposeVisibility();
+    tags.dispose();
     entities.dispose();
     overlaps.dispose();
     crossSection.dispose();

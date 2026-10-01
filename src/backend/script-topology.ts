@@ -1,6 +1,6 @@
 import type { ScriptOperation, ScriptResult } from "../agent-script/api.js";
-import { continueDecorators } from "../decorators/continuation.js";
 import type { SketchDocument } from "../sketch/document.js";
+import { continueBodyMetadata } from "./body-metadata.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
 import type { SolidCalculator } from "./solid-calculator.js";
 
@@ -39,7 +39,7 @@ export async function scriptTopology(
     bodies: [body],
   });
   const next = result.participants.length
-    ? continueDecorators(document, {
+    ? continueBodyMetadata(document, {
         ...document,
         bodies: continuingBodies(bodies, materialize(bodies, result)),
       })

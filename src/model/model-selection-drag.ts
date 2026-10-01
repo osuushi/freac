@@ -3,6 +3,11 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { selectModelsInFrustum } from "../sketch/model-selection.js";
 import { penSelectionClick, pointerDragThreshold } from "../sketch/pointer-intent.js";
 
+const drags = new WeakMap<SketchEditor, ModelSelectionDrag>();
+export function cancelModelSelectionDrag(editor: SketchEditor): void {
+  drags.get(editor)?.reset(true);
+}
+
 /** A modeling-space marquee; it only changes transient topology selection. */
 export class ModelSelectionDrag {
   private readonly box = document.createElement("div");
@@ -18,6 +23,7 @@ export class ModelSelectionDrag {
     overlay: HTMLElement,
     private available: () => boolean,
   ) {
+    drags.set(editor, this);
     this.box.className = "model-selection-box";
     this.box.hidden = true;
     overlay.append(this.box);
@@ -50,7 +56,10 @@ export class ModelSelectionDrag {
       !this.available()
     )
       return;
-    const interaction = this.editor.interactions.acquire("model-selection", () => this.reset());
+    const interaction =
+      this.editor.interactions.current?.kind === "tag-membership"
+        ? this.editor.interactions.current
+        : this.editor.interactions.acquire("model-selection", () => this.reset());
     if (!interaction) return;
     this.ignoreClick = false;
     this.start = event;
@@ -101,18 +110,21 @@ export class ModelSelectionDrag {
       this.ignoreClick = true;
     }
   };
-  private reset = (): void => {
+  reset = (suppressClick = false): void => {
+    if (suppressClick && this.start) this.ignoreClick = true;
     this.box.hidden = true;
     this.start = null;
     this.pointerId = null;
     const interaction = this.interaction;
     this.interaction = null;
-    interaction?.release();
+    if (interaction?.kind === "tag-membership") interaction.releaseCapture();
+    else interaction?.release();
   };
   private cancel = (event: PointerEvent): void => {
     if (event.pointerId === this.pointerId) this.reset();
   };
   dispose(): void {
+    drags.delete(this.editor);
     this.reset();
     this.abort.abort();
     this.box.remove();

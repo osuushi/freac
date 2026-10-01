@@ -33,6 +33,12 @@ process.on(
       } else waiting?.resolve(message.value);
     } else if (message.kind === "start") {
       const api: ScriptApi = {
+        taggedGroups: () =>
+          call({ kind: "taggedGroups", input: {} }) as ReturnType<ScriptApi["taggedGroups"]>,
+        editTaggedGroup: (input) =>
+          call({ kind: "editTaggedGroup", input }) as ReturnType<ScriptApi["editTaggedGroup"]>,
+        applyTaggedGroup: (input) =>
+          call({ kind: "applyTaggedGroup", input }) as ReturnType<ScriptApi["applyTaggedGroup"]>,
         topology: (input) => call({ kind: "topology", input }) as ReturnType<ScriptApi["topology"]>,
         replaceFace: (input) =>
           call({ kind: "replaceFace", input }) as ReturnType<ScriptApi["replaceFace"]>,

@@ -1,13 +1,15 @@
 import type { ScriptOperation, ScriptResult } from "../agent-script/api.js";
-import { continueDecorators } from "../decorators/continuation.js";
 import { emptySketch, newId, type SketchDocument, withSketch } from "../sketch/document.js";
 import { planes, validateFrame } from "../sketch/planes.js";
 import { profilesFor } from "../sketch/profiles.js";
+import { editTags } from "../tags/model.js";
+import { continueBodyMetadata } from "./body-metadata.js";
 import { pathSweepInput } from "./kernel-input.js";
 import { materialize } from "./kernel-result.js";
 import type { NativeSolver } from "./native-solver.js";
 import { scriptModelingOperation } from "./script-modeling-operation.js";
 import { scriptSolidTool } from "./script-solid-tools.js";
+import { resolveTagOperation } from "./script-tags.js";
 import { scriptTopology } from "./script-topology.js";
 import { validateScriptSolid } from "./script-validation.js";
 import type { SolidCalculator } from "./solid-calculator.js";
@@ -27,6 +29,15 @@ export async function scriptOperation(
 ): Promise<{ document: SketchDocument; result: ScriptResult }> {
   if (!operation || typeof operation !== "object" || !operation.input)
     throw new Error("Invalid script operation");
+  if (operation.kind === "taggedGroups") return { document, result: document.taggedGroups ?? [] };
+  if (operation.kind === "editTaggedGroup") {
+    const next = editTags(document, operation.input);
+    return { document: next, result: next.taggedGroups ?? [] };
+  }
+  if (operation.kind === "applyTaggedGroup") {
+    const resolved = resolveTagOperation(document, operation.input);
+    return scriptOperation(document, resolved, solids, solver, kernel);
+  }
   if (operation.kind === "topology" || operation.kind === "replaceFace")
     return scriptTopology(document, operation, kernel);
   if (operation.kind === "createSketch") return createScriptSketch(document, operation, solver);
@@ -84,7 +95,7 @@ async function calculateScriptSolid(
   if (operation.kind === "sweep") {
     const bodies = document.bodies ?? [];
     const result = await kernel.calculate(pathSweepInput(document, operation.input, bodies));
-    next = continueDecorators(document, { ...document, bodies: materialize(bodies, result) });
+    next = continueBodyMetadata(document, { ...document, bodies: materialize(bodies, result) });
   } else if (operation.kind === "extrude") {
     const e = operation.input;
     next = await solids.calculate(document, { kind: "extrude", extrusion: e });

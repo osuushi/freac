@@ -15,6 +15,7 @@ import type { PlaneCut } from "../model/plane-cut.js";
 import type { ScaleOperation } from "../model/scale.js";
 import type { BodyTopology, FaceReplacement } from "../model/topology-edit.js";
 import type { PlaneFrame, PlaneId, Point } from "../sketch/planes.js";
+import type { TagScriptApi, TagScriptOperation } from "../tags/script.js";
 import type { DecoratorScriptApi, DecoratorScriptOperation } from "./decorators.js";
 
 export type ScriptCurve =
@@ -46,6 +47,7 @@ export interface ScaleResult extends SolidResult {
   sketches: SketchResult[];
 }
 export type ScriptResult =
+  | readonly import("../tags/model.js").TaggedGroup[]
   | BodyTopology
   | SketchResult
   | SolidResult
@@ -53,7 +55,7 @@ export type ScriptResult =
   | PlaneResult
   | { removed: string };
 /** All distances are mm, angles degrees. Await each call; parallel edits reject. */
-export interface ScriptApi extends DecoratorScriptApi {
+export interface ScriptApi extends DecoratorScriptApi, TagScriptApi {
   topology(input: { body: string }): Promise<BodyTopology>;
   replaceFace(input: FaceReplacement): Promise<SolidResult>;
   /** Omit id to create; supply an existing plane id to reposition. Frames are copied. */
@@ -88,6 +90,7 @@ export interface ScriptApi extends DecoratorScriptApi {
   transformBodies(input: BodyTransform): Promise<SolidResult>;
 }
 export type ScriptOperation =
+  | TagScriptOperation
   | { kind: "topology"; input: { body: string } }
   | { kind: "replaceFace"; input: FaceReplacement }
   | DecoratorScriptOperation

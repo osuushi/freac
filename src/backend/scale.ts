@@ -1,6 +1,6 @@
-import { continueDecorators } from "../decorators/continuation.js";
 import { identityScale, type ScaleOperation, validateScale } from "../model/scale.js";
 import type { SketchDocument } from "../sketch/document.js";
+import { continueBodyMetadata } from "./body-metadata.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
 import { scaleSketch } from "./scale-sketch.js";
 import type { SolidCalculator } from "./solid-calculator.js";
@@ -83,5 +83,9 @@ export async function scaleDocument(
       }),
     );
   }
-  return continueDecorators(document, { ...document, bodies: next }, { kind: "scale", operation });
+  return continueBodyMetadata(
+    document,
+    { ...document, bodies: next },
+    { kind: "scale", operation },
+  );
 }

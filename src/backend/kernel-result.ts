@@ -106,6 +106,7 @@ export function materialize(
       topologyOrigins.set(materialized, {
         bodies: predecessorBodies,
         copy,
+        edges: new Map(edges.map((edge, index) => [edgeIds[index], edge.predecessors])),
         faces: new Map(faces.map((face, index) => [faceIds[index], face.predecessors])),
       });
       return materialized;

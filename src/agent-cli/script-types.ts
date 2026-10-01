@@ -1,7 +1,9 @@
 import { decoratorTypes } from "./decorator-types.js";
+import { tagTypes } from "./tag-types.js";
 import { topologyTypes } from "./topology-types.js";
 /** Public script declarations, included in the actual pre-execution typecheck. */
 export const scriptTypes = `
+${tagTypes}
 ${decoratorTypes}
 ${topologyTypes}
 export type Point = { x: number; y: number };
@@ -21,7 +23,7 @@ export interface SolidResult {
   bodies: { id: string; volume: number; faces: string[]; edges: string[] }[];
 }
 /** Distances mm, angles degrees. Await each call; parallel edits reject. */
-export interface FreacScript extends DecoratorScriptApi {
+export interface FreacScript extends DecoratorScriptApi, TagScriptApi {
   /** Candidate topology, including analytic supports, trimmed loops and adjacency; no geometry edit. */
   topology(input: { body: string }): Promise<BodyTopology>;
   /** Coaxial complete cylinder/cone wall with two circular rims and perpendicular planar neighbors. */

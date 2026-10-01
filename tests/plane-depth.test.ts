@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { pickSavedPlane } from "../src/model/saved-plane-picking.js";
 import type { SketchEditor } from "../src/sketch/editor.js";
 import { pickModels } from "../src/sketch/model-selection.js";
+import { ModelSelection } from "../src/sketch/model-selection-state.js";
 import { minimumPlaneBounds } from "../src/sketch/plane-bounds.js";
 import { planes } from "../src/sketch/planes.js";
 
@@ -15,7 +16,7 @@ function scene(faceZ: number) {
   return {
     bodiesVisible: true,
     visibility: { visible: () => true },
-    modeling: { targets: [] },
+    modeling: new ModelSelection(),
     world: {
       camera,
       renderer: { clippingPlanes: [] },

@@ -7,11 +7,13 @@ import { type SketchDocument, withSketch } from "../sketch/document.js";
 import { removeCurves } from "../sketch/geometry.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { mergeDocumentSketches } from "../sketch/sketch-merge.js";
+import { editTags } from "../tags/model.js";
 
 export function isDirectDocumentEdit(
   request: ModelRequest,
 ): request is Exclude<Parameters<typeof editDocument>[1], { kind: "delete-entities" }> {
   return [
+    "tagged-group",
     "decorator",
     "decorator-definition",
     "rename-entity",
@@ -32,6 +34,7 @@ export function editDocument(
     ModelRequest,
     {
       kind:
+        | "tagged-group"
         | "decorator"
         | "decorator-definition"
         | "rename-entity"
@@ -48,6 +51,8 @@ export function editDocument(
   >,
 ): SketchDocument {
   switch (request.kind) {
+    case "tagged-group":
+      return editTags(document, request.edit);
     case "decorator":
       return editDecorators(document, request.edit);
     case "decorator-definition":
@@ -88,6 +93,9 @@ export function editDocument(
       const sketchIds = new Set(request.sketchIds);
       return {
         ...document,
+        ...(document.taggedGroups
+          ? { taggedGroups: document.taggedGroups.filter((g) => !bodyIds.has(g.body)) }
+          : {}),
         ...(bodyIds.size
           ? { bodies: (document.bodies ?? []).filter((body) => !bodyIds.has(body.id)) }
           : {}),

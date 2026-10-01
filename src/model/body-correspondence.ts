@@ -6,6 +6,7 @@ export const topologyOrigins = new WeakMap<
   {
     bodies: readonly string[];
     copy: boolean;
+    edges?: ReadonlyMap<string, readonly string[]>;
     faces: ReadonlyMap<string, readonly string[]>;
   }
 >();
