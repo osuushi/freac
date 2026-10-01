@@ -24,7 +24,7 @@ export function sketchBackend(): Plugin {
           let body = "";
           for await (const chunk of request) {
             body += chunk;
-            if (body.length > 2_000_000) throw new Error("Sketch request too large");
+            if (body.length > 32 * 1024 * 1024) throw new Error("Sketch request too large");
           }
           const result = await owner?.call(JSON.parse(body) as ModelRequest);
           response.setHeader("Content-Type", "application/json");

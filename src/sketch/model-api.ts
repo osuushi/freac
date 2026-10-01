@@ -19,6 +19,8 @@ import type { OperationHistoryEntry } from "./operation-history.js";
 import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
+  | { kind: "export-step"; items: import("../model/step-export.js").StepItem[] }
+  | { kind: "cancel-step-export" }
   | { kind: "export-geometry"; bodyIds?: string[] }
   | {
       kind: "decorator-draft";
@@ -101,6 +103,7 @@ export interface ModelView {
   solveMs: number;
 }
 export type ModelReply = {
+  step?: string;
   decoratorDraft?: readonly import("../decorators/types.js").DecoratorInstance[];
   decoratorInspection?: import("../decorators/inspection.js").DecoratorInspection;
   exportDocument?: SketchDocument;

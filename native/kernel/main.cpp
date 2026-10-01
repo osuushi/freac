@@ -131,6 +131,10 @@ int main() {
         try {
             Tree input; std::istringstream stream(line); boost::property_tree::read_json(stream, input);
             timing.operation(input.get<std::string>("kind")); timing.phase("parse");
+            if (input.get<std::string>("kind") == "export-step") {
+                std::ostringstream output; exportStep(output, input);
+                std::cout << output.str() << std::endl; continue;
+            }
             const auto bodies = operands(input); std::string mode;
             timing.phase("operands");
             if (input.get<std::string>("kind") == "topology") {

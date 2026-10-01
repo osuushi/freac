@@ -35,7 +35,8 @@ Its synchronous hooks are:
   warnings remain visible in the settings panel. At most 100 diagnostics.
 - generate(context): return [{operation:"add"|"subtract",mesh}]. Each modifier is a
   closed, consistently oriented triangle mesh; the array may be empty. The host
-  applies these modifiers to the original body mesh at STL/3MF export.
+  applies these modifiers to the original body mesh at STL/3MF export, or STEP
+  export with Include decorators (AP242 mesh bodies, with an editability warning).
 - preview(context): optional when preview:true; return one triangle mesh, null,
   or {mesh, state}. state is optional transient JSON under 16 KiB. Open meshes
   are allowed. Preview is translucent and never replaces picking on exact faces.

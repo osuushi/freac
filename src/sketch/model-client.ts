@@ -147,6 +147,16 @@ export class ModelClient {
     if (!reply.exportDocument) throw new Error("Export geometry unavailable");
     return reply.exportDocument;
   }
+  async exportStep(items: import("../model/step-export.js").StepItem[]) {
+    const reply = await call({ kind: "export-step", items });
+    if (reply.error) throw new Error(reply.error);
+    if (!reply.step) throw new Error("STEP geometry unavailable");
+    return reply.step;
+  }
+  async cancelStepExport(): Promise<void> {
+    const reply = await call({ kind: "cancel-step-export" });
+    if (reply.error) throw new Error(reply.error);
+  }
   async draftDecorator(
     edit: Extract<import("../decorators/types.js").DecoratorEdit, { action: "settings" }>,
   ) {

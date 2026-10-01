@@ -1,5 +1,5 @@
 import { toolMenuOpen } from "../tools/menu-focus.js";
-/** CAD shortcuts must not intercept keys before they reach the embedded agent. */
+/** CAD shortcuts leave embedded agents and native modal dialogs in control of their keys. */
 export function onModelKeydown(
   handler: (event: KeyboardEvent) => void,
   options?: AddEventListenerOptions,
@@ -7,7 +7,8 @@ export function onModelKeydown(
   window.addEventListener(
     "keydown",
     (event) => {
-      if (event.target instanceof Element && event.target.closest(".agent-dock")) return;
+      if (event.target instanceof Element && event.target.closest(".agent-dock, dialog[open]"))
+        return;
       if (
         toolMenuOpen() ||
         document.querySelector(".control-menu:popover-open") ||

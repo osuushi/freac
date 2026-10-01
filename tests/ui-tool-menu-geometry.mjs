@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { exportDocument, openDocument, saveDocument } from "./native-documents.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, close, drag, inspect } from "./ui-helpers.mjs";
+import { startScale } from "./ui-scale.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function show(page, query) {
@@ -43,8 +44,7 @@ async function sketchAndExtrude(page) {
   await page.mouse.click(edge.x, edge.y);
   await chooseTool(page, "transform", "transform");
   assert.equal((await inspect(page)).moveMode, true);
-  await chooseTool(page, "transform", "transform");
-  await page.getByRole("checkbox", { name: "Uniform scale", exact: true }).check();
+  await startScale(page);
   await page.getByRole("textbox", { name: "Transform scale X" }).fill("1.2");
   await inspect(page);
   await unchangedMenu(page);

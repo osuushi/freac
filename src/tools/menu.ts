@@ -119,7 +119,8 @@ export class ToolMenu {
     restoreToolFocus();
   }
   private keydown = (event: KeyboardEvent): void => {
-    if (event.target instanceof Element && event.target.closest(".agent-dock")) return;
+    if (event.target instanceof Element && event.target.closest(".agent-dock, dialog[open]"))
+      return;
     if ((event.metaKey || event.ctrlKey) && !event.altKey && event.key.toLowerCase() === "f") {
       event.preventDefault();
       event.stopImmediatePropagation();

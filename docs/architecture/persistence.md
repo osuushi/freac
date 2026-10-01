@@ -87,6 +87,37 @@ the [3MF Core specification](https://github.com/3MFConsortium/spec_core/blob/mas
 Placement is baked into vertices. Exports contain geometry only, without printer,
 material or slicing settings. Exact editable geometry remains in the Freac file.
 
+## STEP export
+
+STEP exports the same visible accepted bodies and world placement as STL/3MF,
+excluding sketches and temporary previews. The native OCCT writer produces AP242
+with explicit millimeter units and separate body products. This is geometry
+exchange, without Freac IDs, constraints, decorator code/settings, feature history,
+entity names, colors or a product assembly hierarchy. Export does not change the
+accepted document, dirty state or Undo.
+
+When a visible body has decorators, a modal offers **Include decorators** or
+**Exact bodies only**, plus Cancel/Escape. Including decorators runs the existing
+mesh pipeline and writes each decorated body's entire final mesh as native AP242
+tessellated geometry. Undecorated bodies retain exact BReps in that same file.
+The warning explains that decorated bodies are meshes rather than smooth editable
+CAD solids, and receiving apps may not support them. Do not substitute the nominal
+solid as an alternative representation of the modified mesh.
+
+Exact bodies only explicitly omits decorators and writes the underlying exact
+solids for every visible body. It does not execute decorator code or require
+decorator resolution. Including decorators retains the existing repair/missing-code
+export failures. Hidden decorators do not cause a warning or block visible-body
+export. There is no triangle-to-BRep conversion, analytic reconstruction of meshes,
+or target-app compatibility certification in this increment.
+
+Conversion runs in a disposable worker for decorator meshes and a cancellable
+native child for STEP serialization. Temporary exact/mesh items come from one
+captured accepted snapshot; later document edits cannot alter that export. Cancel
+export stops mesh/STEP work and suppresses late downloads; a pending shared
+geometry-refinement query may finish. The host APIs remain
+behind the existing model transport; browser/WebKit and Electron use the same path.
+
 ## Portable agent workspace
 
 Area 2 adds version-2 ZIP files when a document has portable content. `model.json`

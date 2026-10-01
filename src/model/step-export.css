@@ -1,0 +1,29 @@
+.step-export-choice {
+  max-width: 480px;
+  padding: 24px;
+  color: var(--text, #26364a);
+  background: var(--panel, white);
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 12px;
+  box-shadow: 0 12px 48px #0003;
+}
+
+.step-export-choice h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+
+.step-export-choice p {
+  line-height: 1.5;
+}
+
+.step-export-choice > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.step-export-choice::backdrop {
+  background: #0004;
+}

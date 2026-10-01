@@ -107,7 +107,9 @@ see the bundled JavaScript authoring reference below.
 Inspect after a modeling call to see inherited faces and any unresolved attachment;
 ambiguous continuation needs explicit reassign or discard. Diagnostics validate
 hook inputs and local geometry; final mesh generation/Booleans are checked by
-ordinary STL/3MF export. Read-only calls do not create an Undo step.
+ordinary STL/3MF export or STEP with Include decorators. STEP writes decorated
+bodies as AP242 meshes and warns about editability and receiving-app support;
+Exact bodies only explicitly omits decorators. Read-only calls do not create an Undo step.
 
 Example: create an editable circle sketch and a separate extruded solid:
 \`\`\`typescript

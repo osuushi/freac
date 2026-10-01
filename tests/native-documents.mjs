@@ -84,7 +84,7 @@ export async function saveDocument(page, path) {
   throw new Error(`Save did not complete: ${path}`);
 }
 
-export async function exportDocument(page, format, path) {
+export async function exportDocument(page, format, path, stepChoice) {
   const session = sessions.get(page);
   const waiting = session
     ? session.app.evaluate(
@@ -104,6 +104,11 @@ export async function exportDocument(page, format, path) {
       )
     : page.waitForEvent("download");
   await chooseTool(page, `export ${format}`, `export-${format}`);
+  if (stepChoice)
+    await page
+      .getByRole("dialog", { name: "STEP export with decorators" })
+      .getByRole("button", { name: stepChoice, exact: true })
+      .click();
   const download = await waiting;
   if (download) await download.saveAs(path);
 }

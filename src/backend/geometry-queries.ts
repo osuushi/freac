@@ -3,18 +3,25 @@ import { validateFrame } from "../sketch/planes.js";
 import { exportGeometry } from "./export-geometry.js";
 import { measurementInput } from "./measurement-input.js";
 import { SolidCalculator } from "./solid-calculator.js";
+import { StepExporter } from "./step-exporter.js";
 
-type Query = Extract<ModelRequest, { kind: "sections" | "measure" | "export-geometry" }>;
+type Query = Extract<
+  ModelRequest,
+  { kind: "sections" | "measure" | "export-geometry" | "export-step" }
+>;
 
-/** Section refresh and selection readouts share one serialized read-only worker. */
+/** Geometry readouts share a worker; STEP has its own cancellable snapshot writer. */
 export class GeometryQueries {
   private kernel: SolidCalculator;
+  private step: StepExporter;
   private pending = Promise.resolve();
   private closed = false;
   constructor(executable?: string) {
     this.kernel = new SolidCalculator(executable);
+    this.step = new StepExporter(executable ?? SolidCalculator.executable, "STEP exporter");
   }
   call(view: ModelView, request: Query): Promise<ModelReply> {
+    if (request.kind === "export-step") return this.calculate(view, request);
     const result = this.pending.then(() => this.calculate(view, request));
     this.pending = result.then(() => {});
     return result;
@@ -22,6 +29,9 @@ export class GeometryQueries {
   private async calculate(view: ModelView, request: Query): Promise<ModelReply> {
     try {
       if (this.closed) throw new Error("Geometry query cancelled");
+      if (request.kind === "export-step") {
+        return { view, step: await this.step.export(request.items) };
+      }
       if (request.kind === "export-geometry")
         return {
           view,
@@ -45,5 +55,9 @@ export class GeometryQueries {
   close(): void {
     this.closed = true;
     this.kernel.close();
+    this.step.close();
+  }
+  async cancelStep(): Promise<void> {
+    await this.step.cancel();
   }
 }

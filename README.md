@@ -23,7 +23,8 @@ are intended targets but have not yet been verified.
   perform supported modeling operations through scripts. Each successful modeling
   script can be undone as one edit.
 - **Save and share.** Keep your model, workspace files, and supported agent
-  conversations together in a `.freac` document. Export solid meshes as STL or 3MF.
+  conversations together in a `.freac` document. Export solids as STEP, or meshes
+  as STL or 3MF.
 
 Some complex solid edits may be rejected. A failed calculation preserves the
 accepted model, so you can adjust the operation and try again.
@@ -118,8 +119,12 @@ starts fresh Undo history, and there is no geometry autosave, so save regularly.
 To recover retained agent files, stop the agent and use
 **Settings → Recover agent files…**.
 
-To export, open Tools and choose **Export STL** or **Export 3MF**. Exports include
-all accepted solid bodies, including hidden bodies, in millimeters.
+To export, open Tools and choose **Export STL**, **Export 3MF** or **Export STEP**.
+Exports include visible accepted solid bodies in millimeters at their world positions.
+STEP keeps undecorated bodies as exact geometry. When decorators are present,
+choose whether to include their final shapes as AP242 meshes or omit decorators
+and export the underlying exact solids. The dialog warns that mesh bodies are
+not smooth editable CAD solids and some receiving apps may not support them.
 
 ## iPad interface
 

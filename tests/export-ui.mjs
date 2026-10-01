@@ -6,6 +6,7 @@ import { strFromU8, unzipSync } from "three/addons/libs/fflate.module.js";
 import { STLLoader } from "three/addons/loaders/STLLoader.js";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
+import { readStep } from "./step-readback.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { exportCapture } from "./ui-export-capture.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
@@ -38,6 +39,7 @@ try {
   await exportCapture(page, name, app);
   await reset(page);
   assert.equal(!(await toolEnabled(page, "export 3mf", "export-3mf")), true);
+  assert.equal(await toolEnabled(page, "export step", "export-step"), false);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   // Grid-aligned dimensions avoid browser pointer-coordinate rounding.
   await page.keyboard.press("r");
@@ -48,6 +50,8 @@ try {
   const second = await at(page, 35, 0);
   await chooseTool(page, "return to modeling", "modeling");
   await page.mouse.click(pick.x, pick.y);
+  if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
+    await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
   await page.getByRole("textbox", { name: "Extrusion distance" }).fill("5");
   await page.keyboard.press("Enter");
   assert.equal(
@@ -55,16 +59,19 @@ try {
     true,
     "Temporary geometry is not exported",
   );
+  assert.equal(await toolEnabled(page, "export step", "export-step"), false);
   await page.keyboard.press("Enter");
   await inspect(page);
   assert.equal(await toolEnabled(page, "export 3mf", "export-3mf"), true);
   await page.mouse.click(second.x, second.y);
+  if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
+    await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
   await page.getByRole("textbox", { name: "Extrusion distance" }).fill("10");
   await page.keyboard.press("Enter");
   await page.keyboard.press("Enter");
   assert.equal((await inspect(page)).document.bodies.length, 2);
   await page.getByRole("button", { name: "Hide Body 2", exact: true }).click();
-  for (const format of ["3mf", "stl"]) {
+  for (const format of ["3mf", "stl", "step"]) {
     assert.equal(await toolEnabled(page, `export ${format}`, `export-${format}`), true);
   }
   for (const [hide, show] of [
@@ -73,14 +80,14 @@ try {
   ]) {
     if (hide === "Hide bodies") await chooseTool(page, hide, "hide-bodies");
     else await page.getByRole("button", { name: hide, exact: true }).click();
-    for (const format of ["3mf", "stl"]) {
+    for (const format of ["3mf", "stl", "step"]) {
       assert.equal(await toolEnabled(page, `export ${format}`, `export-${format}`), false);
     }
     if (show === "Show bodies") await chooseTool(page, show, "show-bodies");
     else await page.getByRole("button", { name: show, exact: true }).click();
   }
   const before = await inspect(page);
-  for (const format of ["3mf", "stl"]) {
+  for (const format of ["3mf", "stl", "step"]) {
     const path = resolve(`.cache/sketch-review/${name}-export.${format}`);
     const waiting = app
       ? app.evaluate(
@@ -115,7 +122,7 @@ try {
       assert.deepEqual(geometry.boundingBox.max.toArray(), [20, 10, 5]);
       assert.equal(geometry.attributes.position.count, 36);
       geometry.dispose();
-    } else {
+    } else if (format === "3mf") {
       const files = unzipSync(bytes);
       const model = strFromU8(files["3D/3dmodel.model"]);
       const parsed = await page.evaluate((xml) => {
@@ -139,6 +146,16 @@ try {
         close(Math.min(...parsed.vertices.map((v) => v[axis])), [-20, -10, 0][axis]);
         close(Math.max(...parsed.vertices.map((v) => v[axis])), [20, 10, 5][axis]);
       }
+    } else {
+      const shapes = readStep(path);
+      assert.equal(shapes.length, 1);
+      assert.equal(shapes[0].valid, true);
+      assert.equal(shapes[0].exactFaces, 6);
+      assert.equal(shapes[0].meshFaces, 0);
+      shapes[0].bounds.forEach((value, i) => {
+        close(value, [-20, -10, 0, 20, 10, 5][i]);
+      });
+      close(shapes[0].volume, 4000);
     }
     assert.deepEqual((await inspect(page)).document, before.document);
   }
@@ -151,7 +168,7 @@ try {
   assert.equal(await toolEnabled(page, "export 3mf", "export-3mf"), true);
   await page.screenshot({ path: `.cache/sketch-review/${name}-export.png` });
   console.log(
-    `${name}: real extrusion, temporary/empty guards, STL/3MF downloads, parsed geometry/units, Undo/Redo and adjacent Save/Open pass`,
+    `${name}: real extrusion, temporary/empty guards, STL/3MF/STEP downloads, independent STEP readback, Undo/Redo and adjacent Save/Open pass`,
   );
 } finally {
   await browser?.close();

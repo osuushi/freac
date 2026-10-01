@@ -73,5 +73,6 @@ void planarSketchCurves(std::ostream&, const TopoDS_Shape&, const Tree&);
 
 std::vector<Result> replaceFace(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);
 void inspectTopology(std::ostream&, const Tree&, const std::vector<Operand>&);
+void exportStep(std::ostream&, const Tree&);
 
 TopoDS_Shape loftSections(const Tree&, const std::vector<Operand>&);

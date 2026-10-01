@@ -6,6 +6,7 @@ import { initializeDecoratorRuntime } from "../decorators/javascript-runtime.js"
 import { decoratedMeshes, initializeMeshRuntime } from "../decorators/mesh-runtime.js";
 import { nativeDecoratedMeshes } from "../decorators/native-export.js";
 import type { SketchDocument } from "../sketch/document.js";
+import { exportMesh } from "./export-mesh.js";
 import { ExportTiming } from "./export-timing.js";
 import { type ExportFormat, encodeMeshes, exportBodies } from "./mesh-export.js";
 
@@ -20,7 +21,7 @@ function integrate(input: ArrayBuffer): Promise<ArrayBuffer> {
 self.onmessage = async (
   event: MessageEvent<{
     document: SketchDocument;
-    format: ExportFormat;
+    format: ExportFormat | "step";
     sources?: EnabledDefinition[];
     native?: boolean;
     profile?: boolean;
@@ -45,6 +46,15 @@ self.onmessage = async (
         )
       : undefined;
     timing?.mark("runtimeSetup");
+    if (format === "step") {
+      const meshes = document.decorators?.length
+        ? event.data.native
+          ? await nativeDecoratedMeshes(document, integrate, javascript, timing)
+          : decoratedMeshes(await initializeMeshRuntime(wasmUrl), document, javascript)
+        : (document.bodies ?? []).map(exportMesh);
+      self.postMessage({ stepMeshes: meshes });
+      return;
+    }
     const bytes = document.decorators?.length
       ? encodeMeshes(
           event.data.native

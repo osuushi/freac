@@ -20,6 +20,7 @@ Run all commands in this guide from the repository root, after activating `.nvmr
 npm ci
 npm run setup:native
 npm run setup:kernel
+npm run setup:mesh
 npm run dev
 ```
 
@@ -30,10 +31,12 @@ commit and builds a separate calculator. It needs network access on first use;
 its source and build caches live in `.cache/solver` and `.build/solver`. Normal
 `dev`/`build` runs rebuild the calculator incrementally without downloading sources.
 `setup:kernel` downloads checksum-verified OCCT 7.9.3 source and builds the modeling
-libraries plus FreAC's separate solid calculator. This initial source build takes
+libraries, STEP translator (`TKDESTEP`) and FreAC's separate solid calculator.
+Its transitive toolkit dependencies are built without FreeType or X11; STEP
+export does not initialize graphics. This initial source build takes
 longer; its cache is `.cache/kernel` and the calculator is `.build/kernel`.
 Alternatively, set `OCCT_ROOT` to an installed OCCT 7.9.3 SDK before running the
-command. The SDK must match the calculator architecture. On macOS, both setup
+command. The SDK must include `TKDESTEP` and match the calculator architecture. On macOS, native setup
 commands explicitly default to Node's architecture, replacing any stale CMake
 architecture selection. `CMAKE_OSX_ARCHITECTURES` remains an explicit override.
 On Apple Silicon, use an ARM64 Node installation; an Intel Node running under
@@ -85,6 +88,27 @@ To repeat setup from committed source, create a separate checkout with
 and run the setup and check commands above. Start without copying `node_modules/`,
 `.build/` or `.cache/` from another checkout. The compiler and CMake remain system
 prerequisites; native sources and headers are downloaded and verified.
+
+### STEP export
+
+After native setup and `npm run build`, build the independent reader and run
+geometry and ordinary control acceptance:
+
+```sh
+cmake -S native/kernel -B .build/kernel -DFREAC_KERNEL_TESTS=ON
+cmake --build .build/kernel --target step-readback --config Release --parallel 4
+npm test
+node tests/step-geometry.mjs
+node tests/ui-step-export.mjs
+FREAC_TEST_BROWSER=chromium node tests/export-ui.mjs
+FREAC_TEST_BROWSER=webkit node tests/export-ui.mjs
+FREAC_TEST_BROWSER=electron node tests/export-ui.mjs
+```
+
+The reader checks exact surfaces, units, placement, volume, closed cavities and
+AP242 mesh data. The UI route covers decorator choices, cancellation, visibility,
+WASM fallback and unchanged accepted geometry in headless Chromium/WebKit and
+hidden Electron. These checks do not certify third-party STEP application support.
 
 ### Sketch and solid tools
 

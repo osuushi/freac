@@ -428,6 +428,30 @@ workaround: reproduce its necessity against Freac's selected version.
 [TopoShape.cpp L896-L936](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Part/App/TopoShape.cpp#L896-L936).
 Full XCAF/assembly metadata and units are outside this first-pass audit.
 
+### Freac STEP representation (2026-10-01)
+
+Source observation at configured OCCT 7.9.3 commit
+`a016080bf6738d6aeae020badee4e888ad1540a5`:
+[`STEPControl_Writer::Transfer` and `WriteStream`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/STEPControl/STEPControl_Writer.cxx#L109-L183)
+provide checked shape transfer and stream writing; the
+[`DESTEP_Parameters`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/DESTEP/DESTEP_Parameters.hxx#L190-L194)
+carry explicit schema, tessellation and output units. The
+[`TopoDSToStep_MakeManifoldSolidBrep` solid constructor](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/TopoDSToStep/TopoDSToStep_MakeManifoldSolidBrep.cxx#L111-L163)
+can produce a `tessellated_solid` without a manifold BRep link; its
+[`TopoDSToStep_MakeTessellatedItem::Init` face conversion](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/TopoDSToStep/TopoDSToStep_MakeTessellatedItem.cxx#L112-L175)
+uses attached triangulation for a `triangulated_face` without requiring a surface.
+
+Freac inference: preserve ordinary solids as exact BReps and carry decorated
+bodies as native AP242 meshes, without thousands of manufactured planar CAD faces
+or an incorrect nominal-solid alternate representation. Warn about mesh editability
+and receiving-app support, with an explicit underlying-exact-solid export choice.
+No OCCT implementation was copied; this uses public APIs from the existing pinned
+LGPL component. STEP requires the TKDESTEP toolkit and its
+[transitive dependencies](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/TKDESTEP/EXTERNLIB);
+setup disables optional FreeType and Xlib to avoid new system font/X11 requirements.
+Independent reader acceptance and its actual runtime results belong in tests and
+the active brief; this source observation does not establish target-app compatibility.
+
 ### Service implications of implementation details
 
 The mapped Boolean path changes OCCT parallel-thread configuration before build.

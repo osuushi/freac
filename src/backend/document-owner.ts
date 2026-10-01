@@ -83,6 +83,10 @@ export class DocumentOwner {
     this.candidate = null;
   }
   async call(request: ModelRequest): Promise<ModelReply> {
+    if (request.kind === "cancel-step-export") {
+      await this.queries.cancelStep();
+      return { view: this.view };
+    }
     if (request.kind === "decorator-inspect" || request.kind === "decorator-draft")
       return {
         view: this.view,
@@ -93,6 +97,7 @@ export class DocumentOwner {
     if (
       request.kind === "sections" ||
       request.kind === "measure" ||
+      request.kind === "export-step" ||
       request.kind === "export-geometry"
     )
       return this.queries.call(this.view, request);

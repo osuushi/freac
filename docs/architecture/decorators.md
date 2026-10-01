@@ -69,6 +69,12 @@ The same typed operations serve agents, including inspection of settings, member
 resolved dimensions and diagnostics. Multi-selection does not create a permanent
 relationship between separately threaded parts.
 
+STEP export offers an explicit choice when visible bodies have decorators:
+include their final meshes as AP242 tessellated geometry, or omit decorators and
+export the underlying exact solids. Undecorated bodies remain exact. The warning
+explains mesh editability and receiving-app support limitations; no export hook
+or accepted BRep changes. See [STEP export](persistence.md#step-export).
+
 ## Thread geometry contract
 
 Equal reference diameters plus the same resolved thread definition must produce

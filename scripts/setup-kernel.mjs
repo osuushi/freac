@@ -66,6 +66,7 @@ if (!sdk) {
       `-DCMAKE_INSTALL_PREFIX=${sdk}`,
       "-DCMAKE_BUILD_TYPE=Release",
       "-DBUILD_LIBRARY_TYPE=Shared",
+      "-DBUILD_ADDITIONAL_TOOLKITS=TKDESTEP",
       ...flags,
       ...["FoundationClasses", "ModelingData", "ModelingAlgorithms"].map(
         (m) => `-DBUILD_MODULE_${m}=ON`,
@@ -74,6 +75,8 @@ if (!sdk) {
         (m) => `-DBUILD_MODULE_${m}=OFF`,
       ),
       "-DUSE_TBB=OFF",
+      "-DUSE_FREETYPE=OFF",
+      "-DUSE_XLIB=OFF",
       "-DBUILD_USE_PCH=OFF",
     ]);
     run("cmake", [
