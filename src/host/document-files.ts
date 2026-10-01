@@ -2,7 +2,7 @@ import { readFile, stat } from "node:fs/promises";
 import { basename, dirname, isAbsolute, join } from "node:path";
 import { app, type BrowserWindow } from "electron";
 import type { DocumentOwner } from "../backend/document-owner.js";
-import { validateDocument } from "../backend/open-document.js";
+import { validateDocument } from "../backend/document-validation.js";
 import { type CameraState, validateCameraState } from "../model/camera-state.js";
 import { documentArchive } from "../model/document-archive.js";
 import type { DocumentStatus } from "../model/document-host.js";

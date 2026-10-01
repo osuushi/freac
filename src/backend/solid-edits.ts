@@ -13,6 +13,36 @@ import { kernelInput, revolveInput } from "./kernel-input.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
 import type { SolidCalculator } from "./solid-calculator.js";
 
+export type SolidRequest = Extract<
+  ModelRequest,
+  {
+    kind:
+      | "revolve"
+      | "extrude"
+      | "transform-bodies"
+      | "boolean-bodies"
+      | "finish-edges"
+      | "offset-faces"
+      | "shell"
+      | "move-faces"
+      | "move-edges";
+  }
+>;
+
+export function isSolidRequest(request: ModelRequest): request is SolidRequest {
+  return [
+    "revolve",
+    "extrude",
+    "transform-bodies",
+    "boolean-bodies",
+    "finish-edges",
+    "offset-faces",
+    "shell",
+    "move-faces",
+    "move-edges",
+  ].includes(request.kind);
+}
+
 /** Geometry calculations and their temporary measurements; no accepted document or history. */
 export class SolidEdits {
   readonly offsetEdit = new FaceOffsetEdit();
@@ -102,24 +132,7 @@ export class SolidEdits {
     }
     return { ...document, bodies: next };
   }
-  async calculate(
-    document: SketchDocument,
-    request: Extract<
-      ModelRequest,
-      {
-        kind:
-          | "revolve"
-          | "extrude"
-          | "transform-bodies"
-          | "boolean-bodies"
-          | "finish-edges"
-          | "offset-faces"
-          | "shell"
-          | "move-faces"
-          | "move-edges";
-      }
-    >,
-  ): Promise<SketchDocument> {
+  async calculate(document: SketchDocument, request: SolidRequest): Promise<SketchDocument> {
     let candidate: SketchDocument;
     const bodies = document.bodies ?? [];
     if (request.kind === "move-faces" || request.kind === "move-edges") {

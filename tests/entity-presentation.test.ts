@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
-import { validateDocument } from "../src/backend/open-document.js";
+import { validateDocument } from "../src/backend/document-validation.js";
 import { documentArchive, readArchive } from "../src/model/document-archive.js";
 import { entityRows } from "../src/model/entity-presentation.js";
 import { emptySketch } from "../src/sketch/document.js";

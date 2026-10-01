@@ -112,6 +112,12 @@ selection and records a cancelled attempt, while timeout/geometric rejection rec
 a failure, without altering geometry or invalidating Redo. Explicit Accept and
 committing sketch edits complete normally rather than being interrupted.
 
+Automatic acceptance checks cancellation after geometry and decorator continuation,
+immediately before publication. Open checks before replacing the document and its
+history. Cancelling after native computation has finished still abandons that edit.
+DocumentStore validates whole-document identities and current sketch/decorator
+invariants before changing snapshots or history, for manual edits, scripts and Open.
+
 ## Selection Undo (founder decision, 2026-09-22)
 
 The same DocumentStore history includes ordered selection snapshots. Completed
