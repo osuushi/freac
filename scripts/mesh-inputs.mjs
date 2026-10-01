@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { run } from "./native-inputs.mjs";
 
@@ -21,10 +21,16 @@ export const meshInputs = {
 };
 export async function prepareMeshInputs() {
   await mkdir(meshInputCache, { recursive: true });
+  const archiveCache = process.env.FREAC_MESH_ARCHIVE_CACHE;
+  if (archiveCache) await mkdir(archiveCache, { recursive: true });
   for (const [name, input] of Object.entries(meshInputs)) {
-    const archive = resolve(meshInputCache, `${name}.tar.gz`);
-    const bytes = existsSync(archive)
-      ? await readFile(archive)
+    const localArchive = resolve(meshInputCache, `${name}.tar.gz`);
+    const archive = archiveCache
+      ? resolve(archiveCache, `${name}-${input.sha256}.tar.gz`)
+      : localArchive;
+    const existing = existsSync(archive) ? archive : localArchive;
+    const bytes = existsSync(existing)
+      ? await readFile(existing)
       : await (async () => {
           const response = await fetch(input.url);
           if (!response.ok) throw new Error(`${name} download failed: ${response.status}`);
@@ -32,7 +38,17 @@ export async function prepareMeshInputs() {
         })();
     if (createHash("sha256").update(bytes).digest("hex") !== input.sha256)
       throw new Error(`${name} source checksum mismatch`);
-    if (!existsSync(archive)) await writeFile(archive, bytes);
+    // Keep the conventional local archive paths for source-release packaging.
+    for (const destination of new Set([archive, localArchive])) {
+      if (existsSync(destination)) continue;
+      const temporary = `${destination}.${process.pid}.tmp`;
+      try {
+        await writeFile(temporary, bytes);
+        await rename(temporary, destination);
+      } finally {
+        await rm(temporary, { force: true });
+      }
+    }
     const directory = resolve(meshInputCache, name),
       marker = resolve(directory, ".freac-source");
     if (existsSync(marker) && (await readFile(marker, "utf8")) === input.sha256) continue;
