@@ -3,7 +3,7 @@ import { orient, outwardDrag } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, close, drag, inspect, reset } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
-import { chooseTool } from "./ui-tools.mjs";
+import { browseTools, chooseTool } from "./ui-tools.mjs";
 
 async function quantity(page, rotate, axis, value) {
   await page
@@ -70,6 +70,37 @@ async function identityKeepsRedo(page, original) {
   await page.keyboard.press("Enter");
   assert.deepEqual((await inspect(page)).document, original);
   assert.equal((await inspect(page)).preview, null);
+}
+
+async function exitAndReselect(page, cap) {
+  await quantity(page, true, "X", 5);
+  await quantity(page, false, "X", 1);
+  await page.keyboard.press("Enter");
+  await inspect(page);
+  await chooseTool(page, "offset faces", "offset");
+  let state = await inspect(page);
+  assert.equal(state.modelingTool, "offset");
+  rimEquals(faceRim(state.document.bodies[0], cap.id), {
+    center: [2, 2, 10],
+    normal: [0, -Math.sin(Math.PI / 9), Math.cos(Math.PI / 9)],
+    radius: 8,
+  });
+  const accepted = state.document;
+  await browseTools(page, "Select");
+  await chooseTool(page, "clear selection", "selection-clear");
+  assert.deepEqual((await inspect(page)).modelingSelection, []);
+  await worldClick(page, [2, 2, 10]);
+  assert.equal((await inspect(page)).modelingSelection[0]?.face, cap.id);
+  await page.keyboard.press("m");
+  state = await quantity(page, false, "X", 1);
+  close(faceRim(state.preview.bodies[0], cap.id).center[0], 3);
+  await page.keyboard.press("Escape");
+  assert.deepEqual((await inspect(page)).document, accepted);
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await page.keyboard.press("Delete");
+  assert.equal((await inspect(page)).document.bodies.length, 0);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, accepted);
 }
 
 await withUiRuntimes(async (page, name) => {
@@ -139,6 +170,7 @@ await withUiRuntimes(async (page, name) => {
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, accepted);
   assert.equal((await inspect(page)).preview, null);
+  await exitAndReselect(page, cap);
   console.log(
     `${name}: single-face rotation then translation, zero-value handle switch, one-step Undo/Redo and cancellation passed`,
   );
