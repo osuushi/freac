@@ -10,6 +10,7 @@ export type ModelingTool =
   | "move"
   | "fillet"
   | "chamfer"
+  | "loft"
   | "revolve"
   | "shell";
 

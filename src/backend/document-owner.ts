@@ -13,7 +13,7 @@ import { openDocument } from "./open-document.js";
 import { planeCutAvailable } from "./plane-cut.js";
 import { ScriptEdits } from "./script-edits.js";
 import { SolidCalculator } from "./solid-calculator.js";
-import { SolidEdits } from "./solid-edits.js";
+import { isSolidPreviewRequest, SolidEdits } from "./solid-edits.js";
 
 export class DocumentOwner {
   private kernel: SolidCalculator;
@@ -207,6 +207,13 @@ export class DocumentOwner {
       this.store.accept(direct, operation);
       return;
     }
+    if (isSolidPreviewRequest(request)) {
+      this.pendingOperation = operation;
+      this.candidate = null;
+      this.candidate = await this.solids.calculate(this.store.data, request);
+      if (request.kind === "transform-bodies") await this.accept();
+      return;
+    }
     switch (request.kind) {
       case "check-cleanup":
         if (this.candidate)
@@ -227,20 +234,6 @@ export class DocumentOwner {
         break;
       case "edge-finish-selection":
         await this.solids.selectFinishEdges(this.store.data, request.operation);
-        break;
-      case "move-edges":
-      case "move-faces":
-      case "shell":
-      case "offset-faces":
-      case "finish-edges":
-      case "boolean-bodies":
-      case "transform-bodies":
-      case "revolve":
-      case "extrude":
-        this.pendingOperation = operation;
-        this.candidate = null;
-        this.candidate = await this.solids.calculate(this.store.data, request);
-        if (request.kind === "transform-bodies") await this.accept();
         break;
       case "mirror":
       case "scale":

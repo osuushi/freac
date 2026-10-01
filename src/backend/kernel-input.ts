@@ -1,11 +1,17 @@
 import type { Body, Extrusion, LiftSource, Revolution } from "../model/body.js";
+import { type Loft, validateLoft } from "../model/loft.js";
 import type { PathSweep } from "../model/path-sweep.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { PlaneFrame } from "../sketch/planes.js";
 import { profilesFor } from "../sketch/profiles.js";
 import { boundary } from "./profile-boundary.js";
 
-function profileInput(document: SketchDocument, sources: LiftSource[], bodies: readonly Body[]) {
+function profileInput(
+  document: SketchDocument,
+  sources: LiftSource[],
+  bodies: readonly Body[],
+  parallel = true,
+) {
   let direction: number[] | undefined;
   const profiles = sources.map((source) => {
     let frame: PlaneFrame;
@@ -37,10 +43,14 @@ function profileInput(document: SketchDocument, sources: LiftSource[], bodies: r
       u[2] * v[0] - u[0] * v[2],
       u[0] * v[1] - u[1] * v[0],
     ];
-    if (direction && Math.abs(direction.reduce((sum, n, i) => sum + n * normal[i], 0)) < 1 - 1e-7)
+    if (
+      parallel &&
+      direction &&
+      Math.abs(direction.reduce((sum, n, i) => sum + n * normal[i], 0)) < 1 - 1e-7
+    )
       throw new Error("Selected profiles must have parallel planes");
     direction ??= normal;
-    return profile;
+    return parallel ? profile : { ...profile, frame };
   });
   if (!direction) throw new Error("Select a closed profile or planar face");
   return {
@@ -99,6 +109,19 @@ export function pathSweepInput(
     ...profileInput(document, operation.sources, bodies),
     kind: "path-sweep",
     path: operation.path,
+    mode: operation.mode,
+    targets: operation.targets,
+    eligibleTargets: operation.eligibleTargets,
+  };
+}
+
+export function loftInput(document: SketchDocument, operation: Loft, bodies: readonly Body[]) {
+  validateLoft(operation);
+  return {
+    ...profileInput(document, operation.sources, bodies, false),
+    kind: "loft" as const,
+    ruled: operation.ruled,
+    alignment: operation.alignment,
     mode: operation.mode,
     targets: operation.targets,
     eligibleTargets: operation.eligibleTargets,

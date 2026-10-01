@@ -11,6 +11,7 @@ const entries = [
   ["move", "Move", "M", ["translate", "rotate"], []],
   ["fillet", "Fillet", "F", ["round", "rounding"], []],
   ["chamfer", "Chamfer", "⇧F", ["bevel"], []],
+  ["loft", "Loft", "", ["sections", "blend profiles"], ["smooth", "ruled"]],
   ["revolve", "Revolve", "⇧R", ["revolution", "lathe"], ["screw", "helix"]],
 ] as const;
 export class ModelingTools {
@@ -20,6 +21,7 @@ export class ModelingTools {
   constructor(
     private editor: SketchEditor,
     private revolve: () => void,
+    private loft: () => void,
     private edgeMode: (mode: "fillet" | "chamfer") => void,
   ) {
     const catalog = toolCatalog(editor);
@@ -74,7 +76,7 @@ export class ModelingTools {
   }
   private reason(tool: ModelingTool): string | null {
     if (this.editor.world.active) return "Return to Modeling and select solid geometry";
-    if (!this.editor.modeling.targets.length)
+    if (!this.editor.modeling.targets.length && tool !== "loft")
       return {
         shell: "Select a body or faces to shell",
         offset: "Select faces or bodies to offset",
@@ -83,9 +85,12 @@ export class ModelingTools {
         chamfer: "Select solid edges to bevel",
         extrude: "Select a closed profile or planar face",
         revolve: "Select a closed profile or planar face",
+        loft: "Choose ordered sections",
       }[tool];
-    const result = this.editor.modeling.resolve(tool);
-    if (!result.available) return result.reason;
+    if (this.editor.modeling.targets.length) {
+      const result = this.editor.modeling.resolve(tool);
+      if (!result.available) return result.reason;
+    }
     const current = this.editor.interactions.current;
     if (current && !current.finish) return "Finish or cancel the current edit first";
     return null;
@@ -110,6 +115,7 @@ export class ModelingTools {
     editor.modeling.setTool(tool);
     editor.notice = "";
     if (tool === "revolve") this.revolve();
+    if (tool === "loft") this.loft();
     editor.refresh();
   }
   dispose(): void {

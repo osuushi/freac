@@ -58,6 +58,12 @@ export class EntityVisibility {
         : operation.kind === "revolve"
           ? (operation.parameters.revolution as Revolution)
           : undefined;
+    if (operation.kind === "loft")
+      this.setUsedSketchesVisible(
+        document,
+        (operation.parameters.operation as import("./loft.js").Loft).sources,
+        direction === "undo",
+      );
     if (sweep) this.setUsedSketchesVisible(document, sweep.sources, direction === "undo");
   }
   visible(id: string): boolean {

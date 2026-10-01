@@ -138,6 +138,7 @@ const dimensions = new Dimensions(editor, overlay),
 const modelingTools = new ModelingTools(
   editor,
   () => modelControls.activateRevolve(),
+  () => modelControls.activateLoft(),
   (mode) => bodyFinishes.setMode(mode),
 );
 const bodyActions = new BodyActions(

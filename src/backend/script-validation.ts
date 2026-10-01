@@ -1,9 +1,19 @@
 import type { ScriptOperation } from "../agent-script/api.js";
+import { validateLoft } from "../model/loft.js";
 import type { SketchDocument } from "../sketch/document.js";
 
 type SolidOperation = Extract<
   ScriptOperation,
-  { kind: "extrude" | "revolve" | "sweep" | "offsetFaces" | "moveFaces" | "transformBodies" }
+  {
+    kind:
+      | "extrude"
+      | "loft"
+      | "revolve"
+      | "sweep"
+      | "offsetFaces"
+      | "moveFaces"
+      | "transformBodies";
+  }
 >;
 export function validateScriptSolid(document: SketchDocument, operation: SolidOperation): void {
   const ids = (values: unknown): values is string[] =>
@@ -11,7 +21,12 @@ export function validateScriptSolid(document: SketchDocument, operation: SolidOp
     values.length <= 1000 &&
     new Set(values).size === values.length &&
     values.every((id) => document.bodies?.some((b) => b.id === id));
-  if (operation.kind === "extrude" || operation.kind === "revolve" || operation.kind === "sweep") {
+  if (
+    operation.kind === "loft" ||
+    operation.kind === "extrude" ||
+    operation.kind === "revolve" ||
+    operation.kind === "sweep"
+  ) {
     validateSweep(operation, ids);
   } else if (operation.kind === "offsetFaces") {
     const o = operation.input;
@@ -64,7 +79,7 @@ export function validateScriptSolid(document: SketchDocument, operation: SolidOp
 }
 
 function validateSweep(
-  operation: Extract<SolidOperation, { kind: "extrude" | "revolve" | "sweep" }>,
+  operation: Extract<SolidOperation, { kind: "extrude" | "loft" | "revolve" | "sweep" }>,
   ids: (values: unknown) => boolean,
 ): void {
   const e = operation.input;
@@ -84,7 +99,9 @@ function validateSweep(
     (e.eligibleTargets !== undefined && !ids(e.eligibleTargets))
   )
     throw new Error("Invalid script sweep sources or Boolean targets");
-  if (operation.kind === "extrude") {
+  if (operation.kind === "loft") {
+    validateLoft(operation.input);
+  } else if (operation.kind === "extrude") {
     const e = operation.input;
     if (
       !Number.isFinite(e.distance) ||

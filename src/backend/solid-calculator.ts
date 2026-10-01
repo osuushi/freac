@@ -10,7 +10,7 @@ import type {
   FaceMovement,
 } from "../model/body.js";
 import type { CleanupSelection } from "../model/cleanup.js";
-import type { kernelInput, pathSweepInput, revolveInput } from "./kernel-input.js";
+import type { kernelInput, loftInput, pathSweepInput, revolveInput } from "./kernel-input.js";
 import type { KernelResult } from "./kernel-result.js";
 import { NativeCalculator } from "./native-calculator.js";
 import type { projectionInput } from "./projection.js";
@@ -18,6 +18,7 @@ import type { projectionInput } from "./projection.js";
 export class SolidCalculator extends NativeCalculator<
   | ReturnType<typeof import("./sketch-offset.js").sketchOffsetInput>
   | ReturnType<typeof kernelInput>
+  | ReturnType<typeof loftInput>
   | ReturnType<typeof revolveInput>
   | ReturnType<typeof pathSweepInput>
   | ReturnType<typeof projectionInput>

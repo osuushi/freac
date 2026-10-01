@@ -25,7 +25,12 @@ import { installNavigation } from "./world-navigation.js";
 export class World {
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10000);
-  readonly renderer = new THREE.WebGLRenderer({ antialias: true, stencil: true });
+  // Keep the last frame intact between event-driven redraws and canvas captures.
+  readonly renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    stencil: true,
+    preserveDrawingBuffer: true,
+  });
   readonly canvas = this.renderer.domElement;
   readonly target = new THREE.Vector3();
   depthBounds = (): THREE.Box3 => new THREE.Box3();

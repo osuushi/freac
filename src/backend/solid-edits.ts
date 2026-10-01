@@ -9,9 +9,41 @@ import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { EdgeSizeLimit } from "./edge-size-limit.js";
 import { FaceOffsetEdit } from "./face-offset-edit.js";
-import { kernelInput, revolveInput } from "./kernel-input.js";
+import { kernelInput, loftInput, revolveInput } from "./kernel-input.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
 import type { SolidCalculator } from "./solid-calculator.js";
+
+export type SolidPreviewRequest = Extract<
+  ModelRequest,
+  {
+    kind:
+      | "loft"
+      | "revolve"
+      | "extrude"
+      | "transform-bodies"
+      | "boolean-bodies"
+      | "finish-edges"
+      | "offset-faces"
+      | "shell"
+      | "move-faces"
+      | "move-edges";
+  }
+>;
+
+export function isSolidPreviewRequest(request: ModelRequest): request is SolidPreviewRequest {
+  return [
+    "loft",
+    "revolve",
+    "extrude",
+    "transform-bodies",
+    "boolean-bodies",
+    "finish-edges",
+    "offset-faces",
+    "shell",
+    "move-faces",
+    "move-edges",
+  ].includes(request.kind);
+}
 
 /** Geometry calculations and their temporary measurements; no accepted document or history. */
 export class SolidEdits {
@@ -102,24 +134,7 @@ export class SolidEdits {
     }
     return { ...document, bodies: next };
   }
-  async calculate(
-    document: SketchDocument,
-    request: Extract<
-      ModelRequest,
-      {
-        kind:
-          | "revolve"
-          | "extrude"
-          | "transform-bodies"
-          | "boolean-bodies"
-          | "finish-edges"
-          | "offset-faces"
-          | "shell"
-          | "move-faces"
-          | "move-edges";
-      }
-    >,
-  ): Promise<SketchDocument> {
+  async calculate(document: SketchDocument, request: SolidPreviewRequest): Promise<SketchDocument> {
     let candidate: SketchDocument;
     const bodies = document.bodies ?? [];
     if (request.kind === "move-faces" || request.kind === "move-edges") {
@@ -159,9 +174,11 @@ export class SolidEdits {
       const result = await this.kernel.calculate(
         request.kind === "boolean-bodies"
           ? { ...request.operation, kind: "boolean", bodies }
-          : request.kind === "revolve"
-            ? revolveInput(document, request.revolution, bodies)
-            : kernelInput(document, request.extrusion, bodies),
+          : request.kind === "loft"
+            ? loftInput(document, request.operation, bodies)
+            : request.kind === "revolve"
+              ? revolveInput(document, request.revolution, bodies)
+              : kernelInput(document, request.extrusion, bodies),
       );
       this.booleanMode = result.mode;
       this.booleanTargets = result.participants;

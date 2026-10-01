@@ -167,3 +167,9 @@ and zoom, and exits the planar workspace. It creates no geometry edit or camera
 Undo step; normal sketch exit still clears selection through selection history.
 Pointer capture retains drags outside the cube; Escape, cancellation and focus
 loss stop without leveling. Active modeling gestures block cube navigation.
+
+## Retained viewport frame
+
+The event-driven renderer retains its last WebGL drawing buffer between redraws.
+This keeps canvas captures available and prevents blank regions around local cards
+in Chromium. Camera, geometry and viewport changes still trigger ordinary redraws.

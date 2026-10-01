@@ -9,6 +9,7 @@ import type {
   FaceMovement,
   Revolution,
 } from "../model/body.js";
+import type { Loft } from "../model/loft.js";
 import type { PathSweep } from "../model/path-sweep.js";
 import type { PlaneCut } from "../model/plane-cut.js";
 import type { ScaleOperation } from "../model/scale.js";
@@ -77,6 +78,8 @@ export interface ScriptApi extends DecoratorScriptApi {
   extrude(input: Extrusion): Promise<SolidResult>;
   /** Revolve or sweep helically: height is total axial travel, not pitch per turn. */
   revolve(input: Revolution): Promise<SolidResult>;
+  /** Connect ordered planar regions/faces; alignment steps adjust automatic seams. */
+  loft(input: Loft): Promise<SolidResult>;
   /** Normal face offset. Unsupported or limited distances reject the whole script. */
   offsetFaces(input: BodyFaceOffset): Promise<SolidResult>;
   /** Translate/rotate selected solid faces with shared boundary reconnection. */
@@ -100,6 +103,7 @@ export type ScriptOperation =
   | { kind: "createSketch"; input: SketchInput }
   | { kind: "extrude"; input: Extrusion }
   | { kind: "revolve"; input: Revolution }
+  | { kind: "loft"; input: Loft }
   | { kind: "offsetFaces"; input: BodyFaceOffset }
   | { kind: "moveFaces"; input: FaceMovement }
   | { kind: "transformBodies"; input: BodyTransform };

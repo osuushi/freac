@@ -18,6 +18,7 @@ type Kind =
   | "body-move"
   | "projection"
   | "use-edge"
+  | "loft"
   | "revolve"
   | "extrude"
   | "placement"
@@ -46,6 +47,7 @@ export class ActiveInteraction {
       this.active.kind !== "projection" &&
       this.active.kind !== "cleanup" &&
       (![
+        "loft",
         "revolve",
         "scale",
         "construction-plane",

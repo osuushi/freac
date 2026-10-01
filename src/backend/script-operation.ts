@@ -66,7 +66,16 @@ async function calculateScriptSolid(
   document: SketchDocument,
   operation: Extract<
     ScriptOperation,
-    { kind: "sweep" | "extrude" | "revolve" | "offsetFaces" | "moveFaces" | "transformBodies" }
+    {
+      kind:
+        | "sweep"
+        | "extrude"
+        | "loft"
+        | "revolve"
+        | "offsetFaces"
+        | "moveFaces"
+        | "transformBodies";
+    }
   >,
   solids: SolidEdits,
   kernel: SolidCalculator,
@@ -79,6 +88,8 @@ async function calculateScriptSolid(
   } else if (operation.kind === "extrude") {
     const e = operation.input;
     next = await solids.calculate(document, { kind: "extrude", extrusion: e });
+  } else if (operation.kind === "loft") {
+    next = await solids.calculate(document, { kind: "loft", operation: operation.input });
   } else if (operation.kind === "revolve") {
     next = await solids.calculate(document, { kind: "revolve", revolution: operation.input });
   } else if (operation.kind === "offsetFaces") {

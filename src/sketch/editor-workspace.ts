@@ -16,6 +16,7 @@ export function installWorkspaceSync(editor: SketchEditor): void {
     ![
       "projection",
       "mirror",
+      "loft",
       "revolve",
       "extrude",
       "body-move",

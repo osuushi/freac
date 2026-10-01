@@ -68,6 +68,7 @@ process.on(
           call({ kind: "createSketch", input }) as ReturnType<ScriptApi["createSketch"]>,
         extrude: (input) => call({ kind: "extrude", input }) as ReturnType<ScriptApi["extrude"]>,
         sweep: (input) => call({ kind: "sweep", input }) as ReturnType<ScriptApi["sweep"]>,
+        loft: (input) => call({ kind: "loft", input }) as ReturnType<ScriptApi["loft"]>,
         revolve: (input) => call({ kind: "revolve", input }) as ReturnType<ScriptApi["revolve"]>,
         offsetFaces: (input) =>
           call({ kind: "offsetFaces", input }) as ReturnType<ScriptApi["offsetFaces"]>,
