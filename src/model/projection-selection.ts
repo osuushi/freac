@@ -3,7 +3,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { segmentDistance } from "../sketch/geometry.js";
 import type { Point } from "../sketch/planes.js";
 import { worldPoint } from "../sketch/planes.js";
-import { pickFace } from "./body-view.js";
+import { BodyPickProbe } from "./body-picking.js";
 import { pickBodyEdge } from "./edge-selection.js";
 import { featureEdges } from "./feature-edges.js";
 import { coverageTargets } from "./operation-selection.js";
@@ -48,7 +48,8 @@ export function projectionSelection(e: SketchEditor): ProjectionSource[] {
   );
 }
 export function pickProjectionSource(e: SketchEditor, screen: Point): ProjectionSource | null {
-  const edge = pickBodyEdge(e, screen);
+  const probe = new BodyPickProbe(e, screen);
+  const edge = pickBodyEdge(e, screen, probe);
   if (edge) return { kind: "edge", body: edge.body, edge: edge.edge };
   let best: { source: ProjectionSource; distance: number } | undefined;
   for (const sketch of e.store.data.sketches) {
@@ -65,7 +66,7 @@ export function pickProjectionSource(e: SketchEditor, screen: Point): Projection
     }
   }
   if (best) return best.source;
-  const face = pickFace(e, screen);
+  const face = probe.faces()[0];
   return face ? { kind: "face", body: face.body, face: face.face } : null;
 }
 export function projectionLines(e: SketchEditor, sources: readonly ProjectionSource[]): number[][] {

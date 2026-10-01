@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import { type Point, type Vector, worldPoint } from "../sketch/planes.js";
 import type { Revolution } from "./body.js";
-import { pickFace } from "./body-view.js";
+import { pickFace } from "./body-picking.js";
 import { featureEdges } from "./feature-edges.js";
 
 export type RevolveAxis = Revolution["axis"];

@@ -20,6 +20,7 @@ The retired prototype and its command/revision protocol are preserved only in
 | Actual hit candidates and snapping | [Picking](../../src/sketch/picking.ts), [snapping](../../src/sketch/snapping.ts) |
 | World/camera, outlines and local controls | [World](../../src/sketch/world.ts), [drawing](../../src/sketch/drawing.ts), [dimensions](../../src/sketch/dimensions.ts), [selection overlay](../../src/sketch/selection-overlay.ts) |
 | Body resource lifetime and view style | [Body drawables](../../src/model/body-drawable.ts), [body view](../../src/model/body-view.ts) |
+| Body face/edge hit queries and overlap depth | [Pointer probe](../../src/model/body-picking.ts), [mesh ray hits](../../src/model/body-ray-hits.ts), [edge candidates](../../src/model/edge-selection.ts) |
 
 Pointer and numeric edits pass temporary typed intent alongside target geometry:
 point projection, rigid transform, dimension edit, or ordered pair application.

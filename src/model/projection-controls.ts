@@ -5,7 +5,7 @@ import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import { type PlaneFrame, planes } from "../sketch/planes.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
-import { pickFace } from "./body-view.js";
+import { pickFace } from "./body-picking.js";
 import type { ProjectionSource } from "./projection.js";
 import {
   pickProjectionSource,

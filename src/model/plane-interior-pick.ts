@@ -2,7 +2,7 @@ import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import { minimumPlaneBounds, type PlaneBounds, planeCorners } from "../sketch/plane-bounds.js";
 import { type PlaneFrame, type Point, planes } from "../sketch/planes.js";
-import { pickFace } from "./body-view.js";
+import { pickFace } from "./body-picking.js";
 
 /** Pick the displayed patches, not their infinite support or SVG outline. */
 export function pickPlaneInterior(

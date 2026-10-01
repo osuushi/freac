@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
-import { mkdir } from "node:fs/promises";
-import { chromium, webkit } from "playwright";
-import { createServer } from "vite";
 import { DocumentOwner } from "../.cache/sketch-tests/src/backend/document-owner.js";
 import { prism } from "../.cache/sketch-tests/tests/body-edge-fixtures.js";
-import { launchElectron, openDocument } from "./native-documents.mjs";
+import { openDocument } from "./native-documents.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { overlapCancellation } from "./ui-overlap-cancel.mjs";
@@ -12,6 +9,7 @@ import { overlapEdges } from "./ui-overlap-edges.mjs";
 import { hold, releaseChoice } from "./ui-overlap-gesture.mjs";
 import { planeSketchPreview } from "./ui-overlap-sketches.mjs";
 import { overlapTouch } from "./ui-overlap-touch.mjs";
+import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const owner = new DocumentOwner();
@@ -27,13 +25,17 @@ try {
 } finally {
   owner.close();
 }
-async function route(page, name) {
+async function loadFixture(page) {
   await inspect(page);
   await openDocument(page, {
     name: "overlap.freac",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify({ format: "freac", version: 1, document: fixture })),
   });
+  await inspect(page);
+}
+async function route(page, name) {
+  await loadFixture(page);
   const original = (await inspect(page)).document;
   assert.equal(await page.locator(".plane-label, .construction-plane-labels").count(), 0);
   await page.mouse.move(30, 35);
@@ -122,7 +124,7 @@ async function adaptiveMargin(page) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await chooseTool(page, "return to modeling", "modeling");
   const margin = await project(page, [38, 4, 0]);
-  await page.mouse.click(margin.x, margin.y);
+  await page.mouse.dblclick(margin.x, margin.y);
   assert.equal(
     (await inspect(page)).activePlane,
     "XY",
@@ -130,50 +132,29 @@ async function adaptiveMargin(page) {
   );
   await chooseTool(page, "return to modeling", "modeling");
 }
-await mkdir(".cache/sketch-review", { recursive: true });
-const server = await createServer({ server: { port: 0 } });
-await server.listen();
-try {
-  const engines =
-    process.env.FREAC_TEST_BROWSER === "electron" ? { electron: null } : { chromium, webkit };
-  for (const [name, engine] of Object.entries(engines)) {
-    const browser = engine ? await engine.launch({ headless: true }) : null;
-    const app = engine
-      ? null
-      : await launchElectron({
-          args: [process.cwd()],
-          env: {
-            ...process.env,
-            FREAC_TEST_HIDDEN: "1",
-            FREAC_DEV_URL: server.resolvedUrls.local[0],
-          },
-        });
-    try {
-      const page = app
-        ? await app.firstWindow()
-        : await browser.newPage({ viewport: { width: 1280, height: 900 } });
-      page.setDefaultTimeout(12000);
-      if (!app) await page.goto(server.resolvedUrls.local[0]);
-      await route(page, name);
-      if (browser) {
-        const touch = await browser.newPage({
+await withUiRuntimes(
+  async (page, name) => {
+    await route(page, name);
+    if (name !== "electron") {
+      const touch = await page
+        .context()
+        .browser()
+        .newPage({
           viewport: { width: 1280, height: 900 },
           hasTouch: true,
         });
+      try {
         await touch.addInitScript(() => {
           window.freacRemote = true;
         });
-        await touch.goto(server.resolvedUrls.local[0]);
-        await inspect(touch);
+        await touch.goto(page.url());
+        await loadFixture(touch);
         await overlapTouch(touch, name);
+      } finally {
         await touch.close();
       }
-      await planeSketchPreview(page, name);
-    } finally {
-      await browser?.close();
-      await app?.close();
     }
-  }
-} finally {
-  await server.close();
-}
+    await planeSketchPreview(page, name);
+  },
+  { viewport: { width: 1280, height: 900 } },
+);

@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { pickFace } from "../model/body-view.js";
+import { BodyPickProbe } from "../model/body-picking.js";
 import { pickBodyEdge } from "../model/edge-selection.js";
 import {
   type Operation,
@@ -153,7 +153,8 @@ export function pickModels(
       depth: Math.hypot(p[0] - camera.x, p[1] - camera.y, p[2] - camera.z),
     });
   }
-  const face = pickFace(editor, screen);
+  const probe = new BodyPickProbe(editor, screen);
+  const face = probe.faces()[0];
   if (face)
     hits.push({
       target: { kind: "face", body: face.body, face: face.face },
@@ -161,7 +162,7 @@ export function pickModels(
       edge: false,
     });
   hits.sort((a, b) => a.depth - b.depth || Number(b.edge) - Number(a.edge));
-  const edge = pickBodyEdge(editor, screen);
+  const edge = pickBodyEdge(editor, screen, probe);
   // Keep coincident geometry ahead of translucent planes despite the face sort bias.
   const targets = hits.filter((hit) => hit.depth <= maxDepth + 1e-4).map((hit) => hit.target);
   if (edge && edge.depth <= maxDepth + 1e-4)

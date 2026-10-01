@@ -1,21 +1,8 @@
 import * as THREE from "three";
 import { decoratorPreviewLayer } from "../decorators/preview-compositor.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import type { Point } from "../sketch/planes.js";
 import { foregroundBodyLayer } from "../sketch/world-foreground.js";
 import { BodyDrawable } from "./body-drawable.js";
-import { faceRayHits, screenRay } from "./body-ray-hits.js";
-
-export function pickFace(editor: SketchEditor, screen: Point) {
-  if (!editor.bodiesVisible) return undefined;
-  const bodies = (editor.display.bodies ?? []).filter((b) => editor.visibility.visible(b.id));
-  return faceRayHits(
-    bodies,
-    screenRay(editor, screen),
-    editor.world.camera.position,
-    editor.world.renderer.clippingPlanes,
-  )[0];
-}
 
 export function bodyView(editor: SketchEditor): () => void {
   const group = new THREE.Group();

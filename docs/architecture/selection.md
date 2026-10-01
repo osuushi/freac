@@ -53,6 +53,13 @@ founder feedback update these contracts before further tools depend on them.
   faces use the triangle normal nearest the hit on the edge. Candidates are sorted
   by camera distance, including occluded front-facing geometry. Hidden entities
   are excluded.
+  Ordinary edge picking and the chooser share projected edge segments, clipping
+  and local-facing tests. Ordinary picking additionally checks the covering face
+  at each closest edge point; the chooser retains covered candidates and tests
+  the best segment of each edge. A synchronous pointer probe reuses face hits only
+  for identical screen coordinates within that call. Geometry, camera, clipping
+  and visibility changes always start a fresh probe. Immutable face meshes retain
+  conservative bounds for ray rejection; render triangle indexes remain temporary.
   A disk grows from its center to a fixed circular outline over the hold delay; it indicates elapsed hold time, not
   processing. The delay is currently fixed; a future preferences window can expose it.
   Each choice shows the actual target geometry in the current camera orientation,

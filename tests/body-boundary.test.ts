@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import type { Body } from "../src/model/body.js";
-import { faceBoundaryEdges } from "../src/model/edge-selection.js";
+import { faceBoundaryEdges } from "../src/model/face-boundary.js";
 import { featureEdges } from "../src/model/feature-edges.js";
 import { emptySketch } from "../src/sketch/document.js";
 import type { ModelingTarget } from "../src/sketch/model-selection.js";

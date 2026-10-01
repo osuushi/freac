@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { PlaneFrame, Point, Vector } from "../sketch/planes.js";
-import { pickFace } from "./body-view.js";
+import { pickFace } from "./body-picking.js";
 import type { MirrorLine, MirrorPlane } from "./mirror.js";
 
 export type MirrorReference =
