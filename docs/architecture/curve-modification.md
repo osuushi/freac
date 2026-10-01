@@ -60,8 +60,17 @@ document using `model/face-boundary.ts`; shared internal edges and periodic seam
 are omitted, hole loops retained. Explicitly selected edges remain sources even
 when internal to a face set. A whole closed shell has no boundary and is rejected;
 this is boundary projection, not silhouette extraction. Target frames come from
-the active sketch, XY/XZ/YZ or a planar body face. Reuse a coplanar sketch or create
-one on acceptance. `backend/projection.ts` and the native kernel produce the usual
+the active sketch, XY/XZ/YZ, a saved construction plane or a planar body face.
+In Modeling, preselect sources and invoke Project, then click the destination's
+visible patch or planar face. Without preselection, click a first source.
+Shift-click adds/removes sources without a source/target mode switch; inside an
+active sketch ordinary clicks toggle sources and its frame stays the destination.
+Plane hover and click share the same nearest-reference picker, including tilted
+saved planes. Enter/check accepts, Escape/cross cancels and restores selection.
+Only compact accept/cancel controls appear, anchored above the bottom status so
+they do not follow the pointer. Projection errors sit above those controls with
+a fixed gap. Reuse a coplanar sketch or create one on acceptance.
+`backend/projection.ts` and the native kernel produce the usual
 temporary candidate; acceptance is one Undo, without a persistent source link.
 Analytic primitives survive where natural; other curves become editable cubic
 pieces with a 0.001 mm approximation budget. Point-only projections are rejected.

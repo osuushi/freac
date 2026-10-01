@@ -102,3 +102,8 @@ This is user-created Freac geometry.
   The capsule plate is rotated about 0.073° from the world axes; moving its hole
   or end along world X makes the surrounding perforated faces nonplanar. The boss
   sits on a spline-sided base carrying preexisting loose vertex tolerances.
+
+- `projection-tilted-plane.json` retains the R20 XY circle and saved 30° plane
+  at z26 from the founder's `2026-10-01T21-23-07-094Z-477b95d6` capture.
+  History and transient UI state are omitted. The ordinary projection route checks
+  plane picking, the expected ellipse, independent editing and document history.

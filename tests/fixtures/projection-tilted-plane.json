@@ -1,0 +1,40 @@
+{
+  "sourceCapture": "freac-fixture-2026-10-01T21-23-07-094Z.json",
+  "document": {
+    "units": "mm",
+    "sketches": [
+      {
+        "id": "cc9e1cea-38e6-467b-bf13-978eb3ee9846",
+        "plane": {
+          "origin": [0, 0, 0],
+          "u": [1, 0, 0],
+          "v": [0, 1, 0]
+        },
+        "curves": [
+          {
+            "id": "c48ded8a-4897-486d-85eb-0fe0aa166e74",
+            "kind": "circle",
+            "center": {
+              "x": 0,
+              "y": 0
+            },
+            "radius": 20,
+            "construction": false
+          }
+        ],
+        "constraints": [],
+        "groups": []
+      }
+    ],
+    "constructionPlanes": [
+      {
+        "id": "bc1541ba-6cfc-4fbe-8846-265f5f12bc19",
+        "frame": {
+          "origin": [0, 0, 26],
+          "u": [0.8660254037844387, 0, -0.49999999999999994],
+          "v": [0, 1, 0]
+        }
+      }
+    ]
+  }
+}

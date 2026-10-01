@@ -3,9 +3,9 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { Sketch } from "../sketch/document.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
-import { type PlaneFrame, planes } from "../sketch/planes.js";
+import type { PlaneFrame } from "../sketch/planes.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
-import { pickFace } from "./body-picking.js";
+import type { PlaneReferencePicker } from "./plane-reference-picker.js";
 import type { ProjectionSource } from "./projection.js";
 import {
   pickProjectionSource,
@@ -24,13 +24,13 @@ export class ProjectionControls {
   private previousModels: SketchEditor["modeling"]["targets"] = [];
   private target: { frame: PlaneFrame; sketchId?: string } | null = null;
   private result: Sketch | null = null;
-  private picking: "sources" | "target" = "sources";
   private outlines = new THREE.Group();
   private material = new THREE.LineBasicMaterial({ color: "#d28b22", depthTest: false });
   private highlightKey = "";
   constructor(
     private editor: SketchEditor,
     overlay: HTMLElement,
+    private picker: PlaneReferencePicker,
   ) {
     this.disposeTool = toolCatalog(editor).register({
       id: "project",
@@ -41,9 +41,9 @@ export class ProjectionControls {
       reason: () => idleReason(editor),
       run: () => this.begin(),
     });
-    this.root.className = "model-actions";
+    this.root.className = "model-actions projection-actions";
     this.root.innerHTML =
-      '<button data-project="sources" title="Click faces or curves to add or remove them">Sources</button><button data-project="target" title="Choose a coordinate plane or planar face">Target plane</button><button data-project="accept" aria-label="Accept projection" title="Accept projection">✓</button><button data-project="cancel" aria-label="Cancel projection" title="Cancel projection">×</button>';
+      '<button data-project="accept" aria-label="Accept projection" title="Accept projection (Enter)">✓</button><button data-project="cancel" aria-label="Cancel projection" title="Cancel projection (Escape)">×</button>';
     overlay.append(this.root);
     editor.world.scene.add(this.outlines);
     this.root.onclick = (event) => {
@@ -51,22 +51,25 @@ export class ProjectionControls {
       if (editor.blocked && action !== "cancel") return;
       if (action === "accept") void this.accept();
       else if (action === "cancel") void this.cancel();
-      else if (action === "sources" || action === "target") {
-        this.setPicking(action);
-        editor.refresh();
-      }
     };
+    this.bindEvents();
+    editor.world.changed.add(this.update);
+    this.update();
+  }
+  private bindEvents(): void {
+    const editor = this.editor;
     const options = { signal: this.abort.signal, capture: true };
     editor.world.canvas.addEventListener(
       "pointerdown",
       (event) => {
-        if (!this.lease || event.button !== 0) return;
+        if (!this.lease || event.button !== 0 || event.metaKey || event.ctrlKey) return;
         event.preventDefault();
         event.stopImmediatePropagation();
       },
       options,
     );
-    editor.world.canvas.addEventListener("click", this.pick, options);
+    // Run before the shared canvas plane picker so Shift-click can refine sources.
+    editor.world.canvas.ownerDocument.addEventListener("click", this.pick, options);
     editor.world.canvas.addEventListener(
       "dblclick",
       (event) => {
@@ -77,14 +80,9 @@ export class ProjectionControls {
     editor.world.canvas.addEventListener(
       "pointermove",
       (event) => {
-        if (!this.lease || event.buttons) return;
+        if (!this.lease || event.buttons || event.metaKey || event.ctrlKey) return;
         event.stopImmediatePropagation();
         editor.world.canvas.style.cursor = "crosshair";
-        if (this.picking === "target") {
-          const face = pickFace(editor, { x: event.clientX, y: event.clientY });
-          editor.modeling.hover = face ? { kind: "face", body: face.body, face: face.face } : null;
-          editor.refresh();
-        }
       },
       options,
     );
@@ -97,8 +95,6 @@ export class ProjectionControls {
         else if (!editor.blocked) void this.accept();
       }
     }, options);
-    editor.world.changed.add(this.update);
-    this.update();
   }
   private async begin(): Promise<void> {
     const e = this.editor;
@@ -114,59 +110,55 @@ export class ProjectionControls {
     this.target = e.world.activeFrame
       ? { frame: e.world.activeFrame, sketchId: e.sketch?.id ?? e.world.workspace?.sketchId }
       : null;
-    this.setPicking(this.target || !this.sources.length ? "sources" : "target");
-    const p = e.pointer ?? {
-      x: e.world.canvas.clientWidth / 2,
-      y: e.world.canvas.clientHeight / 2,
-    };
-    this.position(p.x, p.y);
+    e.message = "";
+    this.configurePicker();
     e.select([]);
     e.modeling.targets = [];
     await this.preview();
     e.refresh();
   }
-  private setPicking(mode: "sources" | "target"): void {
-    this.picking = mode;
-    this.editor.world.planePicker =
-      mode === "target" && !this.editor.world.active
-        ? (id) => {
-            if (this.editor.blocked || !this.lease) return;
-            this.target = { frame: planes[id] };
-            void this.preview();
-          }
-        : null;
-  }
-  private position(x: number, y: number): void {
-    this.root.style.left = `${Math.max(200, Math.min(this.editor.world.canvas.clientWidth - 200, x))}px`;
-    this.root.style.top = `${Math.max(80, Math.min(this.editor.world.canvas.clientHeight - 100, y + 35))}px`;
+  private configurePicker(): void {
+    if (this.editor.world.active || !this.sources.length) {
+      this.picker.stop();
+      return;
+    }
+    this.picker.start(
+      (frame) => {
+        if (this.editor.blocked || this.lease?.phase !== "editing") return;
+        this.target = { frame };
+        this.editor.message = "";
+        void this.preview();
+      },
+      undefined,
+      () => {
+        this.editor.message = "Click a coordinate plane, construction plane or planar face";
+        this.editor.refresh();
+      },
+    );
   }
   private pick = (event: MouseEvent): void => {
     const e = this.editor;
-    if (!this.lease || event.button !== 0) return;
+    if (
+      !this.lease ||
+      event.target !== e.world.canvas ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      (!e.world.active && this.sources.length && !event.shiftKey)
+    )
+      return;
     event.preventDefault();
     event.stopImmediatePropagation();
     if (e.blocked) return;
     const p = { x: event.clientX, y: event.clientY };
-    this.position(p.x, p.y);
-    if (this.picking === "target") {
-      const hit = pickFace(e, p);
-      const face =
-        hit &&
-        e.store.data.bodies?.find((b) => b.id === hit.body)?.faces.find((f) => f.id === hit.face);
-      if (!face?.plane) {
-        e.message = "Choose a coordinate plane or planar face for the projection";
-        e.refresh();
-        return;
-      }
-      this.target = { frame: face.plane };
-    } else {
-      const source = pickProjectionSource(e, p);
-      if (!source) return;
-      const key = projectionKey(source);
-      this.sources = this.sources.some((s) => projectionKey(s) === key)
-        ? this.sources.filter((s) => projectionKey(s) !== key)
-        : [...this.sources, source];
-    }
+    const source = pickProjectionSource(e, p);
+    if (!source) return;
+    const key = projectionKey(source);
+    this.sources = this.sources.some((s) => projectionKey(s) === key)
+      ? this.sources.filter((s) => projectionKey(s) !== key)
+      : [...this.sources, source];
+    e.message = "";
+    this.configurePicker();
     void this.preview();
   };
   private async preview(): Promise<void> {
@@ -177,7 +169,7 @@ export class ProjectionControls {
     if (!lease) return;
     if (!this.target || !this.sources.length) {
       if (e.store.candidate) await e.store.request({ kind: "discard" });
-      this.update();
+      e.refresh();
       return;
     }
     const ok = await e.store.request({
@@ -222,6 +214,7 @@ export class ProjectionControls {
     await this.editor.store.cancelPreview();
     this.editor.selectTargets(this.previousSelection);
     this.editor.modeling.targets = this.previousModels;
+    this.editor.message = "";
     this.finish();
   }
   private finish(): void {
@@ -230,7 +223,7 @@ export class ProjectionControls {
     this.sources = [];
     this.result = null;
     this.target = null;
-    this.editor.world.planePicker = null;
+    this.picker.stop();
     this.editor.notice = "";
     this.editor.modeling.hover = null;
     lease?.release();
@@ -241,16 +234,16 @@ export class ProjectionControls {
     for (const b of this.root.querySelectorAll<HTMLButtonElement>("button")) {
       b.disabled =
         (e.blocked && b.dataset.project !== "cancel") ||
-        (b.dataset.project === "accept" && !this.result) ||
-        (b.dataset.project === "target" && !!e.world.active);
-      b.setAttribute("aria-pressed", String(b.dataset.project === this.picking));
-      if (b.dataset.project === "sources") b.textContent = `Sources (${this.sources.length})`;
+        (b.dataset.project === "accept" && !this.result);
     }
     if (this.lease)
-      e.notice =
-        this.picking === "sources"
-          ? "Click source faces, edges or sketch curves; choose a target plane, then accept"
-          : "Choose XY, XZ, YZ or a planar face; projection is perpendicular and unclipped";
+      e.notice = this.result
+        ? e.world.active
+          ? "Enter accepts · Click geometry to change sources · Escape cancels"
+          : "Enter accepts · Escape cancels · Shift-click changes sources"
+        : e.world.active || !this.sources.length
+          ? "Click geometry to project · Escape cancels"
+          : "Click a plane to project onto · Shift-click changes sources · Escape cancels";
     const key = JSON.stringify(this.sources);
     if (key === this.highlightKey) return;
     this.highlightKey = key;
