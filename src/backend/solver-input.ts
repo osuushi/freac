@@ -67,6 +67,22 @@ export function solverInput(
   previous?: Sketch,
   intent: EditIntent = { kind: "direct" },
 ): SolverInput {
+  const { layout, input: permanent } = permanentInput(target, previous);
+  const { points, index } = layout;
+  seedTangency(target, previous, points, index);
+  const externallyRelated = new Set(geometricRelations(target).flatMap(constraintCurves));
+  const rectangles = target.groups.filter(
+    (g) =>
+      g.members.every((id) => !externallyRelated.has(id)) && rectangleChanged(target, previous, g),
+  );
+  const handled = new Set(rectangles.flatMap((g) => g.members));
+  const input = relationalTargets(target, previous, permanent, index, intent, handled);
+  const grouped = new Set<string>();
+  for (const group of rectangles) rectangleTargets(target, previous, group, input, index, grouped);
+  return input;
+}
+// Permanent equations and native coordinate/radius layout do not depend on a gesture.
+function permanentInput(target: Sketch, previous: Sketch | undefined) {
   const layout = solverLayout(target);
   const { points, index } = layout;
   const constraints: Equation[] = target.constraints
@@ -94,6 +110,27 @@ export function solverInput(
               : {}),
           },
     );
+  const { radii, curveRadii } = radiusParameters(target, previous, layout, constraints);
+  for (const c of target.constraints) {
+    if (c.kind !== "point-on-edge") continue;
+    const curve = target.curves.find((curve) => curve.id === c.edge);
+    constraints.push({
+      kind: curve?.kind === "segment" ? "on-line" : "on-circle",
+      a: layout.pointIndex(c.point),
+      b: index(c.edge) + (curve?.kind === "arc" ? 2 : 0),
+      radius: curveRadii[c.edge],
+    });
+  }
+  constraints.push(...tangentEquations(target, layout, curveRadii));
+  return { layout, input: { points, constraints, radii, curveRadii } };
+}
+function radiusParameters(
+  target: Sketch,
+  previous: Sketch | undefined,
+  layout: ReturnType<typeof solverLayout>,
+  constraints: Equation[],
+) {
+  const { points, index } = layout;
   const locks = numericConstraints(target);
   const radiusLocks = locks.filter((c) => c.kind === "radius");
   const radii = radiusLocks.map((c) => {
@@ -129,35 +166,7 @@ export function solverInput(
       { kind: "on-circle", a: a + 1, b: a + 2, radius },
     );
   }
-  for (const c of target.constraints) {
-    if (c.kind !== "point-on-edge") continue;
-    const curve = target.curves.find((curve) => curve.id === c.edge);
-    constraints.push({
-      kind: curve?.kind === "segment" ? "on-line" : "on-circle",
-      a: layout.pointIndex(c.point),
-      b: index(c.edge) + (curve?.kind === "arc" ? 2 : 0),
-      radius: curveRadii[c.edge],
-    });
-  }
-  constraints.push(...tangentEquations(target, layout, curveRadii));
-  seedTangency(target, previous, points, index);
-  const externallyRelated = new Set(geometricRelations(target).flatMap(constraintCurves));
-  const rectangles = target.groups.filter(
-    (g) =>
-      g.members.every((id) => !externallyRelated.has(id)) && rectangleChanged(target, previous, g),
-  );
-  const handled = new Set(rectangles.flatMap((g) => g.members));
-  const input = relationalTargets(
-    target,
-    previous,
-    { points, constraints, radii, curveRadii },
-    index,
-    intent,
-    handled,
-  );
-  const grouped = new Set<string>();
-  for (const group of rectangles) rectangleTargets(target, previous, group, input, index, grouped);
-  return input;
+  return { radii, curveRadii };
 }
 function rectangleTargets(
   target: Sketch,
