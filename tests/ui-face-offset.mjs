@@ -182,6 +182,12 @@ async function sharedOffset(page, name) {
   const preview = (await inspect(page)).preview;
   close(preview.bodies[0].volume, (420 - Math.PI * 1.5 ** 2) * 6);
   await page.screenshot({ path: `.cache/sketch-review/${name}-shared-offset.png` });
+  await page.waitForFunction(
+    () =>
+      !window.freacInspect().busy &&
+      document.querySelector(".face-offset-widget .commit-cleanup")?.getAttribute("aria-busy") ===
+        "false",
+  );
   await worldClick(page, [-6, 4, 6]);
   let state = await inspect(page);
   assert.equal(state.interaction, null, "Next selection accepts the valid offset");
