@@ -1,4 +1,5 @@
 import type { SketchEditor } from "../sketch/editor.js";
+import type { PlaneId } from "../sketch/planes.js";
 import { pointerDragThreshold } from "../sketch/pointer-intent.js";
 import type { ConstructionPlane } from "./construction-plane.js";
 import { OverlapChooser } from "./overlap-chooser.js";
@@ -17,7 +18,7 @@ export class OverlapInput {
   private suppress: number | null = null;
   constructor(
     private editor: SketchEditor,
-    selectPlane: (p: ConstructionPlane) => void,
+    selectPlane: (p: ConstructionPlane | PlaneId) => void,
   ) {
     this.chooser = new OverlapChooser(editor, selectPlane);
     this.ring.className = "selection-hold";

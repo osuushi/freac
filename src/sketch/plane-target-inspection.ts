@@ -12,6 +12,7 @@ export function inspectPlaneTargets(world: World) {
         id,
         visible: object.visible,
         hovered: !!object.userData.hovered,
+        selected: world.selectedPlane === id,
         bounds: world.planeBounds(planes[id]),
         points: planeCorners(planes[id], world.planeBounds(planes[id])).map((p) =>
           world.project(p),

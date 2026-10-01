@@ -84,22 +84,25 @@ class PlaneTargetInteraction {
   };
   private click = (event: MouseEvent): void => {
     if (event.button || event.metaKey || event.ctrlKey || this.world.planePickerAccept) return;
-    if (event.type !== (this.world.planePicker ? "click" : "dblclick")) return;
+    if (this.world.planePicker && event.type !== "click") return;
     const target = this.hit({ x: event.clientX, y: event.clientY });
     if (!target) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     if (this.world.planePicker) this.world.planePicker(target.id);
+    else if (event.type === "click") this.world.planeSelection?.(target.id);
     else if (this.world.sketchEntry) this.world.sketchEntry(target.id);
     else this.world.enter(target.id);
   };
   private paint(): void {
     for (const t of this.targets) {
-      const active = t === this.hovered;
-      t.mesh.userData.hovered = active;
+      const selected = t.id === this.world.selectedPlane;
+      const active = selected || t === this.hovered;
+      t.mesh.userData.hovered = t === this.hovered;
+      t.mesh.userData.selected = selected;
       t.mesh.material.color.set(active ? "#83b9ee" : planeTargetBaseColor(t.id));
       t.mesh.material.opacity = active ? 0.43 : 0.224;
-      t.mesh.material.stencilWrite = !this.world.planePicker;
+      t.mesh.material.stencilWrite = !selected && !this.world.planePicker;
     }
   }
   private highlight(target: PlaneTarget | null): void {

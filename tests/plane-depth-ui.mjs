@@ -33,6 +33,8 @@ async function route(page, name) {
   assert.equal((await inspect(page)).modelingSelection[0]?.kind, "face");
   await hold(page, point);
   await releaseChoice(page, "Plane · YZ");
+  assert.equal((await inspect(page)).activePlane, null);
+  await page.keyboard.press("Enter");
   assert.equal((await inspect(page)).activePlane, "YZ");
   await chooseTool(page, "return to modeling", "modeling");
   await page.keyboard.press("Escape");
@@ -72,6 +74,7 @@ async function route(page, name) {
 }
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
+await server.watcher.close();
 try {
   for (const [name, engine] of Object.entries({ chromium, webkit })) {
     const browser = await engine.launch({ headless: true });

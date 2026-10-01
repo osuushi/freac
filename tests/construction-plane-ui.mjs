@@ -19,6 +19,7 @@ async function movePlane(page, axis, value) {
 
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
+await server.watcher.close();
 async function route(page, name) {
   page.setDefaultTimeout(12000);
   const errors = [];

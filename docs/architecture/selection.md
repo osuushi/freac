@@ -68,8 +68,8 @@ founder feedback update these contracts before further tools depend on them.
   thumbnail, and release to choose; releasing outside cancels. Captured touch uses
   screen-coordinate hit testing, so the thumbnail and viewport highlight follow
   the finger. No second click/tap is needed. Shift adds and
-  Command/Ctrl toggles geometry. Canonical planes enter their workspace; saved planes
-  become selected with existing Move/Sketch actions. Escape, outside press, navigation,
+  Command/Ctrl toggles geometry. Canonical and saved planes become selected references;
+  Enter opens their workspace and saved planes also support Transform. Escape, outside press, navigation,
   view/document changes and window blur dismiss the chooser. The hold's trailing
   click is consumed. This is transient UI state and creates no history entry.
   Sketch point disambiguation retains its existing interaction.
@@ -92,7 +92,7 @@ founder feedback update these contracts before further tools depend on them.
   restores ordinary picking; hidden sketches remain excluded. This is view state only.
 - Selection occurs on a completed click. In modeling, double-clicking a body face
   or edge selects its whole body; a single face click retains face selection.
-  Enter on one selected planar face or whole sketch opens its sketch workspace,
+  Enter on one selected plane reference, planar face or whole sketch opens its sketch workspace,
   while active operations retain their own Enter handling. In the entity panel,
   double-click renames inline and dragging reorders rows within their group;
   selecting a sketch and pressing Enter enters it. Canvas sketch/region double-click

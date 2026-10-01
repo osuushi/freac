@@ -57,6 +57,8 @@ export class World {
   longPress: ((event: PointerEvent) => void) | null = null;
   planePickerLabel = "Project onto";
   sketchEntry: ((id: PlaneId) => void) | null = null;
+  planeSelection: ((id: PlaneId) => void) | null = null;
+  selectedPlane: PlaneId | null = null;
   private readonly observer: ResizeObserver;
   private readonly removeNavigation: () => void;
   private cameraAnimation: number | null = null;
