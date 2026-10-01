@@ -30,7 +30,8 @@
     "release:prepare": "node scripts/release/prepare.mjs",
     "package:mac": "npm run build && npm run release:prepare && electron-forge package --platform=darwin --arch=arm64",
     "make:mac": "npm run build && npm run release:prepare && electron-forge make --platform=darwin --arch=arm64",
-    "test:release": "node --test tests/release-metadata.mjs"
+    "test:release": "node --test tests/release-metadata.mjs",
+    "setup:mesh": "node scripts/setup-mesh.mjs"
   },
   "dependencies": {
     "@jitl/quickjs-wasmfile-release-sync": "0.32.0",

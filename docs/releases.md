@@ -17,6 +17,7 @@ export CMAKE_OSX_ARCHITECTURES=arm64
 export MACOSX_DEPLOYMENT_TARGET=14.0
 npm run setup:native
 npm run setup:kernel
+npm run setup:mesh
 npm run package:mac
 node scripts/release/verify.mjs
 node tests/release-package.mjs

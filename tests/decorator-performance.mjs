@@ -5,6 +5,7 @@ import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { DocumentOwner } from "../.build/host/backend/document-owner.js";
 import { roundBody } from "../.cache/sketch-tests/tests/decorator-domain-fixtures.js";
+import { measureExportWorkers } from "./export-worker-benchmark.mjs";
 
 const cases = [];
 for (const [name, length, count] of [
@@ -75,70 +76,19 @@ try {
       for (const scenario of cases) {
         const page = await browser.newPage();
         await page.goto(server.resolvedUrls.local[0]);
-        const measurements = await page.evaluate(
-          async ({ scenario, previewPath, exportPath }) => {
-            const { default: PreviewWorker } = await import(previewPath);
-            const { default: ExportWorker } = await import(exportPath);
-            const result = [];
-            for (const [kind, WorkerClass] of [
-              ["preview", PreviewWorker],
-              ["export", ExportWorker],
-            ]) {
-              for (const temperature of ["cold", "warm"]) {
-                const start = performance.now();
-                const worker = new WorkerClass();
-                try {
-                  const data = await new Promise((resolve, reject) => {
-                    const timer = setTimeout(
-                      () => reject(new Error(`${kind} exceeded 120 seconds`)),
-                      120000,
-                    );
-                    worker.onmessage = (event) => {
-                      clearTimeout(timer);
-                      resolve(event.data);
-                    };
-                    worker.onerror = (event) => {
-                      clearTimeout(timer);
-                      reject(new Error(event.message));
-                    };
-                    worker.postMessage({
-                      document: kind === "preview" ? scenario.preview : scenario.document,
-                      format: "3mf",
-                    });
-                  });
-                  if (data.error) throw new Error(data.error);
-                  if (kind === "export" && !(data.bytes?.length > 100))
-                    throw new Error("Missing export bytes");
-                  if (kind === "preview" && data.meshes?.length !== scenario.count)
-                    throw new Error("Missing preview meshes");
-                  result.push({
-                    kind,
-                    temperature,
-                    milliseconds: performance.now() - start,
-                    ...(kind === "export"
-                      ? { bytes: data.bytes.length }
-                      : {
-                          triangles: data.meshes.reduce((n, m) => n + m.indices.length / 3, 0),
-                        }),
-                  });
-                } finally {
-                  worker.terminate();
-                }
-              }
-            }
-            return result;
-          },
-          {
-            scenario,
-            previewPath: `/@fs/${resolve("src/decorators/preview-worker.ts")}?worker`,
-            exportPath: `/@fs/${resolve("src/model/export-worker.ts")}?worker`,
-          },
-        );
+        const measurements = await page.evaluate(measureExportWorkers, {
+          scenario,
+          compressionPath: process.env.FREAC_BENCH_COMPRESSION
+            ? `/@fs/${resolve("tests/export-compression-benchmark.mjs")}`
+            : undefined,
+          previewPath: `/@fs/${resolve("src/decorators/preview-worker.ts")}?worker`,
+          exportPath: `/@fs/${resolve("src/model/export-worker.ts")}?worker`,
+        });
         const result = {
           browser: browserName,
           name: scenario.name,
           diameter: 10,
-          pitch: 1.5,
+          settings: scenario.document.decorators[0].settings,
           length: scenario.length,
           count: scenario.count,
           preparationMs: scenario.preparationMs,

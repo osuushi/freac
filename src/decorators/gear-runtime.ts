@@ -1,12 +1,13 @@
 import type { ManifoldToplevel } from "manifold-3d";
 import type { SketchDocument } from "../sketch/document.js";
 import { gearMeshes } from "./gear-mesh.js";
+import type { MeshOperations, MeshSolid } from "./mesh-operations.js";
 import { MeshScope } from "./mesh-scope.js";
 import { threadDomain } from "./thread-domain.js";
 import type { DecoratorInstance } from "./types.js";
 
-export function gearOperands(
-  scope: MeshScope,
+export function gearOperands<S extends MeshSolid<S>>(
+  scope: MeshOperations<S>,
   document: SketchDocument,
   instance: DecoratorInstance,
   quality: "preview" | "export",
