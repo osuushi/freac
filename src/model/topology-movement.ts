@@ -6,6 +6,56 @@ import type { EdgeMovement, FaceMovement } from "./body.js";
 
 type Targets = (Pick<FaceMovement, "faces"> | Pick<EdgeMovement, "edges">) & { bodyIds?: string[] };
 export type TopologyMovement = Targets & Omit<FaceMovement, "faces">;
+
+/** Compose a handle gesture in world space with the preceding valid preview. */
+export function composeMovement(
+  base: TopologyMovement,
+  pivot: Vector,
+  direction: Vector,
+  rotate: boolean,
+  value: number,
+): TopologyMovement {
+  if (value === 0) return base;
+  if (!rotate)
+    return {
+      ...base,
+      translation: base.translation.map((n, i) => n + direction[i] * value) as Vector,
+    };
+  const delta = new THREE.Quaternion().setFromAxisAngle(
+    new THREE.Vector3(...direction),
+    (value * Math.PI) / 180,
+  );
+  const rotation = delta
+    .clone()
+    .multiply(
+      new THREE.Quaternion().setFromAxisAngle(
+        new THREE.Vector3(...base.axis),
+        (base.angle * Math.PI) / 180,
+      ),
+    )
+    .normalize();
+  // Use the shortest equivalent axis-angle, including a full-turn identity.
+  if (rotation.w < 0) rotation.set(-rotation.x, -rotation.y, -rotation.z, -rotation.w);
+  const axis = new THREE.Vector3(rotation.x, rotation.y, rotation.z);
+  const sine = axis.length();
+  const translation = new THREE.Vector3(...base.pivot)
+    .add(new THREE.Vector3(...base.translation))
+    .sub(new THREE.Vector3(...pivot))
+    .applyQuaternion(delta)
+    .add(new THREE.Vector3(...pivot))
+    .sub(new THREE.Vector3(...base.pivot));
+  return {
+    ...base,
+    axis: sine < 1e-12 ? direction : (axis.multiplyScalar(1 / sine).toArray() as Vector),
+    angle: sine < 1e-12 ? 0 : (2 * Math.atan2(sine, rotation.w) * 180) / Math.PI,
+    translation: translation.toArray() as Vector,
+  };
+}
+
+export function movementIsIdentity(edit: TopologyMovement): boolean {
+  return Math.abs(edit.angle) < 1e-10 && edit.translation.every((n) => Math.abs(n) < 1e-10);
+}
+
 export function movementTargets(editor: SketchEditor, kind: "faces" | "edges"): Targets | null {
   const resolution = editor.modeling.resolve("move");
   if (!resolution.available) return null;

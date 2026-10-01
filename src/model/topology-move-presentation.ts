@@ -39,7 +39,7 @@ export function updateTopologyMovePresentation(
   lease: InteractionLease | null,
   valid: boolean,
   running: boolean,
-  value: number,
+  changed: boolean,
   invalid: boolean,
   accept: HTMLButtonElement,
   cancel: HTMLButtonElement,
@@ -55,7 +55,7 @@ export function updateTopologyMovePresentation(
       current.kind !== "scale");
   gizmo.input.hidden = !lease;
   accept.hidden = cancel.hidden = !lease;
-  accept.disabled = !valid || running || value === 0;
+  accept.disabled = !valid || running || !changed;
   gizmo.root.dataset.geometryInvalid = String(invalid);
   gizmo.root.setAttribute("aria-busy", String(running));
   gizmo.input.setAttribute("aria-invalid", String(invalid));
