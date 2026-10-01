@@ -30,6 +30,7 @@ export class IPadSession {
     );
     documents.remote = {
       active: () => this.server.active || this.switching,
+      connected: () => this.server.status.connected,
       emit: (method, value) => this.server.emit(method, value),
       inspect: (render, acquireScript, selection) =>
         this.server.request<InspectionView>("inspect", { render, acquireScript, selection }),

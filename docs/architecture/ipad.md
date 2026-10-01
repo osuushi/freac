@@ -38,6 +38,12 @@ requires reconnect/reload; it reads accepted state and never retries an edit.
 Camera, selection and other renderer-local state restart. A running agent process
 may remain alive; no disconnected renderer can supply fresh input.
 
+Deliberate computer Close/Quit/update restart goes through the connected browser's
+ordinary file-command route. It completes a released tool before the unsaved-work
+choice. Cancel keeps browser control, the accepted result and its Undo; failed
+completion leaves the operation available for correction. With no connected editor,
+Close first stops hosting and then uses the computer's normal file lifecycle.
+
 ## Computer files and agent
 
 Save/Open/Save As and agent executable/recovery choices refer to computer paths.

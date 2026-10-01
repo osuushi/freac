@@ -25,6 +25,7 @@ export class DocumentSession {
   }
   remote?: {
     active(): boolean;
+    connected(): boolean;
     emit(method: string, value: unknown): void;
     inspect(render: boolean, acquireScript?: boolean, selection?: string): Promise<InspectionView>;
     close(): Promise<void>;
@@ -183,7 +184,10 @@ export class DocumentSession {
   }
   private dispatch(command: DocumentCommand): void {
     if (this.remote?.active()) {
-      if (command === "close" || command === "quit" || command === "restart-update") {
+      if (
+        !this.remote.connected() &&
+        (command === "close" || command === "quit" || command === "restart-update")
+      ) {
         void this.remote.close().then(async () => {
           const result = await this.command(command);
           if (!this.closing) this.window?.webContents.reload();
