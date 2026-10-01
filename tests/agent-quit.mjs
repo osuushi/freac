@@ -22,10 +22,15 @@ try {
   await page.getByRole("button", { name: "Open agent terminal" }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   await chooseTool(page, "Sketch on XY", "sketch-xy");
-  await page.keyboard.press("r");
+  await chooseTool(page, "rectangle", "rectangle");
   await drag(page, [-10, -6], [10, 6]);
   await settled(page);
   const before = await page.evaluate(() => JSON.stringify(window.freacInspect().document));
+  assert.equal(
+    JSON.parse(before).sketches[0].curves.length,
+    4,
+    "fixture draws real geometry before script cancellation",
+  );
   const input = page.locator(".agent-screen textarea");
   const workspace = (await page.evaluate(() => window.freacAgent.request({ kind: "read" })))
     .workspace;
@@ -39,7 +44,16 @@ console.error("candidate ready"); while (true) {}
   await input.focus();
   await page.keyboard.type("freac run pending.ts 2> pending.err");
   await page.keyboard.press("Enter");
-  await page.getByRole("button", { name: "Cancel script", exact: true }).waitFor();
+  try {
+    await page.getByRole("button", { name: "Cancel script", exact: true }).waitFor();
+  } catch (error) {
+    console.error(
+      "Script launch diagnostics:",
+      await readFile(join(workspace, "pending.err"), "utf8").catch(String),
+    );
+    console.error(await page.evaluate(() => window.freacAgent.request({ kind: "read" })));
+    throw error;
+  }
   for (let i = 0; i < 200; i++) {
     if ((await readFile(join(workspace, "pending.err"), "utf8")).includes("candidate ready")) break;
     await new Promise((resolve) => setTimeout(resolve, 30));

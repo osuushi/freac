@@ -29,6 +29,11 @@ Electron entry or backend require restarting `dev`. `setup:native` downloads has
 commit and builds a separate calculator. It needs network access on first use;
 its source and build caches live in `.cache/solver` and `.build/solver`. Normal
 `dev`/`build` runs rebuild the calculator incrementally without downloading sources.
+On POSIX hosts, `npm run build:native` also configures/builds the small read-only
+agent session helper under `.build/host-native`. It uses C++20 and system process
+APIs, with no geometry SDK or downloaded source. macOS defaults match Node's
+architecture and the 14.0 deployment target; the existing native environment
+overrides apply. macOS release preparation copies/signs it with the calculators.
 `setup:kernel` downloads checksum-verified OCCT 7.9.3 source and builds the modeling
 libraries plus FreAC's separate solid calculator. This initial source build takes
 longer; its cache is `.cache/kernel` and the calculator is `.build/kernel`.

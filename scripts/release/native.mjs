@@ -61,13 +61,18 @@ export async function bundleNative(destination, sdk) {
     ];
     for (const [, path] of paths) run("install_name_tool", ["-delete_rpath", path, file]);
   }
-  for (const component of ["solver", "kernel"]) {
+  const components = [
+    ["solver", "solver"],
+    ["kernel", "kernel"],
+    ["agent-scope", "host-native"],
+  ];
+  for (const [component, build] of components) {
     const name = `freac-${component}`;
     const target = join(destination, name);
-    await cp(resolve(`.build/${component}/bin/${name}`), target);
+    await cp(resolve(`.build/${build}/bin/${name}`), target);
     await relocate(target);
   }
   // Relocation invalidates original signatures, including arm64 ad-hoc signatures.
-  for (const name of [...copied.keys(), "freac-solver", "freac-kernel"])
+  for (const name of [...copied.keys(), ...components.map(([component]) => `freac-${component}`)])
     run("codesign", ["--force", "--sign", "-", join(destination, name)]);
 }
