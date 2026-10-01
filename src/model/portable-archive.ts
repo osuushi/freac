@@ -18,22 +18,28 @@ export interface PortableArchive {
 
 export function writePortableArchive(model: string, files: PortableFiles): Uint8Array {
   validatePortable(files);
-  if (!Object.keys(files).length) return strToU8(model);
-  const { document, camera } = JSON.parse(model);
-  const data = strToU8(JSON.stringify({ format: "freac", version: 2, document, camera }));
+  const portable = Object.keys(files).length > 0;
+  let data: Uint8Array;
+  if (portable) {
+    const { document, camera } = JSON.parse(model);
+    data = strToU8(JSON.stringify({ format: "freac", version: 2, document, camera }));
+  } else data = strToU8(model);
   if (
     data.length + Object.values(files).reduce((sum, file) => sum + file.length, 0) >
     archiveLimits.bytes
   )
     throw new Error("Document exceeds the 64 MiB archive limit.");
-  return zipSync({ "model.json": data, ...files }, { level: 0 });
+  return portable ? zipSync({ "model.json": data, ...files }, { level: 0 }) : data;
 }
 
 export function readPortableArchive(data: Uint8Array): PortableArchive {
   if (data.length > archiveLimits.bytes + 8 * 1024 * 1024)
     throw new Error("Document is too large.");
-  if (data[0] !== 0x50 || data[1] !== 0x4b)
+  if (data[0] !== 0x50 || data[1] !== 0x4b) {
+    if (data.length > archiveLimits.bytes)
+      throw new Error("Document exceeds the 64 MiB archive limit.");
     return { ...readFileArchive(strFromU8(data)), files: {} };
+  }
   const checks = checkZip(data);
   const entries = unzipSync(data);
   for (const [path, check] of checks) {

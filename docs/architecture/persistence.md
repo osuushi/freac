@@ -114,6 +114,10 @@ no absolute/traversal/Windows device paths and no case-folded or file/directory 
 Limits are 4096 portable files and 64 MiB expanded model plus portable bytes. Directories
 are implicit in file paths; empty directories and executable mode bits are not preserved.
 The writer uses uncompressed ZIP entries; the reader also supports compressed entries.
+The same expanded limit applies to model-only JSON on Save and Open. A failed size
+check happens before the destination write and preserves file identity and Edited
+state. ZIP headers have a separate 8 MiB encoded allowance; they do not raise the
+expanded-content limit.
 
 Each document gets its own local Codex home beside (outside) its workspace. Base
 Freac configuration and auth are copied there at launch and synchronized locally on
