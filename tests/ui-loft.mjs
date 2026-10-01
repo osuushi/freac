@@ -135,9 +135,36 @@ async function acceptPreselection(page, points, original, ruledVolume, name) {
   state = await inspect(page);
   assert.ok(Math.abs(state.document.bodies[0].center[0] - accepted.bodies[0].center[0] - 3) < 1e-5);
   await bodyArchiveRoute(page, `${name}-loft`);
+  await deleteAndClear(page);
   console.log(
-    `${name}: ordered loft collection/preselection, Smooth/Ruled, seams, reorder/remove, cancel, accept, Undo/Redo, movement and archive passed`,
+    `${name}: ordered loft collection/preselection, Smooth/Ruled, seams, reorder/remove, cancel, accept, Undo/Redo, movement, archive and Delete/Clear passed`,
   );
+}
+
+async function deleteAndClear(page) {
+  const original = (await inspect(page)).document;
+  await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
+  await page.keyboard.press("Backspace");
+  let state = await inspect(page);
+  assert.equal(state.document.sketches.length, original.sketches.length - 1);
+  assert.deepEqual(state.document.bodies, original.bodies);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await page.keyboard.press("Delete");
+  state = await inspect(page);
+  assert.deepEqual(state.document.bodies, []);
+  assert.deepEqual(state.document.sketches, original.sketches);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
+  await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
+  await chooseTool(page, "edit sketch", "edit-sketch");
+  await chooseTool(page, "clear sketch", "clear-sketch");
+  state = await inspect(page);
+  assert.equal(state.document.sketches[0].curves.length, 0);
+  assert.deepEqual(state.document.bodies, original.bodies);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
 }
 
 async function modeRecovery(page, original) {
