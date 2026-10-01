@@ -59,6 +59,14 @@ exposing a reply. OCCT still owns shape feasibility; reply validation does not r
 a second shape inspection. Immediate topology correspondence lives in the shared
 body model layer for metadata continuation and is never archived.
 
+Body drawing owns face meshes and feature-edge resources separately from style.
+Hover, selection, section stencil ownership and visibility update existing objects.
+A retained body object is a fast reuse check; transport copies compare actual
+triangle/feature-edge inputs before reusing GPU geometry. IDs locate a drawable
+but do not establish geometric equality. Changed presentation replaces that body's
+resources; removed bodies and view disposal release them. Edge-finish previews
+continue highlighting the accepted source chain when the candidate consumes it.
+
 The founder's 2026-09-15 feedback opens planning of the first solid modeling loop
 while further sketch work remains. The [sketch → solid → sketch proposal](../sketch-solid-loop.md)
 develops these requirements into interactions, concrete model ownership and bounded

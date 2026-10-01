@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { orient } from "./ui-blend-edit.mjs";
+import { worldClick } from "./ui-face-offset.mjs";
 import { pixels } from "./ui-fill.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { clearSelection } from "./ui-reconnection-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function cutawayRoute(page, name, plane = "XY") {
@@ -21,9 +23,12 @@ export async function cutawayRoute(page, name, plane = "XY") {
   await page.keyboard.press("Enter");
   await inspect(page);
   // Lift the body clear of the plane so only the foreground pass can show it.
-  await page.mouse.click(pick.x, pick.y);
-  await chooseTool(page, "select owning bodies", "selection-bodies");
+  // A large selected body covers the turntable helper's center-band press points.
+  // Clear through Select, orbit, then reselect its visible cap with the new projection.
+  await clearSelection(page);
   await orient(page, [1, -1, 1]);
+  await worldClick(page, { XY: [0, 0, 10], XZ: [0, -10, 0], YZ: [10, 0, 0] }[plane]);
+  await chooseTool(page, "select owning bodies", "selection-bodies");
   await chooseTool(page, "transform", "transform");
   const axis = { XY: "Z", XZ: "Y", YZ: "X" }[plane];
   await page.getByRole("button", { name: `Move body ${axis}`, exact: true }).click();
