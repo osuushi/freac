@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { access, mkdtemp, readFile, rm, symlink } from "node:fs/promises";
+import { access, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
@@ -20,6 +20,19 @@ async function exists(path: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+async function processNumber(path: string): Promise<number> {
+  let value = 0;
+  await waitFor(async () => {
+    try {
+      value = Number(await readFile(path, "utf8"));
+      return Number.isSafeInteger(value) && value > 0;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      return false;
+    }
+  });
+  return value;
 }
 
 test("natural root exit retains cleanup ownership and cannot affect another PTY", {
@@ -48,8 +61,7 @@ test("natural root exit retains cleanup ownership and cannot affect another PTY"
       80,
       24,
     );
-    await waitFor(() => exists(join(root, "child.pid")));
-    const child = Number(await readFile(join(root, "child.pid"), "utf8"));
+    const child = await processNumber(join(root, "child.pid"));
     await waitFor(() => first.status.exitCode === 7);
     assert.equal(first.status.running, true, "cleanup remains active after the PTY root exits");
     await first.stop();
@@ -105,15 +117,23 @@ test("natural exit also stops HUP/TERM-resistant shell job-control groups", {
   const root = await mkdtemp(join(tmpdir(), "freac-agent-jobs-"));
   const pty = new AgentProcess();
   try {
-    await pty.start("/bin/sh", ["-i"], root, process.env, 80, 24);
+    // Redirection creates the metadata file before ps writes its numeric result.
+    await writeFile(join(root, "ps"), '#!/bin/sh\nsleep .1\nexec /bin/ps "$@"\n', { mode: 0o700 });
+    await pty.start(
+      "/bin/sh",
+      ["-i"],
+      root,
+      { ...process.env, PATH: `${root}:${process.env.PATH}` },
+      80,
+      24,
+    );
     pty.write(
       "trap '' HUP; (trap '' HUP TERM; while :; do echo tick >> writer.log; sleep .02; done) >/dev/null 2>&1 & echo $! > child.pid; ps -o pgid= -p $$ > root.group; ps -o pgid= -p $! > child.group; sleep .1; exit\r",
     );
-    await waitFor(() => exists(join(root, "child.group")));
-    const group = Number(await readFile(join(root, "child.group"), "utf8"));
+    const group = await processNumber(join(root, "child.group"));
     assert.notEqual(
       group,
-      Number(await readFile(join(root, "root.group"), "utf8")),
+      await processNumber(join(root, "root.group")),
       "interactive shell actually created a separate group",
     );
     await waitFor(() => pty.status.exitCode === 0);
