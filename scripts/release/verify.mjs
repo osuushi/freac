@@ -79,7 +79,7 @@ async function check(directory) {
 }
 await check(app);
 assert(binaries >= 20, "Unexpectedly few native binaries");
-for (const component of ["solver", "kernel", "agent-scope"])
+for (const component of ["solver", "kernel", "mesh", "agent-scope"])
   assert((await stat(join(resources, "native", `freac-${component}`))).mode & 0o111);
 if (process.env.FREAC_SIGN === "1") {
   run("codesign", ["--verify", "--deep", "--strict", "--verbose=2", app]);

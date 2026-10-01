@@ -14,7 +14,15 @@ export async function planeTargetsRoute(page, name) {
       await page.screenshot({ path: `.cache/sketch-review/${name}-plane-target-hover.png` });
     await page.mouse.click(hit.x, hit.y);
     assert.equal((await inspect(page)).activePlane, null, "Single-click stays in Modeling");
-    await page.mouse.dblclick(hit.x, hit.y);
+    assert.equal((await inspect(page)).planeTargets.find((p) => p.id === id).selected, true);
+    await page.mouse.move(30, 35);
+    assert.equal((await inspect(page)).planeTargets.find((p) => p.id === id).hovered, false);
+    assert.equal((await inspect(page)).planeTargets.find((p) => p.id === id).selected, true);
+    await page.keyboard.press("Enter");
+    assert.equal((await inspect(page)).activePlane, id, "Enter uses the selected reference");
+    await reset(page);
+    const doubleClick = await findRaycastPoint(page, id);
+    await page.mouse.dblclick(doubleClick.x, doubleClick.y);
     assert.equal((await inspect(page)).activePlane, id, "Double-click enters its plane");
     assert.deepEqual((await inspect(page)).document, before.document);
   }
@@ -33,7 +41,7 @@ export async function planeTargetsRoute(page, name) {
     assert.equal((await inspect(page)).activePlane, id, `${id} accessible target activates`);
     await reset(page);
   }
-  console.log(`${name}: camera-raycast plane target hover, deselection and double-click passed`);
+  console.log(`${name}: plane hover, selection, Enter and double-click passed`);
 }
 
 async function assertEditorTabOrder(page) {

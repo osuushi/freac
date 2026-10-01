@@ -1,0 +1,93 @@
+.loft-controls {
+  position: absolute;
+  width: 350px;
+  max-height: calc(100vh - 110px);
+  overflow: auto;
+  pointer-events: auto;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #bfd3e7;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px #18355020;
+  color: #245b91;
+  font-size: 12px;
+}
+.loft-controls[hidden] {
+  display: none;
+}
+.loft-controls ol {
+  padding-left: 24px;
+  max-height: 220px;
+  overflow: auto;
+}
+.loft-controls li {
+  padding: 4px 0;
+}
+.loft-controls li span {
+  display: inline-block;
+  width: 85px;
+}
+.loft-controls li small {
+  margin-left: 5px;
+}
+.loft-controls button {
+  padding: 4px 7px;
+  margin-right: 3px;
+}
+.loft-options,
+.loft-modes {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  align-items: center;
+}
+.loft-options select {
+  color: inherit;
+  background: #fff;
+  border: 1px solid #bfd3e7;
+  border-radius: 8px;
+  padding: 5px;
+}
+.loft-modes button {
+  width: 35px;
+  height: 34px;
+}
+.loft-modes svg {
+  width: 22px;
+  height: 22px;
+}
+.loft-controls button[aria-pressed="true"] {
+  background: #d9ebfa;
+  border-color: #4486c1;
+}
+.loft-controls .extrude-targets {
+  margin-top: 8px;
+}
+.loft-guides {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+.loft-guides polyline {
+  fill: none;
+  stroke: #4486c1;
+  stroke-width: 1.2;
+}
+.loft-guides circle {
+  fill: #fff;
+  stroke: #4486c1;
+}
+.loft-guides text {
+  fill: #245b91;
+  text-anchor: middle;
+  font: 12px system-ui;
+}
+.loft-controls li span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}

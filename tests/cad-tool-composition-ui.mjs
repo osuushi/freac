@@ -62,7 +62,7 @@ async function route(page, name) {
   await page.getByRole("textbox", { name: "Plane translation Z", exact: true }).fill("12");
   await page.keyboard.press("Enter");
   const reference = (await inspect(page)).document.constructionPlanes;
-  await page.getByRole("button", { name: "Sketch on plane", exact: true }).click();
+  await page.keyboard.press("Enter");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [6, 6], ["Alt"]);
   await chooseTool(page, "transform", "transform");

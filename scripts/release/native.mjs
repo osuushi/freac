@@ -66,6 +66,7 @@ export async function bundleNative(destination, sdk) {
   const components = [
     ["solver", "solver"],
     ["kernel", "kernel"],
+    ["mesh", "mesh"],
     ["agent-scope", "host-native"],
   ];
   for (const [component, build] of components) {

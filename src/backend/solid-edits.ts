@@ -9,7 +9,7 @@ import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { EdgeSizeLimit } from "./edge-size-limit.js";
 import { FaceOffsetEdit } from "./face-offset-edit.js";
-import { kernelInput, revolveInput } from "./kernel-input.js";
+import { kernelInput, loftInput, revolveInput } from "./kernel-input.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
 import type { SolidCalculator } from "./solid-calculator.js";
 
@@ -17,6 +17,7 @@ export type SolidRequest = Extract<
   ModelRequest,
   {
     kind:
+      | "loft"
       | "revolve"
       | "extrude"
       | "transform-bodies"
@@ -31,6 +32,7 @@ export type SolidRequest = Extract<
 
 export function isSolidRequest(request: ModelRequest): request is SolidRequest {
   return [
+    "loft",
     "revolve",
     "extrude",
     "transform-bodies",
@@ -172,9 +174,11 @@ export class SolidEdits {
       const result = await this.kernel.calculate(
         request.kind === "boolean-bodies"
           ? { ...request.operation, kind: "boolean", bodies }
-          : request.kind === "revolve"
-            ? revolveInput(document, request.revolution, bodies)
-            : kernelInput(document, request.extrusion, bodies),
+          : request.kind === "loft"
+            ? loftInput(document, request.operation, bodies)
+            : request.kind === "revolve"
+              ? revolveInput(document, request.revolution, bodies)
+              : kernelInput(document, request.extrusion, bodies),
       );
       this.booleanMode = result.mode;
       this.booleanTargets = result.participants;

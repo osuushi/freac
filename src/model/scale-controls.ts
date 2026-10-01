@@ -32,8 +32,9 @@ export class ScaleControls {
     private editor: SketchEditor,
     overlay: HTMLElement,
     activate: () => void | Promise<void>,
+    referenceSelected: () => boolean = () => false,
   ) {
-    this.disposeTool = registerTransformTool(editor, activate);
+    this.disposeTool = registerTransformTool(editor, activate, referenceSelected);
     this.widget = new ScaleWidget(overlay);
     this.gestures = new ScaleGestures(
       editor,

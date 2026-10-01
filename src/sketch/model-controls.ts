@@ -1,4 +1,5 @@
 import { ExtrudeControls } from "../model/extrude-controls.js";
+import { LoftControls } from "../model/loft-controls.js";
 import { ModelSelectionDrag } from "../model/model-selection-drag.js";
 import { RevolveControls } from "../model/revolve-controls.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
@@ -14,6 +15,7 @@ export class ModelControls {
   private abort = new AbortController();
   private placement: PlacementControls;
   private revolve: RevolveControls;
+  private loft: LoftControls;
   private extrusion: ExtrudeControls;
   private selectionDrag: ModelSelectionDrag;
   constructor(
@@ -23,6 +25,7 @@ export class ModelControls {
     this.registerTools();
     this.placement = new PlacementControls(editor, overlay);
     this.revolve = new RevolveControls(editor, overlay);
+    this.loft = new LoftControls(editor, overlay);
     this.extrusion = new ExtrudeControls(editor, overlay);
     this.selectionDrag = new ModelSelectionDrag(
       editor,
@@ -108,9 +111,14 @@ export class ModelControls {
           editor.isDragging ||
           editor.blocked ||
           this.extrusion.active ||
-          ["revolve", "body-move", "body-boolean", "body-edge-finish", "face-offset"].includes(
-            editor.interactions.current?.kind ?? "",
-          )
+          [
+            "loft",
+            "revolve",
+            "body-move",
+            "body-boolean",
+            "body-edge-finish",
+            "face-offset",
+          ].includes(editor.interactions.current?.kind ?? "")
         )
           return;
         editor.modeling.hover = pickModel(editor, { x: event.clientX, y: event.clientY });
@@ -196,6 +204,9 @@ export class ModelControls {
       }
     }, options);
   }
+  activateLoft(): void {
+    this.loft.begin();
+  }
   activateRevolve(): void {
     this.revolve.begin();
   }
@@ -220,5 +231,6 @@ export class ModelControls {
     this.extrusion.dispose();
     this.selectionDrag.dispose();
     this.revolve.dispose();
+    this.loft.dispose();
   }
 }

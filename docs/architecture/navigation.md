@@ -6,8 +6,10 @@ Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.
 
 ### Canonical plane entry
 
-In Modeling, a single click on an implicit canonical plane clears selection through
-the ordinary canvas selection route. Double-click enters its sketch workspace.
+In Modeling, a single click on a canonical plane selects that reference, clearing
+geometry and saved-plane selection. Its blue highlight persists after hover leaves.
+Enter or double-click enters its sketch workspace; Escape or a blank click clears it.
+Canonical references remain fixed, while construction planes support placement edits.
 Explicit plane-selection modes continue to accept a plane on a single click.
 In Mirror and Projection, a nearer planar solid face takes precedence over a
 canonical patch behind it; a coplanar face wins the depth tie.
@@ -167,3 +169,9 @@ and zoom, and exits the planar workspace. It creates no geometry edit or camera
 Undo step; normal sketch exit still clears selection through selection history.
 Pointer capture retains drags outside the cube; Escape, cancellation and focus
 loss stop without leveling. Active modeling gestures block cube navigation.
+
+## Retained viewport frame
+
+The event-driven renderer retains its last WebGL drawing buffer between redraws.
+This keeps canvas captures available and prevents blank regions around local cards
+in Chromium. Camera, geometry and viewport changes still trigger ordinary redraws.

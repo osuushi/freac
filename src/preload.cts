@@ -5,6 +5,11 @@ import type { HostModelRequest } from "./host/model-request.js";
 import type { IPadStatus } from "./ipad/protocol.js";
 import type { ModelView } from "./sketch/model-api.js";
 
+contextBridge.exposeInMainWorld("freacMesh", {
+  integrate: (input: ArrayBuffer) => ipcRenderer.invoke("mesh-export", input),
+  cancel: () => ipcRenderer.invoke("mesh-export-cancel"),
+});
+
 contextBridge.exposeInMainWorld("freacFixture", (snapshot: unknown) =>
   ipcRenderer.invoke("capture-fixture", snapshot),
 );

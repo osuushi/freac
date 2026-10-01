@@ -61,7 +61,8 @@ TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies) {
 namespace {
 std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>& bodies,
                                    std::string& mode, std::vector<std::string>& participants) {
-    const auto tool = input.get<std::string>("kind") == "revolve"
+    const auto tool = input.get<std::string>("kind") == "loft"
+        ? loftSections(input, bodies) : input.get<std::string>("kind") == "revolve"
         ? revolve(input, bodies) : input.get<std::string>("kind") == "path-sweep"
             ? pathSweep(input, bodies) : sweep(input, bodies);
     mode = input.get<std::string>("mode");

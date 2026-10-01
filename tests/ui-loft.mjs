@@ -1,0 +1,203 @@
+import assert from "node:assert/strict";
+import { orient, project } from "./ui-blend-edit.mjs";
+import { bodyArchiveRoute } from "./ui-body-archive.mjs";
+import { drag, inspect, reset } from "./ui-helpers.mjs";
+import { chooseTool } from "./ui-tools.mjs";
+
+async function createSections(page) {
+  await reset(page);
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
+  for (let index = 0; index < 3; index++) {
+    if (index) {
+      await page.getByRole("button", { name: `Select Sketch ${index}`, exact: true }).click();
+      await chooseTool(page, "New sketch on this plane", "new-sketch-on-plane");
+    }
+    await page.keyboard.press("r");
+    const center = (index - 1) * 12;
+    const half = [5, 2, 4][index];
+    await drag(page, [center - half, -half], [center + half, half]);
+    await chooseTool(page, "return to modeling", "modeling");
+    if (index) {
+      await orient(page, [1, 1, 1]);
+      await page.getByRole("button", { name: `Select Sketch ${index + 1}`, exact: true }).click();
+      await chooseTool(page, "transform", "transform");
+      await page.getByRole("button", { name: "Move sketch Z", exact: true }).click();
+      await page.getByRole("textbox", { name: "Translation Z", exact: true }).fill("10");
+      await page.keyboard.press("Enter");
+      await inspect(page);
+      await page.keyboard.press("Escape");
+    }
+  }
+  await page.keyboard.press("Escape");
+  await orient(page, [0, 0, 1]);
+  return [
+    [-12, 0, 0],
+    [0, 0, 10],
+    [12, 0, 20],
+  ];
+}
+async function select(page, point, shift = false) {
+  const p = await project(page, point);
+  if (shift) await page.keyboard.down("Shift");
+  await page.mouse.click(p.x, p.y);
+  if (shift) await page.keyboard.up("Shift");
+  await inspect(page);
+}
+export async function loftRoute(page, name) {
+  const points = await createSections(page);
+  const original = (await inspect(page)).document;
+  // Start with no selection and collect by actual viewport clicks, in reverse order.
+  await chooseTool(page, "loft", "loft");
+  assert.equal((await inspect(page)).interaction.kind, "loft");
+  await select(page, points[2]);
+  assert.equal(
+    await page.getByRole("button", { name: "Accept loft", exact: true }).isEnabled(),
+    false,
+  );
+  await select(page, points[1]);
+  await select(page, points[0]);
+  let state = await inspect(page);
+  assert.ok(state.preview?.bodies?.length);
+  assert.deepEqual(state.document, original);
+  assert.equal(await page.locator(".loft-controls li").count(), 3);
+  await page.getByRole("button", { name: "Add loft sections", exact: true }).click();
+  await page.getByRole("combobox", { name: "Loft shape", exact: true }).selectOption("ruled");
+  state = await inspect(page);
+  const ruledVolume = (10 / 3) * (100 + 40 + 16 + 16 + 32 + 64);
+  assert.ok(Math.abs(state.preview.bodies[0].volume - ruledVolume) < 1e-5);
+  await page.getByRole("combobox", { name: "Loft shape", exact: true }).selectOption("smooth");
+  state = await inspect(page);
+  assert.ok(Math.abs(state.preview.bodies[0].volume - ruledVolume) > 1);
+  await modeRecovery(page, original);
+  await page.getByRole("button", { name: "Next alignment 2", exact: true }).click();
+  await inspect(page);
+  await page.getByRole("button", { name: "Reset loft alignment", exact: true }).click();
+  await inspect(page);
+  await page.getByRole("button", { name: "Move section up 3", exact: true }).click();
+  await inspect(page);
+  await page.getByRole("button", { name: "Move section down 2", exact: true }).click();
+  await inspect(page);
+  await page.getByRole("button", { name: "Remove section 2", exact: true }).click();
+  await inspect(page);
+  await page.getByRole("button", { name: "Remove section 2", exact: true }).click();
+  state = await inspect(page);
+  assert.equal(
+    await page.getByRole("button", { name: "Accept loft", exact: true }).isEnabled(),
+    false,
+  );
+  assert.deepEqual(state.document, original);
+  await page.keyboard.press("Escape");
+  assert.equal((await inspect(page)).preview, null);
+  await acceptPreselection(page, points, original, ruledVolume, name);
+}
+async function acceptPreselection(page, points, original, ruledVolume, name) {
+  // Ordered preselection remains the other ordinary entry route.
+  await select(page, points[2]);
+  await select(page, points[1], true);
+  await select(page, points[0], true);
+  assert.equal((await inspect(page)).modelingSelection.length, 3);
+  await chooseTool(page, "loft", "loft");
+  await page.getByRole("combobox", { name: "Loft shape", exact: true }).selectOption("ruled");
+  await inspect(page);
+  await orient(page, [1, 1, 1]);
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
+  await retainedCanvasFrame(page);
+  await page.screenshot({ path: `.cache/sketch-review/${name}-loft-preview.png` });
+
+  await page.getByRole("button", { name: "Accept loft", exact: true }).click();
+  let state = await inspect(page);
+  assert.equal(state.document.bodies.length, 1);
+  assert.ok(Math.abs(state.document.bodies[0].volume - ruledVolume) < 1e-5);
+  assert.equal(state.interaction, null);
+  const accepted = state.document;
+  for (let i = 1; i <= 3; i++)
+    assert.equal(
+      await page.getByRole("button", { name: `Show Sketch ${i}`, exact: true }).count(),
+      1,
+    );
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
+  state = await inspect(page);
+  for (let i = 1; i <= 3; i++)
+    assert.equal(
+      await page.getByRole("button", { name: `Hide Sketch ${i}`, exact: true }).count(),
+      1,
+    );
+  await chooseTool(page, "redo", "redo");
+  assert.deepEqual((await inspect(page)).document, accepted);
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await chooseTool(page, "transform", "transform");
+  await page.getByRole("button", { name: "Move body X", exact: true }).click();
+  await page.locator(".body-transform-value").fill("3");
+  await page.keyboard.press("Enter");
+  state = await inspect(page);
+  assert.ok(Math.abs(state.document.bodies[0].center[0] - accepted.bodies[0].center[0] - 3) < 1e-5);
+  await bodyArchiveRoute(page, `${name}-loft`);
+  await deleteAndClear(page);
+  console.log(
+    `${name}: ordered loft collection/preselection, Smooth/Ruled, seams, reorder/remove, cancel, accept, Undo/Redo, movement, archive and Delete/Clear passed`,
+  );
+}
+
+async function deleteAndClear(page) {
+  const original = (await inspect(page)).document;
+  await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
+  await page.keyboard.press("Backspace");
+  let state = await inspect(page);
+  assert.equal(state.document.sketches.length, original.sketches.length - 1);
+  assert.deepEqual(state.document.bodies, original.bodies);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await page.keyboard.press("Delete");
+  state = await inspect(page);
+  assert.deepEqual(state.document.bodies, []);
+  assert.deepEqual(state.document.sketches, original.sketches);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
+  await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
+  await chooseTool(page, "edit sketch", "edit-sketch");
+  await chooseTool(page, "clear sketch", "clear-sketch");
+  state = await inspect(page);
+  assert.equal(state.document.sketches[0].curves.length, 0);
+  assert.deepEqual(state.document.bodies, original.bodies);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
+}
+
+async function modeRecovery(page, original) {
+  await page.getByRole("button", { name: "New body", exact: true }).click();
+  const valid = (await inspect(page)).preview;
+  assert.ok(valid);
+  await page.getByRole("button", { name: "Subtract", exact: true }).click();
+  const failed = await inspect(page);
+  assert.deepEqual(failed.document, original);
+  assert.deepEqual(failed.preview, valid, "Failed mode retains the last valid presentation");
+  assert.equal(
+    await page.getByRole("button", { name: "Accept loft", exact: true }).isEnabled(),
+    false,
+  );
+  await page.getByRole("button", { name: "Union", exact: true }).click();
+  await inspect(page);
+  assert.equal(
+    await page.getByRole("button", { name: "Accept loft", exact: true }).isEnabled(),
+    true,
+  );
+}
+
+async function retainedCanvasFrame(page) {
+  const colors = await page.evaluate(() => {
+    const copy = document.createElement("canvas");
+    copy.width = copy.height = 64;
+    const context = copy.getContext("2d");
+    context.drawImage(document.querySelector("canvas"), 0, 0, 64, 64);
+    const pixels = context.getImageData(0, 0, 64, 64).data;
+    const values = new Set();
+    for (let i = 0; i < pixels.length; i += 4)
+      values.add(`${pixels[i]},${pixels[i + 1]},${pixels[i + 2]}`);
+    return values.size;
+  });
+  assert.ok(colors > 4, "The retained viewport frame must remain capturable between redraws");
+}

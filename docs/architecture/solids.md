@@ -38,7 +38,7 @@ curves, attaching unambiguous endpoints by the existing creation rule. Body snap
 supply coordinates only; they create no body/sketch dependency. Hide bodies is a
 view control for accessing covered sketches. A local Select face choice resolves
 profile/face overlap. These are interaction state, not model relationships.
-Accepting Extrude or Revolve hides each source sketch whose filled regions all
+Accepting Extrude, Revolve or Loft hides each source sketch whose filled regions all
 participate in that operation. Partial region coverage, previews, cancellation
 and failed acceptance leave visibility unchanged. Open curves do not prevent
 full region coverage. The sketch remains available through Show or reopening it
@@ -108,7 +108,7 @@ implement during sketch work:
   and permit camera navigation so the interaction feels continuous. Specify the
   exact accept/exit, cancel and field-Enter gestures before implementation.
   Revolve gets an explicit axis, angle, input and adjustment design.
-  Loft gets multiple ordered sections. Their differing inputs are not extra fields
+  [Loft](loft.md) uses multiple ordered sections. Their differing inputs are not extra fields
   bolted onto an extrusion-shaped operation record.
 - The agent edits the same model through the same serialized entry points. Source
   access stays a requirement; terminal and remote-workspace implementation follows

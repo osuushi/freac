@@ -1,12 +1,18 @@
 import type { Body, Extrusion, LiftSource, Revolution } from "../model/body.js";
 import { exactBodies } from "../model/exact-body.js";
+import { type Loft, validateLoft } from "../model/loft.js";
 import type { PathSweep } from "../model/path-sweep.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { type PlaneFrame, parallelNormals, planeNormal, type Vector } from "../sketch/planes.js";
 import { profilesFor } from "../sketch/profiles.js";
 import { boundary } from "./profile-boundary.js";
 
-function profileInput(document: SketchDocument, sources: LiftSource[], bodies: readonly Body[]) {
+function profileInput(
+  document: SketchDocument,
+  sources: LiftSource[],
+  bodies: readonly Body[],
+  parallel = true,
+) {
   let direction: Vector | undefined;
   const profiles = sources.map((source) => {
     let frame: PlaneFrame;
@@ -33,10 +39,10 @@ function profileInput(document: SketchDocument, sources: LiftSource[], bodies: r
       };
     }
     const normal = planeNormal(frame);
-    if (direction && !parallelNormals(direction, normal))
+    if (parallel && direction && !parallelNormals(direction, normal))
       throw new Error("Selected profiles must have parallel planes");
     direction ??= normal;
-    return profile;
+    return parallel ? profile : { ...profile, frame };
   });
   if (!direction) throw new Error("Select a closed profile or planar face");
   return {
@@ -90,6 +96,19 @@ export function pathSweepInput(
     ...profileInput(document, operation.sources, bodies),
     kind: "path-sweep" as const,
     path: operation.path,
+    mode: operation.mode,
+    targets: operation.targets,
+    eligibleTargets: operation.eligibleTargets,
+  };
+}
+
+export function loftInput(document: SketchDocument, operation: Loft, bodies: readonly Body[]) {
+  validateLoft(operation);
+  return {
+    ...profileInput(document, operation.sources, bodies, false),
+    kind: "loft" as const,
+    ruled: operation.ruled,
+    alignment: operation.alignment,
     mode: operation.mode,
     targets: operation.targets,
     eligibleTargets: operation.eligibleTargets,

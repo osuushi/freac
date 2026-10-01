@@ -66,6 +66,12 @@ export interface FreacScript extends DecoratorScriptApi {
     angle: number; height: number; mode: "new" | "union" | "subtract" | "intersect" | "auto";
     targets?: string[]; eligibleTargets?: string[];
   }): Promise<SolidResult>;
+  loft(input: {
+    sources: ({ sketch: string; profile: string } | { face: string })[];
+    ruled: boolean; alignment?: number[];
+    mode: "new" | "union" | "subtract" | "intersect" | "auto";
+    targets?: string[]; eligibleTargets?: string[];
+  }): Promise<SolidResult>;
   offsetFaces(input: { faces: { body: string; face: string }[]; distance: number; radius?: number }): Promise<SolidResult>;
   moveFaces(input: {
     faces: { body: string; face: string }[]; bodyIds?: string[];

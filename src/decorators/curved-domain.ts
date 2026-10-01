@@ -1,18 +1,18 @@
-import type { Manifold, Mat4 } from "manifold-3d";
+import type { Mat4 } from "manifold-3d";
 import type { BodyGeometry, Face } from "../model/body.js";
 import type { Vector } from "../sketch/planes.js";
 import { cross, cylinderFrame, dot, sameCylinder, subtract } from "./cylinder.js";
-import type { MeshScope } from "./mesh-scope.js";
+import type { MeshOperations, MeshSolid } from "./mesh-operations.js";
 
 /** Extend an adjacent analytic boundary only when the entire selected patch lies
  * on its material side. Nonconvex patches keep their original trimmed mask. */
-export function trimAdjacentCylinders(
-  scope: MeshScope,
-  solid: Manifold,
+export function trimAdjacentCylinders<S extends MeshSolid<S>>(
+  scope: MeshOperations<S>,
+  solid: S,
   face: Face,
   body: BodyGeometry,
   tolerance: number,
-): Manifold {
+): S {
   let result = solid;
   for (const adjacent of body.faces) {
     const cylinder = adjacent.cylinder;
@@ -52,7 +52,7 @@ export function trimAdjacentCylinders(
     // beyond the analytic boundary, and radial deviation stays below tolerance/2.
     const radius =
       cylinder.outward < 0 ? cylinder.radius / Math.cos(Math.PI / segments) : cylinder.radius;
-    const primitive = scope.keep(scope.runtime.Manifold.cylinder(height, radius, radius, segments));
+    const primitive = scope.cylinder(height, radius, segments);
     const origin = localOrigin.map((n, i) => n + low * axis[i]);
     const matrix = [...frame.u, 0, ...frame.v, 0, ...axis, 0, ...origin, 1] as Mat4;
     const limit = scope.keep(primitive.transform(matrix));

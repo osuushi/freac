@@ -52,7 +52,7 @@ export async function planeCutRoute(page, name) {
   assert.equal(state.preview, null);
   assert.equal(await page.locator(".plane-widget").count(), 0);
   await orient(page, [1, -1, 1]);
-  await page.getByRole("button", { name: "Move plane", exact: true }).click();
+  await chooseTool(page, "transform", "transform");
   await page.getByRole("button", { name: "Move plane Z", exact: true }).click();
   await page.getByRole("textbox", { name: "Plane translation Z", exact: true }).fill("-10");
   await page.keyboard.press("Enter");

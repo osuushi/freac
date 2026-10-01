@@ -9,12 +9,13 @@ import type {
 } from "../model/body.js";
 import type { CleanupSelection } from "../model/cleanup.js";
 import type { ExactBody } from "../model/exact-body.js";
-import type { kernelInput, pathSweepInput, revolveInput } from "./kernel-input.js";
+import type { kernelInput, loftInput, pathSweepInput, revolveInput } from "./kernel-input.js";
 import type { projectionInput } from "./projection.js";
 
 type Request =
   | ReturnType<typeof import("./sketch-offset.js").sketchOffsetInput>
   | ReturnType<typeof kernelInput>
+  | ReturnType<typeof loftInput>
   | ReturnType<typeof revolveInput>
   | ReturnType<typeof pathSweepInput>
   | ReturnType<typeof projectionInput>

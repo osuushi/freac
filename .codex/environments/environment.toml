@@ -37,7 +37,8 @@ if [ "$freac_main_workspace" != "$(pwd -P)" ]; then
   fi
 fi
 npm run setup:native
-npm run setup:kernel'''
+npm run setup:kernel
+npm run setup:mesh'''
 
 [[actions]]
 name = "Run Dev"

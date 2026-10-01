@@ -1,5 +1,6 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
+import type { PlaneId } from "../sketch/planes.js";
 import type { ConstructionPlane } from "./construction-plane.js";
 import { type OverlapCandidate, overlapCandidates } from "./overlap-candidates.js";
 import { OverlapHighlight } from "./overlap-highlight.js";
@@ -15,7 +16,7 @@ export class OverlapChooser {
   private hovered: HTMLButtonElement | null = null;
   constructor(
     private editor: SketchEditor,
-    private selectPlane: (p: ConstructionPlane) => void,
+    private selectPlane: (p: ConstructionPlane | PlaneId) => void,
   ) {
     this.element.className = "selection-overlap";
     this.element.setAttribute("role", "dialog");
@@ -108,7 +109,7 @@ export class OverlapChooser {
     const target = candidate.target,
       e = this.editor;
     if (target.kind === "plane") {
-      if (target.world) e.world.sketchEntry?.(target.world);
+      if (target.world) this.selectPlane(target.world);
       else {
         const plane = e.store.data.constructionPlanes?.find((p) => p.id === target.saved);
         if (plane) this.selectPlane(plane);

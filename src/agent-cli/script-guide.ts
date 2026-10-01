@@ -7,9 +7,12 @@ Write a single .ts file in this workspace and run freac run script.ts. The insta
 TypeScript compiler checks a source snapshot before execution; no separate Node or
 TypeScript install is needed. The global freac object has the API printed by freac types.
 Topology calls are topology and replaceFace; see the topology section below.
-Available modeling calls are createSketch, extrude, revolve, moveFaces, offsetFaces, transformBodies,
+Available modeling calls are createSketch, extrude, revolve, loft, moveFaces, offsetFaces, transformBodies,
 constructionPlane, deleteConstructionPlane, splitBody, imprint, scale, sweep, booleanBodies, finishEdges and shell.
 Decorator calls are decorators, inspectDecorator, editDecorator, editDecoratorDefinition and enableDecorator.
+Loft takes 2–256 ordered sources, ruled:false for Smooth or true for Ruled, and mode/targets.
+Optional alignment is one integer seam step per source after automatic correspondence.
+Matching hole counts are required; ambiguous hole correspondence rejects.
 Revolve already includes constant-pitch helical sweeps; it is not limited to rings.
 constructionPlane({frame}) returns {plane,frame}; pass id to reposition an existing plane.
 Sketches copy frames and remain independent when a plane moves or is deleted.

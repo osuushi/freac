@@ -36,8 +36,10 @@ ordinary edits and snapshot Undo. Numeric candidates and generated preview meshe
 are temporary. The native kernel supplies analytic face descriptors, tessellated
 trimmed domains and immediate topology correspondence. Correspondence is consumed
 during acceptance; it is not a persistent operation-history graph. Export refines
-a read-only copy and performs mesh operations in a worker. There is no second
-document, BRep mutation at export or executable feature history.
+a read-only copy and coordinates mesh export through a worker. There is no second
+document, BRep mutation at export or executable feature history. On Electron and
+the local development backend, the worker sends generated meshes and temporary
+mesh operations to native Manifold; clients without that capability retain WASM.
 
 ## Interaction
 
@@ -408,6 +410,19 @@ are not imported or shipped. Release notices explicitly include its Apache-2.0
 license despite the build-only npm classification. Native document/model modules
 do not depend on the mesh runtime. No upstream implementation source was copied.
 
+Desktop exports use a separate native Manifold 3.5.3 executable with statically
+linked oneTBB. Decorators still generate their original mesh operands; the same
+shared integration code either evaluates them through WASM or records temporary
+mesh operations for native evaluation, including domain clipping. Native operations
+use body-local float32 inputs and return the rounding bound alongside the mesh.
+The worker applies the existing precision, packing and validity checks before
+encoding. Document ownership and Undo are unchanged. The native backend runs one
+body at a time with at most four threads by default. Binary IPC (Electron) or a
+localhost binary endpoint (development) avoids JSON expansion of mesh arrays.
+Native errors stop export; absence of the capability uses the portable WASM path.
+Cancel terminates and drains the native process as well as discarding the worker.
+See [native mesh setup, pinned source and protocol](../../native/mesh/README.md).
+
 The initial built-in uses the metric basic 60° profile and nearest coarse pitch
 from the [manufacturer reference table](https://sg.misumi-ec.com/tech-info/categories/technical_data/td01/a0063.html).
 User-selected clearance is a radial hole-side allowance, not an ISO fit class.
@@ -492,10 +507,20 @@ Acceptance uses real geometry and ordinary pointer/keyboard routes.
 Measure preview and export on short/long threads and batches; do not promise
 near-instant generation before measuring cold and warm worker runs.
 
+3MF uses lossless ZIP level 3; compression changes archive size, not mesh precision
+or contents. Set `FREAC_BENCH_COMPRESSION=1` for a level 0/1/3/6 comparison
+on identical exported contents, with decompressed-byte verification.
+
 The reproducible worker benchmark is `node tests/decorator-performance.mjs` after
 `npm run build` and `npx tsc -p tsconfig.test.json`. It creates real native cylinders,
 prepares read-only export tessellations, and measures first/repeated preview and
-3MF generation in fresh headless Chromium/WebKit contexts. The 2026-09-24 macOS
+WASM/native 3MF generation in fresh headless Chromium/WebKit contexts, including
+the native process and HTTP handoff. The 2026-09-24 macOS
+arm64 measurements below used the then-current Metric default. The benchmark now
+records the actual resolved settings (currently FDM fine, 1 mm pitch) and supplies
+the preview worker's per-instance signatures. Both first and repeat runs create
+fresh workers; repeat measures warm browser/module caches, not retained mesh results.
+The historical macOS
 arm64 measurements for Ø10 mm, 1.5 mm metric pitch were about 0.57–0.62 s for a
 10 mm thread, 3.8–4.5 s for an 80 mm thread, and 5.4–6.1 s for six 20 mm threads.
 These are approximately 2.5–3× faster than the initial export implementation.

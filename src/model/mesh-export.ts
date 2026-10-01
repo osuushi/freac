@@ -1,6 +1,7 @@
 import { strToU8, zipSync } from "three/addons/libs/fflate.module.js";
 import type { Body } from "./body.js";
 import { type ExportMesh, exportMesh, triangleNormal, validateMesh } from "./export-mesh.js";
+import type { ExportTiming } from "./export-timing.js";
 import { packedMesh } from "./packed-mesh.js";
 
 export type ExportFormat = "stl" | "3mf";
@@ -12,9 +13,13 @@ export function exportBodies(
   return encodeMeshes(bodies.map(exportMesh), format);
 }
 
-export function encodeMeshes(meshes: ExportMesh[], format: ExportFormat): Uint8Array<ArrayBuffer> {
+export function encodeMeshes(
+  meshes: ExportMesh[],
+  format: ExportFormat,
+  timing?: ExportTiming,
+): Uint8Array<ArrayBuffer> {
   if (!meshes.length) throw new Error("Create a solid body before exporting");
-  return format === "stl" ? stl(meshes) : threeMF(meshes);
+  return format === "stl" ? stl(meshes) : threeMF(meshes, timing);
 }
 
 function stlMesh(mesh: ExportMesh): ExportMesh {
@@ -56,7 +61,7 @@ function stl(source: ExportMesh[]): Uint8Array<ArrayBuffer> {
   return bytes;
 }
 
-function threeMF(meshes: ExportMesh[]): Uint8Array<ArrayBuffer> {
+function threeMF(meshes: ExportMesh[], timing?: ExportTiming): Uint8Array<ArrayBuffer> {
   const objects = meshes
     .map((mesh, index) => {
       const vertices = mesh.vertices
@@ -71,17 +76,21 @@ function threeMF(meshes: ExportMesh[]): Uint8Array<ArrayBuffer> {
   const build = meshes.map((_, index) => `<item objectid="${index + 1}"/>`).join("");
   const xml = '<?xml version="1.0" encoding="UTF-8"?>';
   // Core OPC package; no slicer-specific project settings or required extensions.
-  return new Uint8Array(
-    zipSync({
-      "[Content_Types].xml": strToU8(
-        `${xml}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>`,
-      ),
-      "_rels/.rels": strToU8(
-        `${xml}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="model" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>`,
-      ),
-      "3D/3dmodel.model": strToU8(
-        `${xml}<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"><resources>${objects}</resources><build>${build}</build></model>`,
-      ),
-    }),
-  );
+  timing?.mark("threeMfXml");
+  const files = {
+    "[Content_Types].xml": strToU8(
+      `${xml}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>`,
+    ),
+    "_rels/.rels": strToU8(
+      `${xml}<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="model" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>`,
+    ),
+    "3D/3dmodel.model": strToU8(
+      `${xml}<model unit="millimeter" xml:lang="en-US" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"><resources>${objects}</resources><build>${build}</build></model>`,
+    ),
+  };
+  timing?.mark("threeMfUtf8");
+  // Level 3 keeps lossless geometry while avoiding expensive high-compression searches.
+  const bytes = new Uint8Array(zipSync(files, { level: 3 }));
+  timing?.mark("threeMfZip");
+  return bytes;
 }

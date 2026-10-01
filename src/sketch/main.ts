@@ -142,6 +142,7 @@ const disposeControls = installControls(editor, numeric, app);
 const modelingTools = new ModelingTools(
   editor,
   () => modelControls.activateRevolve(),
+  () => modelControls.activateLoft(),
   (mode) => bodyFinishes.setMode(mode),
 );
 const bodyActions = new BodyActions(
@@ -152,28 +153,33 @@ const bodyActions = new BodyActions(
 );
 const deleteAction = new DeleteTopologyAction(editor);
 const mirror = new MirrorControls(editor, overlay);
-const scaling = new ScaleControls(editor, overlay, () => {
-  if (editor.world.active) return editor.activateMove();
-  else if (
-    editor.modeling.targets.every((target) => target.kind === "sketch" || target.kind === "profile")
-  )
-    modelControls.move();
-  else {
-    editor.modeling.setTool("move");
-    editor.refresh();
-  }
-});
+const entities = new EntityViewer(editor, app);
+const constructionPlanes = new ConstructionPlaneControls(editor, overlay, entities.referenceRows);
+const scaling = new ScaleControls(
+  editor,
+  overlay,
+  () => {
+    if (constructionPlanes.selected()) return constructionPlanes.transform();
+    if (editor.world.active) return editor.activateMove();
+    else if (
+      editor.modeling.targets.every(
+        (target) => target.kind === "sketch" || target.kind === "profile",
+      )
+    )
+      modelControls.move();
+    else {
+      editor.modeling.setTool("move");
+      editor.refresh();
+    }
+  },
+  () => !!constructionPlanes.selected(),
+);
 const projection = new ProjectionControls(editor, overlay);
 const sections = new SectionControls(editor);
 const bodyEdges = new BodyEdgeControls(editor);
-const entities = new EntityViewer(editor, app);
-const constructionPlanes = new ConstructionPlaneControls(editor, overlay, entities.referenceRows);
 const disposeVisibility = visibilityControls(editor, () => constructionPlanes.selected()?.id);
-const crossSection = new CrossSectionControls(
-  editor,
-  overlay,
-  constructionPlanes.picker,
-  () => constructionPlanes.selected()?.frame,
+const crossSection = new CrossSectionControls(editor, overlay, constructionPlanes.picker, () =>
+  constructionPlanes.selectedFrame(),
 );
 const measurements = new MeasurementControls(editor, app, readouts);
 const overlaps = new OverlapInput(editor, (plane) => constructionPlanes.select(plane));
@@ -196,11 +202,13 @@ world.changed.add(() => {
       ? `${world.active} sketch · ${world.spacing} mm grid · ${editor.tool === "trim" ? "Trim · click a highlighted span" : (editor.snap?.label ?? (editor.moveMode ? "Transform · Shift uniform · Option about anchor · ⌘-drag box moves" : "Shift bypasses geometry snaps · Option / Alt draws/resizes about center"))}`
       : editor.modeling.targets.length
         ? `${editor.modeling.targets.length} ${editor.modeling.targets.every((t) => t.kind === "body") ? "body" : editor.modeling.targets.every((t) => t.kind === "edge") ? "edge" : editor.modeling.targets.every((t) => t.kind === "face") ? "face" : editor.modeling.targets.every((t) => t.kind === "sketch") ? "sketch" : editor.modeling.targets.every((t) => t.kind === "profile") ? "region" : "item"} selected${editor.modeling.targets.every((t) => t.kind === "body" || t.kind === "sketch") ? " · M to transform" : ""}`
-        : editor.tool === "rectangle"
-          ? "Rectangle · Choose a plane to sketch"
-          : editor.tool === "trim"
-            ? "Trim · Choose a plane to sketch"
-            : "Choose a plane to sketch");
+        : world.selectedPlane
+          ? `${world.selectedPlane} plane selected · Enter to sketch`
+          : editor.tool === "rectangle"
+            ? "Rectangle · Choose a plane to sketch"
+            : editor.tool === "trim"
+              ? "Trim · Choose a plane to sketch"
+              : "Choose a plane to sketch");
 });
 installViewInspection(editor, sections);
 world.draw();

@@ -98,6 +98,9 @@ async function route(page, name) {
 
   await hold(page, await project(page, [-15, -15, 10]));
   await releaseChoice(page, "Plane · XY");
+  assert.equal((await inspect(page)).activePlane, null, "Chooser selects a canonical reference");
+  assert.equal((await inspect(page)).planeTargets.find((p) => p.id === "XY").selected, true);
+  await page.keyboard.press("Enter");
   assert.equal((await inspect(page)).activePlane, "XY");
   await navigationCancellation(page, panel);
   await adaptiveMargin(page);
@@ -124,7 +127,8 @@ async function adaptiveMargin(page) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await chooseTool(page, "return to modeling", "modeling");
   const margin = await project(page, [38, 4, 0]);
-  await page.mouse.dblclick(margin.x, margin.y);
+  await page.mouse.click(margin.x, margin.y);
+  await page.keyboard.press("Enter");
   assert.equal(
     (await inspect(page)).activePlane,
     "XY",

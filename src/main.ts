@@ -2,6 +2,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, ipcMain } from "electron";
 import { DocumentOwner } from "./backend/document-owner.js";
+import { MeshCalculator } from "./backend/mesh-calculator.js";
 import { NativeSolver } from "./backend/native-solver.js";
 import { AgentSession } from "./host/agent-session.js";
 import { AppUpdates } from "./host/app-updates.js";
@@ -23,6 +24,20 @@ const owner = new DocumentOwner(
 let documents: DocumentSession;
 let agent: AgentSession;
 let ipad: IPadSession;
+const meshCalculator = new MeshCalculator(nativeExecutable("mesh"));
+ipcMain.handle("mesh-export", (event, input: ArrayBuffer) => {
+  if (event.sender !== documentWindow?.webContents || event.senderFrame !== event.sender.mainFrame)
+    throw new Error("Document window only");
+  documents.checkDesktop();
+  return meshCalculator.calculate(input);
+});
+ipcMain.handle("mesh-export-cancel", async (event) => {
+  if (event.sender !== documentWindow?.webContents || event.senderFrame !== event.sender.mainFrame)
+    throw new Error("Document window only");
+  documents.checkDesktop();
+  await meshCalculator.cancel();
+});
+app.on("will-quit", () => meshCalculator.close());
 installFixtureCapture(() => documents.checkDesktop(), icon);
 ipcMain.handle("sketch", (event, request: unknown) => {
   if (event.sender !== documentWindow?.webContents || event.senderFrame !== event.sender.mainFrame)
@@ -65,7 +80,10 @@ async function createWindow(): Promise<void> {
     },
   });
   documentWindow = window;
+  window.webContents.on("did-start-loading", () => meshCalculator.close());
+  window.webContents.on("render-process-gone", () => meshCalculator.close());
   window.on("closed", () => {
+    meshCalculator.close();
     documentWindow = null;
   });
   documents.attach(window);

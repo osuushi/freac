@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { meshInputCache, meshInputs } from "../mesh-inputs.mjs";
 import { inputCache, nativeInputs } from "../native-inputs.mjs";
 
 const htmlEscape = (text) =>
@@ -72,6 +73,19 @@ ${entries.map((e) => `<details><summary>${htmlEscape(e.name)} — ${htmlEscape(e
 }
 
 async function upstreamNotices(add, metadata) {
+  for (const [name, input] of Object.entries(meshInputs)) {
+    const directory = join(meshInputCache, name);
+    await add(
+      `Native ${name}`,
+      input.version,
+      name === "tbb" ? "Apache-2.0 and included third-party notices" : "Apache-2.0",
+      [
+        ...(await licenseFiles(directory)).map((file) => join(directory, file)),
+        ...(name === "tbb" ? [join(directory, "third-party-programs.txt")] : []),
+      ],
+      input.url,
+    );
+  }
   await add("Freac", metadata.timestamp, "LGPL-2.1-or-later", ["LICENSE", "COPYING.md"]);
   await add(
     "Open CASCADE Technology (Freac offset-join precision adaptation, 2026-09-23)",

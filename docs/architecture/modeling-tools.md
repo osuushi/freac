@@ -300,3 +300,11 @@ positions must remain within 1e-12 mm of the originals and their recorded bounds
 must not increase. New or moved vertices keep the existing 2e-6 mm limit. This
 is preservation of accepted geometry, not precision recovery; the usual support,
 closed-solid, self-interference and boundary correspondence checks still apply.
+
+## Loft
+
+[Loft](loft.md) is an explicit tool for ordered filled regions and planar faces;
+it does not replace the existing selection defaults. It can start with two or more
+selected sections or with an empty selection for in-tool collection. Its local card
+owns section order, correspondence and Smooth/Ruled controls, sharing the existing
+Boolean targets and temporary acceptance lifecycle.

@@ -67,7 +67,8 @@ export function validateKernelBodies(reply: Record<string, unknown>, input: Kern
   const mode =
     input.kind === "inspect"
       ? "inspect"
-      : ["extrude", "revolve", "path-sweep", "boolean"].includes(input.kind) && "mode" in input
+      : ["extrude", "revolve", "path-sweep", "loft", "boolean"].includes(input.kind) &&
+          "mode" in input
         ? input.mode
         : "new";
   requireKernel(

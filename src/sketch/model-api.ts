@@ -61,6 +61,7 @@ export type ModelRequest =
   | { kind: "shell"; operation: BodyShell }
   | { kind: "offset-faces"; operation: BodyFaceOffset }
   | { kind: "finish-edges"; operation: BodyEdgeFinish }
+  | { kind: "loft"; operation: import("../model/loft.js").Loft }
   | { kind: "revolve"; revolution: Revolution }
   | { kind: "extrude"; extrusion: Extrusion }
   | {

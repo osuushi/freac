@@ -1,18 +1,17 @@
-import type { Manifold } from "manifold-3d";
 import type { BodyGeometry, Face } from "../model/body.js";
 import type { ExportMesh } from "../model/export-mesh.js";
 import type { Vector } from "../sketch/planes.js";
 import { trimAdjacentCylinders } from "./curved-domain.js";
 import { cross, dot, subtract } from "./cylinder.js";
-import type { MeshScope } from "./mesh-scope.js";
+import type { MeshOperations, MeshSolid } from "./mesh-operations.js";
 
 /** Bound each selected patch independently; disjoint axial patches must not clip each other. */
-function trimAdjacentPlanes(
-  scope: MeshScope,
-  solid: Manifold,
+function trimAdjacentPlanes<S extends MeshSolid<S>>(
+  scope: MeshOperations<S>,
+  solid: S,
   face: Face,
   body: BodyGeometry,
-): Manifold {
+): S {
   let result = solid;
   for (const adjacent of body.faces) {
     if (!adjacent.plane || !adjacent.edges.some((edge) => face.edges.includes(edge))) continue;
@@ -39,12 +38,12 @@ function trimAdjacentPlanes(
   return result;
 }
 
-export function threadDomain(
-  scope: MeshScope,
+export function threadDomain<S extends MeshSolid<S>>(
+  scope: MeshOperations<S>,
   body: BodyGeometry,
   faces: readonly Face[],
   geometry: { band: ExportMesh; masks: ExportMesh[] | null; tolerance: number },
-): Manifold {
+): S {
   const band = scope.from(geometry.band);
   if (!geometry.masks) return band;
   const patches = geometry.masks.map((mesh, i) =>

@@ -20,11 +20,11 @@ if (process.platform !== "win32") {
   }
 }
 
-for (const component of ["solver", "kernel"]) {
+for (const component of ["solver", "kernel", "mesh"]) {
   const build = resolve(import.meta.dirname, `../.build/${component}`);
   if (!existsSync(resolve(build, "CMakeCache.txt"))) {
     console.error(
-      `Native ${component} is not configured. Run npm run ${component === "solver" ? "setup:native" : "setup:kernel"} (see README.md).`,
+      `Native ${component} is not configured. Run npm run ${component === "solver" ? "setup:native" : `setup:${component}`} (see README.md).`,
     );
     process.exit(1);
   }

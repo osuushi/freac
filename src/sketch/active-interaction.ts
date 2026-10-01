@@ -18,6 +18,7 @@ type Kind =
   | "body-move"
   | "projection"
   | "use-edge"
+  | "loft"
   | "revolve"
   | "extrude"
   | "placement"

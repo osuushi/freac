@@ -10,7 +10,7 @@ export async function knurlMembershipRoute(page) {
   await orient(page, [1, -1, 1]);
   await worldClick(page, [2, -2, 10]);
   await chooseTool(page, "construction plane", "construction-plane");
-  await page.getByRole("button", { name: "Move plane", exact: true }).click();
+  await chooseTool(page, "transform", "transform");
   await page.getByRole("button", { name: "Move plane Z", exact: true }).click();
   await page.getByRole("textbox", { name: "Plane translation Z", exact: true }).fill("-5");
   await page.keyboard.press("Enter");

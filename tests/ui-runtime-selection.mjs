@@ -32,6 +32,10 @@ test("ordinary standalone launchers fail before running any route for a typo", (
     "tests/entity-range-ui.mjs",
     "tests/shell-ui.mjs",
     "tests/trim-ui.mjs",
+    "tests/loft-ui.mjs",
+    "tests/canonical-planes-ui.mjs",
+    "tests/native-export-ui.mjs",
+    "tests/agent-loft.mjs",
   ]) {
     const result = spawnSync(process.execPath, [path], {
       env: { ...process.env, FREAC_TEST_BROWSER: "chromuim" },

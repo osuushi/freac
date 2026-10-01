@@ -27,6 +27,7 @@ export interface OperationInputs {
   chamfer: BodyEdgeFinish["edges"];
   extrude: LiftSource[];
   revolve: LiftSource[];
+  loft: LiftSource[];
   cleanup: CleanupSelection[];
   delete: DeletionSelection;
 }
@@ -70,6 +71,7 @@ const resolvers: { [K in Operation]: Resolver<K> } = {
   chamfer: edgeSelection,
   extrude: liftSelection,
   revolve: liftSelection,
+  loft: loftSelection,
   cleanup: (c) =>
     solidOnly(c)
       ? available(cleanupSelection(coverageTargets(c)))
@@ -171,4 +173,24 @@ function shellSelection(c: SelectionContext): Resolution<BodyShell["selection"]>
       faces: c.partialFaces.filter((f) => f.body === body).map((f) => f.face),
     })),
   );
+}
+
+function loftSelection(c: SelectionContext, document: SketchDocument): Resolution<LiftSource[]> {
+  if (c.ordered.length < 2)
+    return unavailable(
+      "Select at least two ordered loft sections, or clear selection to collect them in Loft",
+    );
+  const sources: LiftSource[] = [];
+  for (const target of c.ordered) {
+    if (target.kind === "profile")
+      sources.push({ sketch: target.sketch, profile: target.profile.key });
+    else if (
+      target.kind === "face" &&
+      document.bodies?.find((b) => b.id === target.body)?.faces.find((f) => f.id === target.face)
+        ?.plane
+    )
+      sources.push({ face: target.face });
+    else return unavailable("Loft sections must be filled sketch regions or planar faces");
+  }
+  return available(sources);
 }

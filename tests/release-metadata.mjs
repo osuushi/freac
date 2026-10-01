@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { meshInputs } from "../scripts/mesh-inputs.mjs";
 import { updateFeed } from "../scripts/release/update-feed.mjs";
 import { releaseVersion } from "../scripts/release/version.mjs";
 
@@ -55,6 +56,11 @@ test("runtime source and embedded terminal audits match the installed version pi
     "Review embedded terminal notices on upgrade",
   );
   assert.equal(pkg.license, "LGPL-2.1-or-later");
+  assert.equal(meshInputs.manifold.version, pkg.devDependencies["manifold-3d"]);
+  for (const input of Object.values(meshInputs)) {
+    assert.match(input.commit, /^[a-f0-9]{40}$/);
+    assert.match(input.sha256, /^[a-f0-9]{64}$/);
+  }
   for (const input of runtime.archives) {
     assert.match(input.sha256, /^[a-f0-9]{64}$/);
     assert.equal(new URL(input.url).protocol, "https:");

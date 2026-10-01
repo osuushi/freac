@@ -6,10 +6,14 @@ offset-panel interaction.
 Construction planes are independent saved document objects with stable IDs and
 orthonormal PlaneFrames. With one planar face selected, Construction plane immediately
 creates a plane on that face in one Undo step. Otherwise it picks a world plane,
-planar face or saved plane in the viewport. Local translation/rotation controls
+planar face or saved plane in the viewport. A selected canonical or saved plane seeds
+temporary placement immediately, copying its frame into a new plane. Local translation/rotation controls
 place the temporary plane; Enter or leaving the tool accepts, Escape cancels.
 There is no plane-offset panel. Reselection supports movement, deletion, visibility
-and sketch entry. Visibility remains view state.
+and sketch entry. Select a saved plane and use Transform/M for placement,
+Enter or viewport double-click for sketch entry, and Delete/Backspace for deletion.
+These use the existing selection affordances; there is no floating plane action bar.
+Visibility remains view state.
 
 A sketch begun on a plane copies its evaluated frame and is created on the first
 completed drawing gesture. Subsequent plane movement or deletion does not move or
@@ -58,7 +62,7 @@ split topology and validation precision remain unchanged.
 
 ## Cross-section view
 
-**Cross section** in Cmd-F → View uses one selected planar face or saved plane;
+**Cross section** in Cmd-F → View uses one selected planar face, canonical or saved plane;
 otherwise it picks a world plane, saved plane or planar face in the viewport.
 The initial cut removes the camera-facing half. Its direction then stays fixed
 while orbiting. Existing XYZ plane handles translate/rotate it by dragging or

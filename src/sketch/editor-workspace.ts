@@ -86,6 +86,7 @@ export function installWorkspaceSync(editor: SketchEditor): void {
   editor.world.changed.add(() => {
     const world = editor.world;
     editor.modeling.sync(editor.store.data);
+    if (world.active || editor.modeling.targets.length) world.selectedPlane = null;
     const key = world.workspace?.sketchId ?? world.active;
     if (previous === key) return;
     previous = key;

@@ -20,6 +20,7 @@ Run all commands in this guide from the repository root, after activating `.nvmr
 npm ci
 npm run setup:native
 npm run setup:kernel
+npm run setup:mesh
 npm run dev
 ```
 
@@ -34,6 +35,9 @@ agent session helper under `.build/host-native`. It uses C++20 and system proces
 APIs, with no geometry SDK or downloaded source. macOS defaults match Node's
 architecture and the 14.0 deployment target; the existing native environment
 overrides apply. macOS release preparation copies/signs it with the calculators.
+`setup:mesh` downloads checksum-pinned Manifold 3.5.3 and oneTBB 2022.3.0 sources
+into `.cache/mesh-inputs` and builds the stateless native export calculator in
+`.build/mesh`. Ordinary builds rebuild it from those prepared sources.
 `setup:kernel` downloads checksum-verified OCCT 7.9.3 source and builds the modeling
 libraries plus FreAC's separate solid calculator. This initial source build takes
 longer; its cache is `.cache/kernel` and the calculator is `.build/kernel`.
@@ -44,12 +48,12 @@ require the recipe/build receipt, matching platform/architecture/deployment targ
 and checksums of the installed SDK files. An older SDK without a receipt must be
 rebuilt; a version number or manually copied marker is insufficient. The receipt
 records local build provenance and integrity, not a third-party signature.
-On macOS, both setup
+On macOS, all three native setup
 commands explicitly default to Node's architecture, replacing any stale CMake
 architecture selection. `CMAKE_OSX_ARCHITECTURES` remains an explicit override.
 On Apple Silicon, use an ARM64 Node installation; an Intel Node running under
 Rosetta defaults to Intel native builds. After correcting Node or an architecture
-override, rerun both `setup:native` and `setup:kernel`; ordinary incremental builds
+override, rerun `setup:native`, `setup:kernel` and `setup:mesh`; ordinary incremental builds
 reuse their existing CMake configuration.
 The checksum-pinned source build and receipt-verified installed/cached SDK routes
 are verified on macOS arm64. This does not establish a fresh operating-system setup.

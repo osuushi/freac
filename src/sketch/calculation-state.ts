@@ -9,6 +9,7 @@ export function cancellableCalculation(kind: ModelRequest["kind"]): boolean {
     "plane-cut",
     "check-plane-cut",
     "extrude",
+    "loft",
     "revolve",
     "offset-faces",
     "shell",

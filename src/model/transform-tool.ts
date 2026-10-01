@@ -6,6 +6,7 @@ import { scaleSelection } from "./scale-selection.js";
 export function registerTransformTool(
   editor: SketchEditor,
   activate: () => void | Promise<void>,
+  referenceSelected: () => boolean = () => false,
 ): () => void {
   return toolCatalog(editor).register({
     id: "transform",
@@ -17,11 +18,12 @@ export function registerTransformTool(
       (editor.interactions.current && !editor.interactions.current.finish
         ? "Finish or cancel the current edit first"
         : null) ??
-      (scaleSelection(editor) ||
+      (referenceSelected() ||
+      scaleSelection(editor) ||
       (!editor.world.active && modelingSketch(editor)) ||
       (editor.world.active && editor.selectionOwners.size)
         ? null
-        : "Select sketch or solid geometry"),
+        : "Select sketch, solid geometry or a plane"),
     run: async () => {
       const current = editor.interactions.current;
       if (current && !(await current.finish?.())) {

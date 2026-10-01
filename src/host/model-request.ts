@@ -41,6 +41,7 @@ const kinds: Record<HostModelRequest["kind"], true> = {
   "finish-edges": true,
   revolve: true,
   extrude: true,
+  loft: true,
   "place-sketch": true,
   "merge-sketches": true,
   "delete-entities": true,
