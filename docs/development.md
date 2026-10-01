@@ -82,8 +82,21 @@ independent CMake build directories. `CMAKE_CXX_COMPILER_LAUNCHER`, `CCACHE_DIR`
 Mesh archives are shared by SHA-256 under the main checkout's `.cache/mesh-archives`
 (`FREAC_MESH_ARCHIVE_CACHE` overrides this); extraction remains checkout-local.
 Existing local mesh archives seed that cache after checksum verification.
-Setup uses `npm ci --prefer-offline --no-audit`; run `npm audit` separately for
-dependency auditing. It reports npm/native phase durations, total setup duration
+For local macOS worktrees, completed dependency installations are cached under
+the main checkout's `.cache/dependencies`. A matching installation is copied with
+macOS copy-on-write support into an independent `node_modules`; changing files or
+installing packages in one worktree cannot modify the snapshot or another worktree.
+The key includes package manifests/lockfile, npm configuration, setup scripts,
+Node/npm versions, platform/architecture and install-affecting environment.
+Misses run `npm ci --prefer-offline --no-audit` and publish only after success.
+Local/workspace-linked dependencies bypass the snapshot. Only `node_modules` is
+captured; our current install hooks place their outputs there. If future lifecycle
+hooks generate files elsewhere, extend the setup recipe before caching those outputs.
+`FREAC_DEPENDENCY_CACHE=0 bash scripts/setup-worktree.sh` forces an ordinary install.
+Standalone `npm ci` and CI/release installation are unchanged. Old snapshots can be
+discarded by removing the main checkout's `.cache/dependencies` when no setup is
+running; the next setup repopulates it. Run `npm audit` separately for dependency
+auditing. Setup reports dependency/native phase durations, total setup duration
 and cumulative compiler cache statistics. Missing ccache is reported and falls
 back to normal compilation. To compare worktrees, use cache-statistics deltas;
 unrelated concurrent builds also contribute to the shared counters.

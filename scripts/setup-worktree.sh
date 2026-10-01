@@ -12,8 +12,8 @@ timed() {
 # Match the native macOS SDK settings used by the main workspace/release build.
 export CMAKE_OSX_ARCHITECTURES="${CMAKE_OSX_ARCHITECTURES:-$(node -p 'process.arch === "arm64" ? "arm64" : "x86_64"')}"
 export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-14.0}"
-timed "npm install" npm ci --prefer-offline --no-audit
 freac_main_workspace="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+timed "dependencies" node scripts/worktree-dependencies.mjs "$freac_main_workspace/.cache/dependencies"
 # Shared compiler outputs; CMake build directories remain checkout-local.
 if command -v ccache >/dev/null 2>&1; then
   export CCACHE_DIR="${CCACHE_DIR:-$freac_main_workspace/.cache/ccache}"
