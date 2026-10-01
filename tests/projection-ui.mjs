@@ -7,12 +7,14 @@ import { at, inspect, reset } from "./ui-helpers.mjs";
 import { pickPlane } from "./ui-plane-targets.mjs";
 import { projectionRoute } from "./ui-projection.mjs";
 import { projectionFacesRoute } from "./ui-projection-faces.mjs";
+import { projectionSourcesRoute } from "./ui-projection-sources.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const fixture = JSON.parse(await readFile("tests/fixtures/projection-tilted-plane.json", "utf8"));
 await withUiRuntimes(async (page, name) => {
   await tiltedPlaneRoute(page, name);
+  await projectionSourcesRoute(page, name);
   // Existing routes use odd millimeter grid positions.
   await page.setViewportSize({ width: 1280, height: 2000 });
   await projectionRoute(page, name);

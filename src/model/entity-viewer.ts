@@ -6,6 +6,11 @@ import { renameEntity } from "./entity-rename.js";
 import { EntityReorder } from "./entity-reorder.js";
 
 export class EntityViewer {
+  sourcePicker: {
+    choose: (target: ModelingTarget) => void;
+    hover: (target: ModelingTarget | null) => void;
+    selected: (target: ModelingTarget) => boolean;
+  } | null = null;
   readonly referenceRows = document.createElement("section");
   private root = document.createElement("aside");
   private key = "";
@@ -24,6 +29,10 @@ export class EntityViewer {
   }
   private async select(target: ModelingTarget, event: MouseEvent): Promise<void> {
     if (this.editor.blocked) return;
+    if (this.sourcePicker) {
+      this.sourcePicker.choose(target);
+      return;
+    }
     const interaction = this.editor.interactions.current;
     if (interaction && !(await interaction.finish?.())) return;
     const index = this.selectionRows.findIndex((row) => modelingKey(row) === modelingKey(target));
@@ -69,8 +78,11 @@ export class EntityViewer {
     select.textContent = name;
     select.setAttribute("aria-label", `Select ${name}`);
     select.onclick = (event) => this.select(target, event);
+    select.onpointerenter = () => this.sourcePicker?.hover(target);
+    select.onpointerleave = () => this.sourcePicker?.hover(null);
     select.ondblclick = (event) => {
-      if (event.shiftKey || event.metaKey || event.ctrlKey) return;
+      if (event.shiftKey || event.metaKey || event.ctrlKey || this.editor.interactions.current)
+        return;
       renameEntity(this.editor, select, id);
     };
     new EntityReorder(this.editor, row, select, id, target.kind);
@@ -112,7 +124,11 @@ export class EntityViewer {
       );
       select.setAttribute(
         "aria-pressed",
-        String(selected || this.editor.world.workspace?.sketchId === id),
+        String(
+          this.sourcePicker
+            ? this.sourcePicker.selected(target)
+            : selected || this.editor.world.workspace?.sketchId === id,
+        ),
       );
       const visible = this.editor.visibility.visible(id);
       const mergeable =
@@ -131,7 +147,9 @@ export class EntityViewer {
       }
       select.disabled =
         this.editor.blocked ||
-        (!!this.editor.interactions.current && !this.editor.interactions.current.finish);
+        (!!this.editor.interactions.current &&
+          !this.editor.interactions.current.finish &&
+          !this.sourcePicker);
       row.classList.toggle("entity-hidden", !visible);
     });
     row.append(select, ...(merge ? [merge] : []), eye);

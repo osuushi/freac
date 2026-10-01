@@ -54,26 +54,39 @@ Sketch-to-sketch projection initially makes an explicit independent copy of the
 projected curves, using source/target frames. A dynamic linked projection is a
 separate product decision; do not build a dependency engine to deliver copying.
 
-Projection implementation (2026-09-16): source selections retain document-local
-face/edge/curve references. The backend resolves face sets against the accepted
-document using `model/face-boundary.ts`; shared internal edges and periodic seams
-are omitted, hole loops retained. Explicitly selected edges remain sources even
-when internal to a face set. A whole closed shell has no boundary and is rejected;
-this is boundary projection, not silhouette extraction. Target frames come from
-the active sketch, XY/XZ/YZ, a saved construction plane or a planar body face.
+Projection sources retain document-local body/sketch/region/face/edge/curve
+references. Filled regions behave as faces: project their trimmed outer and hole
+loops, rather than the whole curves owning those spans. Face sets resolve their
+wire boundaries against the accepted document using `model/face-boundary.ts`;
+shared internal edges and periodic seams are omitted. Explicit edges remain
+sources even when internal to a face set. Whole bodies project their feature
+curves plus exact apparent contours; selected curved faces also include their
+apparent contours. This supplies cylinder sides and spherical outlines without
+requiring stored wires. Hidden as well as visible curves remain useful references.
+Collapsed implicit body/face edges and degenerate pole edges are omitted; an
+explicitly chosen edge that projects to a point rejects.
+
+Target-normal projection casts perpendicular to the destination. Source-normal
+projection casts perpendicular to the selected planar support, and is available
+only for planar sources sharing a normal. Bodies, spatial edges and curved faces
+have no inferred source normal. Rays parallel to the target reject with a local
+explanation. Compact direction buttons show the chosen mode. Target frames come
+from the active sketch, XY/XZ/YZ, a saved construction plane or a planar body face.
 In Modeling, preselect sources and invoke Project, then click the destination's
-visible patch or planar face. Without preselection, click a first source.
-Shift-click adds/removes sources without a source/target mode switch; inside an
-active sketch ordinary clicks toggle sources and its frame stays the destination.
+visible patch or planar face. Without preselection, hover and click a first source:
+curves show an outline, and filled faces/regions show a fill. Selected source faces
+retain their filled highlight. Shift-click adds/removes sources; inside an active
+sketch ordinary clicks toggle sources and its frame stays the destination.
+Entities can toggle whole bodies/sketches without closing Project, including
+geometry occluded in the viewport. Its hover highlights the corresponding source.
 Plane hover and click share the same nearest-reference picker, including tilted
 saved planes. Enter/check accepts, Escape/cross cancels and restores selection.
-Only compact accept/cancel controls appear, anchored above the bottom status so
-they do not follow the pointer. Projection errors sit above those controls with
-a fixed gap. Reuse a coplanar sketch or create one on acceptance.
-`backend/projection.ts` and the native kernel produce the usual
+Direction and accept/cancel controls stay above the bottom status. Projection
+errors sit above them with a fixed gap. Reuse a coplanar sketch or create one on
+acceptance. `backend/projection.ts` and the native kernel produce the usual
 temporary candidate; acceptance is one Undo, without a persistent source link.
 Analytic primitives survive where natural; other curves become editable cubic
-pieces with a 0.001 mm approximation budget. Point-only projections are rejected.
+pieces with a 0.001 mm approximation budget.
 
 Corner fillet hints retain their world-space radius while the same corner is
 selected, so zooming in enlarges a crowded hint. Initial sizing provides clearance

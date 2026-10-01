@@ -56,7 +56,7 @@ export function bodyView(editor: SketchEditor): () => void {
       drawing.style(
         selectedBodies,
         selectedFaces,
-        hover?.kind === "face" ? hover.face : undefined,
+        hover?.kind === "face" ? hover.face : hover?.kind === "body" && hover.body === body.id,
         editor.world.activeFrame ?? editor.world.crossSection,
       );
       // A finish preview can consume its source edge; preserve the accepted chain highlight.

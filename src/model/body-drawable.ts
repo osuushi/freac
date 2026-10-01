@@ -123,7 +123,7 @@ export class BodyDrawable {
   style(
     selectedBodies: ReadonlySet<string>,
     selectedFaces: ReadonlySet<string>,
-    hover: string | undefined,
+    hover: string | boolean | undefined,
     section: PlaneFrame | null,
   ): void {
     this.faces.forEach((mesh, i) => {
@@ -131,7 +131,7 @@ export class BodyDrawable {
       mesh.material.color.set(
         selectedBodies.has(this.source.id) || selectedFaces.has(face.id)
           ? "#82b5e0"
-          : hover === face.id
+          : hover === true || hover === face.id
             ? "#ead3aa"
             : "#cad4df",
       );

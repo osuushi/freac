@@ -1,36 +1,34 @@
-import * as THREE from "three";
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { Sketch } from "../sketch/document.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { onModelKeydown } from "../sketch/model-keys.js";
 import type { PlaneFrame } from "../sketch/planes.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
+import type { EntityViewer } from "./entity-viewer.js";
 import type { PlaneReferencePicker } from "./plane-reference-picker.js";
 import type { ProjectionSource } from "./projection.js";
-import {
-  pickProjectionSource,
-  projectionKey,
-  projectionLines,
-  projectionSelection,
-} from "./projection-selection.js";
+import { sourceProjectionNormal } from "./projection-direction.js";
+import { ProjectionInput } from "./projection-input.js";
+import { projectionKey, projectionSelection, projectionSource } from "./projection-selection.js";
+import { ProjectionSourceView } from "./projection-source-view.js";
 
 export class ProjectionControls {
   private disposeTool: () => void;
   private root = document.createElement("div");
-  private abort = new AbortController();
+  private input: ProjectionInput;
+  private view: ProjectionSourceView;
   private lease: InteractionLease | null = null;
   private sources: ProjectionSource[] = [];
   private previousSelection: SketchEditor["selected"]["targets"] = [];
   private previousModels: SketchEditor["modeling"]["targets"] = [];
   private target: { frame: PlaneFrame; sketchId?: string } | null = null;
   private result: Sketch | null = null;
-  private outlines = new THREE.Group();
-  private material = new THREE.LineBasicMaterial({ color: "#d28b22", depthTest: false });
-  private highlightKey = "";
+  private direction: "target-normal" | "source-normal" = "target-normal";
+  private hover: ProjectionSource | null = null;
   constructor(
     private editor: SketchEditor,
     overlay: HTMLElement,
     private picker: PlaneReferencePicker,
+    private entities: EntityViewer,
   ) {
     this.disposeTool = toolCatalog(editor).register({
       id: "project",
@@ -43,58 +41,31 @@ export class ProjectionControls {
     });
     this.root.className = "model-actions projection-actions";
     this.root.innerHTML =
-      '<button data-project="accept" aria-label="Accept projection" title="Accept projection (Enter)">✓</button><button data-project="cancel" aria-label="Cancel projection" title="Cancel projection (Escape)">×</button>';
+      '<button data-project="target-normal" aria-label="Project along target normal" title="Cast perpendicular to the destination plane">Target normal</button><button data-project="source-normal" aria-label="Project along source normal" title="Cast perpendicular to the source plane">Source normal</button><button data-project="accept" aria-label="Accept projection" title="Accept projection (Enter)">✓</button><button data-project="cancel" aria-label="Cancel projection" title="Cancel projection (Escape)">×</button>';
     overlay.append(this.root);
-    editor.world.scene.add(this.outlines);
+    this.view = new ProjectionSourceView(editor);
     this.root.onclick = (event) => {
       const action = (event.target as HTMLElement).closest("button")?.dataset.project;
       if (editor.blocked && action !== "cancel") return;
       if (action === "accept") void this.accept();
       else if (action === "cancel") void this.cancel();
+      else if (action === "target-normal" || action === "source-normal") {
+        this.direction = action;
+        editor.message = "";
+        void this.preview();
+      }
     };
-    this.bindEvents();
+    this.input = new ProjectionInput(
+      editor,
+      () => !!this.lease,
+      () => !!editor.world.active || !this.sources.length,
+      (source) => this.toggle(source),
+      (source) => this.hoverSource(source),
+      () => void this.accept(),
+      () => void this.cancel(),
+    );
     editor.world.changed.add(this.update);
     this.update();
-  }
-  private bindEvents(): void {
-    const editor = this.editor;
-    const options = { signal: this.abort.signal, capture: true };
-    editor.world.canvas.addEventListener(
-      "pointerdown",
-      (event) => {
-        if (!this.lease || event.button !== 0 || event.metaKey || event.ctrlKey) return;
-        event.preventDefault();
-        event.stopImmediatePropagation();
-      },
-      options,
-    );
-    // Run before the shared canvas plane picker so Shift-click can refine sources.
-    editor.world.canvas.ownerDocument.addEventListener("click", this.pick, options);
-    editor.world.canvas.addEventListener(
-      "dblclick",
-      (event) => {
-        if (this.lease) event.stopImmediatePropagation();
-      },
-      options,
-    );
-    editor.world.canvas.addEventListener(
-      "pointermove",
-      (event) => {
-        if (!this.lease || event.buttons || event.metaKey || event.ctrlKey) return;
-        event.stopImmediatePropagation();
-        editor.world.canvas.style.cursor = "crosshair";
-      },
-      options,
-    );
-    onModelKeydown((event) => {
-      if (!this.lease) return;
-      if (event.key === "Escape" || event.key === "Enter") {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        if (event.key === "Escape") void this.cancel();
-        else if (!editor.blocked) void this.accept();
-      }
-    }, options);
   }
   private async begin(): Promise<void> {
     const e = this.editor;
@@ -111,9 +82,16 @@ export class ProjectionControls {
       ? { frame: e.world.activeFrame, sketchId: e.sketch?.id ?? e.world.workspace?.sketchId }
       : null;
     e.message = "";
+    this.direction = "target-normal";
+    this.entities.sourcePicker = {
+      choose: (target) => this.toggle(projectionSource(target)),
+      hover: (target) => this.hoverSource(target ? projectionSource(target) : null),
+      selected: (target) =>
+        this.sources.some((s) => projectionKey(s) === projectionKey(projectionSource(target))),
+    };
     this.configurePicker();
     e.select([]);
-    e.modeling.targets = [];
+    this.view.show(this.sources, null);
     await this.preview();
     e.refresh();
   }
@@ -126,6 +104,8 @@ export class ProjectionControls {
       (frame) => {
         if (this.editor.blocked || this.lease?.phase !== "editing") return;
         this.target = { frame };
+        this.hover = null;
+        this.view.show(this.sources, null);
         this.editor.message = "";
         void this.preview();
       },
@@ -134,33 +114,28 @@ export class ProjectionControls {
         this.editor.message = "Click a coordinate plane, construction plane or planar face";
         this.editor.refresh();
       },
+      (event) => !event.shiftKey,
     );
   }
-  private pick = (event: MouseEvent): void => {
+  private toggle(source: ProjectionSource): void {
     const e = this.editor;
-    if (
-      !this.lease ||
-      event.target !== e.world.canvas ||
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      (!e.world.active && this.sources.length && !event.shiftKey)
-    )
-      return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    if (e.blocked) return;
-    const p = { x: event.clientX, y: event.clientY };
-    const source = pickProjectionSource(e, p);
-    if (!source) return;
+    if (!this.lease || e.blocked) return;
     const key = projectionKey(source);
     this.sources = this.sources.some((s) => projectionKey(s) === key)
       ? this.sources.filter((s) => projectionKey(s) !== key)
       : [...this.sources, source];
     e.message = "";
+    this.hover = null;
+    this.view.show(this.sources, null);
     this.configurePicker();
     void this.preview();
-  };
+  }
+  private hoverSource(source: ProjectionSource | null): void {
+    if (!this.lease || projectionKeyOrEmpty(source) === projectionKeyOrEmpty(this.hover)) return;
+    this.hover = source;
+    this.view.show(this.sources, source);
+    this.editor.refresh();
+  }
   private async preview(): Promise<void> {
     const e = this.editor,
       lease = this.lease;
@@ -174,7 +149,7 @@ export class ProjectionControls {
     }
     const ok = await e.store.request({
       kind: "project",
-      projection: { ...this.target, sources: this.sources },
+      projection: { ...this.target, sources: this.sources, direction: this.direction },
     });
     if (this.lease !== lease || lease.phase !== "editing") return;
     if (ok) {
@@ -212,10 +187,11 @@ export class ProjectionControls {
     const lease = this.lease;
     if (!lease?.close()) return;
     await this.editor.store.cancelPreview();
-    this.editor.selectTargets(this.previousSelection);
-    this.editor.modeling.targets = this.previousModels;
     this.editor.message = "";
     this.finish();
+    this.editor.selectTargets(this.previousSelection);
+    this.editor.modeling.targets = this.previousModels;
+    this.editor.refresh();
   }
   private finish(): void {
     const lease = this.lease;
@@ -223,6 +199,9 @@ export class ProjectionControls {
     this.sources = [];
     this.result = null;
     this.target = null;
+    this.hover = null;
+    this.entities.sourcePicker = null;
+    this.view.clear();
     this.picker.stop();
     this.editor.notice = "";
     this.editor.modeling.hover = null;
@@ -234,7 +213,15 @@ export class ProjectionControls {
     for (const b of this.root.querySelectorAll<HTMLButtonElement>("button")) {
       b.disabled =
         (e.blocked && b.dataset.project !== "cancel") ||
-        (b.dataset.project === "accept" && !this.result);
+        (b.dataset.project === "accept" && !this.result) ||
+        (b.dataset.project === "source-normal" &&
+          !sourceProjectionNormal(e.store.data, this.sources));
+      if (b.dataset.project?.endsWith("normal"))
+        b.setAttribute("aria-pressed", String(b.dataset.project === this.direction));
+      if (b.dataset.project === "source-normal")
+        b.title = sourceProjectionNormal(e.store.data, this.sources)
+          ? "Cast perpendicular to the source plane"
+          : "Available for planar sources sharing a normal";
     }
     if (this.lease)
       e.notice = this.result
@@ -242,29 +229,19 @@ export class ProjectionControls {
           ? "Enter accepts · Click geometry to change sources · Escape cancels"
           : "Enter accepts · Escape cancels · Shift-click changes sources"
         : e.world.active || !this.sources.length
-          ? "Click geometry to project · Escape cancels"
-          : "Click a plane to project onto · Shift-click changes sources · Escape cancels";
-    const key = JSON.stringify(this.sources);
-    if (key === this.highlightKey) return;
-    this.highlightKey = key;
-    for (const child of this.outlines.children) (child as THREE.Line).geometry.dispose();
-    this.outlines.clear();
-    for (const points of projectionLines(e, this.sources)) {
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute("position", new THREE.Float32BufferAttribute(points, 3));
-      const line = new THREE.Line(geometry, this.material);
-      line.renderOrder = 16;
-      this.outlines.add(line);
-    }
+          ? "Click a face, filled region or curve, or choose geometry in Entities · Escape cancels"
+          : "Click a plane to project onto · Shift-click or Entities changes sources · Escape cancels";
+    if (this.lease) this.view.show(this.sources, this.hover);
   };
   dispose(): void {
     void this.cancel();
-    this.abort.abort();
+    this.input.dispose();
     this.editor.world.changed.delete(this.update);
     this.root.remove();
     this.disposeTool();
-    for (const child of this.outlines.children) (child as THREE.Line).geometry.dispose();
-    this.material.dispose();
-    this.editor.world.scene.remove(this.outlines);
+    this.view.dispose();
   }
 }
+
+const projectionKeyOrEmpty = (source: ProjectionSource | null) =>
+  source ? projectionKey(source) : "";

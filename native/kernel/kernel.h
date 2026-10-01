@@ -5,6 +5,7 @@
 #include <TopTools_MapOfShape.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Vec.hxx>
+#include <Geom_Curve.hxx>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -51,6 +52,7 @@ TopoDS_Shape pathSweep(const Tree&, const std::vector<Operand>&);
 TopoDS_Shape revolve(const Tree&, const std::vector<Operand>&);
 
 void projectCurves(std::ostream& out, const Tree& input, const std::vector<Operand>& bodies);
+std::vector<Handle(Geom_Curve)> projectionContours(const Tree&, const std::vector<Operand>&);
 
 std::vector<Result> cleanupBodies(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);
 

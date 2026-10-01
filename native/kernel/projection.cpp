@@ -50,36 +50,40 @@ struct Output {
         point2("a",c->Pole(1)); point2("c1",c->Pole(2)); point2("c2",c->Pole(3)); point2("b",c->Pole(4)); out << '}';
     }
 };
-gp_Pnt onPlane(const gp_Pnt& p, const Handle(Geom_Plane)& plane) {
+gp_Pnt onPlane(const gp_Pnt& p, const Handle(Geom_Plane)& plane, const gp_Dir& direction) {
     const auto n=plane->Pln().Axis().Direction();
-    return p.Translated(gp_Vec(n)*(-gp_Vec(plane->Location(),p).Dot(gp_Vec(n))));
+    return p.Translated(gp_Vec(direction)*(-gp_Vec(plane->Location(),p).Dot(gp_Vec(n))/direction.Dot(n)));
 }
-bool linearImage(Output& output, const Handle(Geom_Curve)& source, const Handle(Geom_Plane)& plane) {
+bool linearImage(Output& output, const Handle(Geom_Curve)& source, const Handle(Geom_Plane)& plane,
+                 const gp_Dir& direction, bool skipCollapsed) {
     GeomAdaptor_Curve curve(source);
     const double first=curve.FirstParameter(), last=curve.LastParameter();
-    auto a=onPlane(curve.Value(first),plane), b=onPlane(curve.Value(last),plane);
-    if (curve.GetType()==GeomAbs_Circle && std::abs(curve.Circle().Axis().Direction().Dot(plane->Pln().Axis().Direction()))<edgeOnDirectionDot) {
-        const auto circle=curve.Circle(); const auto center=onPlane(circle.Location(),plane);
-        const gp_Vec u(center,onPlane(circle.Location().Translated(gp_Vec(circle.XAxis().Direction())*circle.Radius()),plane));
-        const gp_Vec v(center,onPlane(circle.Location().Translated(gp_Vec(circle.YAxis().Direction())*circle.Radius()),plane));
-        const gp_Dir direction(u.SquareMagnitude()>v.SquareMagnitude() ? u:v);
-        const double phase=std::atan2(v.Dot(gp_Vec(direction)),u.Dot(gp_Vec(direction))), pi=std::acos(-1.0);
-        double low=gp_Vec(center,a).Dot(gp_Vec(direction)), high=gp_Vec(center,b).Dot(gp_Vec(direction));
+    auto a=onPlane(curve.Value(first),plane,direction), b=onPlane(curve.Value(last),plane,direction);
+    if (curve.GetType()==GeomAbs_Circle && std::abs(curve.Circle().Axis().Direction().Dot(direction))<edgeOnDirectionDot) {
+        const auto circle=curve.Circle(); const auto center=onPlane(circle.Location(),plane,direction);
+        const gp_Vec u(center,onPlane(circle.Location().Translated(gp_Vec(circle.XAxis().Direction())*circle.Radius()),plane,direction));
+        const gp_Vec v(center,onPlane(circle.Location().Translated(gp_Vec(circle.YAxis().Direction())*circle.Radius()),plane,direction));
+        const gp_Dir along(u.SquareMagnitude()>v.SquareMagnitude() ? u:v);
+        const double phase=std::atan2(v.Dot(gp_Vec(along)),u.Dot(gp_Vec(along))), pi=std::acos(-1.0);
+        double low=gp_Vec(center,a).Dot(gp_Vec(along)), high=gp_Vec(center,b).Dot(gp_Vec(along));
         if(low>high) std::swap(low,high);
         for(int k=int(std::ceil((first-phase)/pi)); phase+k*pi<=last; ++k) {
-            const auto p=onPlane(curve.Value(phase+k*pi),plane);
-            const double t=gp_Vec(center,p).Dot(gp_Vec(direction)); low=std::min(low,t); high=std::max(high,t);
+            const auto p=onPlane(curve.Value(phase+k*pi),plane,direction);
+            const double t=gp_Vec(center,p).Dot(gp_Vec(along)); low=std::min(low,t); high=std::max(high,t);
         }
-        a=center.Translated(gp_Vec(direction)*low); b=center.Translated(gp_Vec(direction)*high);
+        a=center.Translated(gp_Vec(along)*low); b=center.Translated(gp_Vec(along)*high);
     } else if(curve.GetType()!=GeomAbs_Line) return false;
-    if(a.Distance(b)<projectionCollapsedLengthMm) throw std::runtime_error("Selected edge projects to a point");
+    if(a.Distance(b)<projectionCollapsedLengthMm) {
+        if (skipCollapsed) return true;
+        throw std::runtime_error("Selected edge projects to a point");
+    }
     output.begin("segment"); output.point2("a",a); output.point2("b",b); output.out << '}'; return true;
 }
 struct Endpoints { gp_Pnt a, b; };
 void projectCurve(Output& output, const Handle(Geom_Curve)& source, const Handle(Geom_Plane)& plane,
-                  const Endpoints* joined = nullptr) {
-    if (!joined && linearImage(output,source,plane)) return;
-    const auto projected = GeomProjLib::ProjectOnPlane(source, plane, plane->Pln().Axis().Direction(), true);
+                  const gp_Dir& direction, const Endpoints* joined = nullptr, bool skipCollapsed = false) {
+    if (!joined && linearImage(output,source,plane,direction,skipCollapsed)) return;
+    const auto projected = GeomProjLib::ProjectOnPlane(source, plane, direction, true);
     if (projected.IsNull()) throw std::runtime_error("Curve projection failed");
     const double first=projected->FirstParameter(), last=projected->LastParameter();
     GeomAdaptor_Curve curve(projected);
@@ -135,18 +139,25 @@ void projectCurves(std::ostream& out, const Tree& input, const std::vector<Opera
     const auto origin=point(frame.get_child("origin")), u=point(frame.get_child("u")), v=point(frame.get_child("v"));
     const gp_Vec U(u.XYZ()), V(v.XYZ());
     Handle(Geom_Plane) plane=new Geom_Plane(gp_Ax3(origin,gp_Dir(U.Crossed(V)),gp_Dir(U)));
+    const auto selectedDirection=input.get_child_optional("direction");
+    const gp_Dir direction=selectedDirection ? gp_Dir(point(*selectedDirection).XYZ()) : plane->Pln().Axis().Direction();
+    if (std::abs(direction.Dot(plane->Pln().Axis().Direction()))<edgeOnDirectionDot)
+        throw std::runtime_error("Projection direction is parallel to target plane");
     out << std::setprecision(17) << "{\"curves\":["; Output output{out,origin,U,V};
     for (const auto& item:input.get_child("edges")) {
         bool found=false;
         for (const auto& body:bodies) if (body.id==item.second.get<std::string>("body"))
             for (const auto& entity:body.entities) if (entity.id==item.second.get<std::string>("edge") && entity.shape.ShapeType()==TopAbs_EDGE) {
+                found=true;
+                if (item.second.get<bool>("implicit",false) && BRep_Tool::Degenerated(TopoDS::Edge(entity.shape))) continue;
                 double first,last; const auto c=BRep_Tool::Curve(TopoDS::Edge(entity.shape),first,last);
                 if (c.IsNull()) throw std::runtime_error("Selected edge has no spatial curve");
-                projectCurve(output,new Geom_TrimmedCurve(c,first,last),plane); found=true;
+                projectCurve(output,new Geom_TrimmedCurve(c,first,last),plane,direction,nullptr,item.second.get<bool>("implicit",false)); found=true;
             }
         if (!found) throw std::runtime_error("Selected projection edge no longer exists");
     }
-    for (const auto& item:input.get_child("curves")) projectCurve(output,sketchCurve(item.second),plane);
+    for (const auto& item:input.get_child("curves")) projectCurve(output,sketchCurve(item.second),plane,direction);
+    for (const auto& curve:projectionContours(input,bodies)) projectCurve(output,curve,plane,direction,nullptr,true);
     out << "]}";
 }
 
@@ -192,9 +203,9 @@ void planarSketchCurves(std::ostream& out, const TopoDS_Shape& shape, const Tree
         // define connectivity. Project the shared points onto the section plane.
         const auto forward = TopoDS::Edge(edge.Oriented(TopAbs_FORWARD));
         const Endpoints joined{
-            onPlane(BRep_Tool::Pnt(TopExp::FirstVertex(forward)), plane),
-            onPlane(BRep_Tool::Pnt(TopExp::LastVertex(forward)), plane)};
-        projectCurve(output, new Geom_TrimmedCurve(curve, first, last), plane, &joined);
+            onPlane(BRep_Tool::Pnt(TopExp::FirstVertex(forward)), plane, plane->Pln().Axis().Direction()),
+            onPlane(BRep_Tool::Pnt(TopExp::LastVertex(forward)), plane, plane->Pln().Axis().Direction())};
+        projectCurve(output, new Geom_TrimmedCurve(curve, first, last), plane, plane->Pln().Axis().Direction(), &joined);
     }
     out << ']';
 }
