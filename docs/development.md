@@ -37,18 +37,26 @@ overrides apply. macOS release preparation copies/signs it with the calculators.
 `setup:kernel` downloads checksum-verified OCCT 7.9.3 source and builds the modeling
 libraries plus FreAC's separate solid calculator. This initial source build takes
 longer; its cache is `.cache/kernel` and the calculator is `.build/kernel`.
-Alternatively, set `OCCT_ROOT` to an installed OCCT 7.9.3 SDK before running the
-command. The SDK must match the calculator architecture. On macOS, both setup
+Alternatively, set `OCCT_ROOT` to an installed SDK produced by this checkout's
+`setup:kernel` recipe. A stock OCCT 7.9.3 SDK is not equivalent: Freac adapts rounded
+offset joins to shared-boundary precision. Setup and direct CMake configuration
+require the recipe/build receipt, matching platform/architecture/deployment target
+and checksums of the installed SDK files. An older SDK without a receipt must be
+rebuilt; a version number or manually copied marker is insufficient. The receipt
+records local build provenance and integrity, not a third-party signature.
+On macOS, both setup
 commands explicitly default to Node's architecture, replacing any stale CMake
 architecture selection. `CMAKE_OSX_ARCHITECTURES` remains an explicit override.
 On Apple Silicon, use an ARM64 Node installation; an Intel Node running under
 Rosetta defaults to Intel native builds. After correcting Node or an architecture
 override, rerun both `setup:native` and `setup:kernel`; ordinary incremental builds
 reuse their existing CMake configuration.
-The installed-SDK and clean source-build routes are verified on macOS arm64.
+The checksum-pinned source build and receipt-verified installed/cached SDK routes
+are verified on macOS arm64. This does not establish a fresh operating-system setup.
 Codex worktree setup shares downloaded solver/header inputs and keeps `.build`
 local. It uses the main checkout's installed OCCT SDK through `OCCT_ROOT` when
-the SDK setup sources match and the library supports the requested architecture.
+the build receipt matches this recipe/settings, its installed files verify and
+the library supports the requested architecture.
 It never shares OCCT's mutable CMake build directory; without a compatible installed
 SDK, the worktree builds its own cache. Old kernel-cache symlinks are unlinked
 without deleting the main cache. Explicit `OCCT_ROOT` overrides are preserved.

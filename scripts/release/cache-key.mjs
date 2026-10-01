@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { sdkRecipeHash, sdkSettings } from "../sdk-provenance.mjs";
 
 export async function sdkCacheKey() {
   const compiler = execFileSync(process.env.CXX ?? "c++", ["--version"], { encoding: "utf8" });
@@ -13,6 +14,7 @@ export async function sdkCacheKey() {
   const hash = createHash("sha256");
   for (const name of ["../setup-kernel.mjs", "../native-inputs.mjs", "cache-key.mjs"])
     hash.update(await readFile(new URL(name, import.meta.url)));
+  hash.update(await sdkRecipeHash());
   hash.update(
     JSON.stringify({
       compiler,
@@ -20,8 +22,7 @@ export async function sdkCacheKey() {
       sdk,
       platform: process.platform,
       arch: process.arch,
-      target: process.env.MACOSX_DEPLOYMENT_TARGET ?? "",
-      architecture: process.env.CMAKE_OSX_ARCHITECTURES ?? "",
+      ...sdkSettings(),
     }),
   );
   return hash.digest("hex").slice(0, 24);

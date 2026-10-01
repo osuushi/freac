@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { closeSync, openSync } from "node:fs";
 import { cp, mkdir, realpath } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
+import { verifySdk } from "../sdk-provenance.mjs";
 
 const run = (command, args) => execFileSync(command, args, { encoding: "utf8" });
 const system = (path) => path.startsWith("/usr/lib/") || path.startsWith("/System/Library/");
@@ -25,6 +26,7 @@ export function dependencies(file) {
     .filter(Boolean);
 }
 export async function bundleNative(destination, sdk) {
+  await verifySdk(sdk);
   await mkdir(destination, { recursive: true });
   const copied = new Map();
   async function copyLibrary(path) {
