@@ -140,6 +140,13 @@ thresholds are reference defaults that may be tuned through visual review.
 Whole-sketch **Move sketch** uses this same assembly to transform the sketch plane
 without changing its local curves; a relocated anchor supplies its rotation center.
 Existing edge movement remains translation-only, including its boundary-normal control.
+Partial-face and edge Move retain one temporary candidate across handle gestures.
+Each new gesture composes with the last valid preview; numeric changes replace only
+the active gesture. Translations retain rotation and preceding translation axes,
+and face rotations compose in world space about the current anchor. A zero-value
+handle switch preserves prior edits. Accept/exiting applies the combined transform
+as one Undo step; Escape discards the entire sequence. Rejected input remains
+unacceptable until corrected or a new gesture starts from the last valid preview.
 
 The anchor is renderer UI state, independent of accepted geometry and Undo. In sketch
 mode it drags in the workspace plane. In modeling it uses the principal plane

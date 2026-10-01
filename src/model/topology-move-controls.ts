@@ -14,7 +14,9 @@ import {
   updateTopologyMovePresentation,
 } from "./topology-move-presentation.js";
 import {
+  composeMovement,
   movementCenter,
+  movementIsIdentity,
   movementNormal,
   movementRequest,
   movementTargets,
@@ -34,7 +36,7 @@ export class TopologyMoveControls {
   private edit: TopologyMovement | null = null;
   private direction: Vector = [1, 0, 0];
   private rotate = false;
-  private value = 0;
+  private verified: TopologyMovement | null = null;
   private valid = false;
   private invalid = false;
   private pending: TopologyMovement | null = null;
@@ -104,6 +106,7 @@ export class TopologyMoveControls {
       };
     }
     if (this.lease.phase !== "editing") return;
+    this.edit = this.verified ?? this.edit;
     this.rotate = rotate;
     if (event.pointerId !== -1)
       this.pointer = {
@@ -134,7 +137,6 @@ export class TopologyMoveControls {
   };
   private queue(value: number): void {
     if (!this.edit || this.lease?.phase !== "editing") return;
-    this.value = value;
     this.valid = false;
     this.invalid = !Number.isFinite(value);
     this.editor.notice = this.invalid
@@ -142,12 +144,13 @@ export class TopologyMoveControls {
       : `Move ${this.kind} · Enter to accept · Escape to cancel`;
     if (this.invalid) this.latest = this.pending = null;
     else {
-      this.latest = this.pending = {
-        ...this.edit,
-        axis: this.direction,
-        angle: this.rotate ? value : 0,
-        translation: this.rotate ? [0, 0, 0] : (this.direction.map((n) => n * value) as Vector),
-      };
+      this.latest = this.pending = composeMovement(
+        this.edit,
+        this.pivot,
+        this.direction,
+        this.rotate,
+        value,
+      );
       if (!this.running) this.running = this.drain();
     }
     if (!numericFocus(this.gizmo.input)) this.gizmo.input.value = String(Number(value.toFixed(4)));
@@ -161,7 +164,10 @@ export class TopologyMoveControls {
       if (this.lease?.phase !== "editing" || request !== this.latest) continue;
       this.valid = success;
       this.invalid = !success;
-      if (success) this.lease.show(this.editor.store.candidate);
+      if (success) {
+        this.verified = request;
+        this.lease.show(this.editor.store.candidate);
+      }
       // Keep the last valid image for a rejected request, but never accept it as
       // though it were the requested value. The backend clears rejected candidates.
       this.editor.refresh();
@@ -185,7 +191,7 @@ export class TopologyMoveControls {
     await this.running;
     const lease = this.lease;
     if (!lease || this.pointer || !this.valid || this.pending) return false;
-    if (this.value === 0) {
+    if (!this.latest || movementIsIdentity(this.latest)) {
       await this.cancel();
       return true;
     }
@@ -215,7 +221,7 @@ export class TopologyMoveControls {
   }
   private end(lease: InteractionLease): void {
     this.lease = null;
-    this.edit = this.latest = this.pending = null;
+    this.edit = this.latest = this.pending = this.verified = null;
     this.invalid = false;
     this.gizmo.input.blur();
     this.gizmo.input.removeAttribute("aria-label");
@@ -278,7 +284,7 @@ export class TopologyMoveControls {
       this.lease,
       this.valid,
       !!this.running,
-      this.value,
+      !!this.latest && !movementIsIdentity(this.latest),
       this.invalid,
       this.accept,
       this.cancelButton,
