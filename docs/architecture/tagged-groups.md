@@ -29,7 +29,10 @@ distinct. Geometry changes and their membership continuation accept atomically.
 ## Interaction
 
 - Display groups as children beneath their owning entity in Entities, behind a
-  disclosure arrow. Do not introduce nested groups.
+  compact left-hand disclosure chevron. Creating a group expands its owner,
+  including when previously collapsed; ordinary refreshes preserve manual collapse.
+  Each group row has a visible remove icon that removes only its metadata, with Undo.
+  Do not introduce nested groups.
 - Tools → Tag geometry creates a group from an explicit selection within one entity. Mixed-owner
   membership is invalid rather than silently dropping selected geometry.
 - Clicking a group selects its current members using ordinary selection behavior.

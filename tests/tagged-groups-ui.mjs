@@ -22,7 +22,7 @@ await withUiRuntimes(async (page, name) => {
   assert.equal(state.document.taggedGroups.length, 1);
   assert.equal(state.document.taggedGroups[0].members.length, 2);
   assert.deepEqual(state.document.bodies, before.bodies);
-  await page.getByRole("button", { name: "Toggle tagged groups" }).click();
+  await rowAffordances(page, name);
   const row = page.getByRole("button", { name: "Select group Mounting rim", exact: true });
   await row.click();
   assert.equal((await inspect(page)).modelingSelection.length, 2);
@@ -76,8 +76,7 @@ await withUiRuntimes(async (page, name) => {
   const current = page.getByRole("button", { name: "Select group Mounting surface", exact: true });
   if (!(await current.isVisible()))
     await page.getByRole("button", { name: "Toggle tagged groups" }).click();
-  await current.dblclick();
-  await page.getByRole("button", { name: "Remove group", exact: true }).click();
+  await page.getByRole("button", { name: "Remove group Mounting surface", exact: true }).click();
   assert.equal((await inspect(page)).document.taggedGroups.length, 0);
   assert.equal((await inspect(page)).document.bodies.length, 1);
   await chooseTool(page, "undo", "undo");
@@ -160,4 +159,29 @@ async function keyboardEdit(page, row) {
   await page.keyboard.press("Enter");
   assert.equal((await inspect(page)).interaction, null);
   assert.equal((await inspect(page)).document.taggedGroups[0].name, "Mounting rim");
+}
+
+async function rowAffordances(page, name) {
+  const row = page.getByRole("button", { name: "Select group Mounting rim", exact: true });
+  assert.ok(await row.isVisible(), "Creation expands the owner's groups automatically");
+  const disclosure = page.getByRole("button", { name: "Toggle tagged groups" });
+  const toggle = await disclosure.boundingBox();
+  const label = await page
+    .getByRole("button", { name: "Select Body 1", exact: true })
+    .boundingBox();
+  assert.ok(toggle.x + toggle.width <= label.x, "Disclosure is before the body label");
+  assert.ok(toggle.width <= 28 && toggle.height <= 32, "Compact chevron hit target");
+  await disclosure.click();
+  assert.equal(await row.isVisible(), false);
+  await chooseTool(page, "Tag geometry", "tag-geometry");
+  await page.getByRole("textbox", { name: "Group name", exact: true }).fill("Temporary");
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await inspect(page);
+  assert.ok(await row.isVisible(), "A new group expands a manually collapsed owner");
+  const before = (await inspect(page)).document.bodies;
+  await page.getByRole("button", { name: "Remove group Temporary", exact: true }).click();
+  assert.equal((await inspect(page)).document.taggedGroups.length, 1);
+  assert.deepEqual((await inspect(page)).document.bodies, before);
+  await page.mouse.move(600, 700);
+  await page.screenshot({ path: `.cache/sketch-review/${name}-tag-rows.png` });
 }

@@ -40,25 +40,51 @@
   margin: 3px;
 }
 .tag-children {
-  margin-left: 15px;
+  margin-left: 12px;
   border-left: 1px solid #d7e0ec;
-  padding-left: 5px;
+  padding-left: 13px;
+}
+.tag-item {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 .tag-row {
   display: block;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   text-align: left;
   border: none;
   font-size: 12px;
   padding: 7px;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .tag-row[aria-pressed="true"] {
   background: #e6f0ff;
   color: #2863a4;
 }
-.entity-row .tag-disclosure {
-  flex: none;
-  padding: 4px;
+.entity-row .tag-disclosure,
+.tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  box-shadow: none;
+  color: #697b8b;
+}
+.entity-row .tag-disclosure:hover,
+.tag-remove:hover {
+  background: #eaf0f6;
+  color: #253a50;
+}
+.tag-disclosure[aria-expanded="true"] svg {
+  transform: rotate(90deg);
 }
