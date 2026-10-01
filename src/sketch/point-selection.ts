@@ -1,8 +1,8 @@
 import type { Curve, Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
-import { distance } from "./geometry.js";
 import { type Hit, pointHits, pointKey } from "./picking.js";
 import type { Point } from "./planes.js";
+import { distance } from "./point-math.js";
 
 import { pointTarget, type SelectionTarget, targetKey } from "./selected-targets.js";
 

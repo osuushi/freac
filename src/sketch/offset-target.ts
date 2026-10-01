@@ -6,11 +6,11 @@ import {
   type PointReference,
   type Sketch,
 } from "./document.js";
-import { distance } from "./geometry.js";
 import { coincidentPoints } from "./line-edit.js";
 import { type LoopEdge, orderedLoop } from "./loop-boundary.js";
 import { offsetLoop } from "./loop-offset.js";
 import { offsetCurve } from "./offset-geometry.js";
+import { distance } from "./point-math.js";
 
 export interface OffsetTarget {
   curve: Curve;

@@ -1,17 +1,18 @@
 import type { InteractionLease } from "./active-interaction.js";
 import { curveBounds } from "./curve-geometry.js";
-import { validateSketch } from "./document.js";
 import { dragIntent } from "./drag-intent.js";
 import { beginDrag, type Drag, type Quantity, resolveDrag } from "./drag-state.js";
 import { updateDrag } from "./drag-update.js";
 import type { SketchEditor } from "./editor.js";
-import { connectedSelection, distance } from "./geometry.js";
+import { connectedSelection } from "./geometry.js";
 import { GestureSolve } from "./gesture-solve.js";
 import type { DragQuantityEdit } from "./numeric-edit.js";
 import { hitIds, pick, pointKey } from "./picking.js";
+import { distance } from "./point-math.js";
 import { choosePoints, chosenPoints, openPointMenu, selectedPointHits } from "./point-selection.js";
 import { pointTarget } from "./selected-targets.js";
 import { selectHit } from "./selection-input.js";
+import { validateSketch } from "./sketch-validation.js";
 import { snapped } from "./snapping.js";
 import { axisQuantity } from "./transform-handles.js";
 

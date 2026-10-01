@@ -11,10 +11,10 @@ import type { Drag } from "./drag-state.js";
 import type { SketchEditor } from "./editor.js";
 import { editFilletRadius, existingFillet } from "./fillet-edit.js";
 import { filletRadiusAt } from "./fillet-radius.js";
-import { add, distance, midpoint, subtract } from "./geometry.js";
 import { lineDimension, movePoint, transformSelection } from "./line-edit.js";
 import type { Point } from "./planes.js";
 import { dragPoints } from "./point-drag.js";
+import { add, distance, midpoint, subtract } from "./point-math.js";
 import {
   dimensionRectangle,
   rectangleFrame,

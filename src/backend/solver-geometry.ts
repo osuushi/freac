@@ -1,8 +1,8 @@
 import { arcCircle, positiveAngle } from "../sketch/arc-geometry.js";
 import { constraintCurves, geometricRelations } from "../sketch/constraint-geometry.js";
 import type { Arc, Curve, PointReference, Sketch } from "../sketch/document.js";
-import { distance } from "../sketch/geometry.js";
 import type { Point } from "../sketch/planes.js";
+import { distance } from "../sketch/point-math.js";
 
 export function curvePoints(curve: Curve): Point[] {
   if (curve.kind === "circle") return [curve.center];

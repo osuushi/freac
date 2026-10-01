@@ -1,6 +1,6 @@
 import { arcCircle } from "./arc-geometry.js";
 import type { PointReference, Sketch } from "./document.js";
-import { distance } from "./geometry.js";
+import { distance } from "./point-math.js";
 
 // Transient instructions for one calculation, never stored in the document.
 export type EditIntent =

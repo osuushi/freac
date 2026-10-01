@@ -1,8 +1,8 @@
 import { curveDistance, displayPoints } from "./curve-geometry.js";
 import type { SketchEditor } from "./editor.js";
-import { distance } from "./geometry.js";
 import { GestureSolve } from "./gesture-solve.js";
 import type { Point } from "./planes.js";
+import { distance } from "./point-math.js";
 import { trimOverlappingSketch } from "./trim-edit.js";
 import { spanCurve, type TrimSpan, trimAt, trimSpanLength } from "./trim-geometry.js";
 

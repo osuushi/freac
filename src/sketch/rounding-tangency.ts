@@ -1,6 +1,6 @@
 import { arcCircle } from "./arc-geometry.js";
 import type { Arc, TangentConstraint } from "./document.js";
-import { distance, dot, scale, subtract } from "./geometry.js";
+import { distance, dot, scale, subtract } from "./point-math.js";
 import type { RoundingCurve } from "./rounding-curves.js";
 export function roundingTangentSide(curve: RoundingCurve, arc: Arc): TangentConstraint["side"] {
   const circle = arcCircle(arc);

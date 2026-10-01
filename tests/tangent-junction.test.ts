@@ -5,10 +5,11 @@ import { radiusEdit } from "../src/sketch/arc-edit.js";
 import { arcCircle, bowRadius, bowThrough } from "../src/sketch/arc-geometry.js";
 import { emptySketch, newId } from "../src/sketch/document.js";
 import { changedTargets } from "../src/sketch/edit-intent.js";
-import { distance, segment } from "../src/sketch/geometry.js";
+import { segment } from "../src/sketch/geometry.js";
 import { movePoint } from "../src/sketch/line-edit.js";
 import { planes } from "../src/sketch/planes.js";
 import { fusePoints } from "../src/sketch/point-links.js";
+import { distance } from "../src/sketch/point-math.js";
 import { makeTangent } from "../src/sketch/tangency.js";
 
 test("joined segments become tangent without fusing their endpoints", async () => {

@@ -4,6 +4,7 @@ import { DocumentOwner } from "../src/backend/document-owner.js";
 import { DocumentStore } from "../src/backend/document-store.js";
 import { validateDocument } from "../src/backend/document-validation.js";
 import { emptySketch, type SketchDocument } from "../src/sketch/document.js";
+import { rectangle } from "../src/sketch/geometry.js";
 import { planes } from "../src/sketch/planes.js";
 
 const sketch = { ...emptySketch(planes.XY), id: "shared" };
@@ -68,4 +69,45 @@ test("curve IDs remain local to each sketch", () => {
   assert.doesNotThrow(() =>
     validateDocument({ units: "mm", sketches: [a, { ...a, id: "other" }] }),
   );
+});
+
+test("malformed sketch identities and groups cannot publish or destroy Redo", () => {
+  const shape = rectangle(emptySketch(planes.XY), { x: 0, y: 0 }, { x: 10, y: 6 }).sketch;
+  const document: SketchDocument = { units: "mm", sketches: [shape] };
+  const store = new DocumentStore(document);
+  store.accept({ ...document, sketches: [...document.sketches, emptySketch(planes.XZ)] });
+  store.undo();
+  const before = store.history;
+  const malformed = [
+    { ...shape, curves: shape.curves.map((curve, i) => (i ? curve : { ...curve, id: "" })) },
+    {
+      ...shape,
+      curves: shape.curves.map((curve, i) =>
+        i ? curve : { ...curve, id: 4 as unknown as string },
+      ),
+    },
+    {
+      ...shape,
+      constraints: shape.constraints.map((constraint, i) =>
+        i ? constraint : { ...constraint, id: "" },
+      ),
+    },
+    { ...shape, groups: [{ ...shape.groups[0], id: "" }] },
+    { ...shape, groups: [shape.groups[0], shape.groups[0]] },
+    {
+      ...shape,
+      groups: [{ ...shape.groups[0], members: Array(4).fill(shape.curves[0].id) as string[] }],
+    },
+  ];
+  for (const rejected of malformed) {
+    assert.throws(
+      () => store.accept({ ...document, sketches: [rejected] }),
+      /identity|rectangle group/,
+    );
+    assert.equal(store.data, document);
+    assert.deepEqual(store.history, before);
+    assert.equal(store.canRedo, true);
+  }
+  store.redo();
+  assert.equal(store.data.sketches.length, 2);
 });

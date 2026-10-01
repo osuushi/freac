@@ -6,10 +6,11 @@ import {
   newId,
   type PointReference,
   type Sketch,
-  validateSketch,
 } from "./document.js";
-import { distance } from "./geometry.js";
-import { fusePoints, linkedPointCoordinate, unfusePoints } from "./point-links.js";
+import { fusePoints, unfusePoints } from "./point-links.js";
+import { distance } from "./point-math.js";
+import { linkedPointCoordinate } from "./point-reference.js";
+import { validateSketch } from "./sketch-validation.js";
 import { spanCurve, type TrimSpan, trimRemainders } from "./trim-geometry.js";
 import { fuseTrimCorners, newTrimEndpoints } from "./trim-links.js";
 import { overlappingTrim } from "./trim-overlap.js";

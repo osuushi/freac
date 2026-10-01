@@ -3,9 +3,10 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { arcCircle } from "../src/sketch/arc-geometry.js";
-import { type Sketch, validateSketch } from "../src/sketch/document.js";
+import type { Sketch } from "../src/sketch/document.js";
 import { editFilletRadius } from "../src/sketch/fillet-edit.js";
-import { distance } from "../src/sketch/geometry.js";
+import { distance } from "../src/sketch/point-math.js";
+import { validateSketch } from "../src/sketch/sketch-validation.js";
 
 const fixture = JSON.parse(readFileSync("tests/fixtures/second-corner-fillet.json", "utf8"));
 const target: Sketch = fixture.target;

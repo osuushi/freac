@@ -3,7 +3,7 @@ import { closestOnCurve } from "./curve-geometry.js";
 import { curveIntersections } from "./curve-intersections.js";
 import { spanArea } from "./curve-spans.js";
 import type { Arc, Curve, Segment } from "./document.js";
-import { distance, midpoint } from "./geometry.js";
+import { distance, midpoint } from "./point-math.js";
 
 export type LoopEdge = Segment | Arc;
 const epsilon = 1e-7;

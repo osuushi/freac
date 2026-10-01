@@ -1,6 +1,6 @@
 import type { Bezier, Segment, Sketch } from "./document.js";
-import { add, scale, subtract } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { add, scale, subtract } from "./point-math.js";
 
 export function straightBezier(line: Segment): Bezier {
   const step = scale(subtract(line.b, line.a), 1 / 3);

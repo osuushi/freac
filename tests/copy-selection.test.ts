@@ -2,9 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { appendSelection, copySelection } from "../src/sketch/copy-selection.js";
-import { emptySketch, validateSketch } from "../src/sketch/document.js";
+import { emptySketch } from "../src/sketch/document.js";
 import { rectangle } from "../src/sketch/geometry.js";
 import { planes } from "../src/sketch/planes.js";
+import { validateSketch } from "../src/sketch/sketch-validation.js";
 
 test("copies preserve internal constraints/groups, drop outside links, and reuse preview IDs", () => {
   const sketch = rectangle(emptySketch(planes.XY), { x: 0, y: 0 }, { x: 10, y: 5 }).sketch;

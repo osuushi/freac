@@ -4,10 +4,11 @@ import { DocumentOwner } from "../src/backend/document-owner.js";
 import { appendCircle, circleRadius } from "../src/sketch/circle-edit.js";
 import { closestOnCurve, curveBounds, displayPoints } from "../src/sketch/curve-geometry.js";
 import { curveIntersections } from "../src/sketch/curve-intersections.js";
-import { type Circle, emptySketch, validateSketch } from "../src/sketch/document.js";
+import { type Circle, emptySketch } from "../src/sketch/document.js";
 import { rectangle, segment } from "../src/sketch/geometry.js";
 import { planes } from "../src/sketch/planes.js";
 import { dimensionRectangle, rectangleFrame } from "../src/sketch/rectangle-edit.js";
+import { validateSketch } from "../src/sketch/sketch-validation.js";
 
 const circle: Circle = {
   id: "c",

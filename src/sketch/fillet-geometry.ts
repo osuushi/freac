@@ -1,8 +1,8 @@
 import { arcCircle } from "./arc-geometry.js";
 import { supportIntersections } from "./curve-intersections.js";
 import type { Arc, Curve } from "./document.js";
-import { add, distance, dot, scale } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { add, distance, dot, scale } from "./point-math.js";
 import { roundingShape } from "./rounding-candidates.js";
 import { inwardTangent, type RoundingCurve, trimRoundingCurve } from "./rounding-curves.js";
 

@@ -2,7 +2,7 @@ import { arcCircle } from "./arc-geometry.js";
 import { bezierSpan } from "./bezier-geometry.js";
 import { closestOnCurve } from "./curve-geometry.js";
 import type { Curve } from "./document.js";
-import { distance } from "./geometry.js";
+import { distance } from "./point-math.js";
 import {
   spanCurve,
   type TrimSpan,

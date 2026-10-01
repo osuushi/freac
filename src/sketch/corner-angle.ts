@@ -1,6 +1,6 @@
 import type { AngleConstraint, Segment, Sketch } from "./document.js";
-import { distance } from "./geometry.js";
 import { movePoint } from "./line-edit.js";
+import { distance } from "./point-math.js";
 export const wrapDegrees = (angle: number): number =>
   (Math.atan2(Math.sin((angle * Math.PI) / 180), Math.cos((angle * Math.PI) / 180)) * 180) /
   Math.PI;

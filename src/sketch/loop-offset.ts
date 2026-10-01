@@ -1,9 +1,9 @@
 import { arcCircle, arcDomain, positiveAngle } from "./arc-geometry.js";
 import { supportIntersections } from "./curve-intersections.js";
-import { distance, dot, midpoint, subtract } from "./geometry.js";
 import { type LoopEdge, loopArea, simpleBoundary } from "./loop-boundary.js";
 import { offsetCurve } from "./offset-geometry.js";
 import type { Point } from "./planes.js";
+import { distance, dot, midpoint, subtract } from "./point-math.js";
 
 function join(a: LoopEdge, b: LoopEdge, corner: Point): Point {
   if (distance(a.b, b.a) < 1e-7) return midpoint(a.b, b.a);

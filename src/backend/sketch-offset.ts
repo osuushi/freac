@@ -1,10 +1,10 @@
 import { cubicOffsetProfile } from "../sketch/cubic-offset-target.js";
 import { curveIntersections } from "../sketch/curve-intersections.js";
 import { emptySketch, type SketchDocument, withSketch } from "../sketch/document.js";
-import { distance } from "../sketch/geometry.js";
 import { hasClosedEndpoints } from "../sketch/loop-boundary.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { planes } from "../sketch/planes.js";
+import { distance } from "../sketch/point-math.js";
 import { profilesFor } from "../sketch/profiles.js";
 import { projectedSketch } from "../sketch/projected-sketch.js";
 import { boundary } from "./profile-boundary.js";

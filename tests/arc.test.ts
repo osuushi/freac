@@ -4,12 +4,14 @@ import { DocumentOwner } from "../src/backend/document-owner.js";
 import { arcAt, arcCircle, bowRadius, bowThrough, onArc } from "../src/sketch/arc-geometry.js";
 import { curveIntersections } from "../src/sketch/curve-intersections.js";
 import { spanArea } from "../src/sketch/curve-spans.js";
-import { type Arc, emptySketch, validateSketch } from "../src/sketch/document.js";
-import { distance, rectangle, segment } from "../src/sketch/geometry.js";
+import { type Arc, emptySketch } from "../src/sketch/document.js";
+import { rectangle, segment } from "../src/sketch/geometry.js";
 import { movePoint, transformSelection } from "../src/sketch/line-edit.js";
 import { planes } from "../src/sketch/planes.js";
+import { distance } from "../src/sketch/point-math.js";
 import { dimensionRectangle } from "../src/sketch/rectangle-edit.js";
 import { closedBoundaries } from "../src/sketch/regions.js";
+import { validateSketch } from "../src/sketch/sketch-validation.js";
 
 const line = segment({ x: -4, y: 0 }, { x: 4, y: 0 });
 const near = (a: number, b: number) => assert.ok(Math.abs(a - b) < 1e-7, `${a} != ${b}`);

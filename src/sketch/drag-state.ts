@@ -9,10 +9,11 @@ import {
   type SketchDocument,
 } from "./document.js";
 import type { SketchEditor } from "./editor.js";
-import { add, rectangle } from "./geometry.js";
+import { rectangle } from "./geometry.js";
 import { appendLine } from "./line-edit.js";
 import { type Hit, hitIds, pickCandidates, pointKey } from "./picking.js";
 import type { Point } from "./planes.js";
+import { add } from "./point-math.js";
 import { chosenPoints } from "./point-selection.js";
 import { pointerDragThreshold } from "./pointer-intent.js";
 import { type RectangleHandle, rectangleFrame } from "./rectangle-edit.js";

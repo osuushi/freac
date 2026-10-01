@@ -1,7 +1,7 @@
 import { selectedCorner } from "./corner-angle-controls.js";
 import type { SketchEditor } from "./editor.js";
 import { type FilletCorner, filletCorner } from "./fillet-geometry.js";
-import { distance } from "./geometry.js";
+import { distance } from "./point-math.js";
 import { pointBranches, selectedPointHits } from "./point-selection.js";
 import type { RoundingCurve } from "./rounding-curves.js";
 

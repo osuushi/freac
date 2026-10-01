@@ -7,8 +7,8 @@ import {
 } from "../sketch/constraint-geometry.js";
 import type { Constraint, EditingGroup, NumericConstraint, Sketch } from "../sketch/document.js";
 import type { EditIntent } from "../sketch/edit-intent.js";
-import { add, scale } from "../sketch/geometry.js";
 import type { Point } from "../sketch/planes.js";
+import { add, scale } from "../sketch/point-math.js";
 import { rectangleFrame } from "../sketch/rectangle-edit.js";
 import { relationalTargets } from "./relational-targets.js";
 import { solverLayout } from "./solver-geometry.js";

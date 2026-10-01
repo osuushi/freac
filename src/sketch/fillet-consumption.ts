@@ -1,11 +1,6 @@
-import {
-  type Arc,
-  type Constraint,
-  type PointReference,
-  type Sketch,
-  validateSketch,
-} from "./document.js";
+import type { Arc, Constraint, PointReference, Sketch } from "./document.js";
 import type { FilletCorner } from "./fillet-geometry.js";
+import { validateSketch } from "./sketch-validation.js";
 
 // Transfer only the far endpoint: the old corner has been removed by rounding.
 export function consumedFilletConstraints(

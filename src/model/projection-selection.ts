@@ -1,8 +1,8 @@
 import { curveDistance, displayPoints } from "../sketch/curve-geometry.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { segmentDistance } from "../sketch/geometry.js";
 import type { Point } from "../sketch/planes.js";
 import { worldPoint } from "../sketch/planes.js";
+import { segmentDistance } from "../sketch/point-math.js";
 import { BodyPickProbe } from "./body-picking.js";
 import { pickBodyEdge } from "./edge-selection.js";
 import { featureEdges } from "./feature-edges.js";

@@ -13,7 +13,7 @@ The retired prototype and its command/revision protocol are preserved only in
 
 | Current responsibility | Implementation |
 | --- | --- |
-| Shared curves/constraints; backend acceptance and snapshot Undo/Redo | [Model](../../src/sketch/document.ts), [document owner](../../src/backend/document-owner.ts), [history](../../src/backend/document-store.ts) |
+| Shared curves/constraints; backend acceptance and snapshot Undo/Redo | [Model](../../src/sketch/document.ts), [validation](../../src/sketch/sketch-validation.ts), [document owner](../../src/backend/document-owner.ts), [history](../../src/backend/document-store.ts) |
 | Analytic rectangle/segment edits and endpoint continuity | [Geometry](../../src/sketch/geometry.ts), [rectangle edits](../../src/sketch/rectangle-edit.ts), [line edits](../../src/sketch/line-edit.ts) |
 | Ordered typed selection; tool and temporary editor state | [Selected targets](../../src/sketch/selected-targets.ts), [editor](../../src/sketch/editor.ts) |
 | Active edit ownership; pointer intent and candidate calculation | [Interaction owner](../../src/sketch/active-interaction.ts), [gestures](../../src/sketch/gestures.ts), [drag start](../../src/sketch/drag-state.ts), [drag update](../../src/sketch/drag-update.ts) |

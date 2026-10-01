@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentStore } from "../src/backend/document-store.js";
-import { emptySketch, validateSketch, withSketch } from "../src/sketch/document.js";
+import { emptySketch, withSketch } from "../src/sketch/document.js";
 import { rectangle, transform } from "../src/sketch/geometry.js";
 import { planes } from "../src/sketch/planes.js";
 import {
@@ -9,6 +9,7 @@ import {
   rectangleFrame,
   resizeRectangle,
 } from "../src/sketch/rectangle-edit.js";
+import { validateSketch } from "../src/sketch/sketch-validation.js";
 
 test("all corner edits preserve the opposite anchor after a 37 degree rotation", () => {
   const angle = (37 * Math.PI) / 180,

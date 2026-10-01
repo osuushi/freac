@@ -2,15 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { arcCircle, bowThrough } from "../src/sketch/arc-geometry.js";
-import {
-  type Circle,
-  emptySketch,
-  newId,
-  type Sketch,
-  validateSketch,
-} from "../src/sketch/document.js";
+import { type Circle, emptySketch, newId, type Sketch } from "../src/sketch/document.js";
 import { rectangle, segment } from "../src/sketch/geometry.js";
 import { planes } from "../src/sketch/planes.js";
+import { validateSketch } from "../src/sketch/sketch-validation.js";
 import { trimSketch } from "../src/sketch/trim-edit.js";
 import { trimAt, trimRemainders, trimSpans } from "../src/sketch/trim-geometry.js";
 

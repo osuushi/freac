@@ -1,8 +1,8 @@
 import { curveBounds } from "./curve-geometry.js";
 import type { SketchEditor } from "./editor.js";
-import { add, midpoint, scale } from "./geometry.js";
 import { rotationOffset } from "./move-widget/geometry.js";
 import type { Point } from "./planes.js";
+import { add, midpoint, scale } from "./point-math.js";
 import { selectedPointHits } from "./point-selection.js";
 import { rectangleFrame } from "./rectangle-edit.js";
 

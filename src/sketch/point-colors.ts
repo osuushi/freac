@@ -2,9 +2,9 @@ import { Color } from "three";
 import { displayPoints } from "./curve-geometry.js";
 import type { Curve, Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
-import { distance } from "./geometry.js";
 import { hitIds, pointHits, pointKey } from "./picking.js";
 import { pointChoiceGroups } from "./point-choice-groups.js";
+import { distance } from "./point-math.js";
 import { type PointBranch, pointBranches, pointSelected } from "./point-selection.js";
 
 export function pointFeedback(editor: SketchEditor, sketch: Sketch) {

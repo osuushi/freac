@@ -3,7 +3,8 @@ import { circularContact, makeCircularTangent } from "./circular-tangency.js";
 import { makeCubicTangent, validateCubicTangency } from "./cubic-tangency.js";
 import { closestOnCurve } from "./curve-geometry.js";
 import { type Curve, newId, type Sketch, type TangentConstraint } from "./document.js";
-import { add, distance, dot, scale, subtract, transform } from "./geometry.js";
+import { transform } from "./geometry.js";
+import { add, distance, dot, scale, subtract } from "./point-math.js";
 import { makeJunctionTangent } from "./tangent-junction.js";
 
 export function lineCircularPair(a: Curve, b: Curve) {

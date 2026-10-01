@@ -3,11 +3,13 @@ import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { bezierAt, bezierParameter, bezierSpan } from "../src/sketch/bezier-geometry.js";
 import { curveIntersections } from "../src/sketch/curve-intersections.js";
-import { type Bezier, emptySketch, validateSketch } from "../src/sketch/document.js";
-import { distance, segment } from "../src/sketch/geometry.js";
+import { type Bezier, emptySketch } from "../src/sketch/document.js";
+import { segment } from "../src/sketch/geometry.js";
 import { movePoint, transformSelection } from "../src/sketch/line-edit.js";
 import { planes } from "../src/sketch/planes.js";
+import { distance } from "../src/sketch/point-math.js";
 import { profileAt, profilesFor } from "../src/sketch/profiles.js";
+import { validateSketch } from "../src/sketch/sketch-validation.js";
 import { trimAt, trimRemainders } from "../src/sketch/trim-geometry.js";
 
 const curve: Bezier = {

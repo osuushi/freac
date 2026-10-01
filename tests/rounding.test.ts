@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { arcCircle, bowRadius } from "../src/sketch/arc-geometry.js";
-import { emptySketch, validateSketch } from "../src/sketch/document.js";
+import { emptySketch } from "../src/sketch/document.js";
 import { createFillet, editFilletRadius, existingFillet } from "../src/sketch/fillet-edit.js";
 import { filletCorner } from "../src/sketch/fillet-geometry.js";
-import { distance, segment } from "../src/sketch/geometry.js";
+import { segment } from "../src/sketch/geometry.js";
 import { planes } from "../src/sketch/planes.js";
+import { distance } from "../src/sketch/point-math.js";
+import { validateSketch } from "../src/sketch/sketch-validation.js";
 
 test("rounding consumes unequal straight supports without moving either far endpoint", () => {
   const a = segment({ x: 0, y: 0 }, { x: 20, y: 0 }),

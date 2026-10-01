@@ -4,12 +4,12 @@ import { selectedBowCurves } from "./arc-edit.js";
 import { arcCircle, bowRadius, bowThrough } from "./arc-geometry.js";
 import type { Arc, Segment, Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
-import { distance, midpoint } from "./geometry.js";
 import { GestureSolve } from "./gesture-solve.js";
 import { jointBow } from "./joint-bow.js";
 import { onModelKeydown } from "./model-keys.js";
 import { pick } from "./picking.js";
 import type { Point } from "./planes.js";
+import { distance, midpoint } from "./point-math.js";
 import type { SelectionTarget } from "./selected-targets.js";
 
 type Session = {

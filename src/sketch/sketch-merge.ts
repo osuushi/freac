@@ -5,9 +5,9 @@ import {
   type PointReference,
   type Sketch,
   type SketchDocument,
-  validateSketch,
 } from "./document.js";
 import { coplanar, type PlaneFrame, type Point } from "./planes.js";
+import { validateSketch } from "./sketch-validation.js";
 
 export function mergeSketches(target: Sketch, sources: readonly Sketch[]): Sketch {
   if (sources.some((source) => source.id === target.id))

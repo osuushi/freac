@@ -1,6 +1,6 @@
 import { arcCircle } from "./arc-geometry.js";
 import type { Constraint, Curve, NumericConstraint, Sketch } from "./document.js";
-import { distance } from "./geometry.js";
+import { distance } from "./point-math.js";
 
 export function constraintCurves(constraint: Constraint): string[] {
   if (constraint.kind === "point-on-edge") return [constraint.point.curve, constraint.edge];

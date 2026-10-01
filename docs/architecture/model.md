@@ -24,6 +24,14 @@ These begin as modules, not six services or packages. Ordinary typed edit functi
 are sufficient. Moving selected geometry and editing a dimension both use the
 document's edit path; they do not require a generic command-bus framework.
 The composition root only constructs and connects these responsibilities.
+The sketch schema and simple ID/document assembly live in `document.ts` without
+importing validation or editing modules. `point-math.ts` supplies elementary
+coordinate arithmetic, and `point-reference.ts` resolves current endpoint/center
+references without loading point-edit controllers. Callers that accept geometry
+use the explicit `sketch-validation.ts` entry point. Curves, constraints and groups
+require nonempty string IDs, unique within their kind in one sketch; curve and
+constraint references remain sketch-scoped. Rectangle groups require four distinct
+segment members. Whole-document validation remains the publication boundary.
 
 Electron and Three.js remain selected. Native component reuse starts from the
 existing C++20 build; it does not make C++ the owner of application policy or settle

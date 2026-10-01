@@ -8,10 +8,10 @@ import type { FilletCorner } from "./fillet-geometry.js";
 import { FilletGuide } from "./fillet-guide.js";
 import { filletRadiusAt } from "./fillet-radius.js";
 import { selectedFilletCorner } from "./fillet-selection.js";
-import { distance } from "./geometry.js";
 import { GestureSolve } from "./gesture-solve.js";
 import { onModelKeydown } from "./model-keys.js";
 import type { Point } from "./planes.js";
+import { distance } from "./point-math.js";
 
 import type { SelectionTarget } from "./selected-targets.js";
 

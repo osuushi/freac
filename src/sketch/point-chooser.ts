@@ -1,10 +1,10 @@
 import { displayPoints } from "./curve-geometry.js";
 import type { SketchEditor } from "./editor.js";
-import { distance } from "./geometry.js";
 import { onModelKeydown } from "./model-keys.js";
 import { type Hit, pointKey } from "./picking.js";
 import { pointChoiceGroups } from "./point-choice-groups.js";
 import { PointLinkControls } from "./point-link-controls.js";
+import { distance } from "./point-math.js";
 import {
   choosePoints,
   openPointMenu,

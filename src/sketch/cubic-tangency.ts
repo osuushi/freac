@@ -2,8 +2,8 @@ import { arcCircle } from "./arc-geometry.js";
 import type { Bezier, Curve, Sketch, TangentConstraint } from "./document.js";
 import { newId } from "./document.js";
 import type { EditIntent } from "./edit-intent.js";
-import { distance, scale, subtract } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { distance, scale, subtract } from "./point-math.js";
 
 type EndpointCurve = Exclude<Curve, { kind: "circle" }>;
 type CubicJunction = {

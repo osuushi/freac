@@ -1,8 +1,8 @@
 import { arcAt, arcCircle } from "./arc-geometry.js";
 import { bezierAt, bezierDerivative } from "./bezier-geometry.js";
 import type { Curve } from "./document.js";
-import { add, distance, midpoint, scale, subtract } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { add, distance, midpoint, scale, subtract } from "./point-math.js";
 
 export function offsetFrame(curve: Curve): { point: Point; normal: Point } {
   if (curve.kind === "bezier") {

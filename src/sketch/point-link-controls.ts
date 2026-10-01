@@ -1,15 +1,10 @@
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import type { PointReference } from "./document.js";
 import type { SketchEditor } from "./editor.js";
-import { distance } from "./geometry.js";
 import { pointKey } from "./picking.js";
-import {
-  fusePoints,
-  linkedPointCoordinate,
-  makeCoincident,
-  pointLinked,
-  unfusePoints,
-} from "./point-links.js";
+import { fusePoints, makeCoincident, pointLinked, unfusePoints } from "./point-links.js";
+import { distance } from "./point-math.js";
+import { linkedPointCoordinate } from "./point-reference.js";
 import { pointSelected, selectedPointHits } from "./point-selection.js";
 import { sketchIcon } from "./sketch-icons.js";
 

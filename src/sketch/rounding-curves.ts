@@ -1,7 +1,7 @@
 import { arcCircle, arcDomain, positiveAngle } from "./arc-geometry.js";
 import type { Arc, Segment } from "./document.js";
-import { distance, scale, subtract } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { distance, scale, subtract } from "./point-math.js";
 export type RoundingCurve = Segment | Arc;
 export type CurveEnd = "a" | "b";
 export const farEnd = (end: CurveEnd): CurveEnd => (end === "a" ? "b" : "a");
