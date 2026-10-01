@@ -21,6 +21,7 @@
 }
 .entity-row {
   display: flex;
+  align-items: center;
   gap: 2px;
   margin: 3px 0;
 }
@@ -30,18 +31,24 @@
   padding: 7px;
   font-size: 12px;
 }
-.entity-row button:first-child {
+.entity-row .entity-label {
   flex: 1;
   text-align: left;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
 }
 .entity-row button[aria-pressed="true"] {
   background: #e6f0ff;
   color: #2863a4;
 }
-.entity-hidden button:first-child {
+.entity-hidden .entity-label {
   color: #8c99a8;
 }
-.entity-mergeable button:first-child {
+.entity-mergeable .entity-label {
   color: #a66a1f;
   background: #fff5e5;
 }
@@ -56,16 +63,6 @@
 }
 .entity-row .entity-merge:hover {
   background: #f6dfb9;
-}
-.entity-row button:first-child {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.entity-label {
-  touch-action: none;
-  user-select: none;
-  cursor: grab;
 }
 .entity-name {
   flex: 1;

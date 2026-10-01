@@ -1,6 +1,8 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { type ModelingTarget, modelingKey } from "../sketch/model-selection-state.js";
 import { targetKey } from "../sketch/selection-target.js";
+import { requireTag } from "../tags/model.js";
+import { tagTargets } from "../tags/selection.js";
 import { findInspectionTarget } from "./inspection-geometry.js";
 
 /** Arguments are validated again in the renderer before any UI state changes. */
@@ -34,7 +36,11 @@ export function changeAgentSelection(editor: SketchEditor, input: string): void 
       );
     ids = words;
   }
-  const targets = [...new Set(ids)].map((id) => findInspectionTarget(document, id));
+  const targets = [...new Set(ids)].flatMap((id) =>
+    document.taggedGroups?.some((g) => g.id === id)
+      ? tagTargets(requireTag(document, id))
+      : [findInspectionTarget(document, id)],
+  );
   if (editor.world.active) {
     if (
       targets.some(
@@ -72,6 +78,7 @@ function combine<T>(
   mode: string | undefined,
   key: (t: T) => string,
 ): T[] {
+  wanted = [...new Map(wanted.map((target) => [key(target), target])).values()];
   const keys = new Set(wanted.map(key));
   if (mode === "--remove") return current.filter((t) => !keys.has(key(t)));
   if (mode !== "--add") return wanted;

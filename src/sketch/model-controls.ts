@@ -30,7 +30,9 @@ export class ModelControls {
     this.selectionDrag = new ModelSelectionDrag(
       editor,
       overlay,
-      () => !this.extrusion.active && !editor.interactions.current,
+      () =>
+        !this.extrusion.active &&
+        (!editor.interactions.current || editor.interactions.current.kind === "tag-membership"),
     );
     const options = { signal: this.abort.signal },
       canvas = editor.world.canvas;

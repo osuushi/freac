@@ -1,6 +1,7 @@
 import type { DisplayDocument } from "../model/display-document.js";
 
 type Kind =
+  | "tag-membership"
   | "entity-reorder"
   | "scale"
   | "transform-box-move"

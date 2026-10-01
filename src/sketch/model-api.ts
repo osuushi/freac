@@ -19,6 +19,7 @@ import type { OperationHistoryEntry } from "./operation-history.js";
 import type { PlaneFrame } from "./planes.js";
 
 export type ModelRequest =
+  | { kind: "tagged-group"; edit: import("../tags/model.js").TagEdit }
   | { kind: "export-step"; items: import("../model/step-export.js").StepItem[] }
   | { kind: "cancel-step-export" }
   | { kind: "export-geometry"; bodyIds?: string[] }

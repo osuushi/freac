@@ -53,7 +53,9 @@ export function pickModels(
   );
   const priority = (target: ModelingTarget) =>
     !editor.world.active && target.sketch !== undefined && selectedSketches.has(target.sketch);
-  return targets.sort((a, b) => Number(priority(b)) - Number(priority(a)));
+  return targets
+    .filter((target) => editor.modeling.allows(target))
+    .sort((a, b) => Number(priority(b)) - Number(priority(a)));
 }
 export function pickModel(editor: SketchEditor, screen: Point): ModelingTarget | null {
   return pickModels(editor, screen)[0] ?? null;
@@ -79,7 +81,11 @@ export function selectModelsInFrustum(editor: SketchEditor, a: Point, b: Point):
   const faces: ModelingTarget[] = [],
     edges: ModelingTarget[] = [];
   for (const body of editor.display.bodies ?? []) {
-    if (!editor.visibility.visible(body.id)) continue;
+    if (
+      !editor.visibility.visible(body.id) ||
+      (editor.modeling.memberBody && editor.modeling.memberBody !== body.id)
+    )
+      continue;
     for (const face of body.faces)
       if (contained(face.vertices)) faces.push({ kind: "face", body: body.id, face: face.id });
     for (const edge of body.edges)

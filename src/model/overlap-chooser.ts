@@ -2,6 +2,7 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { PlaneId } from "../sketch/planes.js";
 import type { ConstructionPlane } from "./construction-plane.js";
+import { cancelModelSelectionDrag } from "./model-selection-drag.js";
 import { type OverlapCandidate, overlapCandidates } from "./overlap-candidates.js";
 import { OverlapHighlight } from "./overlap-highlight.js";
 import { overlapPreviews } from "./overlap-preview.js";
@@ -35,8 +36,12 @@ export class OverlapChooser {
     const candidates = overlapCandidates(e, { x: event.clientX, y: event.clientY });
     if (!candidates.length) return;
     if (e.interactions.current?.kind === "model-selection") await e.interactions.cancel();
-    if (e.blocked || e.world.active || e.interactions.current) return;
-    this.lease = e.interactions.acquire("selection-choice", () => this.close());
+    const membership = e.interactions.current?.kind === "tag-membership";
+    if (membership) cancelModelSelectionDrag(e);
+    if (e.blocked || e.world.active || (e.interactions.current && !membership)) return;
+    this.lease = membership
+      ? e.interactions.current
+      : e.interactions.acquire("selection-choice", () => this.close());
     if (!this.lease) return;
     this.document = e.store.data;
     this.snapshot = this.viewKey();
@@ -128,7 +133,9 @@ export class OverlapChooser {
   private update = (): void => {
     if (
       this.opened &&
-      (this.document !== this.editor.store.data || this.snapshot !== this.viewKey())
+      (this.editor.interactions.current !== this.lease ||
+        this.document !== this.editor.store.data ||
+        this.snapshot !== this.viewKey())
     )
       this.close();
   };
@@ -141,7 +148,7 @@ export class OverlapChooser {
     this.highlight.show(null);
     const lease = this.lease;
     this.lease = null;
-    lease.release();
+    if (lease.kind !== "tag-membership") lease.release();
     this.editor.world.canvas.focus({ preventScroll: true });
   }
   dispose(): void {

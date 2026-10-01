@@ -1,6 +1,16 @@
 import { decoratorGuide } from "./decorator-guide.js";
 import { topologyGuide } from "./topology-guide.js";
 export const scriptGuide = `
+Tagged groups: freac.taggedGroups() lists named face/edge sets, current members and
+continuation problems. freac.editTaggedGroup creates, updates or removes metadata
+(action: create/update/remove); one body per group, overlapping groups allowed.
+freac.applyTaggedGroup({id, operation}) resolves current members for offsetFaces,
+moveFaces, finishEdges, shell or scale, rejecting incompatible member kinds.
+Empty groups need membership repair. Owner splits produce fresh group IDs with
+splitFrom identifying the old group. Inspect again after geometry changes.
+CLI inspect exposes groups; inspect GROUP_ID reads one, select GROUP_ID selects
+its members. Names are discovery labels; use IDs for operations.
+
 ## Typed modeling scripts
 
 Write a single .ts file in this workspace and run freac run script.ts. The installed

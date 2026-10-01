@@ -503,6 +503,12 @@ not promise CAD features absent from the manual application.
 
 ## Agent selection control
 
+Named body face/edge references are exposed as [tagged groups](tagged-groups.md).
+Scripts list and edit them with `taggedGroups()` and `editTaggedGroup`; direct
+`applyTaggedGroup` operations resolve membership against the current candidate.
+Overview and ID inspection include groups, and `freac select GROUP_ID` selects
+their current members with the ordinary add/remove behavior.
+
 `freac select ID...` replaces UI selection; `--add` and `--remove` preserve the
 order of unrelated targets, and `--clear` clears it. `--surface cylinder|plane|other`
 selects matching exact face metadata across all bodies, including hidden bodies

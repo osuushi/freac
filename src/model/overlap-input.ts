@@ -116,7 +116,7 @@ export class OverlapInput {
       !event.isPrimary ||
       e.blocked ||
       e.world.active ||
-      e.interactions.current ||
+      (e.interactions.current && e.interactions.current.kind !== "tag-membership") ||
       e.world.planePicker ||
       e.world.cameraTransitioning
     )

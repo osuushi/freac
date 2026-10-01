@@ -3,6 +3,7 @@ import { validateDecorators } from "../decorators/edits.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { validateFrame } from "../sketch/planes.js";
 import { validateSketch } from "../sketch/sketch-validation.js";
+import { validateTags } from "../tags/model.js";
 
 export function validateDocument(document: SketchDocument): void {
   if (
@@ -12,6 +13,7 @@ export function validateDocument(document: SketchDocument): void {
     (document.constructionPlanes !== undefined && !Array.isArray(document.constructionPlanes))
   )
     throw new Error("Invalid Freac document");
+  validateTags(document);
   validateDecorators(document);
   validateDefinitions(document);
   if (document.entityPresentation !== undefined) {
@@ -45,6 +47,7 @@ export function validateDocument(document: SketchDocument): void {
     identify(plane.id);
     validateFrame(plane.frame);
   }
+  for (const group of document.taggedGroups ?? []) identify(group.id);
   for (const instance of document.decorators ?? []) identify(instance.id);
   for (const body of document.bodies ?? []) {
     identify(body.id);

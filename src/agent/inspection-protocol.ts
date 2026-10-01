@@ -4,6 +4,7 @@ import type { SelectionTarget } from "../sketch/selection-target.js";
 
 export type InspectionCommand = "selection" | "inspect" | "render" | "select" | "faces" | "context";
 export type InspectionTarget =
+  | { kind: "tagged-group"; taggedGroup: string }
   | { kind: "plane"; plane: string }
   | MeasurementTarget
   | { kind: "body"; body: string }

@@ -45,6 +45,8 @@ function curveSummary(curve: Curve) {
   return { ...curve };
 }
 export function targetGeometry(document: SketchDocument, target: InspectionTarget): unknown {
+  if (target.kind === "tagged-group")
+    return required(document.taggedGroups?.find((g) => g.id === target.taggedGroup));
   if (target.kind === "plane")
     return {
       kind: "plane",
@@ -112,6 +114,8 @@ export function targetGeometry(document: SketchDocument, target: InspectionTarge
   };
 }
 export function findInspectionTarget(document: SketchDocument, id: string): InspectionTarget {
+  if (document.taggedGroups?.some((g) => g.id === id))
+    return { kind: "tagged-group", taggedGroup: id };
   if (document.constructionPlanes?.some((p) => p.id === id)) return { kind: "plane", plane: id };
   for (const body of document.bodies ?? []) {
     if (body.id === id) return { kind: "body", body: id };
@@ -130,6 +134,7 @@ export function findInspectionTarget(document: SketchDocument, id: string): Insp
 export function inspectionOverview(document: SketchDocument, view: InspectionView) {
   return {
     units: document.units,
+    taggedGroups: document.taggedGroups ?? [],
     decorators: document.decorators ?? [],
     decoratorDefinitions: document.decoratorDefinitions ?? [],
     builtinDecorators: [

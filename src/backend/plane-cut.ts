@@ -1,7 +1,7 @@
-import { continueDecorators } from "../decorators/continuation.js";
 import type { PlaneCut } from "../model/plane-cut.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { validateFrame } from "../sketch/planes.js";
+import { continueBodyMetadata } from "./body-metadata.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
 import type { SolidCalculator } from "./solid-calculator.js";
 
@@ -17,7 +17,7 @@ export async function cutWithPlane(
   const result = await kernel.calculate({ ...operation, kind: "plane-cut", bodies });
   if (!result.participants.length) return document;
   const next = materialize(bodies, result);
-  return continueDecorators(document, {
+  return continueBodyMetadata(document, {
     ...document,
     bodies: operation.mode === "imprint" ? continuingBodies(bodies, next) : next,
   });

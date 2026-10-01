@@ -148,7 +148,9 @@ export class DecoratorPanel {
         : this.selected().length > 0 &&
           this.selected().length === this.editor.modeling.targets.length);
     this.root.hidden =
-      !!this.editor.world.active || (!instances.length && !canContinue && !problems.length);
+      this.editor.interactions.current?.kind === "tag-membership" ||
+      !!this.editor.world.active ||
+      (!instances.length && !canContinue && !problems.length);
     for (const input of this.root.querySelectorAll<HTMLInputElement>("input, select, button"))
       input.disabled =
         input.dataset.unavailable === "true" ||

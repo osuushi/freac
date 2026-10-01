@@ -1,6 +1,8 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { modelingSketch } from "../sketch/model-selection.js";
 import { type ModelingTarget, modelingKey } from "../sketch/model-selection-state.js";
+import type { TagControls } from "../tags/controls.js";
+import { TagRows } from "../tags/rows.js";
 import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
 import { EntityReorder } from "./entity-reorder.js";
@@ -14,13 +16,16 @@ export class EntityViewer {
   readonly referenceRows = document.createElement("section");
   private root = document.createElement("aside");
   private key = "";
+  private tags: TagRows;
   private refreshRows: (() => void)[] = [];
   private selectionRows: ModelingTarget[] = [];
   private selectionAnchor: string | null = null;
   constructor(
     private editor: SketchEditor,
     app: HTMLElement,
+    tags: TagControls,
   ) {
+    this.tags = new TagRows(editor, tags);
     this.root.className = "entity-viewer";
     this.root.setAttribute("aria-label", "Entities");
     app.append(this.root);
@@ -153,7 +158,7 @@ export class EntityViewer {
       row.classList.toggle("entity-hidden", !visible);
     });
     row.append(select, ...(merge ? [merge] : []), eye);
-    return row;
+    return target.kind === "body" ? this.tags.wrap(row, id, this.refreshRows) : row;
   }
   private update = (): void => {
     const editor = this.editor,
@@ -162,6 +167,7 @@ export class EntityViewer {
       data.sketches.map((s) => s.id),
       data.bodies?.map((b) => b.id),
       data.entityPresentation,
+      data.taggedGroups,
     ]);
     if (key === this.key) {
       for (const refresh of this.refreshRows) refresh();

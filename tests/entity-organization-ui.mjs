@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron, openDocument, saveDocument } from "./native-documents.mjs";
+import { orient } from "./ui-blend-edit.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { drag, inspect } from "./ui-helpers.mjs";
 import { pickPlane } from "./ui-plane-targets.mjs";
@@ -80,6 +81,7 @@ async function route(page, name) {
   assert.ok((await inspect(page)).activePlane);
   await chooseTool(page, "return to modeling", "modeling");
   await page.keyboard.press("Escape");
+  await orient(page, [1, 1, 1]);
   for (const plane of ["XY", "XZ"]) {
     await chooseTool(page, "Construction plane", "construction-plane");
     await pickPlane(page, plane);

@@ -28,13 +28,20 @@ export const modelingKey = (target: ModelingTarget): string =>
           ? target.sketch
           : target.profile.key;
 export class ModelSelection {
+  memberBody: string | null = null;
+  allows(target: ModelingTarget): boolean {
+    return (
+      !this.memberBody ||
+      ((target.kind === "face" || target.kind === "edge") && target.body === this.memberBody)
+    );
+  }
   private selected: ModelingTarget[] = [];
   get targets(): ModelingTarget[] {
     return this.selected;
   }
   set targets(targets: ModelingTarget[]) {
     const previous = this.key;
-    this.selected = targets;
+    this.selected = targets.filter((target) => this.allows(target));
     if (this.key !== previous) this.chosenTool = null;
   }
   private chosenTool: { key: string; tool: ModelingTool } | null = null;
@@ -96,6 +103,7 @@ export class ModelSelection {
     this.alternatives = [];
   }
   choose(target: ModelingTarget | null, add: boolean, toggle: boolean): void {
+    if (target && !this.allows(target)) return;
     this.chosenTool = null;
     if (!target) {
       if (!add && !toggle) this.targets = [];
