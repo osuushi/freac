@@ -382,6 +382,12 @@ each body mesh; validates results; and encodes through existing STL/3MF paths.
 Bodies remain separate export objects. Failure identifies the body/decorator and
 produces no partial file. Export changes neither the document nor Undo.
 
+Preview delivery keeps the warm worker's per-instance cache aligned with visible
+surfaces. A newer geometry request retains completed results for unchanged support
+signatures, including when switching between settled and live preview. Stale mesh
+results cannot replace current surfaces. Clearing previews or changing enabled
+sources terminates that worker and retires its outstanding replies.
+
 Confirmed: no decorator composition in V1. No ordering UI, modifier stack or
 mesh-input decorator signature. Multiple independent decorations on a body are
 still supported, with at most one decorator assigned to each face. Confirmed:

@@ -55,14 +55,17 @@ export class PreviewOverlaySurfaces {
     live: boolean,
   ) {
     const now = performance.now();
+    const applicable = new Set(
+      processedIds.filter((id) => signatures.has(id) && signatures.get(id) === current.get(id)),
+    );
     for (const surface of this.surfaces)
-      if (surface.fade.current && processedIds.includes(surface.id)) {
+      if (surface.fade.current && applicable.has(surface.id)) {
         surface.fade.replace(now);
         surface.mesh.userData.previewCurrent = false;
       }
     for (const { id, body, faces, positions, indices } of meshes) {
       const signature = signatures.get(id);
-      if (signature === undefined) continue;
+      if (signature === undefined || signature !== current.get(id)) continue;
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
       geometry.setIndex(new THREE.BufferAttribute(indices, 1));
@@ -75,7 +78,6 @@ export class PreviewOverlaySurfaces {
       overlay.visible = this.editor.visibility.visible(body);
       this.group.add(overlay);
       const fade = new PreviewFade(now);
-      if (signature !== current.get(id)) fade.stale(now);
       this.surfaces.push({
         mesh: overlay,
         faces: new Set(faces.map((f) => previewFaceKey(f.body, f.face))),

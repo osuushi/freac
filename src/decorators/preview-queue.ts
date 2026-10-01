@@ -8,7 +8,6 @@ export interface PreviewRequest {
   document: SketchDocument;
   sources: readonly EnabledDefinition[];
   live: boolean;
-  epoch: number;
   signatures: Map<string, string>;
   fingerprint: string;
 }
@@ -25,7 +24,6 @@ export class PreviewQueue {
   private worker: Worker | null = null;
   private active: PreviewRequest | null = null;
   private pending: PreviewRequest | null = null;
-  private epoch = 0;
   private sourcesKey = "";
   private completedFingerprint = "";
 
@@ -52,18 +50,15 @@ export class PreviewQueue {
     if (this.pending?.fingerprint === fingerprint) return;
     const sourceChanged = this.sourcesKey !== nextSources;
     const enteringLive = live && this.active && !this.active.live;
-    const settledDocumentChanged = !live && this.active && this.active.document !== document;
-    if (sourceChanged || enteringLive || settledDocumentChanged) this.epoch++;
     // A long settled hook must not hold up a newly started live gesture.
     // Disabling or replacing bundled code also stops its previous invocation.
     if (sourceChanged || (enteringLive && preemptSettled)) this.interrupt();
     this.sourcesKey = nextSources;
-    this.pending = { document, sources, live, epoch: this.epoch, signatures, fingerprint };
+    this.pending = { document, sources, live, signatures, fingerprint };
     this.pump();
   }
 
   clear(): void {
-    this.epoch++;
     this.pending = null;
     this.completedFingerprint = "";
     this.interrupt();
@@ -88,7 +83,9 @@ export class PreviewQueue {
         if (this.worker !== current) return;
         const finished = this.active;
         this.active = null;
-        if (finished?.epoch === this.epoch) {
+        // The retained worker has memoized these results. Deliver them so the
+        // overlay can keep instances whose signatures still match the latest view.
+        if (finished) {
           this.completedFingerprint = finished.fingerprint;
           this.onResult(event.data, finished);
         }
