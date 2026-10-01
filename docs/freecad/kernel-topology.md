@@ -54,6 +54,14 @@ implicit box edges, trimmed sketch-region spans/holes and both projection direct
 The sphere exposed null spatial curves at the poles: implicit degenerate edges
 must be skipped before reading their curves. These are Freac runtime observations;
 no new claim about the pinned FreeCAD source and no upstream code copying is involved.
+The later tilted-cylinder capture exposed another distinction: a side endpoint
+lies on the exact rim's interior, but independent whole-rim cubic fitting can miss
+it within the permitted approximation budget. That opens the middle cell despite
+both rim loops closing. `tests/projection-junctions.test.ts` checks the absent
+captured cell, both body/curved-face reprojection paths, exact junction endpoints,
+independent silhouette/cell areas and downstream extrusion. Splitting exact rims at
+contour contacts before fitting preserves closure without enlarging region tolerance.
+These are additional Freac runtime findings, not upstream source claims.
 Arbitrary freeform contour robustness and large-model HLR performance remain unproven.
 
 ## Bounded face-movement experiment (2026-09-16)

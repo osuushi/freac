@@ -85,6 +85,10 @@ Direction and accept/cancel controls stay above the bottom status. Projection
 errors sit above them with a fixed gap. Reuse a coplanar sketch or create one on
 acceptance. `backend/projection.ts` and the native kernel produce the usual
 temporary candidate; acceptance is one Undo, without a persistent source link.
+Before fitting spatial rims, split them at exact contour-endpoint contacts. Those
+contacts become cubic endpoints and ordinary coincidence links, keeping side/rim
+junctions closed for filled regions and extrusion. Region walking retains its
+existing tolerance; accepted older copies remain ordinary editable curves.
 Analytic primitives survive where natural; other curves become editable cubic
 pieces with a 0.001 mm approximation budget.
 

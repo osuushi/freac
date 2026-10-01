@@ -143,7 +143,23 @@ void projectCurves(std::ostream& out, const Tree& input, const std::vector<Opera
     const gp_Dir direction=selectedDirection ? gp_Dir(point(*selectedDirection).XYZ()) : plane->Pln().Axis().Direction();
     if (std::abs(direction.Dot(plane->Pln().Axis().Direction()))<edgeOnDirectionDot)
         throw std::runtime_error("Projection direction is parallel to target plane");
+    const auto contours = projectionContours(input,bodies);
+    std::vector<gp_Pnt> junctions;
+    for (const auto& curve : contours) {
+        junctions.push_back(curve->Value(curve->FirstParameter()));
+        junctions.push_back(curve->Value(curve->LastParameter()));
+    }
     out << std::setprecision(17) << "{\"curves\":["; Output output{out,origin,U,V};
+    const auto projectJoined = [&](const Handle(Geom_Curve)& curve, bool implicit) {
+        // Linear/edge-on images use their extrema, rather than a closed rim's ends.
+        if (linearImage(output,curve,plane,direction,implicit)) return;
+        for (const auto& span : projectionSpans(curve,junctions)) {
+            const Endpoints joined{
+                onPlane(span->Value(span->FirstParameter()),plane,direction),
+                onPlane(span->Value(span->LastParameter()),plane,direction)};
+            projectCurve(output,span,plane,direction,&joined,implicit);
+        }
+    };
     for (const auto& item:input.get_child("edges")) {
         bool found=false;
         for (const auto& body:bodies) if (body.id==item.second.get<std::string>("body"))
@@ -152,12 +168,12 @@ void projectCurves(std::ostream& out, const Tree& input, const std::vector<Opera
                 if (item.second.get<bool>("implicit",false) && BRep_Tool::Degenerated(TopoDS::Edge(entity.shape))) continue;
                 double first,last; const auto c=BRep_Tool::Curve(TopoDS::Edge(entity.shape),first,last);
                 if (c.IsNull()) throw std::runtime_error("Selected edge has no spatial curve");
-                projectCurve(output,new Geom_TrimmedCurve(c,first,last),plane,direction,nullptr,item.second.get<bool>("implicit",false)); found=true;
+                projectJoined(new Geom_TrimmedCurve(c,first,last),item.second.get<bool>("implicit",false));
             }
         if (!found) throw std::runtime_error("Selected projection edge no longer exists");
     }
     for (const auto& item:input.get_child("curves")) projectCurve(output,sketchCurve(item.second),plane,direction);
-    for (const auto& curve:projectionContours(input,bodies)) projectCurve(output,curve,plane,direction,nullptr,true);
+    for (const auto& curve:contours) projectJoined(curve,true);
     out << "]}";
 }
 

@@ -149,6 +149,8 @@ test("whole-cylinder and curved-face projection includes the sides without a sto
     const projected = reply.view.candidate?.sketches.at(-1);
     assert.ok(projected);
     assert.ok(projected.curves.some((c) => c.kind === "bezier"));
+    const filledArea = profilesFor(projected).reduce((sum, p) => sum + p.area, 0);
+    assert.ok(Math.abs(filledArea - ((100 * Math.PI * Math.sqrt(3)) / 2 + 100)) < 0.02);
     const sides = projected.curves.filter((c) => c.kind === "segment");
     assert.equal(sides.length, 2);
     for (const side of sides)

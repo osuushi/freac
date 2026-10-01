@@ -53,6 +53,7 @@ TopoDS_Shape revolve(const Tree&, const std::vector<Operand>&);
 
 void projectCurves(std::ostream& out, const Tree& input, const std::vector<Operand>& bodies);
 std::vector<Handle(Geom_Curve)> projectionContours(const Tree&, const std::vector<Operand>&);
+std::vector<Handle(Geom_Curve)> projectionSpans(const Handle(Geom_Curve)&, const std::vector<gp_Pnt>&);
 
 std::vector<Result> cleanupBodies(const Tree&, const std::vector<Operand>&, std::vector<std::string>&);
 
