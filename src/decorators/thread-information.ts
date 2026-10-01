@@ -1,4 +1,4 @@
-import type { Body } from "../model/body.js";
+import type { BodyGeometry } from "../model/body.js";
 import { cross, cylinderExtent, dot, resolveFaces, subtract } from "./cylinder.js";
 import { threadReference } from "./thread-extent.js";
 import { coarseMetric, threadDepth, threadSettings } from "./thread-settings.js";
@@ -9,7 +9,7 @@ export interface ThreadWarning {
   faces: readonly FaceReference[];
 }
 
-export function threadInformation(bodies: readonly Body[], instance: DecoratorInstance) {
+export function threadInformation(bodies: readonly BodyGeometry[], instance: DecoratorInstance) {
   const faces = resolveFaces(bodies, instance.faces);
   const cylinder = faces[0].cylinder;
   const settings = threadSettings(instance.settings);

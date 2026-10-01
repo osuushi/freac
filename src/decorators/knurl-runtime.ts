@@ -1,5 +1,5 @@
 import type { ManifoldToplevel } from "manifold-3d";
-import type { SketchDocument } from "../sketch/document.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import { resolveFaces } from "./cylinder.js";
 import { validateBuiltin } from "./edits.js";
 import { knurlMeshes } from "./knurl-mesh.js";
@@ -9,7 +9,7 @@ import { threadDomain } from "./thread-domain.js";
 import type { DecoratorInstance } from "./types.js";
 
 export function prepareKnurl(
-  document: SketchDocument,
+  document: DisplayDocument,
   instance: DecoratorInstance,
   quality: "preview" | "export",
 ) {
@@ -26,7 +26,7 @@ export function prepareKnurl(
 }
 export function knurlOperand(
   scope: MeshScope,
-  document: SketchDocument,
+  document: DisplayDocument,
   instance: DecoratorInstance,
 ) {
   const { body, faces, geometry } = prepareKnurl(document, instance, "export");
@@ -36,7 +36,7 @@ export function knurlOperand(
 }
 export function knurlPreview(
   runtime: ManifoldToplevel | undefined,
-  document: SketchDocument,
+  document: DisplayDocument,
   instance: DecoratorInstance,
 ) {
   const { body, faces, geometry } = prepareKnurl(document, instance, "preview");

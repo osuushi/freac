@@ -1,4 +1,4 @@
-import type { SketchDocument } from "../sketch/document.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import { gearTolerance } from "./gear-precision.js";
 import { gearDefinition } from "./gear-settings.js";
 import { type ThreadSettings, threadDefinition, threadSettings } from "./thread-settings.js";
@@ -14,7 +14,7 @@ export function threadTolerance({ pitch, clearance }: ThreadSettings): number {
 /** A geometric sampling budget, independent from the user's intentional fit allowance. */
 export function exportTolerance(
   instances: readonly DecoratorInstance[],
-  document?: SketchDocument,
+  document?: DisplayDocument,
 ): number {
   let tolerance = 0.004;
   for (const instance of instances) {

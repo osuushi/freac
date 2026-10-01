@@ -1,4 +1,4 @@
-import type { SketchDocument } from "../sketch/document.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import { bevelMeshes } from "./bevel-mesh.js";
 import { cylinderExtent, resolveFaces } from "./cylinder.js";
 import { gearFaces } from "./gear-faces.js";
@@ -12,7 +12,7 @@ import { cylinderGrid, faceMask, radialShell } from "./radial-mesh.js";
 import type { DecoratorInstance } from "./types.js";
 
 export function gearMeshes(
-  document: SketchDocument,
+  document: DisplayDocument,
   instance: DecoratorInstance,
   quality: "preview" | "export",
 ) {

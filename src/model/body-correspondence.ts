@@ -1,8 +1,8 @@
-import type { Body } from "./body.js";
+import type { BodyGeometry } from "./body.js";
 
 /** Immediate calculation correspondence, consumed by attached metadata; never serialized. */
 export const topologyOrigins = new WeakMap<
-  Body,
+  BodyGeometry,
   {
     bodies: readonly string[];
     copy: boolean;

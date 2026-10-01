@@ -30,15 +30,18 @@ export interface Edge {
   readonly signature: number[];
   readonly points: number[];
 }
-/** Exact shape is authoritative. Meshes and polylines are display derivatives. */
-export interface Body {
+/** Read-only geometry for drawing, picking and mesh decorators; no exact-shape authority. */
+export interface BodyGeometry {
   readonly id: string;
-  readonly brep: string;
   readonly volume: number;
   readonly center: Vector;
   readonly bounds: number[];
   readonly faces: readonly Face[];
   readonly edges: readonly Edge[];
+}
+/** Accepted and kernel-computed bodies have an authoritative exact shape. */
+export interface Body extends BodyGeometry {
+  readonly brep: string;
 }
 export type BooleanMode = "new" | "union" | "subtract" | "intersect";
 export type LiftSource = { sketch: string; profile: string } | { face: string };

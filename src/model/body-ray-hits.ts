@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Point, Vector } from "../sketch/planes.js";
-import type { Body, Face } from "./body.js";
+import type { BodyGeometry, Face } from "./body.js";
 
 const bounds = new WeakMap<Face, THREE.Box3>();
 // Conservative millimeter padding avoids rejecting boundary rays after projection roundoff.
@@ -32,7 +32,7 @@ export function screenRay(editor: SketchEditor, screen: Point): THREE.Ray {
   return caster.ray;
 }
 export function faceRayHits(
-  bodies: readonly Body[],
+  bodies: readonly BodyGeometry[],
   ray: THREE.Ray,
   camera: THREE.Vector3,
   clipping: readonly THREE.Plane[] = [],
@@ -62,7 +62,7 @@ export function faceRayHits(
 }
 /** Curved faces need the normal next to this edge point, not a face-wide normal. */
 export function edgeFacesCamera(
-  body: Body,
+  body: BodyGeometry,
   edge: string,
   point: Vector,
   direction: THREE.Vector3,

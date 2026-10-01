@@ -1,6 +1,6 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Point, Vector } from "../sketch/planes.js";
-import type { Body } from "./body.js";
+import type { BodyGeometry } from "./body.js";
 import { shadowPlanes } from "./movement-shadow-geometry.js";
 
 /** Keep only surfaces a view ray encounters before reaching the axis=0 receiver. */
@@ -22,7 +22,7 @@ export function clipShadowOccluder(triangle: Vector[], axis: number, direction: 
 }
 
 export function shadowOcclusionPaths(
-  bodies: readonly Body[],
+  bodies: readonly BodyGeometry[],
   direction: Vector,
   project: (p: Vector) => Point,
 ): string[] {
@@ -52,8 +52,8 @@ export function shadowOcclusionPaths(
 
 /** Cache only display derivatives; preview bodies, visibility and camera invalidate them. */
 export class ShadowOcclusion {
-  private bodies: readonly Body[] | undefined;
-  private accepted: readonly Body[] | undefined;
+  private bodies: readonly BodyGeometry[] | undefined;
+  private accepted: readonly BodyGeometry[] | undefined;
   private key = "";
   private paths = ["", "", ""];
   update(editor: SketchEditor): string[] {

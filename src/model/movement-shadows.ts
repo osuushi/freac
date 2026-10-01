@@ -1,7 +1,7 @@
 import type * as THREE from "three";
-import type { SketchDocument } from "../sketch/document.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
+import type { DisplayDocument } from "./display-document.js";
 import { type ShadowGeometry, shadowGeometry } from "./movement-shadow-geometry.js";
 import { MovementShadowView } from "./movement-shadow-view.js";
 import type { ScaleSource } from "./scale.js";
@@ -11,7 +11,7 @@ export class MovementShadows {
   private view: MovementShadowView;
   private source: ScaleSource | null = null;
   private sourceKey = "";
-  private document: SketchDocument | null = null;
+  private document: DisplayDocument | null = null;
   private current: ShadowGeometry = { triangles: [], lines: [] };
   private moving = false;
   private anchor: Vector = [0, 0, 0];

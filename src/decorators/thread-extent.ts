@@ -1,9 +1,9 @@
-import type { Body } from "../model/body.js";
+import type { BodyGeometry } from "../model/body.js";
 import { cylinderExtent, resolveFaces } from "./cylinder.js";
 import type { DecoratorInstance } from "./types.js";
 
 export function threadReference(
-  bodies: readonly Body[],
+  bodies: readonly BodyGeometry[],
   instance: DecoratorInstance,
 ): [number, number] {
   return (

@@ -1,9 +1,9 @@
-import type { Body, Edge } from "./body.js";
+import type { BodyGeometry, Edge } from "./body.js";
 
-const cache = new WeakMap<Body, readonly Edge[]>();
+const cache = new WeakMap<BodyGeometry, readonly Edge[]>();
 /** A periodic seam occurs twice in one face's wire. Retain it in exact topology,
  * but do not offer it as a modeling edge or an invisible snap target. */
-export function featureEdges(body: Body): readonly Edge[] {
+export function featureEdges(body: BodyGeometry): readonly Edge[] {
   const previous = cache.get(body);
   if (previous) return previous;
   const seams = new Set<string>();

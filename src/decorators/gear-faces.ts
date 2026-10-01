@@ -1,9 +1,9 @@
 import type { Face } from "../model/body.js";
-import type { SketchDocument } from "../sketch/document.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import { cross, dot, sameCylinder, subtract } from "./cylinder.js";
 import type { FaceReference } from "./types.js";
 
-export function gearFaces(document: SketchDocument, refs: readonly FaceReference[]): Face[] {
+export function gearFaces(document: DisplayDocument, refs: readonly FaceReference[]): Face[] {
   if (!refs.length) throw new Error("Select cylindrical, conic or planar pitch faces for Gear");
   return refs.map((ref) => {
     const face = document.bodies

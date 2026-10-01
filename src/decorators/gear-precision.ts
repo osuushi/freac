@@ -1,11 +1,11 @@
-import type { SketchDocument } from "../sketch/document.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import { cylinderExtent } from "./cylinder.js";
 import { gearFaces } from "./gear-faces.js";
 import { gearSettings, radians } from "./gear-settings.js";
 import type { DecoratorInstance } from "./types.js";
 
 export function gearTolerance(
-  document: SketchDocument,
+  document: DisplayDocument,
   instance: DecoratorInstance,
   quality: "preview" | "export",
 ) {

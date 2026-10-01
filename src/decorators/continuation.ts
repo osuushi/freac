@@ -1,5 +1,6 @@
-import type { Body } from "../model/body.js";
+import type { BodyGeometry } from "../model/body.js";
 import { topologyOrigins } from "../model/body-correspondence.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import { newId, type SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { isBuiltinDecorator } from "./builtins.js";
@@ -14,7 +15,7 @@ import type { DecoratorInstance } from "./types.js";
 function descendants(
   instance: DecoratorInstance,
   source: SketchDocument,
-  body: Body,
+  body: BodyGeometry,
   request?: ModelRequest,
 ) {
   const oldFaces = new Set(instance.faces.map((f) => f.face));
@@ -68,11 +69,11 @@ function descendants(
 }
 
 /** Consume immediate topology correspondence during the geometry edit, never replay old operations. */
-export function continueDecorators(
+export function continueDecorators<Document extends DisplayDocument>(
   source: SketchDocument,
-  candidate: SketchDocument,
+  candidate: Document,
   request?: ModelRequest,
-): SketchDocument {
+): Document {
   if (!source.decorators?.length || source.bodies === candidate.bodies) return candidate;
   const decorators: DecoratorInstance[] = [];
   for (const instance of source.decorators) {

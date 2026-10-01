@@ -1,4 +1,4 @@
-import type { Body, Face } from "../model/body.js";
+import type { BodyGeometry, Face } from "../model/body.js";
 import type { PlaneFrame, Vector } from "../sketch/planes.js";
 import type { FaceReference } from "./types.js";
 
@@ -13,7 +13,7 @@ export const unit = (v: Vector) => v.map((n) => n / Math.hypot(...v)) as Vector;
 export type Cylinder = NonNullable<Face["cylinder"]>;
 
 export function resolveFaces(
-  bodies: readonly Body[],
+  bodies: readonly BodyGeometry[],
   refs: readonly FaceReference[],
 ): (Face & { cylinder: Cylinder })[] {
   if (!refs.length) throw new Error("Select cylindrical faces");

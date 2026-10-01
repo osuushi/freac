@@ -1,4 +1,4 @@
-import type { SketchDocument } from "../sketch/document.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import type { EnabledDefinition } from "./javascript-hooks.js";
 import {
   PreviewSignatureCache,
@@ -9,7 +9,7 @@ import type { PackedPreviewMesh } from "./preview-wire.js";
 import type { FaceReference } from "./types.js";
 
 export interface PreviewRequest {
-  document: SketchDocument;
+  document: DisplayDocument;
   sources: readonly EnabledDefinition[];
   live: boolean;
   signatures: Map<string, string>;
@@ -38,7 +38,7 @@ export class PreviewQueue {
   ) {}
 
   submit(
-    document: SketchDocument,
+    document: DisplayDocument,
     sources: readonly EnabledDefinition[],
     live: boolean,
     preemptSettled = false,

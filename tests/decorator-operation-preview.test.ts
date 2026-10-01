@@ -44,6 +44,8 @@ test("rigid operation previews move, rotate and copy their thread geometry", asy
       duplicate: false,
     };
     const moved = placedDocument(original, edit);
+    assert.ok(moved.bodies?.every((preview) => !("brep" in preview)));
+    assert.ok(original.bodies?.every((accepted) => typeof accepted.brep === "string"));
     const movedFace = moved.bodies?.[0].faces.find((f) => f.id === face.id);
     assert.ok(movedFace?.cylinder);
     assert.equal(movedFace.cylinder.origin[0] - face.cylinder.origin[0], 12);
@@ -77,12 +79,20 @@ test("rigid operation previews move, rotate and copy their thread geometry", asy
     assert.ok(decoratorPreview(runtime, rotated, rotatedInstance).triangles.length);
     const duplicated = placedDocument(original, { ...edit, duplicate: true });
     assert.equal(duplicated.bodies?.length, 2);
+    assert.equal(duplicated.bodies[0], body, "Retained exact geometry is still the source object");
+    assert.equal("brep" in duplicated.bodies[1], false, "A temporary copy has no exact shape");
     assert.equal(duplicated.decorators?.length, 2);
     assert.equal(duplicated.decorators[0].id, original.decorators?.[0].id);
     assert.equal(duplicated.decorators[0].faces[0].body, body.id);
     assert.equal(duplicated.decorators[1].faces[0].body, `copy-preview/${body.id}`);
     assert.equal(duplicated.decorators[1].problem, undefined);
     assert.ok(decoratorPreview(runtime, duplicated, duplicated.decorators[1]).triangles.length);
+    assert.equal(owner.view.data, original);
+    const rejected = await owner.call({
+      kind: "open",
+      document: JSON.parse(JSON.stringify(moved)),
+    });
+    assert.ok(rejected.error, "Serialized presentation cannot replace accepted exact geometry");
     assert.equal(owner.view.data, original);
   } finally {
     owner.close();

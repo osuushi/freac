@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { Body } from "../model/body.js";
+import type { BodyGeometry } from "../model/body.js";
 import {
   clipOrbitPolygon,
   hasOrbitSurfaceArea,
@@ -13,7 +13,7 @@ import {
 /** Return the frontmost rendered surface at a ray; bounds keep unrelated bodies out of triangle tests. */
 export function orbitSurfaceHit(
   camera: THREE.OrthographicCamera,
-  bodies: readonly Body[],
+  bodies: readonly BodyGeometry[],
   ndc: THREE.Vector2,
   planes: readonly THREE.Plane[],
 ): THREE.Vector3 | null {
@@ -51,7 +51,7 @@ export function orbitSurfaceHit(
 /** Nearest projected surface, then a fresh ray resolves occlusion at that screen location. */
 export function nearestOrbitSurface(
   camera: THREE.OrthographicCamera,
-  bodies: readonly Body[],
+  bodies: readonly BodyGeometry[],
   ndc: THREE.Vector2,
   aspect: number,
   clipping: readonly THREE.Plane[],

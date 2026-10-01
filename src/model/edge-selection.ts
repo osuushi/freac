@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Point, Vector } from "../sketch/planes.js";
-import type { Body } from "./body.js";
+import type { BodyGeometry } from "./body.js";
 import { BodyPickProbe } from "./body-picking.js";
 import { edgeFacesCamera, screenRay } from "./body-ray-hits.js";
 import { featureEdges } from "./feature-edges.js";
@@ -20,7 +20,7 @@ const distanceTiePx = 0.1;
 const occlusionSlackMm = 0.06;
 
 /** Shared projected segments; consumers decide visible-only versus all-depth eligibility. */
-function* edgeCandidates(editor: SketchEditor, screen: Point, bodies: readonly Body[]) {
+function* edgeCandidates(editor: SketchEditor, screen: Point, bodies: readonly BodyGeometry[]) {
   const camera = editor.world.camera.position;
   for (const body of bodies)
     for (const edge of featureEdges(body)) {
@@ -77,10 +77,10 @@ export function pickBodyEdge(
 export function edgeRayHits(
   editor: SketchEditor,
   screen: Point,
-  bodies: readonly Body[],
+  bodies: readonly BodyGeometry[],
   ray = screenRay(editor, screen),
 ): EdgeHit[] {
-  const best = new Map<string, { source: Body; hit: EdgeHit }>();
+  const best = new Map<string, { source: BodyGeometry; hit: EdgeHit }>();
   for (const { source, hit } of edgeCandidates(editor, screen, bodies)) {
     const key = JSON.stringify([hit.body, hit.edge]),
       previous = best.get(key)?.hit;

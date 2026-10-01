@@ -2,10 +2,11 @@ import * as THREE from "three";
 import { continueDecorators } from "../decorators/continuation.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { Vector } from "../sketch/planes.js";
-import type { Body, BodyTransform } from "./body.js";
+import type { Body, BodyGeometry, BodyTransform } from "./body.js";
+import type { DisplayDocument } from "./display-document.js";
 
 export const axes: Record<string, Vector> = { X: [1, 0, 0], Y: [0, 1, 0], Z: [0, 0, 1] };
-export function bodyCenter(bodies: readonly Body[]): Vector {
+export function bodyCenter(bodies: readonly BodyGeometry[]): Vector {
   const box = new THREE.Box3();
   for (const body of bodies) {
     box.expandByPoint(new THREE.Vector3(...body.bounds.slice(0, 3)));
@@ -26,7 +27,7 @@ export function placementMatrix(edit: BodyTransform): THREE.Matrix4 {
     .multiply(new THREE.Matrix4().makeTranslation(...(edit.pivot.map((v) => -v) as Vector)));
 }
 /** Temporary display only. Exact BReps and topology are transformed by the kernel on acceptance. */
-export function placedBodies(bodies: readonly Body[], edit: BodyTransform): Body[] {
+export function placedBodies(bodies: readonly Body[], edit: BodyTransform): BodyGeometry[] {
   const matrix = placementMatrix(edit);
   const point = (p: Vector): Vector =>
     new THREE.Vector3(...p).applyMatrix4(matrix).toArray() as Vector;
@@ -35,6 +36,7 @@ export function placedBodies(bodies: readonly Body[], edit: BodyTransform): Body
   const points = (values: number[]) =>
     values.flatMap((_, i) => (i % 3 ? [] : point(values.slice(i, i + 3) as Vector)));
   return bodies.map((body) => {
+    const { brep: _, ...geometry } = body;
     const faces = body.faces.map((face) => ({
       ...face,
       vertices: points(face.vertices),
@@ -62,7 +64,7 @@ export function placedBodies(bodies: readonly Body[], edit: BodyTransform): Body
       ),
     );
     return {
-      ...body,
+      ...geometry,
       id: edit.duplicate ? `copy-preview/${body.id}` : body.id,
       center: point(body.center),
       bounds: [...box.min.toArray(), ...box.max.toArray()],
@@ -92,7 +94,7 @@ export function placedBodies(bodies: readonly Body[], edit: BodyTransform): Body
 }
 
 /** Match client-only rigid body previews with temporary decorator attachments. */
-export function placedDocument(document: SketchDocument, edit: BodyTransform): SketchDocument {
+export function placedDocument(document: SketchDocument, edit: BodyTransform): DisplayDocument {
   const bodies = document.bodies ?? [];
   const selected = bodies.filter((body) => edit.ids.includes(body.id));
   const retained = edit.duplicate ? bodies : bodies.filter((body) => !edit.ids.includes(body.id));

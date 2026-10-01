@@ -1,4 +1,4 @@
-import type { SketchDocument } from "../sketch/document.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import { bevelFrame, bevelProfile } from "./bevel-profile.js";
 import { cross, cylinderExtent, cylinderFrame, dot, resolveFaces, subtract } from "./cylinder.js";
 import { gearFaces, sameGearSupport } from "./gear-faces.js";
@@ -6,7 +6,7 @@ import { gearDimensions, gearSettings, involute, radians } from "./gear-settings
 import type { DecoratorDiagnostic } from "./javascript-hooks.js";
 import type { DecoratorInstance, FaceReference } from "./types.js";
 
-export function partitionGears(document: SketchDocument, instance: DecoratorInstance) {
+export function partitionGears(document: DisplayDocument, instance: DecoratorInstance) {
   const faces = gearFaces(document, instance.faces);
   const groups: { faces: FaceReference[] }[] = [];
   for (let i = 0; i < faces.length; i++) {
@@ -33,7 +33,7 @@ export function partitionGears(document: SketchDocument, instance: DecoratorInst
   });
 }
 
-export function gearFrame(document: SketchDocument, faces: readonly FaceReference[]) {
+export function gearFrame(document: DisplayDocument, faces: readonly FaceReference[]) {
   const face = gearFaces(document, faces)[0];
   if (face.plane) return face.plane;
   if (face.cone) return bevelFrame(face.cone);
@@ -41,13 +41,13 @@ export function gearFrame(document: SketchDocument, faces: readonly FaceReferenc
   return cylinderFrame(face.cylinder);
 }
 
-export function gearPlacement(document: SketchDocument, references: readonly FaceReference[]) {
+export function gearPlacement(document: DisplayDocument, references: readonly FaceReference[]) {
   const frame = gearFrame(document, references),
     faces = gearFaces(document, references);
   return { frame, axialReference: faces[0].cone ? cylinderExtent(frame, faces) : undefined };
 }
 
-export function inspectGear(document: SketchDocument, instance: DecoratorInstance) {
+export function inspectGear(document: DisplayDocument, instance: DecoratorInstance) {
   const faces = gearFaces(document, instance.faces),
     cone = faces[0].cone;
   if (cone) {
@@ -81,7 +81,7 @@ export function inspectGear(document: SketchDocument, instance: DecoratorInstanc
 }
 
 export function gearDiagnostics(
-  document: SketchDocument,
+  document: DisplayDocument,
   instance: DecoratorInstance,
 ): DecoratorDiagnostic[] {
   try {

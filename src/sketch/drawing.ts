@@ -2,8 +2,8 @@ import * as THREE from "three";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import { LineSegments2 } from "three/addons/lines/LineSegments2.js";
 import { LineSegmentsGeometry } from "three/addons/lines/LineSegmentsGeometry.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import { constraintCurves, visibleConstraints } from "./constraint-geometry.js";
-import type { SketchDocument } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { worldPoint } from "./planes.js";
 import { coloredCurve, pointFeedback } from "./point-colors.js";
@@ -25,7 +25,7 @@ export function drawSketches(editor: SketchEditor, obscured = false): () => void
     lines = new LineSegments2(geometry, material);
   editor.world.scene.add(lines);
   lines.renderOrder = 10;
-  let previous: SketchDocument | null = null,
+  let previous: DisplayDocument | null = null,
     selection = "";
   const update = () => {
     const selected = editor.selectionOwners;

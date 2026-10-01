@@ -1,12 +1,12 @@
-import type { Body } from "../model/body.js";
-import type { SketchDocument } from "../sketch/document.js";
+import type { BodyGeometry } from "../model/body.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import { isBuiltinDecorator } from "./builtins.js";
 
 /** View/queue-local serialization of immutable support inputs; no document authority. */
 export class PreviewSignatureCache {
-  private supports = new WeakMap<Body, string>();
-  private documents = new WeakMap<SketchDocument, string>();
-  support(body: Body | undefined): string {
+  private supports = new WeakMap<BodyGeometry, string>();
+  private documents = new WeakMap<DisplayDocument, string>();
+  support(body: BodyGeometry | undefined): string {
     if (!body) return "null";
     let key = this.supports.get(body);
     if (key === undefined) {
@@ -15,7 +15,7 @@ export class PreviewSignatureCache {
     }
     return key;
   }
-  custom(document: SketchDocument, sourcesKey: string): string {
+  custom(document: DisplayDocument, sourcesKey: string): string {
     let key = this.documents.get(document);
     if (key === undefined) {
       key = JSON.stringify(document);
@@ -27,7 +27,7 @@ export class PreviewSignatureCache {
 
 /** Include the support body: trimmed threads can depend on adjacent faces. */
 export function previewSignatures(
-  document: SketchDocument,
+  document: DisplayDocument,
   sourcesKey: string,
   cache = new PreviewSignatureCache(),
 ): Map<string, string> {

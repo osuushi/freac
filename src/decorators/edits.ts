@@ -1,3 +1,4 @@
+import type { DisplayDocument } from "../model/display-document.js";
 import { newId, type SketchDocument } from "../sketch/document.js";
 import { validateFrame } from "../sketch/planes.js";
 import { isBuiltinDecorator, knurlDefinition } from "./builtins.js";
@@ -16,7 +17,7 @@ import type { DecoratorEdit, DecoratorInstance, FaceReference } from "./types.js
 
 export const faceKey = (face: FaceReference) => `${face.body}/${face.face}`;
 
-export function partitionThreads(document: SketchDocument, refs: readonly FaceReference[]) {
+export function partitionThreads(document: DisplayDocument, refs: readonly FaceReference[]) {
   const faces = resolveFaces(document.bodies ?? [], refs);
   const groups: FaceReference[][] = [];
   for (const [index, ref] of refs.entries()) {
@@ -33,7 +34,7 @@ export function partitionThreads(document: SketchDocument, refs: readonly FaceRe
   return groups;
 }
 
-export function validateThread(document: SketchDocument, instance: DecoratorInstance): void {
+export function validateThread(document: DisplayDocument, instance: DecoratorInstance): void {
   const settings = threadSettings(instance.settings);
   const faces = resolveFaces(document.bodies ?? [], instance.faces);
   if (partitionThreads(document, instance.faces).length !== 1)
@@ -47,7 +48,7 @@ export function validateThread(document: SketchDocument, instance: DecoratorInst
     throw new Error("Thread profile is too deep for this cylinder");
 }
 
-export function validateBuiltin(document: SketchDocument, instance: DecoratorInstance): void {
+export function validateBuiltin(document: DisplayDocument, instance: DecoratorInstance): void {
   if (instance.version !== 1) throw new Error("Unsupported decorator version");
   if (instance.definition === threadDefinition) {
     validateThread(document, instance);

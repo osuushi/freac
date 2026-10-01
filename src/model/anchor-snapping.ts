@@ -2,10 +2,10 @@ import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import { type Point, type Vector, worldPoint } from "../sketch/planes.js";
 import { pointHits } from "../sketch/point-query.js";
-import type { Body, Face } from "./body.js";
+import type { BodyGeometry, Face } from "./body.js";
 import { featureEdges } from "./feature-edges.js";
 
-function faceCenter(body: Body, face: Face): Vector | null {
+function faceCenter(body: BodyGeometry, face: Face): Vector | null {
   if (!face.plane) return null;
   const edges = featureEdges(body).filter((edge) => face.edges.includes(edge.id));
   if (edges.length === 1 && edges[0].curve?.kind === "circle") return edges[0].curve.center;

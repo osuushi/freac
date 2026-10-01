@@ -1,4 +1,4 @@
-import type { SketchDocument } from "../sketch/document.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { isBuiltinDecorator } from "./builtins.js";
 import { PreviewOverlaySurfaces } from "./preview-overlay-surfaces.js";
@@ -12,7 +12,7 @@ import {
 export function decoratorOverlay(editor: SketchEditor): () => void {
   const surfaces = new PreviewOverlaySurfaces(editor);
   const signatureCache = new PreviewSignatureCache();
-  let previous: SketchDocument | null = null;
+  let previous: DisplayDocument | null = null;
   let sourcesKey = "";
   let signatureKey = "";
   let currentSignatures = new Map<string, string>();

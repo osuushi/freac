@@ -76,6 +76,14 @@ Sketch copies get fresh curve/constraint/group IDs, retain only internal relatio
 and complete rectangle groups, and never acquire implicit links to their originals.
 Whole-sketch copies also get a fresh sketch ID. The existing DocumentOwner edit path
 owns acceptance and history; gesture copy IDs and placement previews are temporary.
+
+Rigid body placement returns `BodyGeometry` and a `DisplayDocument`, omitting the
+source BRep from moved/copy preview bodies. Drawing, picking and mesh decorators
+read that display geometry. These types cannot be passed as accepted documents or
+exact kernel operands; completion transforms the authoritative source through the
+existing backend operation before publication. Retained bodies may remain exact
+source objects in the same display. The view is never an acceptance payload.
+
 Whole-body copies use the existing exact-kernel transform with fresh topology IDs.
 
 ### Mirror (founder-approved interaction, 2026-09-20)

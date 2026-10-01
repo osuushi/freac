@@ -1,7 +1,7 @@
 import javascriptWasm from "@jitl/quickjs-wasmfile-release-sync/wasm?url";
 import wasmUrl from "manifold-3d/manifold.wasm?url";
 import type { QuickJSWASMModule } from "quickjs-emscripten-core";
-import type { SketchDocument } from "../sketch/document.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import { isBuiltinDecorator } from "./builtins.js";
 import { gearPreview } from "./gear-runtime.js";
 import { gearDefinition } from "./gear-settings.js";
@@ -16,7 +16,7 @@ import { PreviewHistories } from "./preview-feedback.js";
 import { packPreviewMesh } from "./preview-wire.js";
 import type { DecoratorInstance } from "./types.js";
 
-async function renderGear(document: SketchDocument, instance: DecoratorInstance) {
+async function renderGear(document: DisplayDocument, instance: DecoratorInstance) {
   runtime ??= initializeMeshRuntime(wasmUrl);
   const mesh = gearPreview(await runtime, document, instance);
   return {
@@ -55,7 +55,7 @@ async function javascriptDecorators(sources?: EnabledDefinition[]) {
   return new JavaScriptDecorators(await javascriptRuntime, sources);
 }
 
-function liveGroupCount(document: SketchDocument, sources?: EnabledDefinition[]): number {
+function liveGroupCount(document: DisplayDocument, sources?: EnabledDefinition[]): number {
   return (document.decorators ?? []).filter((instance) => {
     if (instance.problem) return false;
     if (isBuiltinDecorator(instance.definition)) return true;
@@ -77,7 +77,7 @@ function liveGroupCount(document: SketchDocument, sources?: EnabledDefinition[])
 
 self.onmessage = async (
   event: MessageEvent<{
-    document: SketchDocument;
+    document: DisplayDocument;
     sources?: EnabledDefinition[];
     live: boolean;
     signatures: [string, string][];

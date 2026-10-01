@@ -1,5 +1,5 @@
 import type { Manifold, Mat4 } from "manifold-3d";
-import type { Body, Face } from "../model/body.js";
+import type { BodyGeometry, Face } from "../model/body.js";
 import type { Vector } from "../sketch/planes.js";
 import { cross, cylinderFrame, dot, sameCylinder, subtract } from "./cylinder.js";
 import type { MeshScope } from "./mesh-scope.js";
@@ -10,7 +10,7 @@ export function trimAdjacentCylinders(
   scope: MeshScope,
   solid: Manifold,
   face: Face,
-  body: Body,
+  body: BodyGeometry,
   tolerance: number,
 ): Manifold {
   let result = solid;

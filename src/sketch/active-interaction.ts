@@ -1,4 +1,4 @@
-import type { SketchDocument } from "./document.js";
+import type { DisplayDocument } from "../model/display-document.js";
 
 type Kind =
   | "entity-reorder"
@@ -46,7 +46,7 @@ export class ActiveInteraction {
   get finishing(): boolean {
     return !!this.active && this.active.phase !== "editing";
   }
-  get candidate(): SketchDocument | null {
+  get candidate(): DisplayDocument | null {
     return this.active?.candidate ?? null;
   }
   acquire(
@@ -77,7 +77,7 @@ export class ActiveInteraction {
 export class InteractionLease {
   readonly navigationAllowed: boolean;
   phase: "editing" | "waiting" | "closing" = "editing";
-  candidate: SketchDocument | null = null;
+  candidate: DisplayDocument | null = null;
   private captureTarget: { element: Element; id: number } | null = null;
   private abort = new AbortController();
   constructor(
@@ -105,7 +105,7 @@ export class InteractionLease {
     this.phase = "closing";
     return true;
   }
-  show(candidate: SketchDocument | null): void {
+  show(candidate: DisplayDocument | null): void {
     if (this.owner.current === this && (candidate === null || this.phase !== "closing"))
       this.candidate = candidate;
   }

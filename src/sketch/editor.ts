@@ -1,3 +1,4 @@
+import type { DisplayDocument } from "../model/display-document.js";
 import { EntityVisibility } from "../model/entity-visibility.js";
 import { ActiveInteraction, type InteractionLease } from "./active-interaction.js";
 import {
@@ -6,7 +7,6 @@ import {
   type EditingGroup,
   type Segment,
   type Sketch,
-  type SketchDocument,
   samePlane,
 } from "./document.js";
 import { actionIntent, type EditAction } from "./edit-intent.js";
@@ -79,7 +79,7 @@ export class SketchEditor {
   overlaps: { hits: Hit[]; screen: Point } | null = null;
   readonly interactions = new ActiveInteraction(() => this.refresh());
   readonly workspaceEntry = new WorkspaceEntry(this);
-  get candidate(): SketchDocument | null {
+  get candidate(): DisplayDocument | null {
     return this.interactions.candidate;
   }
   message = "";
@@ -108,7 +108,7 @@ export class SketchEditor {
     this.world.changed.add(() => this.selectionHistory.observe());
   }
 
-  get display(): SketchDocument {
+  get display(): DisplayDocument {
     return this.candidate ?? this.store.data;
   }
   get sketch(): Sketch | undefined {

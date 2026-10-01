@@ -7,7 +7,7 @@ import { previewFaceKey } from "../decorators/preview-compositor.js";
 import { coplanar, type PlaneFrame } from "../sketch/planes.js";
 import { stableClipping } from "../sketch/stable-clipping.js";
 import { foregroundBodyLayer } from "../sketch/world-foreground.js";
-import type { Body, Edge } from "./body.js";
+import type { BodyGeometry, Edge } from "./body.js";
 import { featureEdges } from "./feature-edges.js";
 
 interface Counts {
@@ -18,7 +18,7 @@ function sameValues<T>(a: readonly T[], b: readonly T[]): boolean {
   return a === b || (a.length === b.length && a.every((value, i) => value === b[i]));
 }
 /** Transport copies can reuse GPU geometry only when their actual drawable inputs agree. */
-export function sameBodyDrawing(a: Body, b: Body): boolean {
+export function sameBodyDrawing(a: BodyGeometry, b: BodyGeometry): boolean {
   if (a === b) return true;
   if (a.id !== b.id || a.faces.length !== b.faces.length) return false;
   if (
@@ -91,7 +91,7 @@ export class BodyDrawable {
   private faces: THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>[] = [];
   private highlights = new Map<string, { edge: Edge; line: Line2 }>();
   constructor(
-    private body: Body,
+    private body: BodyGeometry,
     private counts: Counts,
   ) {
     const source = body;
@@ -112,10 +112,10 @@ export class BodyDrawable {
     }
     this.group.traverse((object) => object.layers.enable(foregroundBodyLayer));
   }
-  get source(): Body {
+  get source(): BodyGeometry {
     return this.body;
   }
-  reuse(body: Body): boolean {
+  reuse(body: BodyGeometry): boolean {
     if (!sameBodyDrawing(this.body, body)) return false;
     this.body = body;
     return true;
@@ -138,7 +138,7 @@ export class BodyDrawable {
       mesh.material.stencilRef = section && face.plane && coplanar(section, face.plane) ? 6 : 2;
     });
   }
-  highlight(source: Body, selected: ReadonlySet<string>, hover?: string): void {
+  highlight(source: BodyGeometry, selected: ReadonlySet<string>, hover?: string): void {
     const edges = featureEdges(source).filter((edge) => selected.has(edge.id) || hover === edge.id);
     for (const [id, highlight] of this.highlights) {
       const next = edges.find((edge) => edge.id === id);
