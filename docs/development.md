@@ -98,6 +98,8 @@ npm run test:current-tools
 
 Checks target the current `src/` application and honor Git ignores; they do not
 format cached upstream sources.
+`npm test` clears its generated output before compiling, so switching branches
+cannot retain compiled tests from earlier code.
 
 `test:current-tools` runs a bounded ordinary-control gate in headless Chromium,
 WebKit and hidden Electron. It covers curve creation/editing, point links, Trim,
