@@ -13,6 +13,8 @@ export const recipeInputs = [
   "native/kernel/verify-sdk.cmake",
 ];
 const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
+// Finder can create, rewrite or remove these independently of SDK installation.
+const finderMetadata = (path) => path.split("/").at(-1) === ".DS_Store";
 export async function sdkRecipeHash() {
   let inputs = "";
   for (const path of recipeInputs)
@@ -32,7 +34,8 @@ async function files(sdk, directory = "") {
   const result = [];
   for (const entry of await readdir(resolve(sdk, directory), { withFileTypes: true })) {
     const path = directory ? `${directory}/${entry.name}` : entry.name;
-    if (entry.name.startsWith(".freac-sdk")) continue;
+    if (entry.name.startsWith(".freac-sdk") || (!entry.isDirectory() && finderMetadata(path)))
+      continue;
     if (entry.isDirectory()) result.push(...(await files(sdk, path)));
     else result.push(path);
   }
@@ -90,7 +93,9 @@ export async function verifySdk(sdk) {
         )
           throw new Error("Invalid OCCT SDK receipt file");
         return [path, hash];
-      }),
+      })
+      // Older receipts may have recorded Finder metadata; its bytes are not SDK payload.
+      .filter(([path]) => !finderMetadata(path)),
   );
   if (JSON.stringify(paths) !== JSON.stringify([...hashes.keys()].sort()))
     throw new Error("OCCT SDK installed file inventory differs from its build receipt");

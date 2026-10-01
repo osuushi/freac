@@ -50,7 +50,10 @@ CMake configuration require the recipe/build receipt, matching
 platform/architecture/deployment target and checksums of the installed SDK files.
 An older SDK without a receipt must be rebuilt; a version number or manually
 copied marker is insufficient. The receipt records local build provenance and
-integrity, not a third-party signature.
+integrity, not a third-party signature. Finder `.DS_Store` files are excluded
+from SDK receipts and ignored during verification, including entries recorded by
+older receipt writers. Added, missing or changed SDK payload files still fail
+verification.
 On macOS, all three native setup
 commands explicitly default to Node's architecture, replacing any stale CMake
 architecture selection. `CMAKE_OSX_ARCHITECTURES` remains an explicit override.
