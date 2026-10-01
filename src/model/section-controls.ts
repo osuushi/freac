@@ -199,10 +199,12 @@ export class SectionControls {
       frame = e.world.activeFrame;
     if (!frame || !this.eligible()) return;
     const workspace = e.world.workspace;
-    await e.commitNumeric();
+    await e.numeric.commit();
     if (e.world.workspace !== workspace || !this.regions.includes(region) || !this.eligible())
       return;
-    const lease = e.interactions.acquire("use-edge", () => {});
+    const lease = e.interactions.acquire("use-edge", () => {}, undefined, {
+      navigation: "when-released",
+    });
     if (!lease) return;
     try {
       const sketch = e.sketch ?? {

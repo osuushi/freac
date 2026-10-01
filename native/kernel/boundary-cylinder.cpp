@@ -20,7 +20,7 @@ Handle(Geom2d_Curve) projected(const TopoDS_Edge& original, const TopoDS_Edge& m
     const auto spatial = BRep_Tool::Curve(moved, first, last);
     require(!spatial.IsNull(), "Missing spatial cylindrical boundary");
     auto curve = GeomProjLib::Curve2d(spatial, first, last, surface, precision);
-    require(!curve.IsNull() && std::isfinite(precision) && precision <= tolerance,
+    require(!curve.IsNull() && std::isfinite(precision) && precision <= boundaryDistanceMm,
             "Cannot project the moved cylindrical boundary precisely");
     double oldFirst, oldLast;
     const auto old = BRep_Tool::CurveOnSurface(original, source, oldFirst, oldLast);
@@ -34,7 +34,7 @@ Handle(Geom2d_Curve) projected(const TopoDS_Edge& original, const TopoDS_Edge& m
     for (int i = 0; i <= 64; ++i) {
         const double t = first + (last - first) * i / 64;
         const auto uv = curve->Value(t);
-        require(surface->Value(uv.X(), uv.Y()).Distance(spatial->Value(t)) <= tolerance,
+        require(surface->Value(uv.X(), uv.Y()).Distance(spatial->Value(t)) <= boundaryDistanceMm,
                 "Cylindrical boundary projection exceeds tolerance");
     }
     return curve;
@@ -78,10 +78,10 @@ TopoDS_Face cylinderFace(const TopoDS_Face& source, const Edit& edit) {
     }
     BRepLib::SameParameter(result, 1e-7, true);
     for (TopExp_Explorer it(result, TopAbs_EDGE); it.More(); it.Next())
-        require(BRep_Tool::Tolerance(TopoDS::Edge(it.Current())) <= tolerance,
+        require(BRep_Tool::Tolerance(TopoDS::Edge(it.Current())) <= boundaryDistanceMm,
                 "Cylindrical reconnection exceeds edge tolerance");
     for (TopExp_Explorer it(result, TopAbs_VERTEX); it.More(); it.Next())
-        require(BRep_Tool::Tolerance(TopoDS::Vertex(it.Current())) <= tolerance,
+        require(BRep_Tool::Tolerance(TopoDS::Vertex(it.Current())) <= boundaryDistanceMm,
                 "Cylindrical reconnection exceeds vertex tolerance");
     return result;
 }

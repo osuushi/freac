@@ -91,7 +91,12 @@ export class BodyPivotDrag {
     const plane = transformPlane(this.editor, origin);
     const hit = this.point(event, plane);
     if (!hit) return;
-    const lease = this.editor.interactions.acquire("body-move", () => this.finish(true));
+    const lease = this.editor.interactions.acquire(
+      "body-move",
+      () => this.finish(true),
+      undefined,
+      { navigation: "when-released" },
+    );
     if (!lease) return;
     this.drag = {
       id: event.pointerId,

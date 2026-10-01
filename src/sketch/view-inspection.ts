@@ -1,4 +1,5 @@
 import { decoratorPreviewLayer } from "../decorators/preview-compositor.js";
+import { inspectBodyRendering } from "../model/body-render-inspection.js";
 import type { SectionControls } from "../model/section-controls.js";
 import type { SketchEditor } from "./editor.js";
 import { inspectPlaneTargets } from "./plane-target-inspection.js";
@@ -46,6 +47,8 @@ export function installViewInspection(editor: SketchEditor, sections: SectionCon
         solver: editor.store.statistics,
         preview: editor.candidate,
         decoratorPreviewBounds: decoratorPreviewBounds(world),
+        bodyRendering: inspectBodyRendering(world.scene),
+        gpuGeometries: world.renderer.info.memory.geometries,
         interaction: editor.interactions.current
           ? { kind: editor.interactions.current.kind, phase: editor.interactions.current.phase }
           : null,
@@ -85,8 +88,8 @@ export function installViewInspection(editor: SketchEditor, sections: SectionCon
         moveMode: editor.moveMode,
         tool: editor.tool,
         selectedCurves: [...editor.selectedCurves],
-        selectedPoint: editor.selectedPoint,
-        pointChoice: editor.pointChoice ? [...editor.pointChoice] : null,
+        selectedPoint: editor.selected.firstPointKey,
+        pointChoice: editor.selected.pointKeys ? [...editor.selected.pointKeys] : null,
         hover: editor.hover,
         snap: editor.snap,
         gridSnap: editor.gridSnap,

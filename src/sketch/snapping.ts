@@ -4,8 +4,8 @@ import { curveFeatures } from "./curve-geometry.js";
 import { curveIntersections } from "./curve-intersections.js";
 import { snapToEdge } from "./edge-snapping.js";
 import type { SketchEditor } from "./editor.js";
-import { distance } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { distance } from "./point-math.js";
 import { rectangleFrame } from "./rectangle-edit.js";
 
 export function snapped(

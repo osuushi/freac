@@ -5,6 +5,7 @@ import { orient, project } from "./ui-blend-edit.mjs";
 import { decoratorTransformRoute } from "./ui-decorator-transforms.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function tealPixels(page) {
@@ -28,10 +29,13 @@ async function tealPixels(page) {
   }, png.toString("base64"));
 }
 
+const names = runtimeNames(["chromium", "webkit"]);
 const server = await createServer({ server: { port: 0, watch: null, hmr: false } });
 await server.listen();
 try {
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
+    names.includes(name),
+  )) {
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });

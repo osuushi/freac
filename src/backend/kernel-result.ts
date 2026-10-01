@@ -1,14 +1,10 @@
-import type { Body, BodyEdgeFinish, BooleanMode, Edge, Face } from "../model/body.js";
-import { type Curve, newId } from "../sketch/document.js";
+import type { Body, BooleanMode, Edge, Face } from "../model/body.js";
+import { topologyOrigins } from "../model/body-correspondence.js";
+import { newId } from "../sketch/document.js";
 
 type Descendant<T> = Omit<T, "id"> & { predecessors: string[] };
-export interface KernelResult {
-  topology?: import("../model/topology-edit.js").BodyTopology;
-  sections?: import("../model/sketch-section.js").SketchSection[];
-  measurement?: import("../model/measurement.js").Measurement;
-  curves?: Curve[];
-  edgeSelection?: BodyEdgeFinish["edges"];
-  mode: BooleanMode;
+export interface KernelResult<Mode extends BooleanMode | "inspect" = BooleanMode> {
+  mode: Mode;
   participants: string[];
   results: (Omit<Body, "id" | "faces" | "edges"> & {
     copy?: boolean;
@@ -23,33 +19,75 @@ export interface KernelResult {
     edges: Descendant<Edge>[];
   })[];
 }
-/** Immediate calculation correspondence, consumed by attached metadata; never serialized. */
-export const topologyOrigins = new WeakMap<
-  Body,
-  {
-    bodies: readonly string[];
-    copy: boolean;
-    faces: ReadonlyMap<string, readonly string[]>;
-  }
->();
-/** Preserve IDs only for one-to-one continuations. A split/merge gets new identities. */
-export function materialize(previous: readonly Body[], result: KernelResult): Body[] {
+type KernelBody = KernelResult<BooleanMode | "inspect">["results"][number];
+function identityPlan(previous: readonly Body[], result: KernelResult<BooleanMode | "inspect">) {
   const retained = new Set(
     previous
       .filter((body) => !result.participants.includes(body.id))
       .flatMap((body) => [body.id, ...body.faces.map((f) => f.id), ...body.edges.map((e) => e.id)]),
   );
   const counts = new Map<string, number>();
-  for (const body of result.results) {
+  for (const body of result.results)
     for (const ids of [
       body.predecessorBodies,
       ...body.faces.map((f) => f.predecessors),
       ...body.edges.map((e) => e.predecessors),
     ])
       for (const id of ids) counts.set(id, (counts.get(id) ?? 0) + 1);
-  }
-  const identity = (ids: string[]) =>
+  return (ids: string[]) =>
     ids.length === 1 && counts.get(ids[0]) === 1 && !retained.has(ids[0]) ? ids[0] : newId();
+}
+function reference(
+  ids: readonly string[],
+  index: number,
+  kind: "face" | "thickness" | "offset" | "blend",
+): string {
+  if (!Number.isInteger(index) || !ids[index])
+    throw new Error(`Kernel ${kind} references an invalid ${kind === "face" ? "edge" : "face"}`);
+  return ids[index];
+}
+function materializeFace(
+  source: KernelBody["faces"][number],
+  id: string,
+  faceIds: string[],
+  edgeIds: string[],
+): Face {
+  const {
+    predecessors: _predecessors,
+    edgeIndexes,
+    offsetFaceIndexes,
+    offsetSelected: _offsetSelected,
+    blend,
+    thickness,
+    ...face
+  } = source;
+  return {
+    ...face,
+    id,
+    thickness: thickness
+      ? {
+          face: reference(faceIds, thickness.faceIndex, "thickness"),
+          distance: thickness.distance,
+          slope: thickness.slope,
+        }
+      : null,
+    offsetFaces: offsetFaceIndexes?.map((i) => reference(faceIds, i, "offset")),
+    blend: blend
+      ? {
+          radius: blend.radius,
+          outward: blend.outward,
+          faces: blend.faceIndexes.map((i) => reference(faceIds, i, "blend")),
+        }
+      : null,
+    edges: edgeIndexes.map((i) => reference(edgeIds, i, "face")),
+  };
+}
+/** Preserve IDs only for one-to-one continuations. A split/merge gets new identities. */
+export function materialize(
+  previous: readonly Body[],
+  result: KernelResult<BooleanMode | "inspect">,
+): Body[] {
+  const identity = identityPlan(previous, result);
   const bodies = result.results.map(
     ({ predecessorBodies, faces, edges, copy = false, ...body }) => {
       const identify = (ids: string[]) => (copy ? newId() : identity(ids));
@@ -58,57 +96,11 @@ export function materialize(previous: readonly Body[], result: KernelResult): Bo
         id: identify(predecessors),
       }));
       const faceIds = faces.map(({ predecessors }) => identify(predecessors));
-      for (const { thickness } of faces)
-        if (thickness && (!Number.isInteger(thickness.faceIndex) || !faceIds[thickness.faceIndex]))
-          throw new Error("Kernel thickness references an invalid face");
+      const edgeIds = mappedEdges.map((edge) => edge.id);
       const materialized: Body = {
         ...body,
         id: identify(predecessorBodies),
-        faces: faces.map(
-          (
-            {
-              predecessors: _predecessors,
-              edgeIndexes,
-              offsetFaceIndexes,
-              offsetSelected: _offsetSelected,
-              blend,
-              thickness,
-              ...face
-            },
-            index,
-          ) => ({
-            ...face,
-            id: faceIds[index],
-            thickness: thickness
-              ? {
-                  face: faceIds[thickness.faceIndex],
-                  distance: thickness.distance,
-                  slope: thickness.slope,
-                }
-              : null,
-            offsetFaces: offsetFaceIndexes?.map((i) => {
-              if (!Number.isInteger(i) || !faceIds[i])
-                throw new Error("Kernel offset references an invalid face");
-              return faceIds[i];
-            }),
-            blend: blend
-              ? {
-                  radius: blend.radius,
-                  outward: blend.outward,
-                  faces: blend.faceIndexes.map((i) => {
-                    if (!Number.isInteger(i) || !faceIds[i])
-                      throw new Error("Kernel blend references an invalid face");
-                    return faceIds[i];
-                  }),
-                }
-              : null,
-            edges: edgeIndexes.map((index) => {
-              if (!Number.isInteger(index) || !mappedEdges[index])
-                throw new Error("Kernel face references an invalid edge");
-              return mappedEdges[index].id;
-            }),
-          }),
-        ),
+        faces: faces.map((face, index) => materializeFace(face, faceIds[index], faceIds, edgeIds)),
         edges: mappedEdges,
       };
       topologyOrigins.set(materialized, {

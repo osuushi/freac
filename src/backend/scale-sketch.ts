@@ -1,6 +1,7 @@
 import type { ScaleOperation } from "../model/scale.js";
 import { circularBeziers } from "../sketch/circular-beziers.js";
-import { type Curve, type Sketch, validateSketch } from "../sketch/document.js";
+import type { Curve, Sketch } from "../sketch/document.js";
+import { validateSketch } from "../sketch/sketch-validation.js";
 import { scaleCurveConnections } from "./scale-curve-connections.js";
 import { scaledSketchFrame } from "./scale-frame.js";
 

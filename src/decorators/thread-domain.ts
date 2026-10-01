@@ -1,4 +1,4 @@
-import type { Body, Face } from "../model/body.js";
+import type { BodyGeometry, Face } from "../model/body.js";
 import type { ExportMesh } from "../model/export-mesh.js";
 import type { Vector } from "../sketch/planes.js";
 import { trimAdjacentCylinders } from "./curved-domain.js";
@@ -10,7 +10,7 @@ function trimAdjacentPlanes<S extends MeshSolid<S>>(
   scope: MeshOperations<S>,
   solid: S,
   face: Face,
-  body: Body,
+  body: BodyGeometry,
 ): S {
   let result = solid;
   for (const adjacent of body.faces) {
@@ -40,7 +40,7 @@ function trimAdjacentPlanes<S extends MeshSolid<S>>(
 
 export function threadDomain<S extends MeshSolid<S>>(
   scope: MeshOperations<S>,
-  body: Body,
+  body: BodyGeometry,
   faces: readonly Face[],
   geometry: { band: ExportMesh; masks: ExportMesh[] | null; tolerance: number },
 ): S {

@@ -65,8 +65,8 @@ export function nativeFlags() {
     (process.platform === "darwin" ? (process.arch === "x64" ? "x86_64" : process.arch) : "");
   return [
     ...(architecture ? [`-DCMAKE_OSX_ARCHITECTURES=${architecture}`] : []),
-    ...(process.env.MACOSX_DEPLOYMENT_TARGET
-      ? [`-DCMAKE_OSX_DEPLOYMENT_TARGET=${process.env.MACOSX_DEPLOYMENT_TARGET}`]
+    ...(process.platform === "darwin" || process.env.MACOSX_DEPLOYMENT_TARGET
+      ? [`-DCMAKE_OSX_DEPLOYMENT_TARGET=${process.env.MACOSX_DEPLOYMENT_TARGET || "14.0"}`]
       : []),
     ...(process.env.CMAKE_CXX_COMPILER_LAUNCHER
       ? [`-DCMAKE_CXX_COMPILER_LAUNCHER=${process.env.CMAKE_CXX_COMPILER_LAUNCHER}`]

@@ -38,7 +38,7 @@ void matchEdges(Result& result, const Edit& edit, const TopTools_IndexedMapOfSha
 }
 }
 Result reconstruct(const Edit& edit, const std::vector<SourceEntity>& replacements) {
-    BRepBuilderAPI_Sewing sewing(tolerance);
+    BRepBuilderAPI_Sewing sewing(boundaryDistanceMm);
     std::vector<SourceEntity> expected;
     for (const auto& entity : edit.body->entities) {
         if (entity.shape.ShapeType() != TopAbs_FACE) continue;

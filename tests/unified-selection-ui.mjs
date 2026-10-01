@@ -7,6 +7,7 @@ import { trackballRoute } from "./ui-camera-trackball.mjs";
 import { at, click, drag, inspect, reset } from "./ui-helpers.mjs";
 import { modelFrustumSelectionRoute } from "./ui-model-frustum-selection.mjs";
 import { pointChoiceRoute } from "./ui-point-choice.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 import { typedSelectionRoute } from "./ui-typed-selection.mjs";
 
@@ -129,10 +130,11 @@ async function overlapSelection(page) {
     .click({ modifiers: ["Meta"] });
   assert.equal((await inspect(page)).selectedCurves.length, 4);
 }
+const names = runtimeNames();
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
-  for (const name of ["chromium", "webkit", "electron"]) {
+  for (const name of names) {
     let browser, app;
     try {
       let page;

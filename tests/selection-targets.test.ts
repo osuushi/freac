@@ -3,7 +3,8 @@ import test from "node:test";
 import { emptySketch } from "../src/sketch/document.js";
 import { rectangle } from "../src/sketch/geometry.js";
 import { planes } from "../src/sketch/planes.js";
-import { SelectedTargets, targetKey } from "../src/sketch/selected-targets.js";
+import { SelectedTargets } from "../src/sketch/selected-targets.js";
+import { targetKey } from "../src/sketch/selection-target.js";
 
 test("point and whole-edge targets remain distinct and ordered across selection restore", () => {
   const selection = new SelectedTargets();

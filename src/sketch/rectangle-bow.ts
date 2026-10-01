@@ -1,15 +1,14 @@
 import { constraintCurves } from "./constraint-geometry.js";
-import {
-  type Arc,
-  type Constraint,
-  type Segment,
-  type Sketch,
-  validateSketch,
-} from "./document.js";
+import type { Arc, Constraint, Segment, Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
+import { validateSketch } from "./sketch-validation.js";
 
 export function rectangleBowSide(editor: SketchEditor): Segment | undefined {
-  if (editor.selectionOwners.size !== 1 || editor.selectedPoint || !editor.rectangleContext)
+  if (
+    editor.selectionOwners.size !== 1 ||
+    editor.selected.firstPointKey ||
+    !editor.rectangleContext
+  )
     return undefined;
   return editor.sketch?.curves.find(
     (c): c is Segment => c.kind === "segment" && editor.selectionOwners.has(c.id),

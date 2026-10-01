@@ -1,8 +1,9 @@
 import type { Body, Extrusion, LiftSource, Revolution } from "../model/body.js";
+import { exactBodies } from "../model/exact-body.js";
 import { type Loft, validateLoft } from "../model/loft.js";
 import type { PathSweep } from "../model/path-sweep.js";
 import type { SketchDocument } from "../sketch/document.js";
-import type { PlaneFrame } from "../sketch/planes.js";
+import { type PlaneFrame, parallelNormals, planeNormal, type Vector } from "../sketch/planes.js";
 import { profilesFor } from "../sketch/profiles.js";
 import { boundary } from "./profile-boundary.js";
 
@@ -12,7 +13,7 @@ function profileInput(
   bodies: readonly Body[],
   parallel = true,
 ) {
-  let direction: number[] | undefined;
+  let direction: Vector | undefined;
   const profiles = sources.map((source) => {
     let frame: PlaneFrame;
     let profile:
@@ -37,17 +38,8 @@ function profileInput(
         holes: region.holes.map((hole) => boundary(hole, frame)),
       };
     }
-    const { u, v } = frame;
-    const normal = [
-      u[1] * v[2] - u[2] * v[1],
-      u[2] * v[0] - u[0] * v[2],
-      u[0] * v[1] - u[1] * v[0],
-    ];
-    if (
-      parallel &&
-      direction &&
-      Math.abs(direction.reduce((sum, n, i) => sum + n * normal[i], 0)) < 1 - 1e-7
-    )
+    const normal = planeNormal(frame);
+    if (parallel && direction && !parallelNormals(direction, normal))
       throw new Error("Selected profiles must have parallel planes");
     direction ??= normal;
     return parallel ? profile : { ...profile, frame };
@@ -56,12 +48,7 @@ function profileInput(
   return {
     normal: direction,
     profiles,
-    bodies: bodies.map(({ id, brep, faces, edges }) => ({
-      id,
-      brep,
-      faces: faces.map(({ id, signature }) => ({ id, signature })),
-      edges: edges.map(({ id, signature }) => ({ id, signature })),
-    })),
+    bodies: exactBodies(bodies),
   };
 }
 
@@ -72,7 +59,7 @@ export function kernelInput(
 ) {
   return {
     ...profileInput(document, extrusion.sources, bodies),
-    kind: "extrude",
+    kind: "extrude" as const,
     mode: extrusion.mode,
     distance: extrusion.distance,
     symmetric: extrusion.symmetric,
@@ -90,7 +77,7 @@ export function revolveInput(
 ) {
   return {
     ...profileInput(document, operation.sources, bodies),
-    kind: "revolve",
+    kind: "revolve" as const,
     mode: operation.mode,
     targets: operation.targets,
     eligibleTargets: operation.eligibleTargets,
@@ -107,7 +94,7 @@ export function pathSweepInput(
 ) {
   return {
     ...profileInput(document, operation.sources, bodies),
-    kind: "path-sweep",
+    kind: "path-sweep" as const,
     path: operation.path,
     mode: operation.mode,
     targets: operation.targets,

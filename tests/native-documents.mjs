@@ -14,6 +14,21 @@ export async function launchElectron(options) {
       ...options,
       args: [...options.args, `--user-data-dir=${directory}`],
     });
+    const close = app.close.bind(app);
+    app.close = async () => {
+      let timedOut = false;
+      const timeout = setTimeout(() => {
+        timedOut = true;
+        app.process().kill("SIGKILL");
+      }, 10000);
+      try {
+        await close();
+        if (timedOut) throw new Error("Owned Electron UI cleanup timed out");
+      } finally {
+        clearTimeout(timeout);
+        await rm(directory, { recursive: true, force: true });
+      }
+    };
     await app.evaluate(({ dialog }) => {
       dialog.showMessageBox = async () => ({ response: 2 });
     });
@@ -22,14 +37,6 @@ export async function launchElectron(options) {
       const page = await firstWindow(...args);
       sessions.set(page, { app, directory });
       return page;
-    };
-    const close = app.close.bind(app);
-    app.close = async () => {
-      try {
-        await close();
-      } finally {
-        await rm(directory, { recursive: true, force: true });
-      }
     };
     return app;
   } catch (error) {

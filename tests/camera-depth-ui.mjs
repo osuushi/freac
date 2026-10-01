@@ -6,6 +6,7 @@ import { createServer } from "vite";
 import { launchElectron, openDocument } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 // Supply a founder Capture fixture; geometry enters via the ordinary Open command.
@@ -99,7 +100,7 @@ async function route(page, name) {
   );
 }
 await mkdir(".cache/sketch-review", { recursive: true });
-const name = process.env.FREAC_TEST_BROWSER ?? "chromium";
+const [name] = runtimeNames(["chromium", "webkit", "electron"], ["chromium"]);
 let server, browser, app;
 try {
   let page;

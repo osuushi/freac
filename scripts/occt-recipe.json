@@ -1,0 +1,10 @@
+{
+  "version": "7.9.3",
+  "commit": "a016080bf6738d6aeae020badee4e888ad1540a5",
+  "sha256": "c533f2667b59921bd6bd40ce82e7b9900b0289ccc731af5fdeeba097de80ef0f",
+  "adaptation": {
+    "file": "src/BRepOffset/BRepOffset_MakeOffset.cxx",
+    "original": "BRepOffset_Offset OF(E, EOn1, EOn2, CurOffset, E1f, E1l);",
+    "replacement": "// Freac (2026-09-23): shared-boundary precision for rounded offset joins.\n          BRepOffset_Offset OF(E, EOn1, EOn2, CurOffset, E1f, E1l, false, 1e-7);"
+  }
+}

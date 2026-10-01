@@ -1,8 +1,8 @@
 import { arcCircle, onArc } from "./arc-geometry.js";
 import { bezierIntersections } from "./bezier-intersections.js";
 import type { Circle, Curve, Segment } from "./document.js";
-import { add, distance, dot, scale, subtract } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { add, distance, dot, scale, subtract } from "./point-math.js";
 
 const tolerance = 1e-7;
 const cross = (a: Point, b: Point) => a.x * b.y - a.y * b.x;

@@ -44,6 +44,7 @@ is a later operation on current geometry, through ordinary Undo.
 | Constraints, Fuse/Unfuse, attachment | [Constraints](architecture/constraints.md), [point links](architecture/point-links.md), [drawing attachments](architecture/drawing-attachments.md) |
 | Trim, offset, regions | [Curve modification](architecture/curve-modification.md) |
 | Native solving and drag targets | [Solver integration](architecture/solver.md) |
+| Native units and geometry budgets | [Numerical geometry](architecture/numerical-geometry.md) |
 | Bodies, modeling selection, tool switching | [Materialized solids](architecture/solids.md), [modeling tools](architecture/modeling-tools.md), [solid-loop design](sketch-solid-loop.md) |
 | Topology inspection and surface replacement | [Composable topology editing](architecture/topology-editing.md) |
 | Loft | [Ordered sections, correspondence and acceptance](architecture/loft.md) |

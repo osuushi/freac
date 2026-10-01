@@ -1,5 +1,6 @@
 #include "kernel.h"
 #include "boolean-periodic.h"
+#include "geometry-policy.h"
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
@@ -50,7 +51,8 @@ void solids(std::vector<Result>& results, const TopoDS_Shape& shape,
     if (shape.IsNull()) return;
     for (TopExp_Explorer e(shape, TopAbs_SOLID); e.More(); e.Next()) {
         validate(e.Current());
-        if (volume(e.Current()) > 1e-12) results.push_back({e.Current(), origins, bodies});
+        if (volume(e.Current()) > geometry_policy::minimumSolidVolumeMm3)
+            results.push_back({e.Current(), origins, bodies});
     }
 }
 

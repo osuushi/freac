@@ -4,8 +4,8 @@ import { circlePoint, closestOnCurve } from "./curve-geometry.js";
 import { curveIntersections } from "./curve-intersections.js";
 import type { Bezier, Curve } from "./document.js";
 import { newId } from "./document.js";
-import { add, distance, dot, scale, subtract } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { add, distance, dot, scale, subtract } from "./point-math.js";
 
 export interface TrimSpan {
   curve: Curve;

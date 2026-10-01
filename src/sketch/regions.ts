@@ -9,8 +9,8 @@ import {
   splitCurveSpans,
 } from "./curve-spans.js";
 import type { Curve } from "./document.js";
-import { distance } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { distance } from "./point-math.js";
 
 export function signedArea(points: readonly Point[]): number {
   return (

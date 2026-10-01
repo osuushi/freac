@@ -1,8 +1,8 @@
 import { arcAt, arcCircle, onArc } from "./arc-geometry.js";
 import { bezierAt, bezierBounds, bezierParameter, bezierSamples } from "./bezier-geometry.js";
 import type { Circle, Curve } from "./document.js";
-import { add, distance, dot, scale, subtract } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { add, distance, dot, scale, subtract } from "./point-math.js";
 
 export function circlePoint(circle: Circle, angle: number): Point {
   return add(circle.center, {

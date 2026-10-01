@@ -1,6 +1,6 @@
 import * as THREE from "three";
+import type { DisplayDocument } from "../model/display-document.js";
 import { boundaryPoints, type CurveSpan } from "./curve-spans.js";
-import type { SketchDocument } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { type PlaneFrame, worldPoint } from "./planes.js";
 import { closedBoundaries } from "./regions.js";
@@ -26,7 +26,7 @@ export function drawRegionFills(editor: SketchEditor): () => void {
   const mesh = new THREE.Mesh(new THREE.BufferGeometry(), material);
   mesh.renderOrder = 5;
   editor.world.scene.add(mesh);
-  let previous: SketchDocument | null = null,
+  let previous: DisplayDocument | null = null,
     previousScale = 0,
     visibility = "";
   let regions: { plane: PlaneFrame; boundaries: CurveSpan[][] }[] = [];

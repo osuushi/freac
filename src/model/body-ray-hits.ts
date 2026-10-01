@@ -1,8 +1,23 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { Point, Vector } from "../sketch/planes.js";
-import type { Body, Face } from "./body.js";
-import { featureEdges } from "./feature-edges.js";
+import type { BodyGeometry, Face } from "./body.js";
+
+const bounds = new WeakMap<Face, THREE.Box3>();
+// Conservative millimeter padding avoids rejecting boundary rays after projection roundoff.
+const boundsPadding = 1e-7;
+function faceBounds(face: Face): THREE.Box3 {
+  let box = bounds.get(face);
+  if (!box) {
+    box = new THREE.Box3();
+    const point = new THREE.Vector3();
+    for (let i = 0; i < face.vertices.length; i += 3)
+      box.expandByPoint(point.fromArray(face.vertices, i));
+    box.expandByScalar(boundsPadding);
+    bounds.set(face, box);
+  }
+  return box;
+}
 
 export function screenRay(editor: SketchEditor, screen: Point): THREE.Ray {
   const rect = editor.world.canvas.getBoundingClientRect(),
@@ -17,7 +32,7 @@ export function screenRay(editor: SketchEditor, screen: Point): THREE.Ray {
   return caster.ray;
 }
 export function faceRayHits(
-  bodies: readonly Body[],
+  bodies: readonly BodyGeometry[],
   ray: THREE.Ray,
   camera: THREE.Vector3,
   clipping: readonly THREE.Plane[] = [],
@@ -29,6 +44,7 @@ export function faceRayHits(
     hit = new THREE.Vector3();
   for (const body of bodies)
     for (const face of body.faces) {
+      if (!ray.intersectsBox(faceBounds(face))) continue;
       let depth = Infinity;
       for (let i = 0; i < face.vertices.length; i += 9) {
         a.fromArray(face.vertices, i);
@@ -46,7 +62,7 @@ export function faceRayHits(
 }
 /** Curved faces need the normal next to this edge point, not a face-wide normal. */
 export function edgeFacesCamera(
-  body: Body,
+  body: BodyGeometry,
   edge: string,
   point: Vector,
   direction: THREE.Vector3,
@@ -74,44 +90,4 @@ function localFaceFacing(face: Face, point: Vector, direction: THREE.Vector3): b
     distance = Math.min(distance, d);
   }
   return front;
-}
-export function edgeRayHits(editor: SketchEditor, screen: Point, bodies: readonly Body[]) {
-  const ray = screenRay(editor, screen),
-    camera = editor.world.camera.position;
-  const hits: { body: string; edge: string; depth: number; point: Vector; distance: number }[] = [];
-  for (const body of bodies)
-    for (const edge of featureEdges(body)) {
-      let best: (typeof hits)[number] | null = null;
-      for (let i = 0; i + 3 < edge.points.length; i += 3) {
-        const a = new THREE.Vector3().fromArray(edge.points, i),
-          b = new THREE.Vector3().fromArray(edge.points, i + 3);
-        const A = editor.world.project(a.toArray() as Vector),
-          B = editor.world.project(b.toArray() as Vector);
-        const dx = B.x - A.x,
-          dy = B.y - A.y;
-        const t = Math.max(
-          0,
-          Math.min(1, ((screen.x - A.x) * dx + (screen.y - A.y) * dy) / (dx * dx + dy * dy || 1)),
-        );
-        const distance = Math.hypot(screen.x - A.x - dx * t, screen.y - A.y - dy * t);
-        if (distance > 7) continue;
-        const point = a.lerp(b, t),
-          depth = point.distanceTo(camera);
-        if (!editor.world.visiblePoint(point)) continue;
-        if (
-          !best ||
-          distance < best.distance - 0.1 ||
-          (Math.abs(distance - best.distance) <= 0.1 && depth < best.depth)
-        )
-          best = {
-            body: body.id,
-            edge: edge.id,
-            depth,
-            distance,
-            point: point.toArray() as Vector,
-          };
-      }
-      if (best && edgeFacesCamera(body, edge.id, best.point, ray.direction)) hits.push(best);
-    }
-  return hits.sort((a, b) => a.depth - b.depth);
 }

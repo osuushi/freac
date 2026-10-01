@@ -1,5 +1,5 @@
 import type { Arc, Segment, Sketch } from "./document.js";
-import { dot, subtract } from "./geometry.js";
+import { dot, subtract } from "./point-math.js";
 import { closedBoundaries } from "./regions.js";
 
 // Signs describe the side of each a→b chord's left normal. Matching signs in

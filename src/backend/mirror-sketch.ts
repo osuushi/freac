@@ -1,11 +1,6 @@
 import { type MirrorOperation, reflectPoint } from "../model/mirror.js";
-import {
-  type Constraint,
-  type Curve,
-  newId,
-  type Sketch,
-  validateSketch,
-} from "../sketch/document.js";
+import { type Constraint, type Curve, newId, type Sketch } from "../sketch/document.js";
+import { validateSketch } from "../sketch/sketch-validation.js";
 
 type Operation = Extract<MirrorOperation, { kind: "sketch" }>;
 function references(c: Constraint): string[] {

@@ -2,15 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { bezierSpan } from "../src/sketch/bezier-geometry.js";
-import {
-  type Bezier,
-  type Circle,
-  emptySketch,
-  newId,
-  validateSketch,
-} from "../src/sketch/document.js";
+import { type Bezier, type Circle, emptySketch, newId } from "../src/sketch/document.js";
 import { segment } from "../src/sketch/geometry.js";
 import { planes } from "../src/sketch/planes.js";
+import { validateSketch } from "../src/sketch/sketch-validation.js";
 import { trimOverlappingSketch } from "../src/sketch/trim-edit.js";
 import { spanCurve, trimAt } from "../src/sketch/trim-geometry.js";
 

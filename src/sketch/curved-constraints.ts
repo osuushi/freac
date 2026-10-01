@@ -87,7 +87,7 @@ export class CurvedConstraints {
       pair.length !== 2 ||
       e.selectionOwners.size !== 2 ||
       pair.every((c) => c.kind === "segment") ||
-      e.selectedPoint
+      e.selected.firstPointKey
     )
       return "Select two compatible sketch curves";
     if (kind === "concentric" && pair.some((c) => c.kind === "segment" || c.kind === "bezier"))

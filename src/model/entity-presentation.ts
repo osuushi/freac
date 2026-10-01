@@ -1,10 +1,11 @@
 import type { SketchDocument } from "../sketch/document.js";
+import type { DisplayDocument } from "./display-document.js";
 
 export interface EntityPresentation {
   readonly id: string;
   readonly name: string;
 }
-export function entityRows(document: SketchDocument, ids: readonly string[], prefix: string) {
+export function entityRows(document: DisplayDocument, ids: readonly string[], prefix: string) {
   const saved = document.entityPresentation ?? [];
   const rows = ids.map((id, index) => ({
     id,

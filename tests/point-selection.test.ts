@@ -3,9 +3,9 @@ import test from "node:test";
 import { Color } from "three";
 import { emptySketch } from "../src/sketch/document.js";
 import { rectangle, segment } from "../src/sketch/geometry.js";
-import { pointHits } from "../src/sketch/picking.js";
 import { planes } from "../src/sketch/planes.js";
 import { coloredCurve } from "../src/sketch/point-colors.js";
+import { pointHits } from "../src/sketch/point-query.js";
 import { colocated, pointBranches } from "../src/sketch/point-selection.js";
 
 test("point branches distinguish rectangle corners, edges and independent endpoints", () => {

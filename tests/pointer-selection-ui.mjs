@@ -6,6 +6,7 @@ import { plate } from "./ui-body-fillet.mjs";
 import { bodyMultiselectRoute } from "./ui-body-multiselect.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { modelFrustumSelectionRoute } from "./ui-model-frustum-selection.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 
 async function mouseSelection(page, name) {
   const { center, top } = await plate(page);
@@ -26,10 +27,11 @@ async function mouseSelection(page, name) {
   await modelFrustumSelectionRoute(page, name);
   console.log(name, "mouse body double-click, face selection/entry and marquee passed");
 }
+const names = runtimeNames();
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
-  for (const name of ["chromium", "webkit", "electron"]) {
+  for (const name of names) {
     let browser, app;
     try {
       let page;

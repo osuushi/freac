@@ -1,8 +1,9 @@
 import { numericConstraints, numericValue } from "../sketch/constraint-geometry.js";
 import type { Sketch } from "../sketch/document.js";
 import type { EditIntent } from "../sketch/edit-intent.js";
-import { connectedSelection, distance } from "../sketch/geometry.js";
+import { connectedSelection } from "../sketch/geometry.js";
 import { coincidentPoints } from "../sketch/line-edit.js";
+import { distance } from "../sketch/point-math.js";
 import { tangentJunction } from "../sketch/tangent-junction.js";
 import { intentTargets } from "./intent-targets.js";
 import { curvePoints, solverLayout } from "./solver-geometry.js";

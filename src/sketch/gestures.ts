@@ -1,20 +1,24 @@
 import type { InteractionLease } from "./active-interaction.js";
 import { curveBounds } from "./curve-geometry.js";
-import { validateSketch } from "./document.js";
 import { dragIntent } from "./drag-intent.js";
-import { beginDrag, type Drag, resolveDrag } from "./drag-state.js";
+import { beginDrag, type Drag, type Quantity, resolveDrag } from "./drag-state.js";
 import { updateDrag } from "./drag-update.js";
 import type { SketchEditor } from "./editor.js";
-import { connectedSelection, distance } from "./geometry.js";
+import { connectedSelection } from "./geometry.js";
 import { GestureSolve } from "./gesture-solve.js";
-import { hitIds, pick, pointKey } from "./picking.js";
-import { choosePoints, chosenPoints, openPointMenu, selectedPointHits } from "./point-selection.js";
-import { pointTarget } from "./selected-targets.js";
+import type { DragQuantityEdit } from "./numeric-edit.js";
+import { pick } from "./picking.js";
+import { distance } from "./point-math.js";
+import { pointKey } from "./point-query.js";
+import { choosePoints, chosenPoints, openPointMenu } from "./point-selection.js";
 import { selectHit } from "./selection-input.js";
+import { pointTarget } from "./selection-target.js";
+import { hitIds } from "./sketch-hit.js";
+import { validateSketch } from "./sketch-validation.js";
 import { snapped } from "./snapping.js";
 import { axisQuantity } from "./transform-handles.js";
 
-export class PointerGestures {
+export class PointerGestures implements DragQuantityEdit {
   private drag: Drag | null = null;
   private solve: GestureSolve | null = null;
   private interaction: InteractionLease | null = null;
@@ -28,22 +32,6 @@ export class PointerGestures {
   }
   constructor(private readonly editor: SketchEditor) {
     const options = { signal: this.abort.signal };
-    editor.editDuringDrag = (quantity, value) => {
-      if (!this.drag) return;
-      const previous = this.drag.quantities[quantity];
-      this.drag.quantities[quantity] = value;
-      try {
-        const candidate = updateDrag(editor, this.drag, this.drag.lastPoint, this.drag.bypass);
-        validateSketch(candidate, false);
-        this.submit(candidate);
-        this.drag.valid = true;
-      } catch (error) {
-        if (previous === undefined) delete this.drag.quantities[quantity];
-        else this.drag.quantities[quantity] = previous;
-        throw error;
-      }
-      editor.refresh();
-    };
     this.canvas.addEventListener("pointerdown", this.start, options);
     this.canvas.addEventListener("pointermove", this.move, options);
     this.canvas.addEventListener("pointerup", this.release, options);
@@ -64,6 +52,22 @@ export class PointerGestures {
       },
       options,
     );
+  }
+  editQuantity(quantity: Quantity, value: number): void {
+    if (!this.drag) throw new Error("No active geometry drag");
+    const previous = this.drag.quantities[quantity];
+    this.drag.quantities[quantity] = value;
+    try {
+      const candidate = updateDrag(this.editor, this.drag, this.drag.lastPoint, this.drag.bypass);
+      validateSketch(candidate, false);
+      this.submit(candidate);
+      this.drag.valid = true;
+    } catch (error) {
+      if (previous === undefined) delete this.drag.quantities[quantity];
+      else this.drag.quantities[quantity] = previous;
+      throw error;
+    }
+    this.editor.refresh();
   }
   private finish(): void {
     const interaction = this.interaction;
@@ -99,7 +103,7 @@ export class PointerGestures {
     event.preventDefault();
     this.failure = "";
     this.canvas.focus();
-    await this.editor.commitNumeric();
+    await this.editor.numeric.commit();
     this.drag = beginDrag(this.editor, event);
     if (this.drag) {
       const interaction = this.editor.interactions.acquire("pointer", this.cancel);
@@ -136,7 +140,7 @@ export class PointerGestures {
           : editor.hover &&
               (editor.tool === "select" ||
                 !pointKey(editor.hover) ||
-                pointKey(editor.hover) === editor.selectedPoint)
+                pointKey(editor.hover) === editor.selected.firstPointKey)
             ? "move"
             : editor.tool === "select"
               ? "default"
@@ -216,7 +220,8 @@ export class PointerGestures {
         if (drag.toggle && selected.has(curve.id)) selected.delete(curve.id);
         else selected.add(curve.id);
     }
-    if (drag.additive) choosePoints(this.editor, selectedPointHits(this.editor), selected);
+    if (drag.additive)
+      choosePoints(this.editor, this.editor.selected.pointHits(this.editor.sketch), selected);
     else this.editor.select(selected);
   }
   private release = async (event: PointerEvent): Promise<void> => {
@@ -227,7 +232,7 @@ export class PointerGestures {
     this.move(event);
     interaction.wait();
     interaction.releaseCapture();
-    await editor.commitNumeric();
+    await editor.numeric.commit();
     const solved = this.solve ? await this.solve.flush() : true;
     if (this.drag !== drag || !interaction.close()) return;
     if (!drag.moved && drag.hits[0]) {
@@ -281,11 +286,11 @@ export class PointerGestures {
     this.finish();
     editor.hover = null;
     editor.refresh();
-    if (!drag.moved && drag.hits[0]?.kind === "bow") editor.focusQuantity("radius");
+    if (!drag.moved && drag.hits[0]?.kind === "bow") editor.numeric.focus("radius");
     if (!drag.moved && drag.hits[0]?.kind === "translate")
-      editor.focusQuantity(axisQuantity(drag.hits[0].axis), drag.symmetric);
+      editor.numeric.focus(axisQuantity(drag.hits[0].axis), drag.symmetric);
     if (!drag.moved && drag.hits[0]?.kind === "rotate")
-      editor.focusQuantity("angle", drag.symmetric);
+      editor.numeric.focus("angle", drag.symmetric);
   };
   dispose(): void {
     this.cancelAndDraw();

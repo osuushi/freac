@@ -18,12 +18,13 @@ import {
 import { prepareAgentSkills } from "./agent-skills.js";
 import { AgentWorkspace } from "./agent-workspace.js";
 import { codexResumeArgs, copyCodexLocalState } from "./codex-workspace.js";
+import { nativeExecutable } from "./native-paths.js";
 import { sessionDialogs as dialog } from "./session-dialogs.js";
 import { recoverWorkspaceFiles } from "./workspace-recovery.js";
 
 export class AgentSession {
   canUseDesktop = () => true;
-  private process = new AgentProcess();
+  private process = new AgentProcess(nativeExecutable("agent-scope"));
   private settings = new AgentSettings(app.getPath("userData"));
   readonly workspace = new AgentWorkspace(join(app.getPath("userData"), "agent", "workspaces"));
   private codexHome: string | null = null;
@@ -208,7 +209,7 @@ export class AgentSession {
             ]
           : [];
       const executable = await agentExecutable(preferences.executable, cwd, env);
-      this.process.start(
+      await this.process.start(
         executable,
         [
           ...(preferences.preset === "codex" ? (resume.length ? resume : ["--cd", cwd]) : []),
@@ -260,7 +261,7 @@ export class AgentSession {
     }
   }
   reset(): void {
-    this.process = new AgentProcess();
+    this.process = new AgentProcess(nativeExecutable("agent-scope"));
     this.window?.webContents.setIgnoreMenuShortcuts(false);
   }
   endReplacement(): void {

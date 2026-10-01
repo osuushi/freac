@@ -1,4 +1,4 @@
-import type { SketchDocument } from "./document.js";
+import type { DisplayDocument } from "../model/display-document.js";
 
 type Kind =
   | "entity-reorder"
@@ -31,6 +31,10 @@ type Kind =
   | "offset"
   | "trim"
   | "numeric";
+interface InteractionCapabilities {
+  /** Captured gestures always exclude navigation, including otherwise settled tools. */
+  navigation: "blocked" | "when-released";
+}
 export class ActiveInteraction {
   private active: InteractionLease | null = null;
   constructor(private changed: () => void) {}
@@ -38,46 +42,22 @@ export class ActiveInteraction {
     return this.active;
   }
   get dragging(): boolean {
-    return (
-      !!this.active &&
-      this.active.kind !== "mirror" &&
-      this.active.kind !== "numeric" &&
-      this.active.kind !== "trim" &&
-      this.active.kind !== "use-edge" &&
-      this.active.kind !== "projection" &&
-      this.active.kind !== "cleanup" &&
-      (![
-        "loft",
-        "revolve",
-        "scale",
-        "construction-plane",
-        "cross-section",
-        "plane-cut",
-        "extrude",
-        "body-move",
-        "body-boolean",
-        "body-edge-finish",
-        "face-offset",
-        "shell",
-        "face-move",
-        "edge-move",
-      ].includes(this.active.kind) ||
-        this.active.captured)
-    );
+    return !!this.active && (!this.active.navigationAllowed || this.active.captured);
   }
   get finishing(): boolean {
     return !!this.active && this.active.phase !== "editing";
   }
-  get candidate(): SketchDocument | null {
+  get candidate(): DisplayDocument | null {
     return this.active?.candidate ?? null;
   }
   acquire(
     kind: Kind,
     cancel: () => Promise<void> | void,
     finish?: () => Promise<boolean>,
+    capabilities: InteractionCapabilities = { navigation: "blocked" },
   ): InteractionLease | null {
     if (this.active) return null;
-    this.active = new InteractionLease(this, kind, cancel, finish);
+    this.active = new InteractionLease(this, kind, cancel, finish, capabilities);
     return this.active;
   }
   async cancel(): Promise<void> {
@@ -96,8 +76,9 @@ export class ActiveInteraction {
   }
 }
 export class InteractionLease {
+  readonly navigationAllowed: boolean;
   phase: "editing" | "waiting" | "closing" = "editing";
-  candidate: SketchDocument | null = null;
+  candidate: DisplayDocument | null = null;
   private captureTarget: { element: Element; id: number } | null = null;
   private abort = new AbortController();
   constructor(
@@ -105,7 +86,10 @@ export class InteractionLease {
     readonly kind: Kind,
     readonly cancel: () => Promise<void> | void,
     readonly finish?: () => Promise<boolean>,
-  ) {}
+    capabilities: InteractionCapabilities = { navigation: "blocked" },
+  ) {
+    this.navigationAllowed = capabilities.navigation === "when-released";
+  }
   get captured(): boolean {
     return this.captureTarget !== null;
   }
@@ -122,7 +106,7 @@ export class InteractionLease {
     this.phase = "closing";
     return true;
   }
-  show(candidate: SketchDocument | null): void {
+  show(candidate: DisplayDocument | null): void {
     if (this.owner.current === this && (candidate === null || this.phase !== "closing"))
       this.candidate = candidate;
   }

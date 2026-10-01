@@ -25,13 +25,7 @@ if [ "$freac_main_workspace" != "$(pwd -P)" ]; then
   done
   # Consume the installed SDK, never another checkout's mutable CMake build tree.
   freac_sdk="$freac_main_workspace/.cache/kernel/sdk"
-  freac_sdk_matches=true
-  for freac_input in scripts/setup-kernel.mjs scripts/native-inputs.mjs scripts/release/cache-key.mjs; do
-    if ! cmp -s "$freac_input" "$freac_main_workspace/$freac_input"; then
-      freac_sdk_matches=false
-    fi
-  done
-  if [ -z "${OCCT_ROOT:-}" ] && [ "$freac_sdk_matches" = true ] && [ -f "$freac_sdk/.freac-sdk" ] && [ -f "$freac_sdk/lib/cmake/opencascade/OpenCASCADEConfig.cmake" ]; then
+  if [ -z "${OCCT_ROOT:-}" ] && [ -f "$freac_sdk/.freac-sdk.json" ] && node scripts/sdk-provenance.mjs "$freac_sdk"; then
     if lipo "$freac_sdk/lib/libTKernel.dylib" -verify_arch $CMAKE_OSX_ARCHITECTURES; then
       export OCCT_ROOT="$freac_sdk"
       echo "Using main workspace OCCT SDK: $OCCT_ROOT"
@@ -43,7 +37,8 @@ if [ "$freac_main_workspace" != "$(pwd -P)" ]; then
   fi
 fi
 npm run setup:native
-npm run setup:kernel'''
+npm run setup:kernel
+npm run setup:mesh'''
 
 [[actions]]
 name = "Run Dev"

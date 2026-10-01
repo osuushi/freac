@@ -1,14 +1,13 @@
 import assert from "node:assert/strict";
 import { resolve } from "node:path";
-import { chromium, webkit } from "playwright";
-import { createServer } from "vite";
-import { launchElectron, openDocument, saveDocument } from "./native-documents.mjs";
+import { openDocument, saveDocument } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { drag, inspect, reset, settled } from "./ui-helpers.mjs";
 import { planeCutRoute } from "./ui-plane-cuts.mjs";
 import { planeFaceReferenceRoute } from "./ui-plane-face-reference.mjs";
 import { planePlacementRoute } from "./ui-plane-placement.mjs";
 import { pickPlane } from "./ui-plane-targets.mjs";
+import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function movePlane(page, axis, value) {
@@ -17,9 +16,6 @@ async function movePlane(page, axis, value) {
   await page.getByRole("textbox", { name: `Plane translation ${axis}`, exact: true }).fill(value);
 }
 
-const server = await createServer({ server: { port: 0 } });
-await server.listen();
-await server.watcher.close();
 async function route(page, name) {
   page.setDefaultTimeout(12000);
   const errors = [];
@@ -77,6 +73,8 @@ async function route(page, name) {
   await saveDocument(page, path);
   await openDocument(page, path);
   await settled(page);
+  // Desktop structured cloning retains absent optional keys as undefined;
+  // compare the persisted representation, preserving every geometry/identity value.
   assert.deepEqual(
     JSON.parse(JSON.stringify((await inspect(page)).document)),
     JSON.parse(JSON.stringify({ ...saved, bodies: saved.bodies ?? [] })),
@@ -93,38 +91,8 @@ async function route(page, name) {
   assert.deepEqual(errors, []);
   console.log(name, "plane lifecycle passed");
 }
-try {
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
-    if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
-    const browser = await engine.launch({ headless: true });
-    try {
-      const p = await browser.newPage({ viewport: { width: 1280, height: 850 } });
-      await p.goto(server.resolvedUrls.local[0]);
-      await route(p, name);
-      await planeCutRoute(p, name);
-      await planeFaceReferenceRoute(p, name);
-    } finally {
-      await browser.close();
-    }
-  }
-  if (!process.env.FREAC_TEST_BROWSER || process.env.FREAC_TEST_BROWSER === "electron") {
-    const app = await launchElectron({
-      args: ["."],
-      env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: server.resolvedUrls.local[0] },
-    });
-    try {
-      const p = await app.firstWindow();
-      assert.equal(
-        await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),
-        false,
-      );
-      await route(p, "electron");
-      await planeCutRoute(p, "electron");
-      await planeFaceReferenceRoute(p, "electron");
-    } finally {
-      await app.close();
-    }
-  }
-} finally {
-  await server.close();
-}
+await withUiRuntimes(async (page, name) => {
+  await route(page, name);
+  await planeCutRoute(page, name);
+  await planeFaceReferenceRoute(page, name);
+});

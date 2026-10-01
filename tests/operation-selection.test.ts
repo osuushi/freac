@@ -6,7 +6,7 @@ import { selectionContext } from "../src/model/selection-context.js";
 import { refineSelection } from "../src/model/selection-refinement.js";
 import { defaultModelingTool } from "../src/model/tool-policy.js";
 import type { SketchDocument } from "../src/sketch/document.js";
-import { type ModelingTarget, ModelSelection } from "../src/sketch/model-selection.js";
+import { type ModelingTarget, ModelSelection } from "../src/sketch/model-selection-state.js";
 import { planes } from "../src/sketch/planes.js";
 
 const body = (id: string): Body => ({

@@ -81,7 +81,9 @@ export class BodyMoveControls {
   private open(duplicate: boolean): Session | null {
     const bodies = selectedBodies(this.editor, duplicate ? "duplicate" : "move");
     if (!bodies.length) return null;
-    const lease = this.editor.interactions.acquire("body-move", () => this.cancel());
+    const lease = this.editor.interactions.acquire("body-move", () => this.cancel(), undefined, {
+      navigation: "when-released",
+    });
     if (!lease) return null;
     this.gizmo.input.removeAttribute("aria-label");
     this.session = {

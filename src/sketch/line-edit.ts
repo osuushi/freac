@@ -1,8 +1,9 @@
 import { arcCircle } from "./arc-geometry.js";
 import { moveBezierEnds } from "./bezier-geometry.js";
 import type { PointReference, Sketch } from "./document.js";
-import { distance, segment } from "./geometry.js";
+import { segment } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { distance } from "./point-math.js";
 
 export function appendLine(sketch: Sketch, start: Point, end: Point) {
   const curve = segment(start, end);

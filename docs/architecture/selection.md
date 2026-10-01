@@ -53,6 +53,13 @@ founder feedback update these contracts before further tools depend on them.
   faces use the triangle normal nearest the hit on the edge. Candidates are sorted
   by camera distance, including occluded front-facing geometry. Hidden entities
   are excluded.
+  Ordinary edge picking and the chooser share projected edge segments, clipping
+  and local-facing tests. Ordinary picking additionally checks the covering face
+  at each closest edge point; the chooser retains covered candidates and tests
+  the best segment of each edge. A synchronous pointer probe reuses face hits only
+  for identical screen coordinates within that call. Geometry, camera, clipping
+  and visibility changes always start a fresh probe. Immutable face meshes retain
+  conservative bounds for ray rejection; render triangle indexes remain temporary.
   A disk grows from its center to a fixed circular outline over the hold delay; it indicates elapsed hold time, not
   processing. The delay is currently fixed; a future preferences window can expose it.
   Each choice shows the actual target geometry in the current camera orientation,
@@ -81,6 +88,14 @@ founder feedback update these contracts before further tools depend on them.
   sketch has a local origin distinguishable from the world origin; it does not
   redefine the world axes. Grids and markers must not hide outlines or intercept
   geometry picking; explicit plane-entry targets handle plane selection.
+  Deliberate entry from canonical patches, Tools, selected sketches/faces, saved
+  planes and accepted projections passes through the editor's WorkspaceEntry.
+  It rejects busy, captured or active edits before changing workspace or selection;
+  finish or cancel first. Ordinary modeling clicks may finish a released valid
+  operation before a subsequent entry. History restores its recorded workspace
+  through its existing cancellation/selection route. Navigation capability is
+  declared when each interaction acquires its lease: released modeling tools can
+  pan/orbit, while captured gestures block navigation.
 - R arms Rectangle without choosing a plane. Explicitly enter XY, XZ or YZ.
   Merely viewing a plane does not save an empty sketch. Orbit exits planar editing;
   pan/zoom retain it. Re-entering a plane resumes its first visible coplanar sketch;
@@ -143,6 +158,14 @@ founder feedback update these contracts before further tools depend on them.
   sketch and leaves its plane usable. Both are actual tested controls.
 
 ### Point disambiguation
+
+`selection-target.ts` defines typed targets and their keys; `SelectedTargets` owns
+ordered state and resolves selected point coordinates from the current sketch.
+`point-query.ts` enumerates intrinsic endpoint, midpoint, center and group-handle
+samples without importing viewport picking or Transform controls. Picking owns
+screen tolerances and precedence. Rendering owner IDs remain separate from whole
+curve selection. Modeling selection state and operation policy similarly live in
+`model-selection-state.ts`, apart from viewport face/edge/sketch hit testing.
 
 Click a coincident point location to open a local chooser of incident-edge diagrams.
 The ordinary default includes all colocated point targets. Each stored coincidence

@@ -1,6 +1,6 @@
 import type { QuickJSWASMModule } from "quickjs-emscripten-core";
+import type { DisplayDocument } from "../model/display-document.js";
 import { type ExportMesh, triangleNormal, validateMesh } from "../model/export-mesh.js";
-import type { SketchDocument } from "../sketch/document.js";
 import { type DecoratorDefinition, definitionSettings } from "./definition.js";
 import { gearDefinition, gearManifest } from "./gear-settings.js";
 import { gearDiagnostics, gearPlacement, partitionGears } from "./gear-support.js";
@@ -29,7 +29,7 @@ export interface DecoratorGroup {
   state?: unknown;
 }
 
-export function geometryContext(document: SketchDocument, selection: readonly FaceReference[]) {
+export function geometryContext(document: DisplayDocument, selection: readonly FaceReference[]) {
   const ids = new Set(selection.map((f) => f.body));
   for (const ref of selection)
     if (!document.bodies?.some((b) => b.id === ref.body && b.faces.some((f) => f.id === ref.face)))
@@ -39,7 +39,14 @@ export function geometryContext(document: SketchDocument, selection: readonly Fa
     selection,
     bodies: (document.bodies ?? [])
       .filter((b) => ids.has(b.id))
-      .map(({ brep: _, ...body }) => body),
+      .map(({ id, volume, center, bounds, faces, edges }) => ({
+        id,
+        volume,
+        center,
+        bounds,
+        faces,
+        edges,
+      })),
   };
 }
 
@@ -49,7 +56,7 @@ export class JavaScriptDecorators {
     private runtime: QuickJSWASMModule,
     private enabled: readonly EnabledDefinition[] = [],
   ) {}
-  definition(document: SketchDocument, id: string, version: number): DecoratorDefinition {
+  definition(document: DisplayDocument, id: string, version: number): DecoratorDefinition {
     if (id === gearDefinition && version === 1) return gearManifest;
     const definition = document.decoratorDefinitions?.find(
       (d) => d.id === id && d.version === version,
@@ -64,7 +71,7 @@ export class JavaScriptDecorators {
     return definition;
   }
   invoke(
-    document: SketchDocument,
+    document: DisplayDocument,
     instance: DecoratorInstance,
     hook: string,
     extra = {},
@@ -89,7 +96,7 @@ export class JavaScriptDecorators {
       milliseconds,
     );
   }
-  partition(document: SketchDocument, instance: DecoratorInstance): DecoratorGroup[] {
+  partition(document: DisplayDocument, instance: DecoratorInstance): DecoratorGroup[] {
     const result = this.invoke(document, instance, "partition") as {
       groups?: DecoratorGroup[];
       reason?: string;
@@ -118,7 +125,7 @@ export class JavaScriptDecorators {
       ...(group.state === undefined ? {} : { state: group.state }),
     }));
   }
-  diagnostics(document: SketchDocument, instance: DecoratorInstance): DecoratorDiagnostic[] {
+  diagnostics(document: DisplayDocument, instance: DecoratorInstance): DecoratorDiagnostic[] {
     const result = this.invoke(document, instance, "validate");
     if (!Array.isArray(result) || result.length > 100)
       throw new Error("Invalid decorator diagnostics");
@@ -154,7 +161,7 @@ export class JavaScriptDecorators {
     }
     return result;
   }
-  modifications(document: SketchDocument, instance: DecoratorInstance): MeshModification[] {
+  modifications(document: DisplayDocument, instance: DecoratorInstance): MeshModification[] {
     const error = this.diagnostics(document, instance).find((d) => d.severity === "error");
     if (error) throw new Error(error.message);
     const result = this.invoke(document, instance, "generate", {
@@ -171,7 +178,7 @@ export class JavaScriptDecorators {
     return result;
   }
   preview(
-    document: SketchDocument,
+    document: DisplayDocument,
     instance: DecoratorInstance,
     live = false,
     feedback: PreviewFeedback = { targetMs: 100, history: [] },

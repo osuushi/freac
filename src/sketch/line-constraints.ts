@@ -2,8 +2,8 @@ import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { constraintCurves, geometricRelations } from "./constraint-geometry.js";
 import { type Constraint, newId, type Segment } from "./document.js";
 import type { SketchEditor } from "./editor.js";
-import { distance } from "./geometry.js";
 import { lineDimension } from "./line-edit.js";
+import { distance } from "./point-math.js";
 import { sketchIcon } from "./sketch-icons.js";
 
 type RelationKind = "horizontal" | "vertical" | "parallel" | "equal";

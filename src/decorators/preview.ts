@@ -1,13 +1,18 @@
-import type { SketchDocument } from "../sketch/document.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { isBuiltinDecorator } from "./builtins.js";
 import { PreviewOverlaySurfaces } from "./preview-overlay-surfaces.js";
 import { PreviewQueue } from "./preview-queue.js";
-import { previewFingerprint, previewSignatures } from "./preview-signatures.js";
+import {
+  PreviewSignatureCache,
+  previewFingerprint,
+  previewSignatures,
+} from "./preview-signatures.js";
 
 export function decoratorOverlay(editor: SketchEditor): () => void {
   const surfaces = new PreviewOverlaySurfaces(editor);
-  let previous: SketchDocument | null = null;
+  const signatureCache = new PreviewSignatureCache();
+  let previous: DisplayDocument | null = null;
   let sourcesKey = "";
   let signatureKey = "";
   let currentSignatures = new Map<string, string>();
@@ -37,7 +42,7 @@ export function decoratorOverlay(editor: SketchEditor): () => void {
     const document = editor.display;
     const nextSources = JSON.stringify(editor.store.decoratorSources);
     if (document === previous && nextSources === sourcesKey) return;
-    const signatures = previewSignatures(document, nextSources);
+    const signatures = previewSignatures(document, nextSources, signatureCache);
     const nextSignatureKey = previewFingerprint(signatures, false);
     const live = editor.candidate !== null;
     const needsPreview =

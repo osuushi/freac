@@ -10,9 +10,10 @@ import { at, drag, inspect, settled } from "./ui-helpers.mjs";
 import { orient, pick, readout } from "./ui-measurement.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { clearSelection } from "./ui-reconnection-helpers.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-const name = process.env.FREAC_TEST_BROWSER ?? "electron";
+const [name] = runtimeNames(undefined, ["electron"]);
 let app,
   server,
   browser,

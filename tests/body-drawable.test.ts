@@ -1,0 +1,85 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import * as THREE from "three";
+import { DocumentOwner } from "../src/backend/document-owner.js";
+import { BodyDrawable, sameBodyDrawing } from "../src/model/body-drawable.js";
+import { inspectBodyRendering } from "../src/model/body-render-inspection.js";
+import { planes } from "../src/sketch/planes.js";
+import { prism, square } from "./body-edge-fixtures.js";
+
+test("drawable compatibility uses presentation values rather than IDs or exact-shape identity", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const body = await prism(owner, square);
+    assert.equal(sameBodyDrawing(body, structuredClone(body)), true);
+    const changedTriangle = structuredClone(body);
+    changedTriangle.faces[0].vertices[0] += 1;
+    assert.equal(sameBodyDrawing(body, changedTriangle), false);
+    const changedEdge = structuredClone(body);
+    changedEdge.edges[0].points[0] += 1;
+    assert.equal(sameBodyDrawing(body, changedEdge), false);
+    const splitIdentity = { ...body, id: "split" };
+    assert.equal(sameBodyDrawing(body, splitIdentity), false);
+    const cap = body.faces.find((face) => face.plane?.origin[2] === 10);
+    assert.ok(cap);
+    const offset = await owner.call({
+      kind: "offset-faces",
+      operation: { faces: [{ body: body.id, face: cap.id }], distance: 1 },
+    });
+    assert.equal(offset.error, undefined);
+    const candidate = offset.view.candidate?.bodies?.[0];
+    assert.ok(candidate);
+    assert.equal(candidate.id, body.id);
+    assert.equal(sameBodyDrawing(body, candidate), false);
+  } finally {
+    owner.close();
+  }
+});
+
+test("face styling and source-chain highlighting preserve resources and dispose them once", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const body = await prism(owner, square),
+      counts = { created: 0, disposed: 0 };
+    const drawing = new BodyDrawable(body, counts),
+      scene = new THREE.Scene();
+    scene.add(drawing.group);
+    const original = inspectBodyRendering(scene),
+      cap = body.faces.find((face) => face.plane?.origin[2] === 10);
+    assert.ok(cap);
+    assert.equal(drawing.reuse(structuredClone(body)), true);
+    drawing.style(new Set(), new Set([cap.id]), undefined, { ...planes.XY, origin: [0, 0, 10] });
+    const styled = inspectBodyRendering(scene);
+    assert.equal(styled.faces.find((face) => face.face === cap.id)?.color, "82b5e0");
+    assert.equal(styled.faces.find((face) => face.face === cap.id)?.stencil, 6);
+    assert.deepEqual(
+      styled.faces.map((face) => face.geometry),
+      original.faces.map((face) => face.geometry),
+    );
+    const edges = new Set([body.edges[0].id]);
+    drawing.highlight(body, edges);
+    const highlight = drawing.group.children.find(
+      (object) => object.renderOrder === 20,
+    ) as THREE.Mesh;
+    assert.ok(highlight);
+    let disposed = 0;
+    highlight.geometry.addEventListener("dispose", () => {
+      disposed++;
+    });
+    drawing.highlight(structuredClone(body), edges);
+    assert.equal(
+      drawing.group.children.find((object) => object.renderOrder === 20),
+      highlight,
+    );
+    drawing.highlight(body, new Set());
+    assert.equal(disposed, 1);
+    assert.deepEqual(counts, { created: 6, disposed: 0 });
+    drawing.dispose();
+    drawing.dispose();
+    assert.deepEqual(counts, { created: 6, disposed: 6 });
+    assert.equal(drawing.group.children.length, 0);
+    assert.equal(disposed, 1);
+  } finally {
+    owner.close();
+  }
+});

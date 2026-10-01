@@ -1,10 +1,10 @@
 import type { Curve, Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
-import { distance } from "./geometry.js";
-import { type Hit, pointHits, pointKey } from "./picking.js";
 import type { Point } from "./planes.js";
-
-import { pointTarget, type SelectionTarget, targetKey } from "./selected-targets.js";
+import { distance } from "./point-math.js";
+import { pointHits, pointKey } from "./point-query.js";
+import { pointTarget, type SelectionTarget, targetKey } from "./selection-target.js";
+import type { Hit } from "./sketch-hit.js";
 
 export interface PointMenu {
   hits: Hit[];
@@ -18,7 +18,7 @@ export function chosenPoints(editor: SketchEditor, hit: Hit): Hit[] {
   const sketch = editor.sketch;
   if (!sketch) return [];
   const all = colocated(sketch, hit);
-  const chosen = all.filter((p) => editor.pointChoice?.has(pointKey(p) ?? ""));
+  const chosen = all.filter((p) => editor.selected.pointKeys?.has(pointKey(p) ?? ""));
   return chosen.length ? chosen : all;
 }
 export function openPointMenu(
@@ -28,7 +28,7 @@ export function openPointMenu(
   inspect = false,
 ): void {
   if (!editor.sketch || !pointKey(hit)) return;
-  const selected = selectedPointHits(editor);
+  const selected = editor.selected.pointHits(editor.sketch);
   const separated =
     selected.length > 1 && selected.some((p) => distance(p.point, hit.point) > 1e-7);
   const hits =
@@ -83,7 +83,7 @@ export function choosePoints(
   editor.creationArmed = false;
 }
 export function pointSelected(editor: SketchEditor, key: string): boolean {
-  return editor.pointChoice?.has(key) ?? editor.selectedPoint === key;
+  return editor.selected.pointKeys?.has(key) ?? editor.selected.firstPointKey === key;
 }
 export interface PointBranch {
   curve: string;
@@ -106,16 +106,6 @@ export function pointBranches(hit: Hit): PointBranch[] {
         ];
   }
   return [];
-}
-
-export function selectedPointHits(editor: SketchEditor, sketch = editor.sketch): Hit[] {
-  if (!sketch) return [];
-  const available = pointHits(sketch);
-  const keys = editor.pointChoice ?? new Set(editor.selectedPoint ? [editor.selectedPoint] : []);
-  return [...keys].flatMap((key) => {
-    const hit = available.find((p) => pointKey(p) === key);
-    return hit ? [hit] : [];
-  });
 }
 
 /** The two distinct edges at the one selected physical degree-two endpoint junction. */
@@ -142,7 +132,7 @@ export function tangentPointPair(sketch: Sketch, selected: readonly Hit[]): [Cur
   return curves.length === 2 && curves[0].id !== curves[1].id ? [curves[0], curves[1]] : null;
 }
 export function togglePoint(editor: SketchEditor, hit: Hit, toggle = true): void {
-  const selected = selectedPointHits(editor),
+  const selected = editor.selected.pointHits(editor.sketch),
     key = pointKey(hit);
   choosePoints(
     editor,

@@ -65,6 +65,7 @@ export class BooleanControls {
       "body-boolean",
       () => this.cancel(),
       () => this.finish(),
+      { navigation: "when-released" },
     );
     if (!this.lease) return;
     this.operation = { ids: [], mode, keepOriginals: false };

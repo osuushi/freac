@@ -1,7 +1,7 @@
 import { curveDistance } from "./curve-geometry.js";
 import { type FilletCorner, filletShape } from "./fillet-geometry.js";
-import { distance, dot, subtract } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { distance, dot, subtract } from "./point-math.js";
 
 // Minimize distance to the finite arc, not its midpoint or supporting circle.
 // Sampling brackets the separate feasible intervals of curved/consumed supports.

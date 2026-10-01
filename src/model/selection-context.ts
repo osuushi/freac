@@ -1,5 +1,5 @@
 import type { SketchDocument } from "../sketch/document.js";
-import type { ModelingTarget } from "../sketch/model-selection.js";
+import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import type { Body } from "./body.js";
 
 export type FaceTarget = Extract<ModelingTarget, { kind: "face" }>;

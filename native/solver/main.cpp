@@ -50,18 +50,17 @@ struct Calculation {
         result.p2 = points.at(index + 1);
         return result;
     }
-    void add(const Tree& item, int tag) {
-        const auto kind = item.get<std::string>("kind");
+    bool addCurveRelation(const std::string& kind, const Tree& item, int tag) {
         if (kind == "tangent-normal") {
             addNormal(item, tag);
-            return;
+            return true;
         }
         if (kind == "tangent-circles") {
             system.addConstraintTangentCircumf(
                 points.at(item.get<size_t>("a")), points.at(item.get<size_t>("b")),
                 &radii.at(item.get<size_t>("radius")), &radii.at(item.get<size_t>("otherRadius")),
                 item.get<bool>("internal"), tag);
-            return;
+            return true;
         }
         if (kind == "tangent-line") {
             auto edge = line(item, "a");
@@ -69,7 +68,7 @@ struct Calculation {
             circle.center = points.at(item.get<size_t>("b"));
             circle.rad = &radii.at(item.get<size_t>("radius"));
             system.addConstraintTangent(edge, circle, item.get<int>("side") > 0, tag);
-            return;
+            return true;
         }
         if (kind == "corner-angle") {
             auto first = line(item, "a"), second = line(item, "b");
@@ -79,20 +78,25 @@ struct Calculation {
             if (!std::isfinite(value)) throw std::runtime_error("Invalid angle");
             constants.push_back(value);
             system.addConstraintL2LAngle(first, second, &constants.back(), tag);
-            return;
+            return true;
         }
         if (kind == "on-line") {
             auto edge = line(item, "b");
             system.addConstraintPointOnLine(points.at(item.get<size_t>("a")), edge, tag);
-            return;
+            return true;
         }
         if (kind == "on-circle") {
             GCS::Circle circle;
             circle.center = points.at(item.get<size_t>("b"));
             circle.rad = &radii.at(item.get<size_t>("radius"));
             system.addConstraintPointOnCircle(points.at(item.get<size_t>("a")), circle, tag);
-            return;
+            return true;
         }
+        return false;
+    }
+    void add(const Tree& item, int tag) {
+        const auto kind = item.get<std::string>("kind");
+        if (addCurveRelation(kind, item, tag)) return;
         if (kind == "radius") {
             const double value = item.get<double>("value");
             if (!std::isfinite(value) || value <= 0) throw std::runtime_error("Invalid radius target");

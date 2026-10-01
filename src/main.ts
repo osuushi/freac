@@ -10,7 +10,6 @@ import { DocumentSession } from "./host/document-session.js";
 import { installFixtureCapture } from "./host/fixture-capture.js";
 import { IPadSession } from "./host/ipad-session.js";
 import { nativeExecutable } from "./host/native-paths.js";
-import type { ModelRequest } from "./sketch/model-api.js";
 
 const directory = dirname(fileURLToPath(import.meta.url));
 const icon = join(
@@ -40,8 +39,9 @@ ipcMain.handle("mesh-export-cancel", async (event) => {
 });
 app.on("will-quit", () => meshCalculator.close());
 installFixtureCapture(() => documents.checkDesktop(), icon);
-ipcMain.handle("sketch", (event, request: ModelRequest) => {
-  if (event.senderFrame !== event.sender.mainFrame) throw new Error("Main frame only");
+ipcMain.handle("sketch", (event, request: unknown) => {
+  if (event.sender !== documentWindow?.webContents || event.senderFrame !== event.sender.mainFrame)
+    throw new Error("Model requests require the document window");
   documents.checkDesktop();
   return documents.model(request);
 });

@@ -2,9 +2,9 @@ import type { InteractionLease } from "./active-interaction.js";
 import { editBezierHandle } from "./bezier-edit.js";
 import type { Bezier, Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
-import { distance } from "./geometry.js";
 import { GestureSolve } from "./gesture-solve.js";
 import { replayPointerModifiers } from "./modifier-pointer.js";
+import { distance } from "./point-math.js";
 import { snapped } from "./snapping.js";
 
 const ns = "http://www.w3.org/2000/svg";

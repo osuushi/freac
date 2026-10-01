@@ -1,8 +1,8 @@
 import { closestOnCurve } from "./curve-geometry.js";
 import { curveIntersections } from "./curve-intersections.js";
 import type { Curve, Segment } from "./document.js";
-import { distance } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { distance } from "./point-math.js";
 
 // Only inspect grid lines inside the nearest grid corner's distance. A farther
 // intersection cannot win; this bounds the work independently of curve length.

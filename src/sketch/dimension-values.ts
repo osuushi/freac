@@ -10,9 +10,9 @@ import { updateDimensionLock } from "./dimension-locks.js";
 import { orientation, type Quantity } from "./drag-state.js";
 import { rotatedPoint } from "./drag-update.js";
 import type { SketchEditor } from "./editor.js";
-import { distance, midpoint } from "./geometry.js";
 import { expandedGroups, lineDimension, transformSelection } from "./line-edit.js";
 import type { Point } from "./planes.js";
+import { distance, midpoint } from "./point-math.js";
 import { dimensionRectangle, rectangleFrame } from "./rectangle-edit.js";
 import { selectionFrame } from "./selection-frame.js";
 import { transformSelected } from "./selection-transform.js";
@@ -124,7 +124,7 @@ export async function changeDimension(
   )
     throw new Error("Enter a valid dimension");
   if (editor.isDragging) {
-    editor.editDuringDrag(quantity, value);
+    editor.numeric.duringDrag(quantity, value);
     return;
   }
   const sketch = editor.sketch,

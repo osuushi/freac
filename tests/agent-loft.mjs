@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { scriptBrowser } from "./agent-script-browser.mjs";
 import { inspect, settled } from "./ui-helpers.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const source = `
@@ -15,7 +16,7 @@ for (const [z,radius] of [[0,5],[10,3]]) {
 }
 await freac.loft({sources:sections,ruled:true,mode:"new"});
 `;
-for (const name of ["chromium", "webkit"]) {
+for (const name of runtimeNames(["chromium", "webkit"])) {
   const web = await scriptBrowser(name);
   try {
     const before = (await inspect(web.page)).document;

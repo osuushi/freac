@@ -1,10 +1,10 @@
 import { cubicOffsetProfile } from "../sketch/cubic-offset-target.js";
 import { curveIntersections } from "../sketch/curve-intersections.js";
 import { emptySketch, type SketchDocument, withSketch } from "../sketch/document.js";
-import { distance } from "../sketch/geometry.js";
 import { hasClosedEndpoints } from "../sketch/loop-boundary.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { planes } from "../sketch/planes.js";
+import { distance } from "../sketch/point-math.js";
 import { profilesFor } from "../sketch/profiles.js";
 import { projectedSketch } from "../sketch/projected-sketch.js";
 import { boundary } from "./profile-boundary.js";
@@ -34,7 +34,7 @@ export async function offsetSketchDocument(
 ): Promise<SketchDocument> {
   const input = sketchOffsetInput(document, request);
   const result = await kernel.calculate(input);
-  if (!result.curves?.length) throw new Error("Offset returned no curves");
+  if (!result.curves.length) throw new Error("Offset returned no curves");
   const sketch = document.sketches.find((s) => s.id === request.sketchId);
   if (!sketch) throw new Error("Offset sketch no longer exists");
   const source = cubicOffsetProfile(sketch.curves.filter((c) => request.curves.includes(c.id)));

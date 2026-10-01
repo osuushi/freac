@@ -1,6 +1,6 @@
 import type { Bezier } from "./document.js";
-import { add, distance, scale, segmentDistance, subtract } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { add, distance, scale, segmentDistance, subtract } from "./point-math.js";
 import { derivative, evaluate, multiply, roots, sum } from "./polynomial.js";
 
 const lerp = (a: Point, b: Point, t: number) => add(scale(a, 1 - t), scale(b, t));

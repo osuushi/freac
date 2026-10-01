@@ -1,7 +1,8 @@
 import type { PointReference, Sketch } from "./document.js";
 import { coincidentPoints } from "./line-edit.js";
-import { type Hit, pointKey } from "./picking.js";
-import { endpointKey } from "./point-links.js";
+import { pointKey } from "./point-query.js";
+import { endpointKey } from "./point-reference.js";
+import type { Hit } from "./sketch-hit.js";
 
 function reference(hit: Hit): PointReference | null {
   if (hit.kind === "endpoint") return hit.endpoint;

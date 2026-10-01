@@ -1,5 +1,5 @@
 import type { SketchDocument } from "../sketch/document.js";
-import type { ModelingTarget } from "../sketch/model-selection.js";
+import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import { resolveOperation } from "./operation-selection.js";
 import { selectionContext } from "./selection-context.js";
 

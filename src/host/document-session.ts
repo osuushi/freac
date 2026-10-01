@@ -4,12 +4,12 @@ import type { DocumentOwner } from "../backend/document-owner.js";
 import { ScriptSession } from "../backend/script-session.js";
 import { type CameraState, validateCameraState } from "../model/camera-state.js";
 import type { DocumentCommand } from "../model/document-host.js";
-import type { ModelRequest } from "../sketch/model-api.js";
 import { inspectDrawing } from "./agent-inspection.js";
 import type { AgentSession } from "./agent-session.js";
 import { DocumentFiles } from "./document-files.js";
 import { installDocumentMenu } from "./document-menu.js";
 import { readInspectionView } from "./inspection-view.js";
+import { hostModelRequest } from "./model-request.js";
 import { sessionDialogs as dialog } from "./session-dialogs.js";
 
 export class DocumentSession {
@@ -25,6 +25,7 @@ export class DocumentSession {
   }
   remote?: {
     active(): boolean;
+    connected(): boolean;
     emit(method: string, value: unknown): void;
     inspect(render: boolean, acquireScript?: boolean, selection?: string): Promise<InspectionView>;
     close(): Promise<void>;
@@ -141,7 +142,8 @@ export class DocumentSession {
     if (this.needsRestore) await this.restore();
     this.needsRestore = false;
   }
-  async model(request: ModelRequest) {
+  async model(value: unknown) {
+    const request = hostModelRequest(value);
     if (this.busy) return { view: this.owner.view, error: "Finish the file operation first" };
     const reply = await this.owner.call(request);
     this.update();
@@ -182,7 +184,10 @@ export class DocumentSession {
   }
   private dispatch(command: DocumentCommand): void {
     if (this.remote?.active()) {
-      if (command === "close" || command === "quit" || command === "restart-update") {
+      if (
+        !this.remote.connected() &&
+        (command === "close" || command === "quit" || command === "restart-update")
+      ) {
         void this.remote.close().then(async () => {
           const result = await this.command(command);
           if (!this.closing) this.window?.webContents.reload();

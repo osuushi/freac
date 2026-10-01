@@ -2,10 +2,11 @@ import { Color } from "three";
 import { displayPoints } from "./curve-geometry.js";
 import type { Curve, Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
-import { distance } from "./geometry.js";
-import { hitIds, pointHits, pointKey } from "./picking.js";
 import { pointChoiceGroups } from "./point-choice-groups.js";
+import { distance } from "./point-math.js";
+import { pointHits, pointKey } from "./point-query.js";
 import { type PointBranch, pointBranches, pointSelected } from "./point-selection.js";
+import { hitIds } from "./sketch-hit.js";
 
 export function pointFeedback(editor: SketchEditor, sketch: Sketch) {
   const points = pointHits(sketch).filter((hit) => pointSelected(editor, pointKey(hit) ?? ""));

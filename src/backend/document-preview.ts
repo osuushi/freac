@@ -14,6 +14,12 @@ export type PreviewRequest = Extract<
   { kind: "preview" | "edit" | "mirror" | "project" | "scale" | "plane-cut" | "offset-sketch" }
 >;
 
+export function isPreviewRequest(request: ModelRequest): request is PreviewRequest {
+  return ["preview", "edit", "mirror", "project", "scale", "plane-cut", "offset-sketch"].includes(
+    request.kind,
+  );
+}
+
 /** Calculates a candidate; acceptance, history and cancellation remain with DocumentOwner. */
 export async function previewDocument(
   source: SketchDocument,

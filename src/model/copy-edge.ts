@@ -1,8 +1,8 @@
 import { bowThrough } from "../sketch/arc-geometry.js";
 import { drawingAttachment } from "../sketch/creation-links.js";
 import { type Curve, newId, type Sketch } from "../sketch/document.js";
-import { distance } from "../sketch/geometry.js";
 import type { PlaneFrame, Point, Vector } from "../sketch/planes.js";
+import { distance } from "../sketch/point-math.js";
 import type { Edge } from "./body.js";
 
 function local(frame: PlaneFrame, p: Vector): Point {

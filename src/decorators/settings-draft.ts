@@ -31,6 +31,7 @@ export class DecoratorSettingsDraft {
         "numeric",
         () => this.cancel(),
         () => this.commit(),
+        { navigation: "when-released" },
       );
       if (!lease) return;
       this.current = { lease, edit, valid: false, pending: null };

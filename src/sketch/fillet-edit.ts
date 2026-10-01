@@ -2,9 +2,9 @@ import { arcCircle } from "./arc-geometry.js";
 import { type Arc, type Constraint, newId, type Sketch } from "./document.js";
 import { consumedFilletConstraints } from "./fillet-consumption.js";
 import { type FilletCorner, filletCorner, filletGeometry } from "./fillet-geometry.js";
-import { distance } from "./geometry.js";
 import { coincidentPoints } from "./line-edit.js";
 import { unfusePoints } from "./point-links.js";
+import { distance } from "./point-math.js";
 import { roundingTangentSide } from "./rounding-tangency.js";
 
 export function createFillet(sketch: Sketch, corner: FilletCorner, radius: number, id = newId()) {

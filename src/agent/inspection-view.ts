@@ -1,7 +1,7 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { worldPoint } from "../sketch/planes.js";
-import { selectedPointHits } from "../sketch/point-selection.js";
-import { pointTarget } from "../sketch/selected-targets.js";
+
+import { pointTarget } from "../sketch/selection-target.js";
 import type { InspectionTarget, InspectionView } from "./inspection-protocol.js";
 import { changeAgentSelection } from "./selection-command.js";
 
@@ -35,7 +35,7 @@ export function inspectionView(editor: SketchEditor, render: boolean): Inspectio
     selection,
     selectedPoints:
       sketch && world.active
-        ? selectedPointHits(editor).flatMap((hit) => {
+        ? editor.selected.pointHits(editor.sketch).flatMap((hit) => {
             const target = pointTarget(hit);
             return target
               ? [

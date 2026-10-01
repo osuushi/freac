@@ -41,7 +41,7 @@ void checkFreeformOffset(const Operand& body, BRepOffset_MakeOffset& operation,
             accounted.Add(to);
             if (std::abs(amount) <= 1e-8) continue;
             BRepExtrema_DistShapeShape separation(from, to);
-            require(separation.IsDone() && separation.Value() >= std::abs(amount) - offset_geometry::tolerance,
+            require(separation.IsDone() && separation.Value() >= std::abs(amount) - offset_geometry::boundaryDistanceMm,
                     "did not preserve the requested surface separation");
         }
     }

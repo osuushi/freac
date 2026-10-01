@@ -1,9 +1,9 @@
 import { curveBounds } from "./curve-geometry.js";
 import type { SketchEditor } from "./editor.js";
-import { add, midpoint, scale } from "./geometry.js";
 import { rotationOffset } from "./move-widget/geometry.js";
 import type { Point } from "./planes.js";
-import { selectedPointHits } from "./point-selection.js";
+import { add, midpoint, scale } from "./point-math.js";
+
 import { rectangleFrame } from "./rectangle-edit.js";
 
 export function selectionFrame(
@@ -16,7 +16,7 @@ export function selectionFrame(
         ...sketch.curves
           .filter((curve) => editor.selectedCurves.has(curve.id))
           .flatMap(curveBounds),
-        ...selectedPointHits(editor).map((hit) => hit.point),
+        ...editor.selected.pointHits(editor.sketch).map((hit) => hit.point),
       ]
     : sketch.curves.filter((curve) => editor.selectionOwners.has(curve.id)).flatMap(curveBounds);
   if (!points.length) return null;
@@ -44,8 +44,8 @@ export function hasTransformWidget(editor: SketchEditor): boolean {
   return (
     editor.selectionOwners.size > 1 &&
     !editor.rectangleContext &&
-    !editor.selectedPoint &&
-    !editor.pointChoice?.size &&
+    !editor.selected.firstPointKey &&
+    !editor.selected.pointKeys?.size &&
     !editor.pointMenu
   );
 }

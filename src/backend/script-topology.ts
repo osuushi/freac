@@ -14,7 +14,6 @@ export async function scriptTopology(
   if (!body) throw new Error("Unknown topology body");
   if (operation.kind === "topology") {
     const result = await kernel.calculate({ kind: "topology", body: body.id, bodies: [body] });
-    if (!result.topology) throw new Error("Missing topology result");
     return { document, result: result.topology };
   }
   const { face, surface } = operation.input;

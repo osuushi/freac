@@ -3,13 +3,12 @@ import { LoftControls } from "../model/loft-controls.js";
 import { ModelSelectionDrag } from "../model/model-selection-drag.js";
 import { RevolveControls } from "../model/revolve-controls.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
-import { newId } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { modelDoubleClick } from "./model-double-click.js";
 import { onModelKeydown } from "./model-keys.js";
-import { type ModelingTarget, modelingSketch, pickModel, pickModels } from "./model-selection.js";
+import { modelingSketch, pickModel, pickModels } from "./model-selection.js";
+import type { ModelingTarget } from "./model-selection-state.js";
 import { PlacementControls } from "./placement-controls.js";
-import { profileFraming } from "./profile-framing.js";
 
 export class ModelControls {
   private disposers: (() => void)[] = [];
@@ -223,50 +222,7 @@ export class ModelControls {
     this.editor.refresh();
   }
   private enter(fresh = false): void {
-    const sketch = modelingSketch(this.editor);
-    if (
-      this.editor.blocked ||
-      this.editor.isDragging ||
-      this.extrusion.active ||
-      ["loft", "revolve", "body-move", "body-boolean", "body-edge-finish", "face-offset"].includes(
-        this.editor.interactions.current?.kind ?? "",
-      )
-    )
-      return;
-    const target = this.editor.modeling.targets[0];
-    if (!sketch && target?.kind === "face") {
-      const face = this.editor.display.bodies
-        ?.flatMap((b) => b.faces)
-        .find((f) => f.id === target.face);
-      if (!face?.plane) return;
-      this.editor.world.enterWorkspace({
-        key: "Face sketch",
-        frame: face.plane,
-        sketchId: newId(),
-      });
-      this.editor.modeling.targets = [];
-      this.editor.refresh();
-      return;
-    }
-    if (!sketch) return;
-    const id = fresh ? newId() : sketch.id;
-    if (!fresh) this.editor.visibility.show(sketch.id);
-    this.editor.world.enterWorkspace(
-      {
-        key: fresh
-          ? "New sketch"
-          : (this.editor.display.entityPresentation?.find((entry) => entry.id === sketch.id)
-              ?.name ?? `Sketch ${this.editor.display.sketches.indexOf(sketch) + 1}`),
-        frame: sketch.plane,
-        sketchId: id,
-      },
-      !fresh && target?.kind === "profile"
-        ? profileFraming(this.editor, sketch, target.profile)
-        : undefined,
-    );
-    this.editor.modeling.targets = [];
-    this.placement.enabled = false;
-    this.editor.refresh();
+    if (this.editor.workspaceEntry.selected(fresh)) this.placement.enabled = false;
   }
   dispose(): void {
     for (const dispose of this.disposers) dispose();

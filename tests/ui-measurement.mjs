@@ -58,7 +58,18 @@ export async function measurementRoute(page, name) {
     line,
   );
   assert.deepEqual((await inspect(page)).document, original);
-  assert.deepEqual(await page.evaluate(() => window.freacHistory()), history);
+  const afterHistory = await page.evaluate(() => window.freacHistory());
+  assert.deepEqual(
+    afterHistory.filter((entry) => entry.operation.kind !== "selection"),
+    history.filter((entry) => entry.operation.kind !== "selection"),
+    "readouts and navigation do not add or modify geometry history",
+  );
+  assert.ok(
+    afterHistory
+      .filter((entry) => entry.id > history.at(-1).id)
+      .every((entry) => entry.operation.kind === "selection"),
+    "pointer selection changes retain their ordinary selection history",
+  );
   await page.screenshot({ path: `.cache/sketch-review/${name}-measurements.png` });
   await (await relativeOffsetInput(page)).fill("1");
   await inspect(page);
@@ -82,8 +93,10 @@ export async function measurementRoute(page, name) {
   await readout(page, "Line–plane angle", "0 °");
   await clearSelection(page);
   await chooseTool(page, "undo", "undo");
-  assert.equal(await page.getByRole("region", { name: "Measurements" }).isVisible(), false);
+  assert.deepEqual((await inspect(page)).modelingSelection, state.modelingSelection);
+  await readout(page, "Maximum gap", "20 mm");
   await chooseTool(page, "redo", "redo");
+  assert.equal(await page.getByRole("region", { name: "Measurements" }).isVisible(), false);
   assert.deepEqual((await inspect(page)).document, original);
   await sketchMeasurements(page, name);
   console.log(

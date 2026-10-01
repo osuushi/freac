@@ -6,8 +6,8 @@ import { bezierAt } from "../src/sketch/bezier-geometry.js";
 import { cubicOffsetProfile } from "../src/sketch/cubic-offset-target.js";
 import { closestOnCurve } from "../src/sketch/curve-geometry.js";
 import type { Sketch } from "../src/sketch/document.js";
-import { distance } from "../src/sketch/geometry.js";
 import { hasClosedEndpoints } from "../src/sketch/loop-boundary.js";
+import { distance } from "../src/sketch/point-math.js";
 
 const sketch: Sketch = JSON.parse(readFileSync("tests/fixtures/offset-cubic-section.json", "utf8"));
 const operation = (amount: number) => ({

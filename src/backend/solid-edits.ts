@@ -13,7 +13,7 @@ import { kernelInput, loftInput, revolveInput } from "./kernel-input.js";
 import { continuingBodies, materialize } from "./kernel-result.js";
 import type { SolidCalculator } from "./solid-calculator.js";
 
-export type SolidPreviewRequest = Extract<
+export type SolidRequest = Extract<
   ModelRequest,
   {
     kind:
@@ -30,7 +30,7 @@ export type SolidPreviewRequest = Extract<
   }
 >;
 
-export function isSolidPreviewRequest(request: ModelRequest): request is SolidPreviewRequest {
+export function isSolidRequest(request: ModelRequest): request is SolidRequest {
   return [
     "loft",
     "revolve",
@@ -64,7 +64,7 @@ export class SolidEdits {
       kind: "edge-finish-selection",
       bodies: document.bodies ?? [],
     });
-    if (!result.edgeSelection?.length) throw new Error("No eligible edges in selection");
+    if (!result.edgeSelection.length) throw new Error("No eligible edges in selection");
     this.edgeSelection = result.edgeSelection;
   }
   async checkCleanup(original: SketchDocument, candidate: SketchDocument): Promise<boolean> {
@@ -134,7 +134,7 @@ export class SolidEdits {
     }
     return { ...document, bodies: next };
   }
-  async calculate(document: SketchDocument, request: SolidPreviewRequest): Promise<SketchDocument> {
+  async calculate(document: SketchDocument, request: SolidRequest): Promise<SketchDocument> {
     let candidate: SketchDocument;
     const bodies = document.bodies ?? [];
     if (request.kind === "move-faces" || request.kind === "move-edges") {

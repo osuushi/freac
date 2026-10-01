@@ -3,8 +3,8 @@ import { closestOnCurve } from "./curve-geometry.js";
 import { supportIntersections } from "./curve-intersections.js";
 import type { Arc, Circle, Segment } from "./document.js";
 import type { FilletCorner } from "./fillet-geometry.js";
-import { add, distance, dot, scale, subtract } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { add, distance, dot, scale, subtract } from "./point-math.js";
 import { type CurveEnd, farEnd, inwardTangent, type RoundingCurve } from "./rounding-curves.js";
 
 type Support = { locus: Circle | Segment; pinned: boolean };

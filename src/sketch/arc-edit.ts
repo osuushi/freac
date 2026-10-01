@@ -4,9 +4,9 @@ import { constraintCurves } from "./constraint-geometry.js";
 import type { Arc, Segment, Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { editFilletRadius } from "./fillet-edit.js";
-import { add, distance, midpoint, scale, subtract } from "./geometry.js";
 import { movePoint } from "./line-edit.js";
 import type { Point } from "./planes.js";
+import { add, distance, midpoint, scale, subtract } from "./point-math.js";
 import { rectangleBowSide } from "./rectangle-bow.js";
 
 export function replaceBow(sketch: Sketch, curve: Segment | Arc): Sketch {
@@ -91,7 +91,7 @@ export function bowGuides(editor: SketchEditor): BowGuide[] {
     editor.moveMode ||
     editor.creationArmed ||
     editor.isDragging ||
-    (editor.selectedPoint && !editor.selectedPoint.endsWith("/midpoint"))
+    (editor.selected.firstPointKey && !editor.selected.firstPointKey.endsWith("/midpoint"))
   )
     return [];
   const curves = selectedBowCurves(editor);

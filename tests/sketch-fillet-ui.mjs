@@ -10,10 +10,11 @@ import { filletLossRoute, filletRoute } from "./ui-fillet.mjs";
 import { filletConsumptionRoute } from "./ui-fillet-consumption.mjs";
 import { filletCursorRoute } from "./ui-fillet-cursor.mjs";
 import { filletGuideRoute } from "./ui-fillet-guide.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { secondCornerFilletRoute } from "./ui-second-corner-fillet.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
-const name = process.env.FREAC_TEST_BROWSER ?? "chromium";
+const [name] = runtimeNames(["chromium", "webkit", "electron"], ["chromium"]);
 let server, browser, app, page;
 try {
   server = await createServer({ server: { port: 0, watch: null } });

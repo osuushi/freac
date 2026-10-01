@@ -1,8 +1,8 @@
 import { curveDistance, displayPoints } from "./curve-geometry.js";
 import type { SketchEditor } from "./editor.js";
-import { distance } from "./geometry.js";
 import { GestureSolve } from "./gesture-solve.js";
 import type { Point } from "./planes.js";
+import { distance } from "./point-math.js";
 import { trimOverlappingSketch } from "./trim-edit.js";
 import { spanCurve, type TrimSpan, trimAt, trimSpanLength } from "./trim-geometry.js";
 
@@ -85,9 +85,14 @@ export class TrimControls {
   private async apply(span: TrimSpan): Promise<void> {
     const sketch = this.editor.sketch;
     if (!sketch || this.editor.blocked) return;
-    const interaction = this.editor.interactions.acquire("trim", () => {
-      cancelled = true;
-    });
+    const interaction = this.editor.interactions.acquire(
+      "trim",
+      () => {
+        cancelled = true;
+      },
+      undefined,
+      { navigation: "when-released" },
+    );
     if (!interaction) return;
     let cancelled = false;
     const solve = new GestureSolve(this.editor, interaction);

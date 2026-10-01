@@ -1,7 +1,8 @@
 import type { Curve, PointReference, Sketch } from "./document.js";
-import { distance } from "./geometry.js";
 import type { Point } from "./planes.js";
-import { fusePoints, linkedPointCoordinate } from "./point-links.js";
+import { fusePoints } from "./point-links.js";
+import { distance } from "./point-math.js";
+import { linkedPointCoordinate } from "./point-reference.js";
 
 export function newTrimEndpoints(source: Curve, pieces: Curve[]) {
   return pieces.flatMap((curve) =>

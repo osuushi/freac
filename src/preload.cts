@@ -1,8 +1,9 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { InspectionView } from "./agent/inspection-protocol.js";
 import type { AgentRequest } from "./agent/protocol.js";
+import type { HostModelRequest } from "./host/model-request.js";
 import type { IPadStatus } from "./ipad/protocol.js";
-import type { ModelRequest, ModelView } from "./sketch/model-api.js";
+import type { ModelView } from "./sketch/model-api.js";
 
 contextBridge.exposeInMainWorld("freacMesh", {
   integrate: (input: ArrayBuffer) => ipcRenderer.invoke("mesh-export", input),
@@ -70,7 +71,7 @@ contextBridge.exposeInMainWorld("freacAgent", {
   request: (request: AgentRequest) => ipcRenderer.invoke("agent", request),
 });
 
-contextBridge.exposeInMainWorld("freacModel", (request: ModelRequest) =>
+contextBridge.exposeInMainWorld("freacModel", (request: HostModelRequest) =>
   ipcRenderer.invoke("sketch", request),
 );
 

@@ -1,18 +1,14 @@
 #include "kernel.h"
 #include "boundary-move.h"
+#include "sketch-curve.h"
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepBndLib.hxx>
 #include <Bnd_Box.hxx>
-#include <GC_MakeArcOfCircle.hxx>
-#include <Geom_TrimmedCurve.hxx>
-#include <Geom_BezierCurve.hxx>
-#include <TColgp_Array1OfPnt.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Wire.hxx>
-#include <gp_Circ.hxx>
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
@@ -21,25 +17,9 @@ namespace {
 TopoDS_Wire wire(const Tree& spans) {
     BRepBuilderAPI_MakeWire builder;
     for (const auto& item : spans) {
-        const auto& span = item.second;
-        if (span.get<std::string>("kind") == "circle") {
-            const auto n = point(span.get_child("normal")), x = point(span.get_child("axis"));
-            const gp_Ax2 axes(point(span.get_child("center")),
-                             gp_Dir(n.X(), n.Y(), n.Z()), gp_Dir(x.X(), x.Y(), x.Z()));
-            builder.Add(BRepBuilderAPI_MakeEdge(gp_Circ(axes, span.get<double>("radius"))));
-            continue;
-        }
-        const auto a = point(span.get_child("a")), b = point(span.get_child("b"));
-        if (span.get<std::string>("kind") == "bezier") {
-            TColgp_Array1OfPnt poles(1,4); poles(1)=a; poles(2)=point(span.get_child("c1"));
-            poles(3)=point(span.get_child("c2")); poles(4)=b;
-            builder.Add(BRepBuilderAPI_MakeEdge(new Geom_BezierCurve(poles)));
-        } else if (span.get<std::string>("kind") == "line") builder.Add(BRepBuilderAPI_MakeEdge(a, b));
-        else {
-            GC_MakeArcOfCircle arc(a, point(span.get_child("mid")), b);
-            if (!arc.IsDone()) throw std::runtime_error("Cannot construct circular profile span");
-            builder.Add(BRepBuilderAPI_MakeEdge(arc.Value()));
-        }
+        BRepBuilderAPI_MakeEdge edge(sketchCurve(item.second));
+        if (!edge.IsDone()) throw std::runtime_error("Cannot construct profile span");
+        builder.Add(edge.Edge());
     }
     if (!builder.IsDone()) throw std::runtime_error("Profile boundary is not a valid wire");
     return builder.Wire();
@@ -78,49 +58,9 @@ TopoDS_Shape sweep(const Tree& input, const std::vector<Operand>& bodies) {
     if (tool.IsNull()) throw std::runtime_error("Select at least one closed region or face");
     return tool;
 }
-std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bodies,
-                             std::string& mode, std::vector<std::string>& participants) {
-    if (input.get<std::string>("kind", "") == "replace-face") {
-        mode = "new"; return replaceFace(input, bodies, participants);
-    }
-    if (input.get<std::string>("kind", "") == "plane-cut") {
-        mode = "new"; return cutWithPlane(input, bodies, participants);
-    }
-    if (input.get<std::string>("kind", "extrude") == "inspect") {
-        std::vector<Result> results;
-        for (const auto& body : bodies) solids(results, body.shape, body.entities, {body.id});
-        mode = "inspect"; return results;
-    }
-    if (input.get<std::string>("kind", "") == "delete-topology") {
-        mode = "new"; return deleteTopology(input, bodies, participants);
-    }
-    if (input.get<std::string>("kind", "") == "shell") {
-        mode = "new"; return shellBodies(input, bodies, participants);
-    }
-    if (input.get<std::string>("kind", "") == "cleanup") {
-        mode = "new"; return cleanupBodies(input, bodies, participants);
-    }
-    if (input.get<std::string>("kind", "") == "move-edges" ||
-        input.get<std::string>("kind", "") == "scale-boundaries") {
-        mode = "new"; return reconnectBoundaries(input, bodies, participants);
-    }
-    if (input.get<std::string>("kind", "") == "move-faces") {
-        mode = "new"; return reconnectBoundaries(input, bodies, participants);
-    }
-    if (input.get<std::string>("kind", "") == "transform" ||
-        input.get<std::string>("kind", "") == "mirror" ||
-        input.get<std::string>("kind", "") == "scale") {
-        mode = "new"; return transformBodies(input, bodies, participants);
-    }
-    if (input.get<std::string>("kind", "") == "offset-faces") {
-        mode = "new"; return offsetFaces(input, bodies, participants);
-    }
-    if (input.get<std::string>("kind", "") == "edge-finish") {
-        mode = "new"; return finishEdges(input, bodies, participants);
-    }
-    if (input.get<std::string>("kind", "") == "boolean") {
-        mode = input.get<std::string>("mode"); return booleanBodies(input, bodies, participants);
-    }
+namespace {
+std::vector<Result> calculateSweep(const Tree& input, const std::vector<Operand>& bodies,
+                                   std::string& mode, std::vector<std::string>& participants) {
     const auto tool = input.get<std::string>("kind") == "loft"
         ? loftSections(input, bodies) : input.get<std::string>("kind") == "revolve"
         ? revolve(input, bodies) : input.get<std::string>("kind") == "path-sweep"
@@ -176,4 +116,50 @@ std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bod
         solids(results, shape, origins, {body->id});
     }
     return results;
+}
+}
+std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bodies,
+                             std::string& mode, std::vector<std::string>& participants) {
+    if (input.get<std::string>("kind", "") == "replace-face") {
+        mode = "new"; return replaceFace(input, bodies, participants);
+    }
+    if (input.get<std::string>("kind", "") == "plane-cut") {
+        mode = "new"; return cutWithPlane(input, bodies, participants);
+    }
+    if (input.get<std::string>("kind", "extrude") == "inspect") {
+        std::vector<Result> results;
+        for (const auto& body : bodies) solids(results, body.shape, body.entities, {body.id});
+        mode = "inspect"; return results;
+    }
+    if (input.get<std::string>("kind", "") == "delete-topology") {
+        mode = "new"; return deleteTopology(input, bodies, participants);
+    }
+    if (input.get<std::string>("kind", "") == "shell") {
+        mode = "new"; return shellBodies(input, bodies, participants);
+    }
+    if (input.get<std::string>("kind", "") == "cleanup") {
+        mode = "new"; return cleanupBodies(input, bodies, participants);
+    }
+    if (input.get<std::string>("kind", "") == "move-edges" ||
+        input.get<std::string>("kind", "") == "scale-boundaries") {
+        mode = "new"; return reconnectBoundaries(input, bodies, participants);
+    }
+    if (input.get<std::string>("kind", "") == "move-faces") {
+        mode = "new"; return reconnectBoundaries(input, bodies, participants);
+    }
+    if (input.get<std::string>("kind", "") == "transform" ||
+        input.get<std::string>("kind", "") == "mirror" ||
+        input.get<std::string>("kind", "") == "scale") {
+        mode = "new"; return transformBodies(input, bodies, participants);
+    }
+    if (input.get<std::string>("kind", "") == "offset-faces") {
+        mode = "new"; return offsetFaces(input, bodies, participants);
+    }
+    if (input.get<std::string>("kind", "") == "edge-finish") {
+        mode = "new"; return finishEdges(input, bodies, participants);
+    }
+    if (input.get<std::string>("kind", "") == "boolean") {
+        mode = input.get<std::string>("mode"); return booleanBodies(input, bodies, participants);
+    }
+    return calculateSweep(input, bodies, mode, participants);
 }

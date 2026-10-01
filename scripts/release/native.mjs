@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { closeSync, openSync } from "node:fs";
 import { cp, mkdir, realpath } from "node:fs/promises";
 import { basename, join, resolve } from "node:path";
+import { verifySdk } from "../sdk-provenance.mjs";
 
 const run = (command, args) => execFileSync(command, args, { encoding: "utf8" });
 const system = (path) => path.startsWith("/usr/lib/") || path.startsWith("/System/Library/");
@@ -25,6 +26,7 @@ export function dependencies(file) {
     .filter(Boolean);
 }
 export async function bundleNative(destination, sdk) {
+  await verifySdk(sdk);
   await mkdir(destination, { recursive: true });
   const copied = new Map();
   async function copyLibrary(path) {
@@ -61,13 +63,19 @@ export async function bundleNative(destination, sdk) {
     ];
     for (const [, path] of paths) run("install_name_tool", ["-delete_rpath", path, file]);
   }
-  for (const component of ["solver", "kernel", "mesh"]) {
+  const components = [
+    ["solver", "solver"],
+    ["kernel", "kernel"],
+    ["mesh", "mesh"],
+    ["agent-scope", "host-native"],
+  ];
+  for (const [component, build] of components) {
     const name = `freac-${component}`;
     const target = join(destination, name);
-    await cp(resolve(`.build/${component}/bin/${name}`), target);
+    await cp(resolve(`.build/${build}/bin/${name}`), target);
     await relocate(target);
   }
   // Relocation invalidates original signatures, including arm64 ad-hoc signatures.
-  for (const name of [...copied.keys(), "freac-solver", "freac-kernel", "freac-mesh"])
+  for (const name of [...copied.keys(), ...components.map(([component]) => `freac-${component}`)])
     run("codesign", ["--force", "--sign", "-", join(destination, name)]);
 }

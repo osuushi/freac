@@ -1,6 +1,6 @@
 import { displayPoints } from "../sketch/curve-geometry.js";
-import type { SketchDocument } from "../sketch/document.js";
 import { type Vector, worldPoint } from "../sketch/planes.js";
+import type { DisplayDocument } from "./display-document.js";
 import type { ScaleSource } from "./scale.js";
 
 export interface ShadowGeometry {
@@ -8,7 +8,7 @@ export interface ShadowGeometry {
   lines: Vector[][];
 }
 export function shadowGeometry(
-  document: SketchDocument,
+  document: DisplayDocument,
   source: ScaleSource,
   tolerance: number,
 ): ShadowGeometry {

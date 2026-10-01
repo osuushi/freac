@@ -1,5 +1,6 @@
 import type { SketchDocument } from "../sketch/document.js";
 import { type CameraState, validateCameraState } from "./camera-state.js";
+import { exactBodies } from "./exact-body.js";
 
 export function documentArchive(document: SketchDocument, camera?: CameraState): string {
   return JSON.stringify({
@@ -8,12 +9,7 @@ export function documentArchive(document: SketchDocument, camera?: CameraState):
     ...(camera ? { camera: validateCameraState(camera) } : {}),
     document: {
       ...document,
-      bodies: document.bodies?.map(({ id, brep, faces, edges }) => ({
-        id,
-        brep,
-        faces: faces.map(({ id, signature }) => ({ id, signature })),
-        edges: edges.map(({ id, signature }) => ({ id, signature })),
-      })),
+      bodies: document.bodies && exactBodies(document.bodies),
     },
   });
 }

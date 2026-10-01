@@ -124,7 +124,7 @@ async function archive(page, name) {
     for (const [i, coordinate] of body.center.entries()) close(coordinate, original.center[i]);
   }
 }
-async function numericSketch(page) {
+export async function numericSketch(page) {
   await rectangle(page);
   await click(page, -15, -10);
   await page.keyboard.press("m");

@@ -1,5 +1,6 @@
 #pragma once
 #include "kernel.h"
+#include "geometry-policy.h"
 #include <TopTools_IndexedMapOfShape.hxx>
 #include <TopoDS_Edge.hxx>
 #include <TopoDS_Vertex.hxx>
@@ -8,7 +9,7 @@
 
 // Boundary neighborhood model shared by edge and face selection.
 namespace boundary_move {
-constexpr double tolerance = 1e-6;
+using geometry_policy::boundaryDistanceMm;
 struct Edit {
     const Operand* body = nullptr;
     gp_GTrsf transform;

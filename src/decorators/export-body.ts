@@ -1,4 +1,5 @@
 import type { Body } from "../model/body.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import { exportMesh } from "../model/export-mesh.js";
 import type { ExportTiming } from "../model/export-timing.js";
 import type { SketchDocument } from "../sketch/document.js";
@@ -16,7 +17,7 @@ import type { ThreadPreviewResolution } from "./thread-sampling.js";
 import { threadDefinition, threadSettings } from "./thread-settings.js";
 import type { DecoratorInstance } from "./types.js";
 export function prepareThreadGeometry(
-  document: SketchDocument,
+  document: DisplayDocument,
   instance: DecoratorInstance,
   quality: "preview" | "export",
   previewResolution?: ThreadPreviewResolution,

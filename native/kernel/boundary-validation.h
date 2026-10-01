@@ -1,4 +1,5 @@
 #pragma once
+#include "geometry-policy.h"
 // Validity checks for reconstructed boundary geometry.
 #include <BOPAlgo_ArgumentAnalyzer.hxx>
 #include <BRepCheck_Analyzer.hxx>
@@ -33,7 +34,9 @@ inline void valid(const TopoDS_Shape& shape, const char* stage) {
     if (count(shape, TopAbs_SOLID) != 1 || count(shape, TopAbs_SHELL) != 1)
         throw std::runtime_error(std::string(stage) + ": expected one solid/shell, got "
             + std::to_string(count(shape, TopAbs_SOLID)) + "/" + std::to_string(count(shape, TopAbs_SHELL)));
-    require(enclosedVolume(shape) > 1e-7, "Expected positive volume");
+    const double volume = enclosedVolume(shape);
+    require(std::isfinite(volume) && volume > geometry_policy::minimumSolidVolumeMm3,
+            "Expected positive volume");
     BOPAlgo_ArgumentAnalyzer check;
     check.SetShape1(shape); check.SelfInterMode() = true; check.Perform();
     require(!check.HasFaulty(), "Self-interference");

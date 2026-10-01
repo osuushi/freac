@@ -9,9 +9,10 @@ import { faceMoveRoute, planarFaceMoveRoute } from "./ui-face-move.mjs";
 import { cylinderFaceMoveRoute } from "./ui-face-move-cylinder.mjs";
 import { roundedFaceMoveRoute } from "./ui-face-move-rounded.mjs";
 import { faceOffsetRoute } from "./ui-face-offset.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
-const name = process.env.FREAC_TEST_BROWSER ?? "chromium";
+const [name] = runtimeNames(["chromium", "webkit", "electron"], ["chromium"]);
 let server, browser, app;
 try {
   let page;

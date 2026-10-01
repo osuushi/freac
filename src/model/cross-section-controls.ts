@@ -123,6 +123,7 @@ export class CrossSectionControls {
       "cross-section",
       () => this.cancel(),
       () => this.finish(),
+      { navigation: "when-released" },
     );
     if (!this.lease) return;
     this.valid = true;

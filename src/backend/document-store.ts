@@ -1,10 +1,12 @@
-import { type SketchDocument, validateSketch } from "../sketch/document.js";
+import type { SketchDocument } from "../sketch/document.js";
 import {
   emptySelection,
   type HistorySelection,
   type SelectionChanges,
 } from "../sketch/history-selection.js";
 import type { HistoryOperation, OperationHistoryEntry } from "../sketch/operation-history.js";
+
+import { validateDocument } from "./document-validation.js";
 
 interface HistoryRecord {
   entry: OperationHistoryEntry;
@@ -14,7 +16,9 @@ interface HistoryRecord {
 
 /** One attempted-operation history. Only entries with an active change navigate. */
 export class DocumentStore {
-  constructor(private accepted: SketchDocument = { units: "mm", sketches: [] }) {}
+  constructor(private accepted: SketchDocument = { units: "mm", sketches: [] }) {
+    validateDocument(accepted);
+  }
   private records: HistoryRecord[] = [];
   selection = emptySelection();
   selections(changes: SelectionChanges): void {
@@ -66,7 +70,7 @@ export class DocumentStore {
     candidate: SketchDocument,
     operation: HistoryOperation = { kind: "accept", parameters: {} },
   ): boolean {
-    for (const sketch of candidate.sketches) validateSketch(sketch);
+    validateDocument(candidate);
     if (JSON.stringify(candidate) === JSON.stringify(this.accepted)) {
       this.record(operation, "noop");
       return false;

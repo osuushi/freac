@@ -2,7 +2,7 @@ import { idleReason, toolCatalog } from "../tools/catalog.js";
 import type { PointReference } from "./document.js";
 import type { SketchEditor } from "./editor.js";
 import { makePointOnEdge } from "./point-incidence.js";
-import { selectedPointHits } from "./point-selection.js";
+
 import { sketchIcon } from "./sketch-icons.js";
 
 export class PointEdgeControls {
@@ -32,7 +32,7 @@ export class PointEdgeControls {
     this.update();
   }
   private pair() {
-    const hits = selectedPointHits(this.editor);
+    const hits = this.editor.selected.pointHits(this.editor.sketch);
     if (hits.length !== 1 || this.editor.selectedCurves.size !== 1) return null;
     const hit = hits[0];
     const point: PointReference | null =
@@ -52,16 +52,14 @@ export class PointEdgeControls {
     const pair = this.pair(),
       sketch = this.editor.sketch;
     if (!pair || !sketch || this.editor.blocked || this.editor.isDragging) return;
+    const edgeFirst = this.editor.selected.orderedKeys(sketch)[0] === pair.edge;
     try {
-      await this.editor.editSketch(
-        makePointOnEdge(sketch, pair.point, pair.edge, this.editor.selectionOrder[0] === pair.edge),
-        {
-          kind: "pair",
-          points: this.editor.selectionOrder[0] === pair.edge ? undefined : [pair.point],
-          subject: this.editor.selectionOrder[0] === pair.edge ? pair.edge : pair.point.curve,
-          reference: this.editor.selectionOrder[0] === pair.edge ? pair.point.curve : pair.edge,
-        },
-      );
+      await this.editor.editSketch(makePointOnEdge(sketch, pair.point, pair.edge, edgeFirst), {
+        kind: "pair",
+        points: edgeFirst ? undefined : [pair.point],
+        subject: edgeFirst ? pair.edge : pair.point.curve,
+        reference: edgeFirst ? pair.point.curve : pair.edge,
+      });
     } catch (error) {
       this.editor.message = String(error);
     }

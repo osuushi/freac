@@ -1,3 +1,4 @@
+import type { DisplayDocument } from "../model/display-document.js";
 import { EntityVisibility } from "../model/entity-visibility.js";
 import { ActiveInteraction, type InteractionLease } from "./active-interaction.js";
 import {
@@ -6,23 +7,24 @@ import {
   type EditingGroup,
   type Segment,
   type Sketch,
-  type SketchDocument,
   samePlane,
 } from "./document.js";
-import type { Quantity } from "./drag-state.js";
 import { actionIntent, type EditAction } from "./edit-intent.js";
 import { editNotice } from "./edit-notice.js";
 import { performHistory } from "./editor-history.js";
 import { replaceSelection } from "./editor-selection.js";
-import { installWorkspaceSync } from "./editor-workspace.js";
+import { installWorkspaceSync, WorkspaceEntry } from "./editor-workspace.js";
 import { ModelClient } from "./model-client.js";
-import { ModelSelection, modelingSketch } from "./model-selection.js";
-import { type Hit, hitIds } from "./picking.js";
+import { modelingSketch } from "./model-selection.js";
+import { ModelSelection } from "./model-selection-state.js";
+import type { NumericEdit } from "./numeric-edit.js";
 import type { Point } from "./planes.js";
-import { type PointMenu, selectedPointHits } from "./point-selection.js";
+import type { PointMenu } from "./point-selection.js";
 import type { RectangleHandle } from "./rectangle-edit.js";
-import { SelectedTargets, type SelectionTarget, targetKey } from "./selected-targets.js";
+import { SelectedTargets } from "./selected-targets.js";
 import { SelectionHistory } from "./selection-history.js";
+import type { SelectionTarget } from "./selection-target.js";
+import { type Hit, hitIds } from "./sketch-hit.js";
 import type { World } from "./world.js";
 
 export type Tool = "select" | "rectangle" | "line" | "circle" | "bezier" | "trim";
@@ -39,17 +41,8 @@ export class SketchEditor {
   bodiesVisible = true;
   readonly modeling = new ModelSelection();
   readonly selected = new SelectedTargets();
-  get selectionOrder(): string[] {
-    return this.selected.orderedKeys(this.sketch);
-  }
   get selectedCurves(): Set<string> {
     return this.selected.wholeCurves(this.sketch);
-  }
-  get pointChoice(): Set<string> | null {
-    return this.selected.points.length ? new Set(this.selected.points.map(targetKey)) : null;
-  }
-  get selectedPoint(): string | null {
-    return this.selected.points[0] ? targetKey(this.selected.points[0]) : null;
   }
   selectGroup(id: string): void {
     this.selectTargets([{ kind: "group", group: id }]);
@@ -58,7 +51,10 @@ export class SketchEditor {
     replaceSelection(this, targets);
   }
   get selectionOwners(): Set<string> {
-    return new Set([...this.selectedCurves, ...selectedPointHits(this).flatMap(hitIds)]);
+    return new Set([
+      ...this.selectedCurves,
+      ...this.selected.pointHits(this.sketch).flatMap(hitIds),
+    ]);
   }
   moveMode = false;
   tool: Tool = "select";
@@ -69,7 +65,6 @@ export class SketchEditor {
   transformDistance = 0;
   transformRotation = false;
   rotationPreview: number | null = null;
-  focusQuantity: (quantity: Quantity, duplicate?: boolean) => void = () => {};
   creationArmed = false;
   pointMenu: PointMenu | null = null;
   pointHover: Hit | null = null;
@@ -83,7 +78,8 @@ export class SketchEditor {
   selectionBox: { a: Point; b: Point } | null = null;
   overlaps: { hits: Hit[]; screen: Point } | null = null;
   readonly interactions = new ActiveInteraction(() => this.refresh());
-  get candidate(): SketchDocument | null {
+  readonly workspaceEntry = new WorkspaceEntry(this);
+  get candidate(): DisplayDocument | null {
     return this.interactions.candidate;
   }
   message = "";
@@ -100,10 +96,10 @@ export class SketchEditor {
   }
   activeHandle: RectangleHandle | undefined;
   snap: { x: number; y: number; label: string } | null = null;
-  commitNumeric: () => Promise<void> = async () => {};
-  cancelNumeric: () => void = () => {};
-  editDuringDrag: (quantity: Quantity, value: number) => void = () => {};
-  constructor(readonly world: World) {
+  constructor(
+    readonly world: World,
+    readonly numeric: NumericEdit,
+  ) {
     world.changed.add(() => {
       this.transformAnchor = null;
     });
@@ -112,7 +108,7 @@ export class SketchEditor {
     this.world.changed.add(() => this.selectionHistory.observe());
   }
 
-  get display(): SketchDocument {
+  get display(): DisplayDocument {
     return this.candidate ?? this.store.data;
   }
   get sketch(): Sketch | undefined {
@@ -150,7 +146,7 @@ export class SketchEditor {
   }
   async setTool(tool: Tool): Promise<void> {
     if (this.blocked || this.isDragging) return;
-    await this.commitNumeric();
+    await this.numeric.commit();
     await this.interactions.cancel();
     this.selected.replacePoints([]);
     this.pointMenu = null;
@@ -170,7 +166,7 @@ export class SketchEditor {
   }
   async activateMove(): Promise<void> {
     if (!this.selectionOwners.size || this.blocked || this.isDragging) return;
-    await this.commitNumeric();
+    await this.numeric.commit();
     this.tool = "select";
     this.creationArmed = false;
     this.moveMode = true;
@@ -235,7 +231,7 @@ export class SketchEditor {
   }
   async remove(): Promise<void> {
     if (this.blocked || this.isDragging) return;
-    this.cancelNumeric();
+    this.numeric.cancel();
     await this.interactions.cancel();
     const sketch = this.sketch;
     if (sketch)
@@ -248,7 +244,7 @@ export class SketchEditor {
   }
   async clear(): Promise<void> {
     if (this.blocked || this.isDragging) return;
-    this.cancelNumeric();
+    this.numeric.cancel();
     await this.interactions.cancel();
     const sketch = this.sketch;
     if (sketch) await this.store.request({ kind: "clear", sketchId: sketch.id });
@@ -256,7 +252,7 @@ export class SketchEditor {
   }
   async newDocument(): Promise<void> {
     if (this.blocked || this.isDragging) return;
-    this.cancelNumeric();
+    this.numeric.cancel();
     await this.interactions.cancel();
     await this.store.request({ kind: "new" });
     this.bodiesVisible = true;
@@ -266,7 +262,7 @@ export class SketchEditor {
   }
   escape(): void {
     if (this.moveMode && !this.isDragging) {
-      this.cancelNumeric();
+      this.numeric.cancel();
       this.moveMode = false;
       this.transformAxis = null;
       this.transformRotation = false;

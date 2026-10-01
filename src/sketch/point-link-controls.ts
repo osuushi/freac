@@ -1,20 +1,16 @@
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import type { PointReference } from "./document.js";
 import type { SketchEditor } from "./editor.js";
-import { distance } from "./geometry.js";
-import { pointKey } from "./picking.js";
-import {
-  fusePoints,
-  linkedPointCoordinate,
-  makeCoincident,
-  pointLinked,
-  unfusePoints,
-} from "./point-links.js";
-import { pointSelected, selectedPointHits } from "./point-selection.js";
+import { fusePoints, makeCoincident, pointLinked, unfusePoints } from "./point-links.js";
+import { distance } from "./point-math.js";
+import { pointKey } from "./point-query.js";
+import { linkedPointCoordinate } from "./point-reference.js";
+import { pointSelected } from "./point-selection.js";
 import { sketchIcon } from "./sketch-icons.js";
 
 function selectedPointReferences(editor: SketchEditor): PointReference[] {
-  return selectedPointHits(editor)
+  return editor.selected
+    .pointHits(editor.sketch)
     .filter((hit) => editor.pointMenu?.hits.some((p) => pointKey(p) === pointKey(hit)))
     .flatMap<PointReference>((hit) => {
       if (!pointSelected(editor, pointKey(hit) ?? "")) return [];
@@ -140,7 +136,7 @@ export class PointLinkControls {
           : { kind: "direct" },
       );
       if (accepted && action === "coincident" && editor.pointMenu)
-        editor.pointMenu = { ...editor.pointMenu, hits: selectedPointHits(editor) };
+        editor.pointMenu = { ...editor.pointMenu, hits: editor.selected.pointHits(editor.sketch) };
     } catch (error) {
       editor.message = error instanceof Error ? error.message : String(error);
     }

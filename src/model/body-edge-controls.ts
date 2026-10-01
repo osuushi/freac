@@ -40,7 +40,9 @@ export class BodyEdgeControls {
         }
         if (editor.blocked) return;
         await editor.setTool("select");
-        this.lease = editor.interactions.acquire("use-edge", () => this.cancel());
+        this.lease = editor.interactions.acquire("use-edge", () => this.cancel(), undefined, {
+          navigation: "when-released",
+        });
         editor.refresh();
       },
     });

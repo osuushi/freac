@@ -1,9 +1,10 @@
 import type { Sketch } from "./document.js";
-import { add, distance, subtract } from "./geometry.js";
 import { movePoint, transformSelection } from "./line-edit.js";
-import { type Hit, hitIds, pointHits, pointKey } from "./picking.js";
 import type { Point } from "./planes.js";
+import { add, distance, subtract } from "./point-math.js";
+import { pointHits, pointKey } from "./point-query.js";
 import { resizeRectangle } from "./rectangle-edit.js";
+import { type Hit, hitIds } from "./sketch-hit.js";
 
 // Co-location is a selection rule for this drag, not a persistent relationship.
 export function dragPoints(

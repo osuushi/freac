@@ -5,7 +5,9 @@ import { launchElectron } from "./native-documents.mjs";
 import { loftRoute } from "./ui-loft.mjs";
 import { loftHolesRoute } from "./ui-loft-holes.mjs";
 import { revolveRoute } from "./ui-revolve.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 
+const names = runtimeNames();
 const server = await createServer({ server: { port: 0, watch: null, hmr: false } });
 await server.listen();
 async function check(page, name) {
@@ -18,7 +20,9 @@ async function check(page, name) {
   assert.deepEqual(errors, []);
 }
 try {
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
+    names.includes(name),
+  )) {
     if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
     const browser = await engine.launch({ headless: true });
     try {
@@ -29,7 +33,7 @@ try {
       await browser.close();
     }
   }
-  if (!process.env.FREAC_TEST_BROWSER || process.env.FREAC_TEST_BROWSER === "electron") {
+  if (names.includes("electron")) {
     const app = await launchElectron({
       args: ["."],
       env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: server.resolvedUrls.local[0] },

@@ -50,11 +50,28 @@ Numeric fields acquire an edit while focused. Tab transfers that ownership;
 numeric entry during a held drag belongs to the existing pointer edit. Acceptance
 and discard finish before ownership is released. Waiting for a final calculation
 remains cancellable; an acceptance already sent to the backend completes normally.
+The composition root passes a named NumericEdit collaborator to the editor and
+connects Dimensions and PointerGestures as its field and gesture owners before
+installing input shortcuts. Field focus, commit/cancel and held-drag quantity
+changes use this contract; controllers do not install mutable callback slots on
+the editor. Missing or disposed owners fail explicitly. Each owner retains its
+existing edit lifetime and the composition releases the references on teardown.
 
 This release-time acceptance applies to sketch edits, not to every tool. Extrusion
 retains one candidate across successive drags/parameter edits until the user
 completes and exits the tool. Its split bodies are temporary until then. Both
 lifecycles use the same simple edit acceptance and Undo mechanism.
+Extrude, Face Offset and body Fillet/Chamfer share a bounded PreviewRunner: one
+running calculation, one latest waiting parameter set and a serial slot for
+selection/cleanup queries. It does
+not own accepted data, candidates, validity or completion. Extrude interrupts
+superseded calculations; Offset retains its established noninterrupting policy,
+last verified distance and selection feedback. Fillet/Chamfer similarly retain verified
+size-limit feedback; their pending sizes use the expanded edge selection when
+calculation starts. Each controller checks its lease
+and request identity before changing presentation. Invalid input clears waiting
+targets; cancellation closes the lease before awaiting native cleanup. Settling a
+cleanup query alone does not schedule another query.
 
 Unconstrained movement and transforms that preserve every existing constraint
 exactly can run directly. Use the solver for coupled constrained edits; do not
@@ -111,6 +128,12 @@ or mixed deletion is cancellable; acceptance remains atomic. Cancellation retain
 selection and records a cancelled attempt, while timeout/geometric rejection records
 a failure, without altering geometry or invalidating Redo. Explicit Accept and
 committing sketch edits complete normally rather than being interrupted.
+
+Automatic acceptance checks cancellation after geometry and decorator continuation,
+immediately before publication. Open checks before replacing the document and its
+history. Cancelling after native computation has finished still abandons that edit.
+DocumentStore validates whole-document identities and current sketch/decorator
+invariants before changing snapshots or history, for manual edits, scripts and Open.
 
 ## Selection Undo (founder decision, 2026-09-22)
 

@@ -1,6 +1,6 @@
-import type { ModelingTarget } from "./model-selection.js";
+import type { ModelingTarget } from "./model-selection-state.js";
 import type { PlaneFrame } from "./planes.js";
-import type { SelectionTarget } from "./selected-targets.js";
+import type { SelectionTarget } from "./selection-target.js";
 
 /** Selection context is transient UI data, never part of the saved document. */
 export interface HistorySelection {

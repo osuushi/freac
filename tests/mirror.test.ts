@@ -4,8 +4,9 @@ import { DocumentOwner } from "../src/backend/document-owner.js";
 import { mirrorSketch } from "../src/backend/mirror-sketch.js";
 import type { MirrorOperation } from "../src/model/mirror.js";
 import { arcCircle } from "../src/sketch/arc-geometry.js";
-import { emptySketch, type Sketch, validateSketch } from "../src/sketch/document.js";
+import { emptySketch, type Sketch } from "../src/sketch/document.js";
 import { planes } from "../src/sketch/planes.js";
+import { validateSketch } from "../src/sketch/sketch-validation.js";
 
 const line = { origin: { x: 2, y: 0 }, direction: { x: 0, y: 1 } };
 function operation(

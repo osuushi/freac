@@ -6,9 +6,11 @@ import { createServer } from "vite";
 import { DocumentOwner } from "../.build/host/backend/document-owner.js";
 import { ScriptSession } from "../.build/host/backend/script-session.js";
 import { prepareOrientation } from "../.build/host/host/agent-orientation.js";
+import { runtimeNames } from "./ui-runtime.mjs";
 
 /** Test-owned web transport; same script session, CLI and owner as desktop. */
 export async function scriptBrowser(name) {
+  runtimeNames(["chromium", "webkit"], [name]);
   const owner = new DocumentOwner();
   const workspace = await mkdtemp(join(tmpdir(), "freac-script-web-"));
   let page, browser, server, connection;

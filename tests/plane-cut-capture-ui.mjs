@@ -3,6 +3,7 @@ import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { planeCutCaptureRoute } from "./ui-plane-cut-capture.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 
 async function run(page, name, app) {
   const errors = [];
@@ -10,10 +11,13 @@ async function run(page, name, app) {
   await planeCutCaptureRoute(page, name, app);
   assert.deepEqual(errors, []);
 }
+const names = runtimeNames(["chromium", "webkit", "electron"]);
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
+    names.includes(name),
+  )) {
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
@@ -23,18 +27,20 @@ try {
       await browser.close();
     }
   }
-  const app = await launchElectron({
-    args: ["."],
-    env: {
-      ...process.env,
-      FREAC_DEV_URL: server.resolvedUrls.local[0],
-      FREAC_TEST_HIDDEN: "1",
-    },
-  });
-  try {
-    await run(await app.firstWindow(), "electron", app);
-  } finally {
-    await app.close();
+  if (names.includes("electron")) {
+    const app = await launchElectron({
+      args: ["."],
+      env: {
+        ...process.env,
+        FREAC_DEV_URL: server.resolvedUrls.local[0],
+        FREAC_TEST_HIDDEN: "1",
+      },
+    });
+    try {
+      await run(await app.firstWindow(), "electron", app);
+    } finally {
+      await app.close();
+    }
   }
 } finally {
   await server.close();

@@ -36,7 +36,7 @@ test("PTY stop kills a child that ignores TERM and retains workspace files", {
   const root = await mkdtemp(join(tmpdir(), "freac-agent-process-"));
   const pty = new AgentProcess();
   try {
-    pty.start(
+    await pty.start(
       "/bin/sh",
       ["-c", "trap '' TERM; (trap '' TERM; sleep 90) & echo $! > child.pid; wait"],
       root,

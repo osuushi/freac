@@ -1,17 +1,12 @@
 import { displayPoints } from "./curve-geometry.js";
 import type { SketchEditor } from "./editor.js";
-import { distance } from "./geometry.js";
 import { onModelKeydown } from "./model-keys.js";
-import { type Hit, pointKey } from "./picking.js";
 import { pointChoiceGroups } from "./point-choice-groups.js";
 import { PointLinkControls } from "./point-link-controls.js";
-import {
-  choosePoints,
-  openPointMenu,
-  pointBranches,
-  pointSelected,
-  selectedPointHits,
-} from "./point-selection.js";
+import { distance } from "./point-math.js";
+import { pointKey } from "./point-query.js";
+import { choosePoints, openPointMenu, pointBranches, pointSelected } from "./point-selection.js";
+import type { Hit } from "./sketch-hit.js";
 
 const ns = "http://www.w3.org/2000/svg";
 export class PointChooser {
@@ -110,7 +105,7 @@ export class PointChooser {
       const menu = editor.pointMenu;
       const toggle = event.metaKey || event.ctrlKey;
       const additive = event.shiftKey || toggle;
-      const selected = additive ? selectedPointHits(editor) : [];
+      const selected = additive ? editor.selected.pointHits(editor.sketch) : [];
       const allSelected = hits.every((hit) => selected.some((p) => pointKey(p) === pointKey(hit)));
       const next =
         toggle && allSelected

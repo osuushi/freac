@@ -7,14 +7,16 @@ import { STLLoader } from "three/addons/loaders/STLLoader.js";
 import { createServer } from "vite";
 import { exportDocument, launchElectron, openDocument } from "./native-documents.mjs";
 import { inspect } from "./ui-helpers.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 
+const names = runtimeNames();
 const fixture = JSON.parse(await readFile("tests/fixtures/thread-boolean-sliver.json", "utf8"));
 const document = fixture.snapshot?.document ?? fixture.document;
 await mkdir(".cache/sketch-review", { recursive: true });
 const server = await createServer({ server: { port: 0, watch: null, hmr: false } });
 await server.listen();
 try {
-  for (const name of ["chromium", "webkit", "electron"]) {
+  for (const name of names) {
     let browser, app;
     try {
       let page;

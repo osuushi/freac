@@ -1,9 +1,8 @@
-import { arcCircle } from "./arc-geometry.js";
 import { newId, type PointReference, type Sketch } from "./document.js";
-import { distance } from "./geometry.js";
 import { coincidentPoints, movePoint } from "./line-edit.js";
+import { distance } from "./point-math.js";
+import { endpointKey, linkedPointCoordinate } from "./point-reference.js";
 
-export const endpointKey = (p: PointReference): string => `${p.curve}/${p.end}`;
 const intrinsic = (sketch: Sketch, a: PointReference, b: PointReference): boolean =>
   sketch.groups.some((g) => g.members.includes(a.curve) && g.members.includes(b.curve));
 export function pointLinked(sketch: Sketch, p: PointReference): boolean {
@@ -13,13 +12,6 @@ export function pointLinked(sketch: Sketch, p: PointReference): boolean {
       !intrinsic(sketch, c.a, c.b) &&
       [c.a, c.b].some((q) => endpointKey(q) === endpointKey(p)),
   );
-}
-export function linkedPointCoordinate(sketch: Sketch, p: PointReference) {
-  const curve = sketch.curves.find((c) => c.id === p.curve);
-  if (p.end === "center" && curve && (curve.kind === "circle" || curve.kind === "arc"))
-    return curve.kind === "circle" ? curve.center : arcCircle(curve).center;
-  if (p.end !== "center" && curve && curve.kind !== "circle") return curve[p.end];
-  throw new Error("Point linking requires a curve endpoint or circle/arc center");
 }
 export function fusePoints(sketch: Sketch, points: PointReference[]): Sketch {
   const first = points[0];
@@ -59,21 +51,6 @@ export function unfusePoints(sketch: Sketch, points: PointReference[]): Sketch {
   for (const remaining of components)
     if (remaining.length > 1) result = fusePoints(result, remaining);
   return result;
-}
-
-export function validatePointLinks(sketch: Sketch): void {
-  const parent = new Map<string, string>();
-  const root = (key: string): string => {
-    while (parent.has(key)) key = parent.get(key) ?? key;
-    return key;
-  };
-  for (const c of sketch.constraints) {
-    if (c.kind !== "coincident") continue;
-    const a = root(endpointKey(c.a)),
-      b = root(endpointKey(c.b));
-    if (a === b) throw new Error("Redundant point coincidence");
-    parent.set(a, b);
-  }
 }
 
 export function makeCoincident(sketch: Sketch, points: PointReference[]): Sketch {

@@ -4,7 +4,7 @@ import type { Body } from "../src/model/body.js";
 import { refineSelection } from "../src/model/selection-refinement.js";
 import { emptySketch, type SketchDocument } from "../src/sketch/document.js";
 import { rectangle } from "../src/sketch/geometry.js";
-import { ModelSelection } from "../src/sketch/model-selection.js";
+import { ModelSelection } from "../src/sketch/model-selection-state.js";
 import { planes } from "../src/sketch/planes.js";
 import { profilesFor } from "../src/sketch/profiles.js";
 

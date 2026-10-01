@@ -1,6 +1,6 @@
 import type { MeasurementTarget } from "../model/measurement.js";
 import type { PlaneFrame, Vector } from "../sketch/planes.js";
-import type { SelectionTarget } from "../sketch/selected-targets.js";
+import type { SelectionTarget } from "../sketch/selection-target.js";
 
 export type InspectionCommand = "selection" | "inspect" | "render" | "select" | "faces" | "context";
 export type InspectionTarget =

@@ -35,6 +35,11 @@ current path; first Save and Save As use a native save panel. A temporary siblin
 is fully written before replacing the destination; failure retains the old identity
 and dirty state. Open validates/materializes before replacing accepted work.
 
+Desktop and paired-browser model transports accept geometry/history requests only.
+New/Open use document commands, so geometry replacement cannot bypass file identity,
+unsaved-work choices or agent workspace binding. The standalone calculator owner
+retains New/Open for browser archive loading and internal session use.
+
 File menu commands and Cmd/Ctrl-N/O/S, Shift-Cmd/Ctrl-S and Cmd/Ctrl-W share these routes.
 The title and macOS represented-file/edited indicators reflect the current document.
 Dirty state compares accepted archive contents to the saved baseline, including Undo
@@ -137,6 +142,24 @@ termination, stops before a final saved capture, and rechecks after shutdown whe
 initial document was clean. Cancel preserves the current data; cancel after stopping
 may require Start again. A failed save never discards local workspace bytes.
 
+POSIX harness launches verify their private terminal session before executing the
+configured program. A quiet process keeps that session identifiable after natural
+root exit; a private FIFO closes that member when the host exits. The host checks
+its process-group and precise birth identity before
+signalling the session's groups, including interactive shell jobs. Natural exit
+also drains this cleanup. Exited/Start availability and final file capture wait for
+it. The read-only `freac-agent-scope` helper reports OS process identity; it owns no
+document and makes no termination decisions. This covers ordinary POSIX jobs;
+programs that deliberately create another OS session are outside that scope.
+Windows retains the existing ConPTY shutdown path and needs target verification.
+
+The macOS adapter uses the group and birth fields declared in Apple's
+[proc_bsdinfo](https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/sys/proc_info.h#L54-L77).
+The Linux adapter reads session/group/start-time fields from
+[/proc/pid/stat](https://www.man7.org/linux/man-pages/man5/proc_pid_stat.5.html).
+These are OS interface observations; the launch gate, retained member and cleanup
+policy are Freac's implementation. No upstream implementation was copied.
+
 Open checks ZIP metadata/expanded limits/CRC and model structure, prepares files in
 an isolated directory, then uses the normal model validation/materialization path
 before adopting the prepared workspace. No archived file is executed during Open.
@@ -145,6 +168,10 @@ no absolute/traversal/Windows device paths and no case-folded or file/directory 
 Limits are 4096 portable files and 64 MiB expanded model plus portable bytes. Directories
 are implicit in file paths; empty directories and executable mode bits are not preserved.
 The writer uses uncompressed ZIP entries; the reader also supports compressed entries.
+The same expanded limit applies to model-only JSON on Save and Open. A failed size
+check happens before the destination write and preserves file identity and Edited
+state. ZIP headers have a separate 8 MiB encoded allowance; they do not raise the
+expanded-content limit.
 
 Each document gets its own local Codex home beside (outside) its workspace. Base
 Freac configuration and auth are copied there at launch and synchronized locally on

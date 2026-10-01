@@ -1,5 +1,6 @@
-import { type Curve, newId, type Sketch, validateSketch } from "./document.js";
-import { distance } from "./geometry.js";
+import { type Curve, newId, type Sketch } from "./document.js";
+import { distance } from "./point-math.js";
+import { validateSketch } from "./sketch-validation.js";
 
 export function sameProjectedCurve(a: Curve, b: Curve): boolean {
   if (a.kind !== b.kind) return false;

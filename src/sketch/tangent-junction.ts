@@ -1,8 +1,8 @@
 import { arcCircle } from "./arc-geometry.js";
 import { circularContact, supportingCircle } from "./circular-tangency.js";
 import { type Curve, newId, type Sketch, type TangentConstraint } from "./document.js";
-import { add, distance, dot, scale, subtract } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { add, distance, dot, scale, subtract } from "./point-math.js";
 import { lineCircularPair, tangentContact } from "./tangency.js";
 
 export function tangentJunction(sketch: Sketch, c: TangentConstraint) {

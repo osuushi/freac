@@ -3,12 +3,14 @@ import test from "node:test";
 import { DocumentOwner } from "../src/backend/document-owner.js";
 import { arcCircle } from "../src/sketch/arc-geometry.js";
 import { spanArea } from "../src/sketch/curve-spans.js";
-import { emptySketch, newId, type Sketch, validateSketch } from "../src/sketch/document.js";
+import { emptySketch, newId, type Sketch } from "../src/sketch/document.js";
 import { createFillet, editFilletRadius, existingFillet } from "../src/sketch/fillet-edit.js";
 import { filletCorner } from "../src/sketch/fillet-geometry.js";
-import { distance, segment } from "../src/sketch/geometry.js";
+import { segment } from "../src/sketch/geometry.js";
 import { planes } from "../src/sketch/planes.js";
+import { distance } from "../src/sketch/point-math.js";
 import { closedBoundaries } from "../src/sketch/regions.js";
+import { validateSketch } from "../src/sketch/sketch-validation.js";
 
 test("fillets preserve finite supports, infer radius editing from relations and Undo atomically", async () => {
   for (const angle of [45, 90, 135, -90]) {

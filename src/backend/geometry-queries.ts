@@ -10,6 +10,15 @@ type Query = Extract<
   { kind: "sections" | "measure" | "export-geometry" | "export-step" }
 >;
 
+export function isGeometryQuery(request: ModelRequest): request is Query {
+  return (
+    request.kind === "sections" ||
+    request.kind === "measure" ||
+    request.kind === "export-step" ||
+    request.kind === "export-geometry"
+  );
+}
+
 /** Geometry readouts share a worker; STEP has its own cancellable snapshot writer. */
 export class GeometryQueries {
   private kernel: SolidCalculator;

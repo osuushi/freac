@@ -1,4 +1,4 @@
-import { type ModelingTarget, modelingKey } from "../sketch/model-selection.js";
+import { type ModelingTarget, modelingKey } from "../sketch/model-selection-state.js";
 import type { Body } from "./body.js";
 import { faceBoundaryEdges } from "./face-boundary.js";
 import { expandedSelection, selectionContext } from "./selection-context.js";

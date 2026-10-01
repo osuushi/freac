@@ -5,6 +5,7 @@ import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { modelingRoute } from "./ui-modeling.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { sketchPlaneRoute } from "./ui-sketch-plane.mjs";
 import {
   menuDiscoveryRoute,
@@ -56,11 +57,12 @@ async function run(page, name) {
   console.log(`${name}: tool menu smoke passed`);
 }
 await mkdir(".cache/sketch-review", { recursive: true });
+const names = runtimeNames(process.env.FREAC_MENU_SMOKE ? ["chromium"] : undefined);
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
   const engines = process.env.FREAC_MENU_SMOKE ? { chromium } : { chromium, webkit };
-  for (const [name, engine] of Object.entries(engines)) {
+  for (const [name, engine] of Object.entries(engines).filter(([name]) => names.includes(name))) {
     if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
     const browser = await engine.launch({ headless: true });
     try {

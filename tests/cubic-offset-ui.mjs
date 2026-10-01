@@ -5,14 +5,16 @@ import { launchElectron } from "./native-documents.mjs";
 import { cubicOffsetRoute } from "./ui-cubic-offset.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { offsetAdjacentRoute } from "./ui-offset-regressions.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
+const names = runtimeNames(["chromium", "webkit", "electron"], ["chromium", "webkit"]);
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
   const engines =
     process.env.FREAC_TEST_BROWSER === "electron" ? { electron: null } : { chromium, webkit };
-  for (const [name, engine] of Object.entries(engines)) {
+  for (const [name, engine] of Object.entries(engines).filter(([name]) => names.includes(name))) {
     const browser = engine ? await engine.launch({ headless: true }) : null;
     const app = engine
       ? null

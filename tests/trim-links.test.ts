@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { emptySketch, validateSketch } from "../src/sketch/document.js";
+import { emptySketch } from "../src/sketch/document.js";
 import { segment } from "../src/sketch/geometry.js";
 import { planes } from "../src/sketch/planes.js";
+import { validateSketch } from "../src/sketch/sketch-validation.js";
 import { trimOverlappingSketch } from "../src/sketch/trim-edit.js";
 import { trimAt } from "../src/sketch/trim-geometry.js";
 

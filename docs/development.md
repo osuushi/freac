@@ -30,23 +30,40 @@ Electron entry or backend require restarting `dev`. `setup:native` downloads has
 commit and builds a separate calculator. It needs network access on first use;
 its source and build caches live in `.cache/solver` and `.build/solver`. Normal
 `dev`/`build` runs rebuild the calculator incrementally without downloading sources.
+On POSIX hosts, `npm run build:native` also configures/builds the small read-only
+agent session helper under `.build/host-native`. It uses C++20 and system process
+APIs, with no geometry SDK or downloaded source. macOS defaults match Node's
+architecture and the 14.0 deployment target; the existing native environment
+overrides apply. macOS release preparation copies/signs it with the calculators.
+`setup:mesh` downloads checksum-pinned Manifold 3.5.3 and oneTBB 2022.3.0 sources
+into `.cache/mesh-inputs` and builds the stateless native export calculator in
+`.build/mesh`. Ordinary builds rebuild it from those prepared sources.
 `setup:kernel` downloads checksum-verified OCCT 7.9.3 source and builds the modeling
 libraries, STEP translator (`TKDESTEP`) and FreAC's separate solid calculator.
 Its transitive toolkit dependencies are built without FreeType or X11; STEP
 export does not initialize graphics. This initial source build takes
 longer; its cache is `.cache/kernel` and the calculator is `.build/kernel`.
-Alternatively, set `OCCT_ROOT` to an installed OCCT 7.9.3 SDK before running the
-command. The SDK must include `TKDESTEP` and match the calculator architecture. On macOS, native setup
+Alternatively, set `OCCT_ROOT` to an installed SDK produced by this checkout's
+`setup:kernel` recipe, including `TKDESTEP`. A stock OCCT 7.9.3 SDK is not equivalent:
+Freac adapts rounded offset joins to shared-boundary precision. Setup and direct
+CMake configuration require the recipe/build receipt, matching
+platform/architecture/deployment target and checksums of the installed SDK files.
+An older SDK without a receipt must be rebuilt; a version number or manually
+copied marker is insufficient. The receipt records local build provenance and
+integrity, not a third-party signature.
+On macOS, all three native setup
 commands explicitly default to Node's architecture, replacing any stale CMake
 architecture selection. `CMAKE_OSX_ARCHITECTURES` remains an explicit override.
 On Apple Silicon, use an ARM64 Node installation; an Intel Node running under
 Rosetta defaults to Intel native builds. After correcting Node or an architecture
-override, rerun both `setup:native` and `setup:kernel`; ordinary incremental builds
+override, rerun `setup:native`, `setup:kernel` and `setup:mesh`; ordinary incremental builds
 reuse their existing CMake configuration.
-The installed-SDK and clean source-build routes are verified on macOS arm64.
+The checksum-pinned source build and receipt-verified installed/cached SDK routes
+are verified on macOS arm64. This does not establish a fresh operating-system setup.
 Codex worktree setup shares downloaded solver/header inputs and keeps `.build`
 local. It uses the main checkout's installed OCCT SDK through `OCCT_ROOT` when
-the SDK setup sources match and the library supports the requested architecture.
+the build receipt matches this recipe/settings, its installed files verify and
+the library supports the requested architecture.
 It never shares OCCT's mutable CMake build directory; without a compatible installed
 SDK, the worktree builds its own cache. Old kernel-cache symlinks are unlinked
 without deleting the main cache. Explicit `OCCT_ROOT` overrides are preserved.
@@ -78,10 +95,29 @@ npm test
 npx playwright install chromium webkit
 npm run test:ui
 npm run test:electron
+npm run test:setup
+npm run test:current-tools
 ```
 
 Checks target the current `src/` application and honor Git ignores; they do not
 format cached upstream sources.
+`npm test` clears its generated output before compiling, so switching branches
+cannot retain compiled tests from earlier code.
+
+`test:current-tools` runs a bounded ordinary-control gate in headless Chromium,
+WebKit and hidden Electron. It covers curve creation/editing, point links, Trim,
+Transform, Extrude/Revolve, Face Offset, Fillet/Chamfer, Shell and plane cutting,
+including the history/archive cases in those routes. `test:setup` checks SDK
+receipt rejection and UI runtime selection. `tests/ui-runtime-cleanup.mjs` checks
+resource closure after actual failed routes. The macOS PR/main workflow runs
+these alongside the full unit suite and desktop host checks; it has no signing or
+publication steps. Workflow execution on GitHub is separate from local verification.
+
+Standalone UI launchers use `tests/ui-runtime.mjs` for runtime selection. Set
+`FREAC_TEST_BROWSER=chromium`, `webkit` or `electron` to select one supported
+runtime; a typo or unsupported runtime fails before launch. Existing dedicated
+geometry suites retain their declared defaults. Captured geometry, decorators,
+delayed delivery and physical-device checks remain separate from the ordinary gate.
 
 To repeat setup from committed source, create a separate checkout with
 `git worktree add --detach ../freac-clean HEAD`, enter it, activate `.nvmrc`,
@@ -99,6 +135,7 @@ cmake -S native/kernel -B .build/kernel -DFREAC_KERNEL_TESTS=ON
 cmake --build .build/kernel --target step-readback --config Release --parallel 4
 npm test
 node tests/step-geometry.mjs
+node tests/bundled-step.mjs # macOS native relocation/signature check
 node tests/ui-step-export.mjs
 FREAC_TEST_BROWSER=chromium node tests/export-ui.mjs
 FREAC_TEST_BROWSER=webkit node tests/export-ui.mjs

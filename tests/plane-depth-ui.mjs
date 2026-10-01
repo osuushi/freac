@@ -6,6 +6,7 @@ import { orient, project } from "./ui-blend-edit.mjs";
 import { at, drag, inspect, reset, settled } from "./ui-helpers.mjs";
 import { hold, releaseChoice } from "./ui-overlap-gesture.mjs";
 import { pickPlane, planeTargetsRoute } from "./ui-plane-targets.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function route(page, name) {
@@ -72,11 +73,14 @@ async function route(page, name) {
   console.log(name, "hollow cylinder plane depth passed", path);
   await planeTargetsRoute(page, name);
 }
+const names = runtimeNames(["chromium", "webkit"]);
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 await server.watcher.close();
 try {
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
+    names.includes(name),
+  )) {
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });

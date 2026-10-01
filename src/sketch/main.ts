@@ -31,7 +31,8 @@ import { planeEntryTools } from "./plane-entry-tools.js";
 import { installViewInspection } from "./view-inspection.js";
 import "../model/entity-viewer.css";
 import { BodyEdgeControls } from "../model/body-edge-controls.js";
-import { bodyView, pickFace } from "../model/body-view.js";
+import { pickFace } from "../model/body-picking.js";
+import { bodyView } from "../model/body-view.js";
 import { visibilityControls } from "../model/visibility-controls.js";
 import "./style.css";
 import "./modeling.css";
@@ -56,6 +57,7 @@ import { SketchEditor } from "./editor.js";
 import { FilletControls } from "./fillet-controls.js";
 import { PointerGestures } from "./gestures.js";
 import { LineConstraints } from "./line-constraints.js";
+import { NumericEdit } from "./numeric-edit.js";
 import { OffsetControls } from "./offset-controls.js";
 import { PointChooser } from "./point-chooser.js";
 import { PointEdgeControls } from "./point-edge-controls.js";
@@ -76,8 +78,9 @@ const host = app.querySelector<HTMLElement>("#world"),
   overlay = app.querySelector<HTMLElement>("#overlay"),
   status = app.querySelector<HTMLElement>(".status");
 if (!host || !overlay || !status) throw new Error("Missing viewport elements");
-const world = new World(host, overlay),
-  editor = new SketchEditor(world);
+const numeric = new NumericEdit(),
+  world = new World(host, overlay),
+  editor = new SketchEditor(world, numeric);
 installPlaneBounds(editor);
 const readouts = document.createElement("div");
 readouts.className = "selection-readouts";
@@ -133,8 +136,9 @@ const fillets = new FilletControls(editor, overlay);
 const trim = new TrimControls(editor, overlay);
 const offsets = new OffsetControls(editor, overlay);
 const dimensions = new Dimensions(editor, overlay),
-  gestures = new PointerGestures(editor),
-  disposeControls = installControls(editor, dimensions, app);
+  gestures = new PointerGestures(editor);
+numeric.connect(dimensions, gestures);
+const disposeControls = installControls(editor, numeric, app);
 const modelingTools = new ModelingTools(
   editor,
   () => modelControls.activateRevolve(),
@@ -248,6 +252,7 @@ window.addEventListener(
     measurements.dispose();
     gestures.dispose();
     dimensions.dispose();
+    numeric.dispose();
     disposeDrawing();
     disposeFills();
     selection.dispose();

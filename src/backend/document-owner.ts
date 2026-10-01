@@ -5,15 +5,15 @@ import type { ModelReply, ModelRequest, ModelView } from "../sketch/model-api.js
 import { describeOperation, type HistoryOperation } from "../sketch/operation-history.js";
 import { DecoratorSession } from "./decorator-session.js";
 import { editDocument, isDirectDocumentEdit } from "./document-edits.js";
-import { type PreviewRequest, previewDocument } from "./document-preview.js";
+import { isPreviewRequest, type PreviewRequest, previewDocument } from "./document-preview.js";
 import { DocumentStore } from "./document-store.js";
-import { GeometryQueries } from "./geometry-queries.js";
+import { GeometryQueries, isGeometryQuery } from "./geometry-queries.js";
 import { NativeSolver } from "./native-solver.js";
 import { openDocument } from "./open-document.js";
 import { planeCutAvailable } from "./plane-cut.js";
 import { ScriptEdits } from "./script-edits.js";
 import { SolidCalculator } from "./solid-calculator.js";
-import { isSolidPreviewRequest, SolidEdits } from "./solid-edits.js";
+import { isSolidRequest, SolidEdits } from "./solid-edits.js";
 
 export class DocumentOwner {
   private kernel: SolidCalculator;
@@ -82,6 +82,9 @@ export class DocumentOwner {
     this.pendingOperation = null;
     this.candidate = null;
   }
+  private checkCancellation(): void {
+    if (this.cancelling) throw new Error("Calculation cancelled");
+  }
   async call(request: ModelRequest): Promise<ModelReply> {
     if (request.kind === "cancel-step-export") {
       await this.queries.cancelStep();
@@ -94,13 +97,7 @@ export class DocumentOwner {
       };
     if (this.scripts.busy && request.kind !== "read" && request.kind !== "read-history")
       return { view: this.view, error: "Finish or cancel the running script first" };
-    if (
-      request.kind === "sections" ||
-      request.kind === "measure" ||
-      request.kind === "export-step" ||
-      request.kind === "export-geometry"
-    )
-      return this.queries.call(this.view, request);
+    if (isGeometryQuery(request)) return this.queries.call(this.view, request);
     if (request.kind === "read-history") return { view: this.view, history: this.store.history };
     if (request.kind === "supersede-preview") {
       if (
@@ -157,6 +154,7 @@ export class DocumentOwner {
         operationCleanup(this.store.data.bodies ?? [], this.candidate.bodies ?? []),
       );
     this.candidate = await this.decorators.continue(this.candidate);
+    this.checkCancellation();
     this.store.accept(this.candidate, {
       ...(this.pendingOperation ?? describeOperation({ kind: "accept" })),
       ...(cleanup ? { parameters: { ...this.pendingOperation?.parameters, cleanup: true } } : {}),
@@ -181,6 +179,7 @@ export class DocumentOwner {
         );
       else await this.dispatch(request, operation);
       if (this.candidate) this.candidate = await this.decorators.continue(this.candidate);
+      this.checkCancellation();
       return { view: this.view, documentChanged: before !== this.store.data };
     } catch (error) {
       const message = this.kernel.wasSuperseded
@@ -212,11 +211,17 @@ export class DocumentOwner {
       this.store.accept(direct, operation);
       return;
     }
-    if (isSolidPreviewRequest(request)) {
+    if (isSolidRequest(request)) {
       this.pendingOperation = operation;
       this.candidate = null;
       this.candidate = await this.solids.calculate(this.store.data, request);
       if (request.kind === "transform-bodies") await this.accept();
+      return;
+    }
+    if (isPreviewRequest(request)) {
+      this.pendingOperation = operation;
+      this.candidate = null;
+      await this.preview(request);
       return;
     }
     switch (request.kind) {
@@ -234,22 +239,14 @@ export class DocumentOwner {
         );
         if (request.kind === "delete-topology") await this.accept();
         break;
-      case "open":
-        this.replaceDocument(await openDocument(request.document, this.kernel));
+      case "open": {
+        const document = await openDocument(request.document, this.kernel);
+        this.checkCancellation();
+        this.replaceDocument(document);
         break;
+      }
       case "edge-finish-selection":
         await this.solids.selectFinishEdges(this.store.data, request.operation);
-        break;
-      case "mirror":
-      case "scale":
-      case "plane-cut":
-      case "offset-sketch":
-      case "project":
-      case "preview":
-      case "edit":
-        this.pendingOperation = operation;
-        this.candidate = null;
-        await this.preview(request);
         break;
       case "accept":
         await this.accept(request.cleanup);
@@ -287,7 +284,9 @@ export class DocumentOwner {
     const candidate = request.topology?.length
       ? await this.solids.removeTopology(reduced, request.topology, "delete-topology")
       : reduced;
-    this.store.accept(await this.decorators.continue(candidate), operation);
+    const continued = await this.decorators.continue(candidate);
+    this.checkCancellation();
+    this.store.accept(continued, operation);
   }
   close(): void {
     this.queries.close();

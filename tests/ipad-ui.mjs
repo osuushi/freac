@@ -3,15 +3,18 @@ import { mkdir, readFile, rm } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium, webkit } from "playwright";
 import WebSocket from "ws";
+import { hostModelBoundary } from "./host-model-boundary.mjs";
 import { tabletAgentRoute } from "./ipad-agent.mjs";
 import { tabletInputRoute } from "./ipad-input.mjs";
 import { installPenClassification } from "./ipad-pen.mjs";
 import { tabletSolidRoute } from "./ipad-solid.mjs";
 import { launchElectron } from "./native-documents.mjs";
 import { drag, inspect, settled } from "./ui-helpers.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 await mkdir(".cache/ipad", { recursive: true });
+const names = runtimeNames(["chromium", "webkit"]);
 const app = await launchElectron({
   args: ["."],
   env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: "" },
@@ -34,7 +37,9 @@ try {
     unauth.on("open", () => unauth.send(JSON.stringify({ token: "wrong" })));
     unauth.on("close", done);
   });
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
+    names.includes(name),
+  )) {
     if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
     const browser = await engine.launch({ headless: true });
     try {
@@ -67,6 +72,7 @@ try {
       await drag(page, [-10, -10], [10, 10]);
       await page.screenshot({ path: `.cache/ipad/${name}-draw.png` });
       let document = (await inspect(page)).document;
+      await hostModelBoundary(page);
       assert.equal(
         document.sketches[0]?.curves.length,
         4,
@@ -103,6 +109,7 @@ try {
       await page.locator("dialog").getByRole("button", { name: "Save", exact: true }).click();
       await settled(page);
       assert.ok((await readFile(path)).length > 100);
+      await hostModelBoundary(page);
       await chooseTool(page, "open document", "open");
       await page
         .locator("dialog")

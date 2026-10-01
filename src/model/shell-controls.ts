@@ -1,7 +1,7 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
-import type { ModelingTarget } from "../sketch/model-selection.js";
+import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import type { Vector } from "../sketch/planes.js";
 import { AxialDrag } from "./axial-drag.js";
 import type { BodyShell } from "./body.js";
@@ -83,6 +83,7 @@ export class ShellControls {
       "shell",
       () => this.cancel(),
       () => this.finish(),
+      { navigation: "when-released" },
     );
     if (!this.lease) return false;
     this.thickness = 0;

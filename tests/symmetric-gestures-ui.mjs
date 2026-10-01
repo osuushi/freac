@@ -2,16 +2,16 @@ import { mkdir } from "node:fs/promises";
 import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { symmetricExtrudeRoute } from "./ui-symmetric-extrude.mjs";
 import { symmetricSketchRoute } from "./ui-symmetric-sketch.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
+const names = runtimeNames();
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
-  for (const name of ["chromium", "webkit", "electron"].filter(
-    (n) => !process.env.FREAC_TEST_BROWSER || process.env.FREAC_TEST_BROWSER === n,
-  )) {
+  for (const name of names) {
     let browser, app;
     try {
       let page;

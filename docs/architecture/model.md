@@ -24,6 +24,14 @@ These begin as modules, not six services or packages. Ordinary typed edit functi
 are sufficient. Moving selected geometry and editing a dimension both use the
 document's edit path; they do not require a generic command-bus framework.
 The composition root only constructs and connects these responsibilities.
+The sketch schema and simple ID/document assembly live in `document.ts` without
+importing validation or editing modules. `point-math.ts` supplies elementary
+coordinate arithmetic, and `point-reference.ts` resolves current endpoint/center
+references without loading point-edit controllers. Callers that accept geometry
+use the explicit `sketch-validation.ts` entry point. Curves, constraints and groups
+require nonempty string IDs, unique within their kind in one sketch; curve and
+constraint references remain sketch-scoped. Rectangle groups require four distinct
+segment members. Whole-document validation remains the publication boundary.
 
 Electron and Three.js remain selected. Native component reuse starts from the
 existing C++20 build; it does not make C++ the owner of application policy or settle
@@ -50,7 +58,7 @@ geometry continuations retain their names through their stable IDs.
 
 | Data | Meaning and lifetime |
 | --- | --- |
-| Document | Units and a collection of sketches; exactly one accepted state in memory |
+| Document | Units, sketches, materialized bodies, saved planes and attached metadata; one accepted state |
 | Sketch | A plane frame, curves, constraints and optional editing groups; a continuing workspace |
 | Plane frame | Origin plus orthonormal U/V axes; sketch coordinates are always local 2D coordinates |
 | Curve | Stable document-local ID, typed geometric definition, construction flag |
@@ -59,8 +67,10 @@ geometry continuations retain their names through their stable IDs.
 | Region | Derived closed loops of curve spans, including holes; recomputed from current geometry |
 | Selection | Transient references to curve/features, groups or current regions; separate from document data |
 
-V1 curve definitions cover a segment, circle, circular arc and ellipse/elliptical
-arc. Store actual curve parameters, not their display polyline. A feature
+Delivered curve definitions cover a segment, circle, circular arc and cubic
+Bézier. Ellipses produced by projection or nonuniform scaling use controlled cubic
+approximation; the document has no ellipse or general NURBS entity. Store actual
+curve parameters, not their display polyline. A feature
 reference names an entity and a meaningful part, such as endpoint, center or
 axis endpoint. Do not use solver indexes or render-array positions as IDs.
 Define each concrete payload alongside its first implementation; no schema generator.
@@ -84,7 +94,7 @@ object ID. After an edit that changes intersections, rebuild the fills and clear
 affected region selection; retain surviving curve selection by ID. This needs no
 public document revision number.
 
-Closure feedback uses analytic segment/circle/arc arrangements. `curve-spans.ts`
+Closure feedback uses current curve arrangements. `curve-spans.ts`
 splits curve parameter domains at actual intersections and coincident endpoints;
 `regions.ts` walks directed spans into bounded faces. Tangent directions and
 curvature order connections, and analytic signed area distinguishes bounded faces.
@@ -95,10 +105,13 @@ unchanged. Endpoint merging uses the existing 1e-7 mm coincidence tolerance.
 them for triangulation at the current zoom. It draws translucent tint with stencil
 union so nested/overlapping cells do not darken. A portion of a circle in a boundary
 is a circular arc span with start/end angles. Arc entities provide a bounded
-parameter domain and filtered intersections to the same walker. Selectable regions, hole containment and model operations remain S3.
+parameter domain and filtered intersections to the same walker. Modeling selects
+current regions with hole containment from `profiles.ts`. Extrude, Revolve and
+other solid tools consume those current boundaries or selected topology; accepted
+bodies retain exact geometry independently of the source sketch.
 
-Use one documented model-space tolerance policy for intersection, coincidence
-and degeneracy. Screen-space hit/snap distances are a separate interaction policy.
-Zoom must not change geometric validity. Choose numeric tolerances with the first
-real curve adapter and test small/large examples; do not scatter magic epsilons
-through tools or invent a precision framework before that need.
+Name numerical policies by units and purpose: intersection and coincidence
+distances, approximation error, orientation and degenerate volume serve distinct
+contracts. Share values only where their semantics match. Screen-space hit/snap
+distances remain separate; zoom must not change geometric validity. Test actual
+small/large geometry before changing a model-space threshold.

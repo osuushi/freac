@@ -1,9 +1,9 @@
 import { curveDistance, curveFeatures } from "./curve-geometry.js";
 import type { Constraint, Endpoint, PointReference, Sketch } from "./document.js";
 import type { Drag } from "./drag-state.js";
-import { distance } from "./geometry.js";
 import type { Point } from "./planes.js";
-import { linkedPointCoordinate } from "./point-links.js";
+import { distance } from "./point-math.js";
+import { linkedPointCoordinate } from "./point-reference.js";
 
 type Attachment = { kind: "coincident"; peer: Endpoint } | { kind: "point-on-edge"; edge: string };
 export function drawingAttachment(sketch: Sketch, point: Point): Attachment | null {

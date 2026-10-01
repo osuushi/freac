@@ -3,6 +3,7 @@ import { mkdir } from "node:fs/promises";
 import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { trimCircleRoute, trimLineRoute } from "./ui-trim.mjs";
 import { trimArcRoute } from "./ui-trim-arcs.mjs";
 import { trimCancellationRoute } from "./ui-trim-cancel.mjs";
@@ -11,7 +12,7 @@ import { trimCornerLinkRoute } from "./ui-trim-links.mjs";
 import { trimOverlapRoute } from "./ui-trim-overlap.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
-const name = process.env.FREAC_TEST_BROWSER ?? "chromium";
+const [name] = runtimeNames(["chromium", "webkit", "electron"], ["chromium"]);
 let server, browser, app, page;
 try {
   if (name === "electron") {

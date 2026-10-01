@@ -117,7 +117,7 @@ Result shellBody(const Operand& source, const Tree& selection, double thickness,
 std::vector<Result> shellBodies(const Tree& input, const std::vector<Operand>& bodies,
                                 std::vector<std::string>& participants) {
     const double thickness = input.get<double>("thickness");
-    if (!std::isfinite(thickness) || std::abs(thickness) <= 10 * shell_tool::tolerance)
+    if (!std::isfinite(thickness) || std::abs(thickness) <= 10 * shell_tool::boundaryDistanceMm)
         throw std::runtime_error("Shell thickness must be finite and larger than 0.00001 mm in magnitude");
     std::set<std::string> seen;
     std::vector<Result> results;

@@ -3,6 +3,7 @@ import type { InteractionLease } from "../sketch/active-interaction.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { onModelKeydown } from "../sketch/model-keys.js";
 import type { Vector } from "../sketch/planes.js";
+import { BufferedPointer } from "./buffered-pointer.js";
 import { MovementShadows } from "./movement-shadows.js";
 import type { ScaleSource } from "./scale.js";
 import { scaleSelection } from "./scale-selection.js";
@@ -29,6 +30,7 @@ export class TransformBoxMove {
   private pointer: { x: number; y: number; command: boolean; canvas: boolean } | null = null;
   private abort = new AbortController();
   private drag: Drag | null = null;
+  private handoff: BufferedPointer | null = null;
   private ignoreClick = false;
   constructor(
     private editor: SketchEditor,
@@ -120,6 +122,7 @@ export class TransformBoxMove {
       event.button ||
       !event.metaKey ||
       this.drag ||
+      this.handoff ||
       !editor.world.transformBoxContains?.(event.clientX, event.clientY)
     )
       return;
@@ -128,21 +131,18 @@ export class TransformBoxMove {
     let released = false;
     let last = { x: event.clientX, y: event.clientY };
     if (editor.interactions.current?.kind === "scale") {
-      const buffer = new AbortController();
-      const track = (next: PointerEvent) => {
-        if (next.pointerId !== event.pointerId) return;
-        last = { x: next.clientX, y: next.clientY };
-        released ||= next.type === "pointerup";
-      };
-      window.addEventListener("pointermove", track, { signal: buffer.signal, capture: true });
-      window.addEventListener("pointerup", track, { signal: buffer.signal, capture: true });
+      const buffer = new BufferedPointer(event, this.abort.signal);
+      this.handoff = buffer;
       let finished: boolean;
       try {
         finished = await this.finishScale();
       } finally {
-        buffer.abort();
+        buffer.dispose();
+        this.handoff = null;
       }
-      if (!finished) return;
+      if (!finished || !buffer.valid) return;
+      released = buffer.released;
+      last = buffer.position;
     }
     if (editor.blocked || editor.interactions.current) return;
     const source = scaleSelection(editor);
@@ -273,6 +273,7 @@ export class TransformBoxMove {
     this.editor.refresh();
   }
   private async cancel(): Promise<void> {
+    this.handoff?.cancel();
     const drag = this.drag;
     if (!drag?.lease.close()) return;
     this.drag = null;

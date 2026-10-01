@@ -1,6 +1,7 @@
 import type { EditingGroup, Sketch } from "./document.js";
-import { add, dot, groupCurves, midpoint, scale, subtract } from "./geometry.js";
+import { groupCurves } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { add, dot, midpoint, scale, subtract } from "./point-math.js";
 
 export interface RectangleFrame {
   corners: Point[];

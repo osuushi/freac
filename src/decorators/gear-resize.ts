@@ -33,7 +33,9 @@ export function resizeGear(editor: SketchEditor, instance: DecoratorInstance): v
     editor.refresh();
     return true;
   };
-  const lease = editor.interactions.acquire("numeric", close, commit);
+  const lease = editor.interactions.acquire("numeric", close, commit, {
+    navigation: "when-released",
+  });
   if (!lease) return;
   const update = () => {
     valid = false;

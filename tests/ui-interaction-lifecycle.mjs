@@ -80,7 +80,7 @@ async function startPoint(page, kind) {
   assert.ok(box, `${kind} control visible`);
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 }
-async function numericOwnership(page) {
+export async function numericOwnership(page) {
   await reset(page);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("r");

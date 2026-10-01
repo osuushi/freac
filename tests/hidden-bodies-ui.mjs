@@ -3,11 +3,15 @@ import { createServer } from "vite";
 import { autoUnionRoute } from "./ui-auto-union.mjs";
 import { booleanTargetsRoute } from "./ui-boolean-targets.mjs";
 import { hiddenBodiesRoute, hiddenRevolveRoute } from "./ui-hidden-bodies.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 
+const names = runtimeNames(["chromium", "webkit"]);
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
+    names.includes(name),
+  )) {
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });

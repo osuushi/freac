@@ -1,5 +1,5 @@
 import type { Face } from "../model/body.js";
-import type { SketchDocument } from "../sketch/document.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import type { Vector } from "../sketch/planes.js";
 import { cross, dot, subtract } from "./cylinder.js";
 import { gearFaces } from "./gear-faces.js";
@@ -9,7 +9,7 @@ import { surfaceShell } from "./surface-shell.js";
 import type { DecoratorInstance } from "./types.js";
 
 export function rackMeshes(
-  document: SketchDocument,
+  document: DisplayDocument,
   instance: DecoratorInstance,
   quality: "preview" | "export",
 ) {

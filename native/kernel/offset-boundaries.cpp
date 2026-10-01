@@ -25,7 +25,7 @@ void checkBoundaries(const TopoDS_Shape& shape) {
             require(BRep_Tool::SameParameter(edge), "offset boundary parameters are inconsistent");
             BRepLib_CheckCurveOnSurface check(edge, TopoDS::Face(f.Current()));
             check.Perform();
-            require(check.IsDone() && std::isfinite(check.MaxDistance()) && check.MaxDistance() <= tolerance,
+            require(check.IsDone() && std::isfinite(check.MaxDistance()) && check.MaxDistance() <= boundaryDistanceMm,
                     "offset boundary does not lie on its incident surfaces");
         }
 }
@@ -40,7 +40,7 @@ void tightenVertices(const TopoDS_Shape& shape) {
         const auto a = TopExp::FirstVertex(edge), b = TopExp::LastVertex(edge);
         for (const auto& endpoint : {std::make_pair(a, first), std::make_pair(b, last)}) {
             if (endpoint.first.IsNull()) continue;
-            require(BRep_Tool::Pnt(endpoint.first).Distance(curve->Value(endpoint.second)) <= tolerance,
+            require(BRep_Tool::Pnt(endpoint.first).Distance(curve->Value(endpoint.second)) <= boundaryDistanceMm,
                     "offset joined distinct boundary endpoints");
             checked.Add(endpoint.first);
         }

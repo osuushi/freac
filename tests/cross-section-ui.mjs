@@ -8,6 +8,7 @@ import { orient } from "./ui-blend-edit.mjs";
 import { makePlate, worldClick } from "./ui-face-offset.mjs";
 import { inspect, settled } from "./ui-helpers.mjs";
 import { pickPlane } from "./ui-plane-targets.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const button = (page, name) => page.getByRole("button", { name, exact: true });
@@ -243,10 +244,13 @@ async function savedPlaneRoute(page, name) {
   assert.equal((await inspect(page)).crossSection, null);
 }
 await mkdir(".cache/cross-section", { recursive: true });
+const names = runtimeNames(["chromium", "webkit", "electron"]);
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
+  for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
+    names.includes(name),
+  )) {
     if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
     const browser = await engine.launch({ headless: true });
     try {

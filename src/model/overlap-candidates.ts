@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
-import type { ModelingTarget } from "../sketch/model-selection.js";
+import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import { type PlaneFrame, type PlaneId, type Point, planes } from "../sketch/planes.js";
-import { edgeRayHits, faceRayHits, screenRay } from "./body-ray-hits.js";
+import { BodyPickProbe } from "./body-picking.js";
+import { edgeRayHits } from "./edge-selection.js";
 import { overlapSketchCandidates } from "./overlap-sketches.js";
 
 export type OverlapTarget =
@@ -15,20 +16,19 @@ export interface OverlapCandidate {
   label: string;
 }
 export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapCandidate[] {
-  const ray = screenRay(editor, screen),
+  const probe = new BodyPickProbe(editor, screen);
+  const ray = probe.ray,
     camera = editor.world.camera.position;
-  const bodies = editor.bodiesVisible
-    ? (editor.display.bodies ?? []).filter((b) => editor.visibility.visible(b.id))
-    : [];
+  const bodies = probe.bodies;
   const result: OverlapCandidate[] = [];
-  for (const hit of faceRayHits(bodies, ray, camera, editor.world.renderer.clippingPlanes))
+  for (const hit of probe.faces())
     result.push({
       target: { kind: "face", body: hit.body, face: hit.face },
       depth: hit.depth,
       key: hit.face,
       label: "Face",
     });
-  for (const hit of edgeRayHits(editor, screen, bodies))
+  for (const hit of edgeRayHits(editor, screen, bodies, ray))
     result.push({
       target: { kind: "edge", body: hit.body, edge: hit.edge, point: hit.point },
       depth: hit.depth,

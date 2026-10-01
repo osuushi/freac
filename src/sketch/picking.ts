@@ -1,44 +1,13 @@
 import { bowGuides } from "./arc-edit.js";
-import { arcAt, arcCircle } from "./arc-geometry.js";
-import { bezierAt } from "./bezier-geometry.js";
 import { closestOnCurve, curveDistance } from "./curve-geometry.js";
-import type { EditingGroup, Endpoint, Sketch } from "./document.js";
 import type { SketchEditor } from "./editor.js";
-import { distance, dot, midpoint, subtract } from "./geometry.js";
 import type { Point } from "./planes.js";
-import { type RectangleHandle, rectangleFrame } from "./rectangle-edit.js";
+import { distance, dot, subtract } from "./point-math.js";
+import { pointHits, rectangleHandles } from "./point-query.js";
+import { rectangleFrame } from "./rectangle-edit.js";
 import { selectionFrame } from "./selection-frame.js";
+import type { Hit } from "./sketch-hit.js";
 import { sketchRotationVisible, transformHandles } from "./transform-handles.js";
-
-export type Hit =
-  | { kind: "translate"; axis: "x" | "y"; point: Point }
-  | { kind: "bow"; curve: string; side: number; point: Point }
-  | { kind: "handle"; group: EditingGroup; handle: RectangleHandle; point: Point }
-  | { kind: "group"; group: EditingGroup; point: Point }
-  | { kind: "curve"; curve: string; point: Point; group?: EditingGroup }
-  | { kind: "endpoint"; endpoint: Endpoint; point: Point }
-  | { kind: "midpoint"; curve: string; point: Point }
-  | { kind: "center"; group: EditingGroup; point: Point }
-  | { kind: "circleCenter" | "circleBody"; curve: string; point: Point }
-  | { kind: "rotate"; point: Point };
-export const hitIds = (hit: Hit): readonly string[] =>
-  hit.kind === "rotate" || hit.kind === "translate"
-    ? []
-    : hit.kind === "endpoint"
-      ? [hit.endpoint.curve]
-      : "curve" in hit
-        ? [hit.curve]
-        : hit.group.members;
-export function rectangleHandles(sketch: Sketch, group: EditingGroup) {
-  const frame = rectangleFrame(sketch, group);
-  return [
-    ...frame.corners.map((point, index) => ({ point, handle: { kind: "corner" as const, index } })),
-    ...frame.corners.map((point, index) => ({
-      point: midpoint(point, frame.corners[(index + 1) % 4]),
-      handle: { kind: "edge" as const, index },
-    })),
-  ];
-}
 
 function selectedHandle(editor: SketchEditor, screen: Point): Hit | null {
   const sketch = editor.sketch;
@@ -162,44 +131,3 @@ export function pickCandidates(editor: SketchEditor, screen: Point): Hit[] {
 }
 export const pick = (editor: SketchEditor, screen: Point): Hit | null =>
   pickCandidates(editor, screen)[0] ?? null;
-
-export function pointKey(hit: Hit | null): string | null {
-  if (!hit) return null;
-  if (hit.kind === "endpoint") return `${hit.endpoint.curve}/${hit.endpoint.end}`;
-  if (hit.kind === "midpoint") return `${hit.curve}/midpoint`;
-  if (hit.kind === "circleCenter") return `${hit.curve}/center`;
-  if (hit.kind === "center") return `${hit.group.id}/center`;
-  if (hit.kind === "handle") return `${hit.group.id}/${hit.handle.kind}/${hit.handle.index}`;
-  return null;
-}
-
-export function pointHits(sketch: Sketch): Hit[] {
-  const points: Hit[] = sketch.curves.flatMap((curve): Hit[] => {
-    const group = sketch.groups.find((item) => item.members.includes(curve.id));
-    if (group) return [];
-    if (curve.kind === "circle")
-      return [{ kind: "circleCenter", curve: curve.id, point: curve.center }];
-    if (curve.kind === "arc")
-      return [
-        { kind: "endpoint", endpoint: { curve: curve.id, end: "a" }, point: curve.a },
-        { kind: "endpoint", endpoint: { curve: curve.id, end: "b" }, point: curve.b },
-        { kind: "circleCenter", curve: curve.id, point: arcCircle(curve).center },
-        { kind: "midpoint", curve: curve.id, point: arcAt(curve, 0.5) },
-      ];
-    return [
-      { kind: "endpoint", endpoint: { curve: curve.id, end: "a" }, point: curve.a },
-      { kind: "endpoint", endpoint: { curve: curve.id, end: "b" }, point: curve.b },
-      {
-        kind: "midpoint",
-        curve: curve.id,
-        point: curve.kind === "bezier" ? bezierAt(curve, 0.5) : midpoint(curve.a, curve.b),
-      },
-    ];
-  });
-  for (const group of sketch.groups) {
-    for (const { point, handle } of rectangleHandles(sketch, group))
-      points.push({ kind: "handle", group, handle, point });
-    points.push({ kind: "center", group, point: rectangleFrame(sketch, group).center });
-  }
-  return points;
-}

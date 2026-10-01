@@ -1,7 +1,8 @@
 import { arcCircle, onArc } from "./arc-geometry.js";
 import { type Arc, type Circle, newId, type Sketch, type TangentConstraint } from "./document.js";
-import { add, distance, scale, subtract, transform } from "./geometry.js";
+import { transform } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { add, distance, scale, subtract } from "./point-math.js";
 
 type Circular = Arc | Circle;
 export type CircularSide = Exclude<TangentConstraint["side"], number>;

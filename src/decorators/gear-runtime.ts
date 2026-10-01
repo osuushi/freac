@@ -1,5 +1,5 @@
 import type { ManifoldToplevel } from "manifold-3d";
-import type { SketchDocument } from "../sketch/document.js";
+import type { DisplayDocument } from "../model/display-document.js";
 import { gearMeshes } from "./gear-mesh.js";
 import type { MeshOperations, MeshSolid } from "./mesh-operations.js";
 import { MeshScope } from "./mesh-scope.js";
@@ -8,7 +8,7 @@ import type { DecoratorInstance } from "./types.js";
 
 export function gearOperands<S extends MeshSolid<S>>(
   scope: MeshOperations<S>,
-  document: SketchDocument,
+  document: DisplayDocument,
   instance: DecoratorInstance,
   quality: "preview" | "export",
 ) {
@@ -37,7 +37,7 @@ export function gearOperands<S extends MeshSolid<S>>(
 
 export function gearPreview(
   runtime: ManifoldToplevel,
-  document: SketchDocument,
+  document: DisplayDocument,
   instance: DecoratorInstance,
 ) {
   const body = document.bodies?.find((b) => b.id === instance.faces[0].body);

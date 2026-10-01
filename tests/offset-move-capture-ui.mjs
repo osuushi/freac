@@ -1,12 +1,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { chromium, webkit } from "playwright";
-import { createServer } from "vite";
-import { launchElectron, openDocument } from "./native-documents.mjs";
+import { openDocument } from "./native-documents.mjs";
 import { orient } from "./ui-blend-edit.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
 import { inspect, reset } from "./ui-helpers.mjs";
 import { relativeOffsetInput } from "./ui-offset-input.mjs";
+import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const fixture = JSON.parse(readFileSync("tests/fixtures/offset-move-tilted-plate.json", "utf8"));
@@ -106,38 +105,4 @@ async function route(page, name) {
     `${name}: captured cap Offset, hole, rounded-end and individual-face Transform, both directions and Undo/Redo passed`,
   );
 }
-const server = await createServer({ server: { port: 0 } });
-await server.listen();
-try {
-  for (const [name, engine] of Object.entries({ chromium, webkit })) {
-    if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
-    const browser = await engine.launch({ headless: true });
-    try {
-      const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
-      page.setDefaultTimeout(30000);
-      await page.goto(server.resolvedUrls.local[0]);
-      await route(page, name);
-    } finally {
-      await browser.close();
-    }
-  }
-  if (!process.env.FREAC_TEST_BROWSER || process.env.FREAC_TEST_BROWSER === "electron") {
-    const app = await launchElectron({
-      args: ["."],
-      env: { ...process.env, FREAC_DEV_URL: server.resolvedUrls.local[0], FREAC_TEST_HIDDEN: "1" },
-    });
-    try {
-      const page = await app.firstWindow();
-      assert.equal(
-        await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),
-        false,
-      );
-      page.setDefaultTimeout(30000);
-      await route(page, "electron");
-    } finally {
-      await app.close();
-    }
-  }
-} finally {
-  await server.close();
-}
+await withUiRuntimes(route, { timeout: 30000 });

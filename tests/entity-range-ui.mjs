@@ -5,6 +5,7 @@ import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { drag, inspect } from "./ui-helpers.mjs";
+import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function reorder(page, from, to) {
@@ -97,10 +98,13 @@ async function route(page, name) {
 }
 await mkdir(".cache/sketch-review", { recursive: true });
 const runtime = process.env.FREAC_TEST_BROWSER;
+const names = runtimeNames(["chromium", "webkit", "electron"]);
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
-  for (const [name, type] of Object.entries({ chromium, webkit })) {
+  for (const [name, type] of Object.entries({ chromium, webkit }).filter(([name]) =>
+    names.includes(name),
+  )) {
     if (runtime && runtime !== name) continue;
     const browser = await type.launch({ headless: true });
     try {

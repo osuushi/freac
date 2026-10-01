@@ -7,8 +7,8 @@ import {
   splitBezier,
 } from "./bezier-geometry.js";
 import type { Bezier, Curve } from "./document.js";
-import { distance, dot, subtract } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { distance, dot, subtract } from "./point-math.js";
 import { multiply, roots, sum } from "./polynomial.js";
 
 export function bezierIntersections(a: Bezier, b: Curve): Point[] {

@@ -1,4 +1,5 @@
 import type { ManifoldToplevel } from "manifold-3d";
+import type { DisplayDocument } from "../model/display-document.js";
 import { type ExportMesh, exportMesh } from "../model/export-mesh.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { knurlDefinition } from "./builtins.js";
@@ -47,7 +48,7 @@ export function decoratedMeshes(
 
 export function decoratorPreview(
   runtime: ManifoldToplevel | undefined,
-  document: SketchDocument,
+  document: DisplayDocument,
   instance: DecoratorInstance,
 ): ExportMesh {
   if (instance.definition === knurlDefinition) {
@@ -60,7 +61,7 @@ export function decoratorPreview(
 
 export function decoratorLivePreview(
   runtime: ManifoldToplevel | undefined,
-  document: SketchDocument,
+  document: DisplayDocument,
   instance: DecoratorInstance,
   feedback: PreviewFeedback,
 ): { mesh: ExportMesh; state: ThreadPreviewResolution | null } {
@@ -71,7 +72,7 @@ export function decoratorLivePreview(
 
 function renderThreadPreview(
   runtime: ManifoldToplevel | undefined,
-  document: SketchDocument,
+  document: DisplayDocument,
   instance: DecoratorInstance,
   resolution?: ThreadPreviewResolution,
 ): { mesh: ExportMesh; state: ThreadPreviewResolution | null } {

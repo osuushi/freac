@@ -21,16 +21,16 @@ namespace {
 void fitVertex(const TopoDS_Vertex& vertex, const std::vector<gp_Pnt>& points, bool retained) {
     const auto original = BRep_Tool::Pnt(vertex);
     if (std::all_of(points.begin(), points.end(), [&](const auto& p) {
-        return p.Distance(original) <= tolerance;
+        return p.Distance(original) <= boundaryDistanceMm;
     })) return;
     gp_XYZ sum(0, 0, 0);
     for (const auto& p : points) sum += p.XYZ();
     const gp_Pnt fitted(sum / static_cast<double>(points.size()));
-    if (retained || original.Distance(fitted) > shapeTolerance ||
+    if (retained || original.Distance(fitted) > generatedVertexAdjustmentMm ||
         std::any_of(points.begin(), points.end(), [&](const auto& p) {
-            return p.Distance(fitted) > tolerance;
+            return p.Distance(fitted) > boundaryDistanceMm;
         })) throw std::runtime_error("Solid boundary endpoints cannot meet within the shape adjustment budget");
-    BRep_Builder().UpdateVertex(vertex, fitted, tolerance);
+    BRep_Builder().UpdateVertex(vertex, fitted, boundaryDistanceMm);
 }
 }
 void tightenGeneratedBoundaries(const TopoDS_Shape& shape, const TopoDS_Shape& source,
@@ -44,7 +44,7 @@ void tightenGeneratedBoundaries(const TopoDS_Shape& shape, const TopoDS_Shape& s
             BRepLib_CheckCurveOnSurface check(edge, TopoDS::Face(f.Current()));
             check.Perform();
             if (!BRep_Tool::SameParameter(edge) || !check.IsDone() ||
-                !std::isfinite(check.MaxDistance()) || check.MaxDistance() > tolerance)
+                !std::isfinite(check.MaxDistance()) || check.MaxDistance() > boundaryDistanceMm)
                 throw std::runtime_error("Solid boundary does not meet its incident surfaces");
         }
     }

@@ -1,6 +1,6 @@
 import type { Arc, Circle, Segment } from "./document.js";
-import { add, distance, dot, midpoint, scale, subtract } from "./geometry.js";
 import type { Point } from "./planes.js";
+import { add, distance, dot, midpoint, scale, subtract } from "./point-math.js";
 
 export const turn = 2 * Math.PI;
 export const positiveAngle = (angle: number): number => ((angle % turn) + turn) % turn;
