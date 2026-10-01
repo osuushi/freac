@@ -35,6 +35,11 @@ current path; first Save and Save As use a native save panel. A temporary siblin
 is fully written before replacing the destination; failure retains the old identity
 and dirty state. Open validates/materializes before replacing accepted work.
 
+Desktop and paired-browser model transports accept geometry/history requests only.
+New/Open use document commands, so geometry replacement cannot bypass file identity,
+unsaved-work choices or agent workspace binding. The standalone calculator owner
+retains New/Open for browser archive loading and internal session use.
+
 File menu commands and Cmd/Ctrl-N/O/S, Shift-Cmd/Ctrl-S and Cmd/Ctrl-W share these routes.
 The title and macOS represented-file/edited indicators reflect the current document.
 Dirty state compares accepted archive contents to the saved baseline, including Undo

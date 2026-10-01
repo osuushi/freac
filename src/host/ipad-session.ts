@@ -4,7 +4,6 @@ import type { AgentRequest } from "../agent/protocol.js";
 import { captureFixture } from "../backend/fixture-capture.js";
 import type { CameraState } from "../model/camera-state.js";
 import type { DocumentCommand } from "../model/document-host.js";
-import type { ModelRequest } from "../sketch/model-api.js";
 import type { AgentSession } from "./agent-session.js";
 import type { DocumentSession } from "./document-session.js";
 import { readInspectionView } from "./inspection-view.js";
@@ -74,7 +73,7 @@ export class IPadSession {
       case "capture-fixture":
         return captureFixture(value);
       case "model":
-        return this.documents.model(value as ModelRequest);
+        return this.documents.model(value);
       case "agent":
         return this.agent.request(value as AgentRequest);
       case "document-status":

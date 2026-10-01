@@ -3,6 +3,7 @@ import { mkdir, readFile, rm } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium, webkit } from "playwright";
 import WebSocket from "ws";
+import { hostModelBoundary } from "./host-model-boundary.mjs";
 import { tabletAgentRoute } from "./ipad-agent.mjs";
 import { tabletInputRoute } from "./ipad-input.mjs";
 import { installPenClassification } from "./ipad-pen.mjs";
@@ -67,6 +68,7 @@ try {
       await drag(page, [-10, -10], [10, 10]);
       await page.screenshot({ path: `.cache/ipad/${name}-draw.png` });
       let document = (await inspect(page)).document;
+      await hostModelBoundary(page);
       assert.equal(
         document.sketches[0]?.curves.length,
         4,
@@ -103,6 +105,7 @@ try {
       await page.locator("dialog").getByRole("button", { name: "Save", exact: true }).click();
       await settled(page);
       assert.ok((await readFile(path)).length > 100);
+      await hostModelBoundary(page);
       await chooseTool(page, "open document", "open");
       await page
         .locator("dialog")

@@ -3,6 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { _electron } from "playwright";
+import { hostModelBoundary } from "./host-model-boundary.mjs";
 import { drag, inspect, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -61,6 +62,23 @@ async function savePath(value) {
 async function status() {
   return page.evaluate(() => window.freacDocument.status());
 }
+async function undoGeometry(keyboard = false) {
+  const before = (await inspect(page)).document;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (keyboard) await page.keyboard.press("Meta+z");
+    else await menu("Undo", "Edit");
+    await settled(page);
+    if (JSON.stringify((await inspect(page)).document) !== JSON.stringify(before)) return;
+    const history = (await page.evaluate(() => window.freacModel({ kind: "read-history" })))
+      .history;
+    assert.equal(
+      history.filter((entry) => entry.state === "undone").at(-1).operation.kind,
+      "selection",
+    );
+    assert.equal((await status()).edited, false, "Selection Undo leaves saved contents clean");
+  }
+  assert.fail("Undo must reach the drawing change after selection entries");
+}
 async function draw() {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
@@ -86,6 +104,7 @@ try {
   await draw();
   assert.equal((await status()).edited, true);
   const original = (await inspect(page)).document;
+  await hostModelBoundary(page);
   await answer(1);
   await page.keyboard.press("Meta+n");
   await page.waitForTimeout(120);
@@ -103,8 +122,8 @@ try {
   assert.equal((await status()).path, path);
   assert.equal((await status()).edited, false);
   assert.equal(JSON.parse(await readFile(path, "utf8")).document.sketches.length, 1);
-  await menu("Undo", "Edit");
-  await settled(page);
+  await hostModelBoundary(page);
+  await undoGeometry();
   assert.equal((await status()).edited, true);
   await page.keyboard.press("Meta+Shift+z");
   await settled(page);
@@ -153,8 +172,7 @@ try {
     2,
     "Save writes back to the current file without another picker",
   );
-  await page.keyboard.press("Meta+z");
-  await settled(page);
+  await undoGeometry(true);
   await answer(1);
   await menu("Close");
   assert.equal((await inspect(page)).document.sketches[0].curves.length, 1);
@@ -222,6 +240,8 @@ try {
     "Hidden Electron: native menus, real drawing, save identity, dirty Undo/Redo, cancellation, failed open/save, close/quit protection and process restoration pass",
   );
 } finally {
+  // A failed assertion must not let the test's Cancel default block app cleanup.
+  await app?.evaluate(({ app }) => app.exit()).catch(() => {});
   await app?.close();
   await rm(root, { recursive: true, force: true });
 }
