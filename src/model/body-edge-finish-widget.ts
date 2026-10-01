@@ -6,6 +6,13 @@ import type * as THREE from "three";
 import type { Point, Vector } from "../sketch/planes.js";
 import type { BodyEdgeFinish } from "./body.js";
 
+interface EdgeFinishInput {
+  begin: () => void;
+  activate: (mode: BodyEdgeFinish["mode"]) => void;
+  chooseMode: (mode: BodyEdgeFinish["mode"]) => void;
+  size: (value: number) => void;
+}
+
 export class BodyEdgeFinishWidget {
   direction: Point | null = null;
   private panel = document.createElement("div");
@@ -60,6 +67,25 @@ export class BodyEdgeFinishWidget {
     this.root.append(this.handles.fillet, this.handles.chamfer, this.panel);
     overlay.append(this.root);
     this.root.hidden = true;
+  }
+  bind(signal: AbortSignal, input: EdgeFinishInput): void {
+    const options = { signal };
+    for (const mode of ["fillet", "chamfer"] as const) {
+      this.modeButtons[mode].addEventListener("click", () => input.chooseMode(mode), options);
+      this.handles[mode].addEventListener(
+        "click",
+        (event) => {
+          if (event.detail === 0) input.activate(mode);
+        },
+        options,
+      );
+    }
+    this.input.addEventListener("focus", input.begin, options);
+    this.input.addEventListener(
+      "input",
+      () => input.size(this.input.value.trim() ? Number(this.input.value) : NaN),
+      options,
+    );
   }
   update(
     camera: THREE.Camera,

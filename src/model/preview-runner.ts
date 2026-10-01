@@ -26,7 +26,7 @@ export class PreviewRunner<Request> {
     this.current = this.pending = null;
   }
 
-  /** A cleanup query shares the same serial slot; pending geometry follows it. */
+  /** Selection/cleanup queries share the same serial slot; pending geometry follows them. */
   check(task: () => Promise<void>): boolean {
     if (this.running || !this.callbacks.editing()) return false;
     this.start(task);

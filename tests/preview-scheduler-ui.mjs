@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { deliveryGate, holdReply, waitForDelivery } from "./preview-delivery.mjs";
 import { extrusionCancelRoute, extrusionPreviewRoute } from "./ui-extrude-preview.mjs";
 import { makePlate, worldClick } from "./ui-face-offset.mjs";
 import { close, inspect } from "./ui-helpers.mjs";
@@ -6,41 +7,17 @@ import { relativeOffsetInput } from "./ui-offset-input.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-function gate() {
-  return {
-    reached: Promise.withResolvers(),
-    release: Promise.withResolvers(),
-    delivered: Promise.withResolvers(),
-    assigned: false,
-  };
-}
-async function reached(gate) {
-  let timer;
-  try {
-    await Promise.race([
-      gate.reached.promise,
-      new Promise((_, reject) => {
-        timer = setTimeout(
-          () => reject(new Error("Native Offset delivery was not reached")),
-          30000,
-        );
-      }),
-    ]);
-  } finally {
-    clearTimeout(timer);
-  }
-}
 async function latestOffset(page, input, held, requests, flags, original, area) {
   await input.fill("1");
-  await reached(held.get(1));
+  await waitForDelivery(held.get(1));
   held.get(1).release.resolve();
   close((await inspect(page)).preview.bodies[0].volume, area * 6);
   await input.fill("2");
-  await reached(held.get(2));
+  await waitForDelivery(held.get(2));
   await input.fill("3");
   await input.fill("4");
   held.get(2).release.resolve();
-  await reached(held.get(4));
+  await waitForDelivery(held.get(4));
   const pending = await page.evaluate(() => window.freacInspect());
   close(pending.preview.bodies[0].volume, area * 7, "superseded verified image remains visible");
   assert.deepEqual(pending.document, original);
@@ -66,7 +43,7 @@ async function latestOffset(page, input, held, requests, flags, original, area) 
 async function cancelOffset(page, held, cancelled, original) {
   await page.getByRole("button", { name: "Offset faces", exact: true }).click();
   await (await relativeOffsetInput(page)).fill("2.5");
-  await reached(held.get(2.5));
+  await waitForDelivery(held.get(2.5));
   await page.keyboard.press("Escape");
   await cancelled.promise;
   held.get(2.5).release.resolve();
@@ -115,7 +92,7 @@ async function offsetScheduling(page) {
   await worldClick(page, [6, 6, 5]);
   await page.getByRole("button", { name: "Offset faces", exact: true }).click();
   const input = await relativeOffsetInput(page);
-  const held = new Map([1, 2, 4, 2.5].map((distance) => [distance, gate()]));
+  const held = new Map([1, 2, 4, 2.5].map((distance) => [distance, deliveryGate()]));
   const requests = [],
     flags = [];
   let cleanupChecks = 0;
@@ -129,15 +106,7 @@ async function offsetScheduling(page) {
     requests.push(request.operation.distance);
     const delay = held.get(request.operation.distance);
     if (!delay || delay.assigned) return route.continue();
-    delay.assigned = true;
-    try {
-      const response = await route.fetch(); // Native calculation; only delivery is held.
-      delay.reached.resolve();
-      await delay.release.promise;
-      await route.fulfill({ response });
-    } finally {
-      delay.delivered.resolve();
-    }
+    await holdReply(route, delay);
   });
   try {
     await latestOffset(page, input, held, requests, flags, original, area);

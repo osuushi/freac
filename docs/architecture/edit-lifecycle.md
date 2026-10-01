@@ -61,11 +61,14 @@ This release-time acceptance applies to sketch edits, not to every tool. Extrusi
 retains one candidate across successive drags/parameter edits until the user
 completes and exits the tool. Its split bodies are temporary until then. Both
 lifecycles use the same simple edit acceptance and Undo mechanism.
-Extrude and Face Offset share a bounded PreviewRunner: one running calculation,
-one latest waiting parameter set and a serial slot for cleanup queries. It does
+Extrude, Face Offset and body Fillet/Chamfer share a bounded PreviewRunner: one
+running calculation, one latest waiting parameter set and a serial slot for
+selection/cleanup queries. It does
 not own accepted data, candidates, validity or completion. Extrude interrupts
 superseded calculations; Offset retains its established noninterrupting policy,
-last verified distance and selection feedback. Each controller checks its lease
+last verified distance and selection feedback. Fillet/Chamfer similarly retain verified
+size-limit feedback; their pending sizes use the expanded edge selection when
+calculation starts. Each controller checks its lease
 and request identity before changing presentation. Invalid input clears waiting
 targets; cancellation closes the lease before awaiting native cleanup. Settling a
 cleanup query alone does not schedule another query.
