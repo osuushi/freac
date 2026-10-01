@@ -62,7 +62,7 @@ export class SolidEdits {
       kind: "edge-finish-selection",
       bodies: document.bodies ?? [],
     });
-    if (!result.edgeSelection?.length) throw new Error("No eligible edges in selection");
+    if (!result.edgeSelection.length) throw new Error("No eligible edges in selection");
     this.edgeSelection = result.edgeSelection;
   }
   async checkCleanup(original: SketchDocument, candidate: SketchDocument): Promise<boolean> {

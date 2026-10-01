@@ -49,6 +49,16 @@ Save/Open serializes exact BReps with their verified topology identity envelope;
 meshes are regenerated and no source sketch is replayed. Sketch-only data remains
 ordinary curves/constraints. Opening validates a candidate before replacing work.
 
+Every native edit and query sends the same reduced exact-body envelope: BRep plus
+ordered face/edge IDs and signatures. Display triangles, polylines, measurements
+and analytic descriptors stay out of that input. Replies have request-specific
+contracts: queries return their own required fields, and only geometry operations
+return materialization results (`inspect` has its own mode). The adapter validates
+finite geometry, bounds, topology indexes and typed predecessor references before
+exposing a reply. OCCT still owns shape feasibility; reply validation does not run
+a second shape inspection. Immediate topology correspondence lives in the shared
+body model layer for metadata continuation and is never archived.
+
 The founder's 2026-09-15 feedback opens planning of the first solid modeling loop
 while further sketch work remains. The [sketch → solid → sketch proposal](../sketch-solid-loop.md)
 develops these requirements into interactions, concrete model ownership and bounded

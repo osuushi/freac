@@ -1,67 +1,11 @@
 import { resolve } from "node:path";
-import type {
-  Body,
-  BodyBoolean,
-  BodyEdgeFinish,
-  BodyFaceOffset,
-  BodyShell,
-  BodyTransform,
-  EdgeMovement,
-  FaceMovement,
-} from "../model/body.js";
-import type { CleanupSelection } from "../model/cleanup.js";
-import type { kernelInput, pathSweepInput, revolveInput } from "./kernel-input.js";
-import type { KernelResult } from "./kernel-result.js";
+import { exactBodies } from "../model/exact-body.js";
+import type { KernelModelRequest, KernelReply } from "./kernel-reply.js";
+import { readKernelReply } from "./kernel-reply-validation.js";
+import type { KernelRequest } from "./kernel-request.js";
 import { NativeCalculator } from "./native-calculator.js";
-import type { projectionInput } from "./projection.js";
 
-export class SolidCalculator extends NativeCalculator<
-  | ReturnType<typeof import("./sketch-offset.js").sketchOffsetInput>
-  | ReturnType<typeof kernelInput>
-  | ReturnType<typeof revolveInput>
-  | ReturnType<typeof pathSweepInput>
-  | ReturnType<typeof projectionInput>
-  | (import("../model/plane-cut.js").PlaneCut & { kind: "plane-cut"; bodies: readonly Body[] })
-  | { kind: "cleanup" | "delete-topology"; selection: CleanupSelection[]; bodies: readonly Body[] }
-  | { kind: "sections"; frame: import("../sketch/planes.js").PlaneFrame; bodies: readonly Body[] }
-  | { kind: "topology"; body: string; bodies: readonly Body[] }
-  | (import("../model/topology-edit.js").FaceReplacement & {
-      kind: "replace-face";
-      bodies: readonly Body[];
-    })
-  | { kind: "inspect"; bodies: readonly Body[]; deflection?: number }
-  | {
-      kind: "scale";
-      ids: string[];
-      pivot: import("../sketch/planes.js").Vector;
-      factor: number;
-      factors?: import("../sketch/planes.js").Vector;
-      bodies: readonly Body[];
-    }
-  | {
-      kind: "scale-boundaries";
-      faces: BodyFaceOffset["faces"];
-      edges: BodyEdgeFinish["edges"];
-      pivot: import("../sketch/planes.js").Vector;
-      factor: number;
-      factors?: import("../sketch/planes.js").Vector;
-      bodies: readonly Body[];
-    }
-  | ReturnType<typeof import("./measurement-input.js").measurementInput>
-  | (Omit<BodyEdgeFinish, "size"> & { kind: "edge-finish-selection"; bodies: readonly Body[] })
-  | (Omit<Extract<import("../model/mirror.js").MirrorOperation, { kind: "bodies" }>, "kind"> & {
-      kind: "mirror";
-      bodies: readonly Body[];
-    })
-  | (BodyShell & { kind: "shell"; bodies: readonly Body[] })
-  | (BodyFaceOffset & { kind: "offset-faces"; bodies: readonly Body[] })
-  | (EdgeMovement & { kind: "move-edges"; bodies: readonly Body[] })
-  | (FaceMovement & { kind: "move-faces"; bodies: readonly Body[] })
-  | (BodyEdgeFinish & { kind: "edge-finish"; bodies: readonly Body[] })
-  | (BodyBoolean & { kind: "boolean"; bodies: readonly Body[] })
-  | (BodyTransform & { kind: "transform"; bodies: readonly Body[] }),
-  KernelResult
-> {
+export class SolidCalculator extends NativeCalculator<KernelRequest, unknown> {
   private superseded = false;
   constructor(
     executable = resolve(
@@ -70,6 +14,11 @@ export class SolidCalculator extends NativeCalculator<
     ),
   ) {
     super(executable, "Solid kernel");
+  }
+  override async calculate<Input extends KernelRequest>(input: Input): Promise<KernelReply<Input>> {
+    // Enforce the wire envelope here even when callers hold a full accepted Body.
+    const reply = await super.calculate({ ...input, bodies: exactBodies(input.bodies) });
+    return readKernelReply(input, reply);
   }
   begin(): void {
     this.superseded = false;
@@ -80,7 +29,7 @@ export class SolidCalculator extends NativeCalculator<
   get wasSuperseded(): boolean {
     return this.superseded;
   }
-  async probe(input: Parameters<SolidCalculator["calculate"]>[0]): Promise<KernelResult> {
+  async probe<Input extends KernelModelRequest>(input: Input): Promise<KernelReply<Input>> {
     if (this.superseded) throw new Error("Preview superseded");
     // Finish the current probe so useful geometry can still reach the viewport.
     // Supersession prevents subsequent probes, rather than starving every frame.

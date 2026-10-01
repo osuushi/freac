@@ -1,5 +1,5 @@
-import { topologyOrigins } from "../backend/kernel-result.js";
 import type { Body } from "../model/body.js";
+import { topologyOrigins } from "../model/body-correspondence.js";
 import { newId, type SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
 import { isBuiltinDecorator } from "./builtins.js";

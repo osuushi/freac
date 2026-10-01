@@ -1,14 +1,10 @@
-import type { Body, BodyEdgeFinish, BooleanMode, Edge, Face } from "../model/body.js";
-import { type Curve, newId } from "../sketch/document.js";
+import type { Body, BooleanMode, Edge, Face } from "../model/body.js";
+import { topologyOrigins } from "../model/body-correspondence.js";
+import { newId } from "../sketch/document.js";
 
 type Descendant<T> = Omit<T, "id"> & { predecessors: string[] };
-export interface KernelResult {
-  topology?: import("../model/topology-edit.js").BodyTopology;
-  sections?: import("../model/sketch-section.js").SketchSection[];
-  measurement?: import("../model/measurement.js").Measurement;
-  curves?: Curve[];
-  edgeSelection?: BodyEdgeFinish["edges"];
-  mode: BooleanMode;
+export interface KernelResult<Mode extends BooleanMode | "inspect" = BooleanMode> {
+  mode: Mode;
   participants: string[];
   results: (Omit<Body, "id" | "faces" | "edges"> & {
     copy?: boolean;
@@ -23,17 +19,11 @@ export interface KernelResult {
     edges: Descendant<Edge>[];
   })[];
 }
-/** Immediate calculation correspondence, consumed by attached metadata; never serialized. */
-export const topologyOrigins = new WeakMap<
-  Body,
-  {
-    bodies: readonly string[];
-    copy: boolean;
-    faces: ReadonlyMap<string, readonly string[]>;
-  }
->();
 /** Preserve IDs only for one-to-one continuations. A split/merge gets new identities. */
-export function materialize(previous: readonly Body[], result: KernelResult): Body[] {
+export function materialize(
+  previous: readonly Body[],
+  result: KernelResult<BooleanMode | "inspect">,
+): Body[] {
   const retained = new Set(
     previous
       .filter((body) => !result.participants.includes(body.id))

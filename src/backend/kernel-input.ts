@@ -1,4 +1,5 @@
 import type { Body, Extrusion, LiftSource, Revolution } from "../model/body.js";
+import { exactBodies } from "../model/exact-body.js";
 import type { PathSweep } from "../model/path-sweep.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { type PlaneFrame, parallelNormals, planeNormal, type Vector } from "../sketch/planes.js";
@@ -41,12 +42,7 @@ function profileInput(document: SketchDocument, sources: LiftSource[], bodies: r
   return {
     normal: direction,
     profiles,
-    bodies: bodies.map(({ id, brep, faces, edges }) => ({
-      id,
-      brep,
-      faces: faces.map(({ id, signature }) => ({ id, signature })),
-      edges: edges.map(({ id, signature }) => ({ id, signature })),
-    })),
+    bodies: exactBodies(bodies),
   };
 }
 
@@ -57,7 +53,7 @@ export function kernelInput(
 ) {
   return {
     ...profileInput(document, extrusion.sources, bodies),
-    kind: "extrude",
+    kind: "extrude" as const,
     mode: extrusion.mode,
     distance: extrusion.distance,
     symmetric: extrusion.symmetric,
@@ -75,7 +71,7 @@ export function revolveInput(
 ) {
   return {
     ...profileInput(document, operation.sources, bodies),
-    kind: "revolve",
+    kind: "revolve" as const,
     mode: operation.mode,
     targets: operation.targets,
     eligibleTargets: operation.eligibleTargets,
@@ -92,7 +88,7 @@ export function pathSweepInput(
 ) {
   return {
     ...profileInput(document, operation.sources, bodies),
-    kind: "path-sweep",
+    kind: "path-sweep" as const,
     path: operation.path,
     mode: operation.mode,
     targets: operation.targets,

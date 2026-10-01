@@ -19,7 +19,7 @@ export async function withUiRuntimes(
 ) {
   const names = runtimeNames(allowed);
   await mkdir(".cache/sketch-review", { recursive: true });
-  const server = await createServer({ server: { port: 0 } });
+  const server = await createServer({ server: { port: 0, watch: null, hmr: false } });
   try {
     await server.listen();
     for (const name of names) {

@@ -57,6 +57,5 @@ export async function projectDocument(
 ): Promise<SketchDocument> {
   const target = projectionTarget(document, projection);
   const result = await kernel.calculate(projectionInput(document, projection, target));
-  if (!result.curves) throw new Error("Kernel did not return projected curves");
   return withSketch(document, projectedSketch(target, result.curves));
 }

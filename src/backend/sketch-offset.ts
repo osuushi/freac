@@ -34,7 +34,7 @@ export async function offsetSketchDocument(
 ): Promise<SketchDocument> {
   const input = sketchOffsetInput(document, request);
   const result = await kernel.calculate(input);
-  if (!result.curves?.length) throw new Error("Offset returned no curves");
+  if (!result.curves.length) throw new Error("Offset returned no curves");
   const sketch = document.sketches.find((s) => s.id === request.sketchId);
   if (!sketch) throw new Error("Offset sketch no longer exists");
   const source = cubicOffsetProfile(sketch.curves.filter((c) => request.curves.includes(c.id)));
