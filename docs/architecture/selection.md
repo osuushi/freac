@@ -63,7 +63,10 @@ founder feedback update these contracts before further tools depend on them.
   A disk grows from its center to a fixed circular outline over the hold delay; it indicates elapsed hold time, not
   processing. The delay is currently fixed; a future preferences window can expose it.
   Each choice shows the actual target geometry in the current camera orientation,
-  with subdued body context and shared thumbnail framing. Plane thumbnails include
+  with subdued body context. Thumbnails share full-scene framing while the target
+  spans at least half the usable width or height; smaller targets get a centered
+  crop at that minimum size, retaining nearby context and the camera orientation.
+  Plane thumbnails include
   visible coplanar sketches in their actual positions; hidden sketches are omitted.
   Sketches off the visible defined planes get their own Sketch choice when a curve
   or enclosed region overlaps the press. Coplanar sketches stay represented by the

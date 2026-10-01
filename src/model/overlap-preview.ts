@@ -5,7 +5,10 @@ import { overlapGeometry, type PreviewGeometry } from "./overlap-geometry.js";
 import { sketchPreviewLines } from "./overlap-sketches.js";
 
 const ns = "http://www.w3.org/2000/svg";
-/** All thumbnails retain the camera and a shared framing, so targets can be compared. */
+const previewWidth = 128,
+  previewHeight = 88,
+  minimumTargetProportion = 0.5;
+/** Keep the camera angle and scene context, zooming small targets into a readable crop. */
 export function overlapPreviews(
   editor: SketchEditor,
   candidates: OverlapCandidate[],
@@ -22,36 +25,57 @@ export function overlapPreviews(
     }
     return geometry;
   });
-  const all = [context, ...targets]
-    .flatMap((g) => [...g.surfaces, ...g.lines])
-    .flat()
-    .map((p) => editor.world.project(p));
-  let left = Infinity,
-    right = -Infinity,
-    top = Infinity,
-    bottom = -Infinity;
-  for (const p of all) {
-    left = Math.min(left, p.x);
-    right = Math.max(right, p.x);
-    top = Math.min(top, p.y);
-    bottom = Math.max(bottom, p.y);
-  }
-  const scale = Math.min(128 / Math.max(1, right - left), 88 / Math.max(1, bottom - top));
-  const project = (p: Vector): Point => {
-    const q = editor.world.project(p);
-    return {
-      x: 72 + (q.x - (left + right) / 2) * scale,
-      y: 52 + (q.y - (top + bottom) / 2) * scale,
-    };
-  };
+  const projectWorld = (p: Vector): Point => editor.world.project(p);
+  const scene = bounds([context, ...targets], projectWorld);
+  const sceneScale = fitScale(scene);
   return targets.map((target) => {
+    const area = bounds([target], projectWorld);
+    const scale = Math.max(sceneScale, fitScale(area) * minimumTargetProportion);
+    const frame = scale > sceneScale ? area : scene;
+    const project = (p: Vector): Point => {
+      const q = projectWorld(p);
+      return {
+        x: 72 + (q.x - (frame.left + frame.right) / 2) * scale,
+        y: 52 + (q.y - (frame.top + frame.bottom) / 2) * scale,
+      };
+    };
     const svg = document.createElementNS(ns, "svg");
     svg.setAttribute("viewBox", "0 0 144 104");
+    svg.setAttribute("overflow", "hidden");
     svg.setAttribute("aria-hidden", "true");
     draw(svg, context, project, "#dbe1e8", "#aab5c1");
     draw(svg, target, project, "#8cbde8", "#1269b5");
     return svg;
   });
+}
+interface Bounds {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+function bounds(geometries: PreviewGeometry[], project: (p: Vector) => Point): Bounds {
+  let left = Infinity,
+    right = -Infinity,
+    top = Infinity,
+    bottom = -Infinity;
+  for (const point of geometries.flatMap((g) => [...g.surfaces, ...g.lines]).flat()) {
+    const p = project(point);
+    left = Math.min(left, p.x);
+    right = Math.max(right, p.x);
+    top = Math.min(top, p.y);
+    bottom = Math.max(bottom, p.y);
+  }
+  return Number.isFinite(left)
+    ? { left, right, top, bottom }
+    : { left: 0, right: 0, top: 0, bottom: 0 };
+}
+function fitScale(area: Bounds): number {
+  const extent = Math.max(
+    (area.right - area.left) / previewWidth,
+    (area.bottom - area.top) / previewHeight,
+  );
+  return extent > 0 ? 1 / extent : 1;
 }
 function draw(
   svg: SVGSVGElement,
