@@ -1,12 +1,12 @@
 import type { Body, Extrusion, LiftSource, Revolution } from "../model/body.js";
 import type { PathSweep } from "../model/path-sweep.js";
 import type { SketchDocument } from "../sketch/document.js";
-import type { PlaneFrame } from "../sketch/planes.js";
+import { type PlaneFrame, parallelNormals, planeNormal, type Vector } from "../sketch/planes.js";
 import { profilesFor } from "../sketch/profiles.js";
 import { boundary } from "./profile-boundary.js";
 
 function profileInput(document: SketchDocument, sources: LiftSource[], bodies: readonly Body[]) {
-  let direction: number[] | undefined;
+  let direction: Vector | undefined;
   const profiles = sources.map((source) => {
     let frame: PlaneFrame;
     let profile:
@@ -31,13 +31,8 @@ function profileInput(document: SketchDocument, sources: LiftSource[], bodies: r
         holes: region.holes.map((hole) => boundary(hole, frame)),
       };
     }
-    const { u, v } = frame;
-    const normal = [
-      u[1] * v[2] - u[2] * v[1],
-      u[2] * v[0] - u[0] * v[2],
-      u[0] * v[1] - u[1] * v[0],
-    ];
-    if (direction && Math.abs(direction.reduce((sum, n, i) => sum + n * normal[i], 0)) < 1 - 1e-7)
+    const normal = planeNormal(frame);
+    if (direction && !parallelNormals(direction, normal))
       throw new Error("Selected profiles must have parallel planes");
     direction ??= normal;
     return profile;

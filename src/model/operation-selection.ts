@@ -1,5 +1,6 @@
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelingTarget } from "../sketch/model-selection.js";
+import { parallelNormals, planeNormal, type Vector } from "../sketch/planes.js";
 import type { Body, BodyEdgeFinish, BodyFaceOffset, BodyShell, Face, LiftSource } from "./body.js";
 import { type CleanupSelection, cleanupSelection } from "./cleanup.js";
 import { expandedSelection, type SelectionContext, selectionContext } from "./selection-context.js";
@@ -140,7 +141,7 @@ export function coverageTargets(c: SelectionContext): ModelingTarget[] {
 }
 
 function liftSelection(c: SelectionContext, document: SketchDocument): Resolution<LiftSource[]> {
-  let normal: number[] | null = null;
+  let normal: Vector | null = null;
   const sources: LiftSource[] = [];
   for (const t of expandedSelection(c)) {
     const plane =
@@ -151,11 +152,10 @@ function liftSelection(c: SelectionContext, document: SketchDocument): Resolutio
           : null;
     if (!plane)
       return unavailable("Select planar faces or filled sketch regions with a common direction");
-    const { u, v } = plane;
-    const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
-    if (normal && normal.reduce((sum, x, i) => sum + x * n[i], 0) < 1 - 1e-7)
-      return unavailable("Selected surfaces must have a common direction");
-    normal = n;
+    const n = planeNormal(plane);
+    if (normal && !parallelNormals(normal, n))
+      return unavailable("Selected surfaces must have parallel planes");
+    normal ??= n;
     if (t.kind === "face") sources.push({ face: t.face });
     if (t.kind === "profile") sources.push({ sketch: t.sketch, profile: t.profile.key });
   }

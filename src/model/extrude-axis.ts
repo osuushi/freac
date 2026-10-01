@@ -1,7 +1,13 @@
 import * as THREE from "three";
 import { boundaryPoints } from "../sketch/curve-spans.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import { type Point, type Vector, worldPoint } from "../sketch/planes.js";
+import {
+  type Point,
+  parallelNormals,
+  planeNormal,
+  type Vector,
+  worldPoint,
+} from "../sketch/planes.js";
 import { expandedSelection, selectionContext } from "./selection-context.js";
 
 /** Display anchor only; curved boundaries are tessellated independently of body geometry. */
@@ -11,7 +17,7 @@ export function extrusionAxis(
   if (!editor.modeling.resolve("extrude").available) return null;
   const weighted = new THREE.Vector3();
   let total = 0;
-  let normal: THREE.Vector3 | null = null;
+  let normal: Vector | null = null;
   let origin: Vector | null = null;
   let coplanar = true;
   const add = (point: Vector, area: number) => {
@@ -31,12 +37,14 @@ export function extrusionAxis(
         : undefined;
     const plane = face?.plane ?? sketch?.plane;
     if (!plane) return null;
-    const n = new THREE.Vector3(...plane.u).cross(new THREE.Vector3(...plane.v)).normalize();
-    if (normal && normal.dot(n) < 1 - 1e-7) return null;
-    normal = n;
+    const n = planeNormal(plane);
+    if (normal && !parallelNormals(normal, n)) return null;
+    normal ??= n;
     origin ??= plane.origin;
+    const baseOrigin = origin;
     coplanar &&=
-      Math.abs(n.dot(new THREE.Vector3(...plane.origin).sub(new THREE.Vector3(...origin)))) < 1e-6;
+      Math.abs(n.reduce((sum, value, i) => sum + value * (plane.origin[i] - baseOrigin[i]), 0)) <
+      1e-6;
     if (face) {
       for (let i = 0; i < face.vertices.length; i += 9) {
         const a = new THREE.Vector3().fromArray(face.vertices, i);
@@ -62,7 +70,7 @@ export function extrusionAxis(
   return total > 1e-10 && normal
     ? {
         center: weighted.divideScalar(total).toArray() as Vector,
-        normal: normal.toArray() as Vector,
+        normal,
         coplanar,
       }
     : null;

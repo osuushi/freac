@@ -31,6 +31,12 @@ shortcuts and operation controllers use this same resolution. Applicability does
 not promise that every parameter value will succeed; the exact kernel remains the
 geometry authority. Unsupported selections never silently drop targets.
 
+Extrude and Revolve accept parallel supports with either normal orientation. The
+first selected support sets the common extrusion direction; signed distance retains
+its meaning when source order changes. Revolve uses that support for its section
+frame and requires its selected axis to lie in the section plane. Manual and script
+paths use the same parallel-normal predicate. Nonparallel supports remain unavailable.
+
 A tool is the interactive parameter-gathering and preview route for an operation.
 `tool-policy.ts` owns the interactive tool IDs and default preference separately
 from operation eligibility. Delete is immediate and has no ongoing tool. Move can

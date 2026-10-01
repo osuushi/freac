@@ -12,6 +12,17 @@ export const planes: Record<PlaneId, PlaneFrame> = {
   YZ: { origin: [0, 0, 0], u: [0, 1, 0], v: [0, 0, 1] },
 };
 export const planeIds: PlaneId[] = ["XY", "XZ", "YZ"];
+
+export function planeNormal(frame: PlaneFrame): Vector {
+  const { u, v } = frame;
+  return [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+}
+
+/** Unit support normals can face either way; signed motion uses the first support. */
+export function parallelNormals(a: Vector, b: Vector): boolean {
+  return Math.abs(a.reduce((sum, value, i) => sum + value * b[i], 0)) >= 1 - 1e-7;
+}
+
 export function worldPoint(frame: PlaneFrame, point: Point): Vector {
   return frame.origin.map(
     (value, i) => value + frame.u[i] * point.x + frame.v[i] * point.y,
