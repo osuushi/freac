@@ -5,12 +5,14 @@ import { DocumentOwner } from "../.cache/sketch-tests/src/backend/document-owner
 import { exportMesh } from "../.cache/sketch-tests/src/model/export-mesh.js";
 import { stepItems } from "../.cache/sketch-tests/src/model/step-export.js";
 import { sphereFit, torusFit } from "../.cache/sketch-tests/tests/mesh-fit-fixtures.js";
+import { smoothShape } from "../.cache/sketch-tests/tests/mesh-fit-shapes.js";
 import { readStep } from "./step-readback.mjs";
 
 await mkdir(".cache/mesh-fit-ui", { recursive: true });
 for (const [name, input] of [
   ["sphere", sphereFit()],
   ["torus", torusFit()],
+  ["bend", smoothShape(([x, y, z]) => [6 * x + 12 * z * z, 6 * y, 20 * z], 4)],
 ]) {
   const owner = new DocumentOwner();
   try {

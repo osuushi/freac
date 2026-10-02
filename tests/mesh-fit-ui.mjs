@@ -3,6 +3,7 @@ import { execFile } from "node:child_process";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
+import { smoothShape } from "../.cache/sketch-tests/tests/mesh-fit-shapes.js";
 import { scriptBrowser } from "./agent-script-browser.mjs";
 import { launchElectron, openDocument, saveDocument } from "./native-documents.mjs";
 import { inspect, settled } from "./ui-helpers.mjs";
@@ -10,9 +11,24 @@ import { orient, pick } from "./ui-measurement.mjs";
 import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-const source = await readFile("docs/examples/mesh-fitting.ts", "utf8");
+const fixtures = [
+  {
+    name: "sphere",
+    source: await readFile("docs/examples/mesh-fitting.ts", "utf8"),
+    volume: (4000 * Math.PI) / 3,
+    point: [3, -9, 2],
+  },
+  {
+    name: "bend",
+    source: `await makeshift.fitMesh(${JSON.stringify(smoothShape(([x, y, z]) => [6 * x + 12 * z * z, 6 * y, 20 * z], 4))});`,
+    volume: (4 * Math.PI * 6 * 6 * 20) / 3,
+    point: [2.08, -5.66, 4.71],
+  },
+];
 await mkdir(".cache/mesh-fit-ui", { recursive: true });
-for (const name of runtimeNames()) {
+for (const fixture of fixtures) for (const name of runtimeNames()) await runtime(name, fixture);
+
+async function runtime(name, fixture) {
   let app, web, page, workspace;
   try {
     if (name === "electron") {
@@ -43,7 +59,7 @@ for (const name of runtimeNames()) {
     page.setDefaultTimeout(20000);
     await settled(page);
     const context = { page, workspace, web };
-    await route(context, name);
+    await route(context, `${name}-${fixture.name}`, fixture);
   } finally {
     if (app) {
       await page.evaluate(() => window.makeshiftAgent.request({ kind: "stop" })).catch(() => {});
@@ -53,24 +69,25 @@ for (const name of runtimeNames()) {
   }
 }
 
-async function route(context, name) {
+async function route(context, name, fixture) {
+  const { source, volume, point } = fixture;
   const { page } = context;
   const original = (await inspect(page)).document;
   await run(context, source, "fit");
   const accepted = (await inspect(page)).document;
   assert.equal(accepted.bodies.length, 1);
   assert(accepted.bodies[0].faces.length < 100);
-  assert(Math.abs(accepted.bodies[0].volume / ((4000 * Math.PI) / 3) - 1) < 0.035);
+  assert(Math.abs(accepted.bodies[0].volume / volume - 1) < 0.035);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, accepted);
   await page.keyboard.press("Escape");
   await orient(page, [0.3, -1, 0.35]);
-  const selected = await pick(page, [3, -9, 2]);
+  const selected = await pick(page, point);
   assert.equal(selected.modelingSelection[0]?.kind, "face");
   await page.keyboard.press("Escape");
-  const again = await pick(page, [3, -9, 2]);
+  const again = await pick(page, point);
   assert.equal(again.modelingSelection[0]?.face, selected.modelingSelection[0].face);
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await chooseTool(page, "transform", "transform");
@@ -96,13 +113,13 @@ async function route(context, name) {
     accepted.bodies[0].faces.map((f) => f.id),
   );
   assert(Math.abs(reopened.bodies[0].volume - accepted.bodies[0].volume) < 1e-6);
-  await rollback(context, reopened);
+  await rollback(context, reopened, source);
   console.log(
     `PASS ${name}: typed fitMesh, selection/reselection, movement, Undo/Redo, archive, rollback, cancellation and Delete/Undo`,
   );
 }
 
-async function rollback(context, reopened) {
+async function rollback(context, reopened, source) {
   const { page } = context;
   // Failure must roll back the entire script, including a preceding successful fit.
   await assert.rejects(

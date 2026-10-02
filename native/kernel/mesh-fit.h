@@ -79,7 +79,7 @@ Network refine(const Network&);
 std::array<double, 4> basis(double t);
 std::array<double, 4> derivative(double t);
 Evaluation evaluate(const Network&, int patch, double u, double v);
-void fit(Network&, const Mesh&, const Search&, int iterations);
+void fit(Network&, const Network& seed, const Mesh&, const Search&, int iterations);
 Statistics assess(const Network&, const Mesh&, const Search&);
 TopoDS_Shape assemble(const Network&, const Input&);
 void reconstruct(std::ostream&, const Tree&);

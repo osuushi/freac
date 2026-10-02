@@ -20,6 +20,21 @@ const scenarios: [string, () => MeshFitInput, number?][] = [
     (4 * Math.PI * 6 * 6 * 20) / 3,
   ],
   [
+    "strongly bent body with conditioned corner tangents",
+    () => smoothShape(([x, y, z]) => [6 * x + 12 * z * z, 6 * y, 20 * z], 4),
+    (4 * Math.PI * 6 * 6 * 20) / 3,
+  ],
+  [
+    "small rotated strongly bent body",
+    () =>
+      transformed(
+        smoothShape(([x, y, z]) => [6 * x + 12 * z * z, 6 * y, 20 * z], 4),
+        0.01,
+        [1, -2, 3],
+      ),
+    (4 * Math.PI * 6 * 6 * 20) / 3e6,
+  ],
+  [
     "three asymmetric lobes",
     () =>
       smoothShape(([x, y, z]) => {
@@ -84,19 +99,6 @@ test("mesh fitting does not silently omit a localized spike between ordinary fit
   try {
     await assert.rejects(
       kernel.calculate({ ...input, maxPatches: 6, kind: "fit-mesh", bodies: [] }),
-      /tolerance|fold|singular/,
-    );
-  } finally {
-    kernel.close();
-  }
-});
-
-test("strongly bent layout with collapsed corner tangents rejects explicitly", async () => {
-  const kernel = new SolidCalculator();
-  const input = smoothShape(([x, y, z]) => [6 * x + 12 * z * z, 6 * y, 20 * z], 4);
-  try {
-    await assert.rejects(
-      kernel.calculate({ ...input, kind: "fit-mesh", bodies: [] }),
       /tolerance|fold|singular/,
     );
   } finally {

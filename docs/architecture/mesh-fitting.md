@@ -40,8 +40,12 @@ point index, and fits a shared bicubic Bézier control network. Boundary control
 are shared exactly between neighbors. A joint sparse least-squares solve combines
 forward/reverse distance samples, normal alignment, tangent-frame regularization,
 and mild fairness. Tangent regularization applies to each iteration rather than
-anchoring the final shape to the initial layout. Bounded steps protect the sampled
-patch orientation.
+anchoring the final shape to the initial layout. An additional signed-area penalty
+resists collapse of initially independent parameter directions; normal residuals
+balance long and short tangents. Bounded steps protect the sampled patch orientation.
+Each refinement level receives up to three batches of 12 iterations, with the full
+acceptance checks after each batch. Passing candidates stop immediately; extra
+iterations and refinement never relax the distance, seam or B-rep requirements.
 Declared crease edges omit the smoothness constraint. Shared de Casteljau
 subdivision preserves the existing surface before another fit iteration.
 Crease initialization uses the intersection of the incident target tangent planes;
@@ -90,9 +94,9 @@ edge network. Local refinement, automatic layout generation, arbitrary open shee
 insertion, exact tangent continuity at all parameters, and general analytic
 primitive recognition are outside this operation's current contract.
 
-Strongly bent layouts can still collapse corner parameter directions even with
-96 initial patches. The regression fixture with radii 6/6/20 mm and a 12 mm
-quadratic bend is rejected; a 4 mm bend fits. More patches alone are not a general
-remedy: layout placement and parameter conditioning matter. Thin shapes need an
-allowance chosen relative to their thickness if volume accuracy matters; the
-15/10/1.5 mm ellipsoid acceptance uses a 0.05 mm allowance and 96 initial quads.
+Layout placement and parameter conditioning still matter: additional patches or
+iterations do not guarantee a feasible fit for an arbitrary layout. The acceptance
+matrix includes radii 6/6/20 mm with a 12 mm quadratic bend and 96 initial patches,
+alongside the milder 4 mm bend. Thin shapes need an allowance chosen relative to
+their thickness if volume accuracy matters; the 15/10/1.5 mm ellipsoid acceptance
+uses a 0.05 mm allowance and 96 initial quads.

@@ -16,8 +16,12 @@ void reconstruct(std::ostream& out, const Tree& tree) {
     Statistics stats;
     while (true) {
         if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "mesh-fit: " << network.patches.size() << " patches\n";
-        fit(network,input.target,target,12);
-        stats = assess(network,input.target,target);
+        const auto seed = network;
+        for (int pass = 0; pass < 3; ++pass) {
+            fit(network,seed,input.target,target,12);
+            stats = assess(network,input.target,target);
+            if (stats.oriented && std::max(stats.forward,stats.reverse) <= input.tolerance && stats.normalAngle <= input.smoothAngle) break;
+        }
         if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "mesh-fit deviation "
             << std::max(stats.forward,stats.reverse)*input.scale << ", seam " << stats.normalAngle << "\n";
         if (stats.oriented && std::max(stats.forward,stats.reverse) <= input.tolerance && stats.normalAngle <= input.smoothAngle) break;

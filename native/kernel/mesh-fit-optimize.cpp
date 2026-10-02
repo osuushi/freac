@@ -12,6 +12,26 @@ void position(std::vector<Row>& rows, const Patch& patch, double u, double v, co
         rows.push_back(std::move(row));
     }
 }
+void conditionFrame(std::vector<Row>& rows, const Patch& patch, double u, double v,
+                    const V& normal, const Evaluation& current, const Evaluation& seed) {
+    const double product = length(current.du)*length(current.dv);
+    const double seedSine = length(unit(seed.du).Crossed(unit(seed.dv)));
+    const double minimumArea = product*seedSine*0.25;
+    const double area = current.du.Crossed(current.dv).Dot(normal);
+    if (area >= minimumArea || product < 1e-20) return;
+    // Linearize signed tangent area. This activates only as a healthy seed frame
+    // collapses; preserving lengths alone cannot keep its two directions independent.
+    const auto gu = current.dv.Crossed(normal), gv = normal.Crossed(current.du);
+    const auto bu = basis(u), bv = basis(v), du = derivative(u), dv = derivative(v);
+    const double weight = 1/std::sqrt(product);
+    Row row; row.value = (minimumArea+area)*weight;
+    for (int i = 0; i < 4; ++i) for (int j = 0; j < 4; ++j)
+        for (int axis = 0; axis < 3; ++axis) {
+            const double coefficient = (du[i]*bv[j]*gu.Coord(axis+1)+bu[i]*dv[j]*gv.Coord(axis+1))*weight;
+            if (coefficient != 0) row.terms.push_back({patch.controls[i*4+j]*3+axis,coefficient});
+        }
+    rows.push_back(std::move(row));
+}
 void tangentPlane(std::vector<Row>& rows, const Patch& patch, double u, double v, const V& normal,
                   const Evaluation& reference) {
     const auto bu = basis(u), bv = basis(v), du = derivative(u), dv = derivative(v);
@@ -23,12 +43,14 @@ void tangentPlane(std::vector<Row>& rows, const Patch& patch, double u, double v
         std::array<Row,3> spacing;
         const auto prior = direction == 0 ? reference.du : reference.dv;
         const auto tangent = unit(prior-normal*prior.Dot(normal));
+        // Match angular influence for long and short parameter directions.
+        const double normalWeight = 10*std::sqrt(length(reference.du)*length(reference.dv))/std::max(1e-20,length(prior));
         for (int axis = 0; axis < 3; ++axis) spacing[axis].value = tangent.Coord(axis+1)*length(prior)*frameWeight;
         for (int i = 0; i < 4; ++i) for (int j = 0; j < 4; ++j) {
             const double w = direction == 0 ? du[i]*bv[j] : bu[i]*dv[j];
             if (w == 0) continue;
             for (int axis = 0; axis < 3; ++axis) {
-                row.terms.push_back({patch.controls[i*4+j]*3+axis,w*normal.Coord(axis+1)*10});
+                row.terms.push_back({patch.controls[i*4+j]*3+axis,w*normal.Coord(axis+1)*normalWeight});
                 spacing[axis].terms.push_back({patch.controls[i*4+j]*3+axis,w*frameWeight});
             }
         }
@@ -82,12 +104,12 @@ double update(Network& n, const std::vector<double>& solved, const std::vector<V
     n.controls = old; return 0;
 }
 }
-void fit(Network& n, const Mesh& mesh, const Search& target, int iterations) {
+void fit(Network& n, const Network& seed, const Mesh& mesh, const Search& target, int iterations) {
     const auto seams = smoothSeams(n);
     std::vector<V> reference;
     for (size_t f = 0; f < n.patches.size(); ++f) for (int i = 0; i <= 12; ++i)
         for (int j = 0; j <= 12; ++j) {
-            const auto e = evaluate(n,int(f),i/12.0,j/12.0);
+            const auto e = evaluate(seed,int(f),i/12.0,j/12.0);
             reference.push_back(e.du.Crossed(e.dv));
         }
     for (int iteration = 0; iteration < iterations; ++iteration) {
@@ -109,7 +131,9 @@ void fit(Network& n, const Mesh& mesh, const Search& target, int iterations) {
                     const double v = side == 0 ? 0 : side == 1 ? t : side == 2 ? 1 : 1-t;
                     const auto normal = normals.at(e)[p.corners[side] == e.first ? k : 8-k];
                     // Regularize each step, not the final shape against its coarse seed.
-                    tangentPlane(rows,p,u,v,normal,evaluate(n,int(f),u,v));
+                    const auto current = evaluate(n,int(f),u,v);
+                    tangentPlane(rows,p,u,v,normal,current);
+                    conditionFrame(rows,p,u,v,normal,current,evaluate(seed,int(f),u,v));
                 }
             }
             fair(rows,p);
