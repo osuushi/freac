@@ -178,24 +178,33 @@ function preserveRelations(
 }
 
 /** Clear the highlighted locus in this sketch in one accepted rewrite. */
-export function trimOverlappingSketch(original: Sketch, span: TrimSpan) {
-  const highlight = spanCurve(span);
-  let result = rewriteTrim(original, span);
-  const created = newTrimEndpoints(span.curve, result.pieces);
-  const pending = result.sketch.curves.filter((c) => c.id !== span.curve.id);
-  while (pending.length) {
-    const curve = pending.pop();
-    if (!curve) break;
-    const overlap = overlappingTrim(curve, highlight);
-    if (!overlap) continue;
-    const next = rewriteTrim(result.sketch, overlap);
-    created.push(...newTrimEndpoints(curve, next.pieces));
-    pending.push(...next.pieces);
-    result = { ...next, cast: result.cast || next.cast };
+export function trimOverlappingSketch(original: Sketch, target: TrimSpan | readonly TrimSpan[]) {
+  const spans = Array.isArray(target) ? target : [target as TrimSpan];
+  let sketch = original;
+  let cast = false;
+  const created: ReturnType<typeof newTrimEndpoints> = [];
+  for (const span of spans) {
+    if (!sketch.curves.some((c) => c.id === span.curve.id)) continue;
+    const highlight = spanCurve(span);
+    let result = rewriteTrim(sketch, span);
+    created.push(...newTrimEndpoints(span.curve, result.pieces));
+    const pending = result.sketch.curves.filter((c) => c.id !== span.curve.id);
+    while (pending.length) {
+      const curve = pending.pop();
+      if (!curve) break;
+      const overlap = overlappingTrim(curve, highlight);
+      if (!overlap) continue;
+      const next = rewriteTrim(result.sketch, overlap);
+      created.push(...newTrimEndpoints(curve, next.pieces));
+      pending.push(...next.pieces);
+      result = { ...next, cast: result.cast || next.cast };
+    }
+    sketch = result.sketch;
+    cast ||= result.cast;
   }
-  result = { ...result, sketch: fuseTrimCorners(result.sketch, created) };
-  const retained = new Set(result.sketch.constraints.map((c) => c.id));
-  return { ...result, removed: original.constraints.filter((c) => !retained.has(c.id)) };
+  sketch = fuseTrimCorners(sketch, created);
+  const retained = new Set(sketch.constraints.map((c) => c.id));
+  return { sketch, cast, removed: original.constraints.filter((c) => !retained.has(c.id)) };
 }
 
 export function trimSketch(original: Sketch, span: TrimSpan) {

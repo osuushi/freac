@@ -119,3 +119,8 @@ one edit value, without adding an implicit persistent equal-radius constraint.
 Escape restores the whole selection; acceptance creates one Undo step. Where a
 bow handle overlaps a translation arrow, the bow handle takes that position;
 explicit Move/M hides bow guides and exposes every translation arrow.
+
+Known limitation: reversing a cubic handle into a neighboring tangent cubic can
+hit the intersection complexity guard. Dense projected junctions may place that
+handle within the endpoint's hit area; use explicit Move/M to move the selected
+junction. Handle reversal at that contact still needs a geometry fix.
