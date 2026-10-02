@@ -161,6 +161,12 @@ void present(std::ostream& out, const Result& result, double deflection) {
     if (!std::isfinite(deflection) || deflection < 1e-5 || deflection > 0.05)
         throw std::runtime_error("Invalid mesh deflection");
     BRepMesh_IncrementalMesh mesh(result.shape, deflection, false, 0.2, OSD_ThreadPool::DefaultPool()->HasThreads());
+    for (TopExp_Explorer faces(result.shape, TopAbs_FACE); faces.More(); faces.Next()) {
+        TopLoc_Location location;
+        const auto triangles = BRep_Tool::Triangulation(TopoDS::Face(faces.Current()), location);
+        if (triangles.IsNull() || triangles->NbTriangles() == 0)
+            throw std::runtime_error("Kernel could not mesh every face; the geometry result was rejected");
+    }
     timing.phase("mesh");
     out << "{\"brep\":" << quoted(encode(result.shape)) << ",\"volume\":" << volume(result.shape);
     GProp_GProps properties; BRepGProp::VolumeProperties(result.shape, properties, 1e-10);

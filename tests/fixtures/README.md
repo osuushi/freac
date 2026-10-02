@@ -107,3 +107,11 @@ This is user-created Freac geometry.
   at z26 from the founder's `2026-10-01T21-23-07-094Z-477b95d6` capture.
   History and transient UI state are omitted. The ordinary projection route checks
   plane picking, the expected ellipse, independent editing and document history.
+
+`extrude-projected-cylinder.json` retains the projected/trimmed sketch, original
+radius-16 tilted cylinder and 40 mm extrusion request from the founder's
+`2026-10-02T12-06-41-325Z-dafff561` pre-extrusion capture. Cached presentation and
+history are omitted. The automatic join passes basic BRep validation but loses
+large faces during meshing and returns an incorrect volume. The regression
+requires rejection without document mutation and verifies separate-body recovery,
+acceptance, Undo/Redo and Open. This is user-created Freac geometry.

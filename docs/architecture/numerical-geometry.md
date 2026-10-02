@@ -23,3 +23,10 @@ feasibility checks. A valid small solid must not fail reconnection merely becaus
 that path applies an unrelated, larger volume floor. Large coordinate magnitudes
 likewise do not relax distance checks. Projection rejects curves outside its error
 budget rather than silently accepting a coarser approximation.
+
+Presentation requires a nonempty triangulation for every exact face. OCCT can
+finish a meshing call while leaving individual faces unmeshed, even after basic
+BRep validation passes. Such a result rejects before publication; an incomplete
+surface display cannot stand in for a successful geometry operation. This check
+also applies when regenerating presentation during Open. It does not prove that
+a fully meshed shape is free of self-intersections.
