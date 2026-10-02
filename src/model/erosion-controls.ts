@@ -160,7 +160,7 @@ export class ErosionControls {
         const suggested = this.editor.store.erosionAllowance;
         this.suggestedAllowance =
           !success && suggested !== undefined && request.thickness > 0
-            ? Math.ceil((suggested / request.thickness) * 1000) / 10
+            ? Math.ceil((suggested / request.thickness) * 10) * 10
             : null;
         this.showPreview(success && !zero);
         if (success) this.editor.notice = "Erode · Enter to accept · Escape to cancel";

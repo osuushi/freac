@@ -90,7 +90,7 @@ failure stops repeated construction attempts rather than spending the same limit
 again on similar proposals. When a minimum-thickness-valid candidate supplies a
 finite bound on its remaining uncovered regions, the failure includes a rounded,
 conservative allowance suggestion with 32% headroom before rounding upward.
-The local **Try …% allowance** button
+The UI rounds this upward to a multiple of 10%. The local **Try …% allowance** button
 changes only the allowance and recalculates through the normal validation path.
 It is guidance, not automatic acceptance or a guarantee for every selected body;
 unsupported construction/precision failures may have no useful suggestion.

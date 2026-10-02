@@ -74,6 +74,7 @@ async function suggestedAllowance(page, name, original) {
   assert.equal(await page.locator(".local-feedback").isVisible(), false);
   const value = Number((await suggest.textContent()).match(/Try ([\d.]+)%/)[1]);
   assert.ok(value > 2.5 && value <= 30, "Suggestion is useful at this model scale");
+  assert.equal(value % 10, 0, "Suggested allowance rounds upward to a multiple of 10%");
   await page.mouse.move(1100, 750);
   const fits = await suggest.evaluate((button) => button.scrollWidth <= button.clientWidth);
   assert.ok(fits, "Allowance suggestion fits its button");
