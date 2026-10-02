@@ -29,9 +29,10 @@ around each glyph. Ordinary value inputs and accept/cancel controls can stay nea
 
 ## Orientation, scale and visibility
 
-Treat the assembly as a rigid object in its chosen frame. The tool decides whether
+Keep the assembly’s geometric orientation in its chosen frame. The tool decides whether
 that frame is the sketch plane, world axes, or a meaningful frame on selected geometry.
-Keep each glyph's position and meaningful axes fixed in that frame during camera orbit.
+Keep each glyph’s meaningful axes fixed in that frame during camera orbit. Its
+nominal position supplies the starting point for screen-space clearance.
 An intentional tool or selection change can establish a new frame.
 
 **Founder refinement, 2026-09-21:** a tool may roll its whole glyph around an
@@ -62,11 +63,22 @@ boundary's section. Do not substitute an arbitrary world perpendicular for this
 geometry-defined frame or independently turn the contour toward the camera.
 
 Project the assembly through the viewport camera. Roll a direction-only arrow as a
-whole around its shaft; do not independently turn its head
-toward the camera, slide markers to avoid collisions, or switch a marker to another
-diagonal as the camera moves. Those adjustments caused the rejected drifting effect.
-Foreshortening is expected. Exact diagonal views can make handles overlap; orbiting
-reveals them again. A future overlap treatment must preserve the rigid placement.
+whole around its shaft; do not independently turn its head toward the camera.
+Foreshortening is expected.
+
+**Founder refinement, 2026-10-02:** multiple 3D controls must avoid overlap in
+screen projection. The shared Move assembly separates actual hit rectangles with
+6 CSS pixels of clearance, extending outward along each marker’s projected ray
+from the anchor. Glyph orientations, geometric edit axes and rotation planes stay
+unchanged. The anchor and scale-box handles are obstacles. Stable handle priority
+makes the result deterministic, including coincident projections. Collision corrections
+settle with a 100 ms ease-out transition; ordinary camera/model tracking is immediate.
+Hover or press freezes the correction at its displayed position, including the hit
+region, until the pointer leaves and the press ends. Reduced-motion preferences
+disable the transition. This supersedes the earlier
+fixed-position rule for the 3D Move assembly. The planar sketch overlay retains its
+existing placement; other multi-widget tools can use the same clearance helper when
+adopting this treatment.
 
 Keep the widget's nominal size and outline weight constant in CSS pixels when zooming.
 A glyph still foreshortens along its meaningful axes; direction-only arrow widths
@@ -141,6 +153,8 @@ is fine if it preserves the same visual and spatial behavior.
 - [Axial roll](../../src/model/widget-frame.ts): camera-facing width around an unchanged shaft.
 - [Modeling assembly](../../src/model/body-gizmo.ts) and
   [styles](../../src/model/body-gizmo.css): world projection, buttons, sphere and state.
+- [Projected clearance](../../src/model/widget-clearance.ts): shared hit-rectangle
+  separation, short correction transitions and pointer stability.
 - [Sketch overlay](../../src/sketch/transform-overlay.ts),
   [handle positions](../../src/sketch/transform-handles.ts) and
   [picking](../../src/sketch/picking.ts): keep rendering and hit testing in agreement.

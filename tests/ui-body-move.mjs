@@ -177,8 +177,15 @@ async function ringDrag(page, bodies) {
   const rawAngle =
     Math.atan2(y - samples.last[1], samples.last[0] - x) -
     Math.atan2(y - samples.first[1], samples.first[0] - x);
-  const angle = Math.atan2(Math.sin(rawAngle), Math.cos(rawAngle));
-  assert.ok(Math.abs(angle - Math.PI / 2) < 0.03, "Quarter turn within pointer pixel resolution");
+  const pointerAngle = Math.atan2(Math.sin(rawAngle), Math.cos(rawAngle));
+  assert.ok(
+    Math.abs(pointerAngle - Math.PI / 2) < 0.03,
+    "Quarter turn within pointer pixel resolution",
+  );
+  // The Move contract snaps world rotation to 5 degrees, even when a browser
+  // rounds the projected marker center to an integer pointer coordinate.
+  const step = (5 * Math.PI) / 180;
+  const angle = Math.round(pointerAngle / step) * step;
   for (let i = 0; i < bodies.length; i++) {
     const dx = bodies[i].center[0] - center[0],
       dy = bodies[i].center[1] - center[1];

@@ -127,9 +127,11 @@ Move follows the founder-approved [orientable widget design language](../design/
 white capsule forms, a single black silhouette, a sphere anchor and a smaller curved
 rotation glyph. Translation arrows roll around their shafts to face the camera, preserving their edit
 directions. Rotation-marker planes retain their geometric orientation. The assembly
-has fixed positions in the sketch or world frame, with constant nominal CSS-pixel
-scale through zoom. Independently camera-facing heads,
-collision-driven sliding and alternate-diagonal placement are superseded.
+has constant nominal CSS-pixel scale through zoom. The 2026-10-02
+screen-space clearance refinement in the widget design guide supersedes fixed
+positions for the shared 3D assembly: projected controls move outward to clear
+each other, the anchor and box handles, while preserving geometric orientation.
+Corrections settle in 100 ms and freeze under hover/press.
 
 Sketch Move has two positive local-axis arrows and a rotation marker at the positive
 45-degree position. Modeling Move has three world-axis arrows and one rotation marker
@@ -184,8 +186,10 @@ selected geometry's bounds change.
 A handle coincident with the anchor has no scaling leverage and is hidden.
 Projected handles that overlap the sphere or rotation glyphs are also hidden
 so those controls remain reachable; moving the anchor or view exposes them again.
-To keep both controls reachable, translation arrows extend along their existing
-axis only when a box handle overlaps their nominal position. The numeric card
+To keep controls reachable, the shared 3D assembly separates both arrows and
+rotation markers from projected box handles and from each other. The planar sketch
+overlay extends translation arrows along their existing axis when a box handle
+overlaps their nominal position. The numeric card
 clears the combined box, arrows and anchor. This is the narrow exception to the
 earlier fixed-position Move assembly; arrow orientation and size remain unchanged.
 
