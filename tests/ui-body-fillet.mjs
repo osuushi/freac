@@ -55,6 +55,8 @@ export async function bodyFilletRoute(page, name, electron, cleanup = false) {
     await page.getByRole("textbox", { name: "Fillet radius" }).getAttribute("aria-invalid"),
     "false",
   );
+  // The deferred cleanup probe briefly owns the same calculation slot.
+  await settledBroom(page);
   assert.ok(await page.getByRole("button", { name: "Accept fillet" }).isEnabled());
   await radius(page, 1);
   if (cleanup) {

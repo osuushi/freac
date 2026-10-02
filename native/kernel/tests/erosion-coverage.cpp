@@ -6,6 +6,7 @@
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
+#include <BRepPrimAPI_MakeSphere.hxx>
 #include <BRep_Builder.hxx>
 #include <TopoDS_Compound.hxx>
 #include <iostream>
@@ -43,9 +44,37 @@ void distanceBounds() {
         }
     }
 }
+void sphericalCoverage() {
+    const auto outer = BRepPrimAPI_MakeSphere(8).Shape();
+    const auto source = BRepAlgoAPI_Cut(outer, BRepPrimAPI_MakeSphere(6).Shape()).Shape();
+    const auto exact = BRepAlgoAPI_Cut(BRepPrimAPI_MakeSphere(7.5).Shape(), BRepPrimAPI_MakeSphere(6.5).Shape()).Shape();
+    if (erosion::sphericalCoverage(source, exact, 0.7) != true)
+        throw std::runtime_error("Concentric spherical coverage was not certified");
+    erosion::checkCoverage(source, exact, 0.7);
+    const auto small = BRepAlgoAPI_Cut(BRepPrimAPI_MakeSphere(7).Shape(), BRepPrimAPI_MakeSphere(6.5).Shape()).Shape();
+    rejected(source, small, 0.7);
+    const auto largeVoid = BRepAlgoAPI_Cut(BRepPrimAPI_MakeSphere(7.5).Shape(), BRepPrimAPI_MakeSphere(6.9).Shape()).Shape();
+    rejected(source, largeVoid, 0.7);
+    rejected(source, empty(), 0.8);
+    erosion::checkCoverage(source, empty(), 1.1);
+    erosion::checkCoverage(outer, BRepPrimAPI_MakeSphere(7).Shape(), 1);
+    rejected(outer, BRepPrimAPI_MakeSphere(6.5).Shape(), 1);
+    const auto eccentric = BRepAlgoAPI_Cut(BRepPrimAPI_MakeSphere(7.5).Shape(),
+        BRepPrimAPI_MakeSphere(gp_Pnt(0.4, 0, 0), 6.5).Shape()).Shape();
+    if (erosion::sphericalCoverage(source, eccentric, 0.7).has_value())
+        throw std::runtime_error("Eccentric surfaces must not use concentric coverage");
+    rejected(source, eccentric, 0.7);
+    erosion::BoundaryDistance bounds(source);
+    const std::array<gp_Pnt, 8> cell{gp_Pnt(6.4,-.1,-.1), gp_Pnt(6.6,-.1,-.1),
+        gp_Pnt(6.4,.1,-.1), gp_Pnt(6.6,.1,-.1), gp_Pnt(6.4,-.1,.1), gp_Pnt(6.6,-.1,.1),
+        gp_Pnt(6.4,.1,.1), gp_Pnt(6.6,.1,.1)};
+    if (bounds.upper(cell) < std::sqrt(6.6*6.6+0.02)-6 || bounds.upper(cell) > .61)
+        throw std::runtime_error("Full spherical cell bound is inaccurate");
+}
 }
 int main() {
     distanceBounds();
+    sphericalCoverage();
     const auto source = BRepPrimAPI_MakeBox(20, 20, 10).Shape();
     const auto exact = BRepPrimAPI_MakeBox(gp_Pnt(1, 1, 1), 18, 18, 8).Shape();
     erosion::checkCoverage(source, exact, 1);

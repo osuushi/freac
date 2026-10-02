@@ -3,12 +3,7 @@
 #include "offset-geometry.h"
 #include "offset-repair.h"
 #include "timing.h"
-#include <BRepBuilderAPI_Copy.hxx>
-#include <BRepCheck_Analyzer.hxx>
-#include <BRepLib.hxx>
-#include <BRepOffsetAPI_MakeOffsetShape.hxx>
 #include <BRep_Builder.hxx>
-#include <ShapeUpgrade_UnifySameDomain.hxx>
 #include <Standard_Failure.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS_Compound.hxx>
@@ -20,21 +15,6 @@
 namespace {
 TopoDS_Shape empty() {
     TopoDS_Compound shape; BRep_Builder().MakeCompound(shape); return shape;
-}
-TopoDS_Shape offset(const TopoDS_Shape& source, double distance, bool intersections) {
-    const auto copy = BRepBuilderAPI_Copy(source, true, false).Shape();
-    BRepOffsetAPI_MakeOffsetShape operation;
-    operation.PerformByJoin(copy, -distance, 1e-7,
-                            BRepOffset_Skin, intersections, false, GeomAbs_Arc, false);
-    if (!operation.IsDone() || operation.Shape().IsNull())
-        throw std::runtime_error("Erosion could not construct an eroded body at this thickness");
-    const auto result = operation.Shape();
-    if (!BRepCheck_Analyzer(result, true, false, true).IsValid())
-        BRepLib::SameParameter(result, 1e-7, true);
-    offset_geometry::tightenGeneratedBoundaries(result, source);
-    ShapeUpgrade_UnifySameDomain clean(result, true, true, false);
-    clean.Build();
-    return clean.Shape();
 }
 
 TopoDS_Shape cavity(const Operand& original, double thickness, double allowance) {
@@ -50,6 +30,8 @@ TopoDS_Shape cavity(const Operand& original, double thickness, double allowance)
     timing.phase("simplify");
     std::vector<TopoDS_Shape> inputs{simplified};
     if (!simplified.IsSame(source.shape)) inputs.push_back(source.shape);
+    const auto withoutCollapsed = erosion::removeCollapsedFeatures(source.shape, thickness);
+    if (!withoutCollapsed.IsSame(source.shape)) inputs.push_back(withoutCollapsed);
     std::string failure = "Erosion could not construct an editable eroded body";
     std::vector<double> distances{thickness};
     // A round can collapse at exactly the requested depth. Spend part of the
@@ -59,7 +41,7 @@ TopoDS_Shape cavity(const Operand& original, double thickness, double allowance)
     for (const double distance : distances) for (const auto& input : inputs) {
         for (const bool intersections : {false, true}) {
             try {
-                const auto result = offset(input, distance, intersections);
+                const auto result = erosion::offset(input, distance, intersections);
                 timing.phase("offset");
                 erosion::validateCavity(original.shape, result, thickness, allowance);
                 timing.phase("verify");

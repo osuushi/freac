@@ -53,6 +53,13 @@ collapses at the requested depth, construction also tries half the extra allowan
 verification still uses the original requested bounds. Valid source pcurves are
 preserved rather than forcibly reparameterized.
 
+Additional construction proposals remove collapsed cylindrical branches and convex
+toroidal rounds, retaining globally supporting planar caps. Every proposal is
+verified against the untouched source. Separate closed inner shells are existing
+voids: their enclosures expand outward while the outer enclosure shrinks, followed
+by one Boolean cut. This permits cavity merging and breakthrough. Optional
+same-domain cleanup is retained only if its topology remains valid.
+
 Acceptance requires valid oriented closed solids, tight edge/vertex correspondence,
 no self-intersections or orphan faces, containment in the original, whole-boundary
 minimum separation, and coverage of all required interior regions. Coverage uses
@@ -64,6 +71,43 @@ interior/exterior distance balls and boundary-free spans reuse classifications
 across neighboring cells. Unresolved cells, the finite work limit, or kernel errors
 reject the proposal. An offset failure
 alone never proves the interior empty; emptiness has its own coverage check.
+Calculation coordinates follow a source surface frame so rigid placement does not
+needlessly multiply Cartesian cells. Full concentric spherical shells additionally
+have an exact radial-interval coverage certificate. These change verification cost,
+not accepted geometry or distance budgets.
+
+## Complex cases
+
+The reproducible matrix below uses millimeters. Each nonempty result is checked
+with exact Boolean material/void probes, in addition to the full acceptance checks.
+Known analytic volumes are asserted independently. All cases preserve the accepted
+source through preview and exercise acceptance, Undo/Redo and document reopening.
+
+| Case | Thickness / allowance | Expected behavior |
+| --- | --- | --- |
+| Long 1 mm thick planar fin | 1 / 0.25 | Fin disappears; broad block survives. |
+| Radius 0.6 cylindrical branch on radius 6 body | 1 / 0.25 | Branch disappears; main cylindrical interior survives. |
+| Torus, major radius 8 and minor radius 3 | 1 / 0.25 | Minor radius becomes 2; central hole stays open. |
+| Two fused tori, centers 18 apart | 0.8 / 0.6 | Connected result preserves both holes and outer lobes. |
+| Plate with two radius 2 through-bores | 1 / 0.25 | Planar exterior shrinks; both bores expand to radius 3. |
+| Radius 8 sphere cut by a plane | 1 / 0.25 | Sphere radius becomes 7; planar bottom moves inward by 1. |
+| Same hemisphere with radius 0.75 rim fillet | 1 / 0.5 | Collapsed rim is simplified; planar cap remains. |
+| Radius 6 sphere joined to radius 3 cylinder | 0.8 / 0.3 | Both bulb and stem survive their sharp junction. |
+| Same join with radius 0.75 fillet | 0.8 / 0.3 | Blended junction yields an editable connected interior. |
+| 20 mm cube with radius 0.2 sealed void | 1 / 0.25 | Tiny void expands to radius 1.2; it is not filled. |
+| Cube with two radius 0.4 sealed voids | 1 / 0.25 | Both voids expand independently to radius 1.4. |
+| Two radius 0.5 voids, centers 4 apart | 1.7 / 0.25 | Expanded voids merge; intervening material disappears. |
+| Radius 0.8 void centered 1.8 from cube side | 0.8 / 0.25 | Expanded void breaks through the eroded exterior. |
+| Concentric spherical shell, radii 8 and 6 | 0.5 / 0.2 | Surviving shell has radii 7.5 and 6.5. |
+| Same spherical shell beyond collapse | 1.1 / 0.2 | Verified empty result. |
+| Torus near collapse | 2.8 / 0.1 | Thin but valid minor-radius 0.2 torus remains. |
+| Torus beyond collapse | 3.1 / 0.2 | Verified empty result. |
+
+Boundary regressions also cover exact zero-volume collapse (spherical shell at 1,
+torus at 3, both with zero allowance), atomic rejection of the round branch with
+zero allowance, and translated/rotated joined tori, filleted hemisphere and merging
+cavities. Empty means no volumetric body; a residual mathematical surface or curve
+at exact collapse is not retained as a solid.
 
 ## Current limits
 
@@ -74,6 +118,29 @@ zero allowance is useful for certifiable cases such as convex polyhedra, but is 
 a promise of exact erosion for every body. Increasing the allowance can help
 verification and simplification but cannot guarantee construction. No dense faceted
 BRep fallback or repeated primitive subtraction is used.
+
+Existing cavities always count as source boundaries, even when very small. Erode
+expands them rather than filling or ignoring them. Thin protrusions can vanish,
+but their thicker roots may require curved transition geometry; the current
+construction rejects a zero-allowance round-branch case instead of silently
+discarding that root. A disappearing fillet can leave a sharp result when it fits
+the requested bounds. Increasing allowance can therefore change topology.
+
+Older filleted bodies may carry curve/surface disagreement beyond the 1e-6 mm
+source budget and still reject. New fillets use tighter fitting; Erode does not
+silently relax precision for old files. General freeform repair remains separate.
+Coverage has a 100,000-cell / 8-second limit per check; multiple construction
+attempts can take longer overall, especially at the initial widget allowance.
+These are bounded construction and verification limits, not proof that the desired
+interior does not exist.
+
+A source-construction limitation was found for two major-radius 8/minor-radius 3
+tori fused at exactly 16 mm center separation: the Boolean union can retain only
+one lobe despite passing topology validity. This precedes Erode. The 18 mm fixture
+checks source volume and symmetry as well as material in both eroded lobes; the
+16 mm union remains a known Boolean defect, not a passing double-torus case.
+The valid 18 mm source also exceeded coverage limits with a 0.3 mm allowance;
+0.6 mm allows it to be certified without reducing the 0.8 mm minimum thickness.
 
 ## Scripting and checks
 
@@ -89,3 +156,8 @@ checks: `cmake -S native/kernel -B .build/kernel -DFREAC_KERNEL_TESTS=ON`, build
 `node tests/erosion-ui.mjs` runs owned headless Chromium/WebKit and hidden Electron,
 including cavity rib cuts and final subtraction. Activate the repository's Node
 version before Node commands, as described in the development process.
+The complex matrix and boundary cases live in `tests/body-erosion-special.test.ts`
+and `tests/body-erosion-special-boundaries.test.ts`, with shared fixture/probe files.
+`node tests/erosion-special-ui.mjs` checks seven representative cases through actual
+Open, selection, Erode fields, acceptance, Undo/Redo, movement and Save/Open in the
+same three runtimes. Compile `tsconfig.test.json` before running this route.

@@ -224,9 +224,14 @@ TopoDS_Shape erosion::boundary(const TopoDS_Shape& shape) {
 }
 
 void erosion::checkCoverage(const TopoDS_Shape& source, const TopoDS_Shape& candidate, double depth) {
-    const auto root = innerBounds(source, depth);
+    const auto [sourceFrame, candidateFrame] = coverageFrame(source, candidate);
+    if (const auto covered = sphericalCoverage(sourceFrame, candidateFrame, depth)) {
+        if (!*covered) throw std::runtime_error("Erosion discarded interior beyond the extra thickness allowance");
+        return;
+    }
+    const auto root = innerBounds(sourceFrame, depth);
     for (int i = 0; i < 3; ++i) if (root.high[i]-root.low[i] <= tolerance/4) return;
-    Distance original(source), result(candidate);
+    Distance original(sourceFrame), result(candidateFrame);
     std::vector<Cell> pending{root};
     const auto start = std::chrono::steady_clock::now();
     size_t visits = 0;

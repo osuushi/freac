@@ -51,6 +51,7 @@ struct Support {
     BRepAdaptor_Surface surface;
     std::unique_ptr<BRepClass_FaceExplorer> explorer;
     bool polygon;
+    bool fullSphere = false;
     double lo[3], hi[3];
     std::vector<std::pair<double, double>> fullBands;
     Support(const TopoDS_Face& face, bool polygon) : face(face), surface(face),
@@ -60,6 +61,13 @@ struct Support {
         Bnd_Box box;
         BRepBndLib::AddOptimal(face, box, false, true);
         box.Get(lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]);
+        if (surface.GetType() == GeomAbs_Sphere) {
+            fullSphere = true;
+            for (TopExp_Explorer e(face, TopAbs_EDGE); e.More(); e.Next()) {
+                const auto edge = TopoDS::Edge(e.Current());
+                if (!BRep_Tool::Degenerated(edge) && !BRep_Tool::IsClosed(edge, face)) fullSphere = false;
+            }
+        }
         if (surface.GetType() == GeomAbs_Cylinder) {
             std::vector<std::pair<double, double>> axialBoundaries;
             gp_Trsf frame; frame.SetTransformation(surface.Cylinder().Position());
@@ -139,6 +147,16 @@ struct Support {
         return p.Distance(surface.Value(u, v)) + geometry_policy::boundaryDistanceMm;
     }
     double bandUpper(const std::array<gp_Pnt, 8>& corners) const {
+        if (fullSphere) {
+            const auto sphere = surface.Sphere();
+            gp_Pnt nearest;
+            double maximum = 0;
+            for (int i = 1; i <= 3; ++i)
+                nearest.SetCoord(i, std::clamp(sphere.Location().Coord(i), corners[0].Coord(i), corners[7].Coord(i)));
+            for (const auto& p : corners) maximum = std::max(maximum, p.Distance(sphere.Location()));
+            return std::max(std::abs(nearest.Distance(sphere.Location())-sphere.Radius()),
+                            std::abs(maximum-sphere.Radius()))+geometry_policy::boundaryDistanceMm;
+        }
         if (surface.GetType() != GeomAbs_Cylinder) return std::numeric_limits<double>::infinity();
         const auto cylinder = surface.Cylinder();
         const gp_Vec axis(cylinder.Axis().Direction());
@@ -189,6 +207,10 @@ struct Support {
         }
         if (surface.GetType() == GeomAbs_Sphere) {
             const auto sphere = surface.Sphere();
+            gp_Pnt nearest;
+            for (int i = 1; i <= 3; ++i)
+                nearest.SetCoord(i, std::clamp(sphere.Location().Coord(i), points[0].Coord(i), points[7].Coord(i)));
+            if (nearest.Distance(sphere.Location()) > sphere.Radius()+tolerance) return false;
             if (std::all_of(points.begin(), points.end(), [&](const gp_Pnt& p) {
                 return p.Distance(sphere.Location()) < sphere.Radius()-tolerance;
             })) return false;

@@ -23,3 +23,10 @@ feasibility checks. A valid small solid must not fail reconnection merely becaus
 that path applies an unrelated, larger volume floor. Large coordinate magnitudes
 likewise do not relax distance checks. Projection rejects curves outside its error
 budget rather than silently accepting a coarser approximation.
+
+New body fillets request 1e-7 fitting tolerances for the spatial and parameter
+curves and blend approximation. This makes subsequent precision-checked offsets
+possible at sphere/plane and sphere/cylinder junctions without relaxing their
+1e-6 mm boundary budget. These are construction targets, not a claim that every
+fillet meets the offset budget; offset operations still measure their input and
+reject coarse older or imported geometry.
