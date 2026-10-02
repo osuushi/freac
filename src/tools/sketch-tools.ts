@@ -10,7 +10,7 @@ export function sketchTools(editor: SketchEditor): () => void {
     ["line", "Line", "L", ["segment"]],
     ["circle", "Circle", "C", ["disk"]],
     ["bezier", "Curve", "B", ["bezier", "cubic curve", "spline"]],
-    ["trim", "Trim", "T", ["cut curve"]],
+    ["trim", "Trim", "T", ["cut curve", "trim brush"]],
   ] as const)
     disposers.push(
       catalog.register({
@@ -19,7 +19,12 @@ export function sketchTools(editor: SketchEditor): () => void {
         shortcut,
         aliases,
         category: id === "select" ? "Select" : "Sketch",
-        description: id === "select" ? "Select geometry" : "Draw or edit in a planar workspace",
+        description:
+          id === "select"
+            ? "Select geometry"
+            : id === "trim"
+              ? "Remove spans; hold Option and drag to brush trim"
+              : "Draw or edit in a planar workspace",
         reason: () => (editor.interactions.current?.kind === "numeric" ? null : idleReason(editor)),
         run: () => editor.setTool(id),
       }),

@@ -72,12 +72,13 @@ function installShortcuts(
         }
         return;
       }
-      if (input || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (input || event.metaKey || event.ctrlKey) return;
       if (event.key === "Escape") {
         event.preventDefault();
         editor.escape();
         return;
       }
+      if (event.altKey) return;
       const tool = (
         {
           r: "rectangle",

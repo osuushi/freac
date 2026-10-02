@@ -32,7 +32,7 @@ export async function trimOverlapRoute(page, name) {
   await page.keyboard.press("t");
   const p = await at(page, 2, 0);
   await page.mouse.move(p.x, p.y);
-  assert.notEqual(await page.locator(".trim-span").getAttribute("points"), "");
+  assert.equal(await page.locator('.trim-span:not([points=""])').count(), 3);
   await click(page, 2, 0);
   const after = (await inspect(page)).document;
   assert.equal(await page.locator(".trim-local").count(), 0);
@@ -54,7 +54,7 @@ export async function trimOverlapRoute(page, name) {
   await page.mouse.move(p.x + 40, p.y + 40);
   const origin = await at(page, 0, 0);
   await page.mouse.move(origin.x, origin.y);
-  assert.notEqual(await page.locator(".trim-span").getAttribute("data-curve"), crossing.id);
+  assert.notEqual(await page.locator(".trim-span").first().getAttribute("data-curve"), crossing.id);
   console.log(
     `${name}: stacked/reversed trim clears highlight and overlaps, preserves crossing, atomic Undo/Redo passed`,
   );

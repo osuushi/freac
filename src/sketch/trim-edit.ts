@@ -184,23 +184,21 @@ export function trimOverlappingSketch(original: Sketch, target: TrimSpan | reado
   let cast = false;
   const created: ReturnType<typeof newTrimEndpoints> = [];
   for (const span of spans) {
-    if (!sketch.curves.some((c) => c.id === span.curve.id)) continue;
     const highlight = spanCurve(span);
-    let result = rewriteTrim(sketch, span);
-    created.push(...newTrimEndpoints(span.curve, result.pieces));
-    const pending = result.sketch.curves.filter((c) => c.id !== span.curve.id);
+    const pending = [...sketch.curves];
     while (pending.length) {
       const curve = pending.pop();
       if (!curve) break;
-      const overlap = overlappingTrim(curve, highlight);
+      // Later brush targets refer to the original geometry. Resolve their locus
+      // against current remnants, rather than applying stale parameters/IDs.
+      const overlap = curve === span.curve ? span : overlappingTrim(curve, highlight);
       if (!overlap) continue;
-      const next = rewriteTrim(result.sketch, overlap);
+      const next = rewriteTrim(sketch, overlap);
       created.push(...newTrimEndpoints(curve, next.pieces));
       pending.push(...next.pieces);
-      result = { ...next, cast: result.cast || next.cast };
+      sketch = next.sketch;
+      cast ||= next.cast;
     }
-    sketch = result.sketch;
-    cast ||= result.cast;
   }
   sketch = fuseTrimCorners(sketch, created);
   const retained = new Set(sketch.constraints.map((c) => c.id));

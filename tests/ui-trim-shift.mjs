@@ -31,7 +31,7 @@ export async function trimShiftRoute(page, name) {
   const p = await at(page, 5, 0);
   await page.mouse.move(p.x, p.y);
   async function highlight(left, right) {
-    const points = (await page.locator(".trim-span").getAttribute("points"))
+    const points = (await page.locator(".trim-span").first().getAttribute("points"))
       .split(" ")
       .map((p) => p.split(",").map(Number));
     const expected = [await at(page, left, 0), await at(page, right, 0)];

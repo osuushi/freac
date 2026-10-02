@@ -6,6 +6,13 @@ import { launchElectron } from "./native-documents.mjs";
 import { runtimeNames } from "./ui-runtime.mjs";
 import { trimCircleRoute, trimLineRoute } from "./ui-trim.mjs";
 import { trimArcRoute } from "./ui-trim-arcs.mjs";
+import {
+  trimBrushCancellationRoute,
+  trimBrushControlsRoute,
+  trimBrushShiftRoute,
+  trimBrushStrokeRoute,
+} from "./ui-trim-brush.mjs";
+import { trimBrushCurveRoute } from "./ui-trim-brush-curves.mjs";
 import { trimCancellationRoute } from "./ui-trim-cancel.mjs";
 import { trimConstraintRoute } from "./ui-trim-constraints.mjs";
 import { trimCornerLinkRoute } from "./ui-trim-links.mjs";
@@ -24,7 +31,7 @@ try {
       false,
     );
   } else {
-    server = await createServer({ server: { port: 0 } });
+    server = await createServer({ server: { port: 0, watch: null, hmr: false } });
     await server.listen();
     browser = await { chromium, webkit }[name].launch({ headless: true });
     page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
@@ -34,6 +41,11 @@ try {
   page.on("pageerror", (error) => {
     throw error;
   });
+  await trimBrushControlsRoute(page, name);
+  await trimBrushStrokeRoute(page, name);
+  await trimBrushCancellationRoute(page, name);
+  await trimBrushShiftRoute(page, name);
+  await trimBrushCurveRoute(page, name);
   await trimShiftRoute(page, name);
   await trimOverlapRoute(page, name);
   await trimCornerLinkRoute(page, name);

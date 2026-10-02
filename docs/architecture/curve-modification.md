@@ -15,6 +15,21 @@ and the click uses the same cut policy. Repeated T retains the tool. Outside a
 plane, T asks for an unambiguous spatial target; it never chooses XY arbitrarily.
 Split, extend, offset, sketch fillet and chamfer follow the same local lifecycle.
 
+Holding Option in Trim shows a circular brush in sketch coordinates. The top
+slider and numeric mm field set its diameter; physical bracket/brace keys resize
+it while Option is held, including macOS Option-translated characters. The circle
+follows the pointer and camera scale. Every finite trim span touched by the disk
+is highlighted in full, including coincident portions removed by the rewrite.
+Option-click accepts those spans; Option-drag accumulates the swept disk's targets
+from the original sketch and accepts them together on release, in one Undo step.
+A stroke keeps its brush mode until release if Option is released early. Shift
+retains the intersection-only and degree-two chain policy alongside Option.
+Escape (including with Option held), focus loss and lost pointer capture discard
+a held stroke. Accepted geometry stays unchanged until release and validation;
+brush diameter is tool UI state, independent of document Undo. Batch targets are
+resolved against surviving geometry after each removal, so several spans of one
+curve never reuse stale remnant parameters or resurrect deleted portions.
+
 T1 trims ordinary lines, circles and arcs at analytic contacts. Its cuts exclude
 the region walker's artificial circle seams; a circle with fewer than two distinct
 contacts is removed whole. The first surviving piece retains the curve ID, and
