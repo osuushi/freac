@@ -1,4 +1,5 @@
 import { decoratorGuide } from "./decorator-guide.js";
+import { meshFitGuide } from "./mesh-fit-guide.js";
 import { topologyGuide } from "./topology-guide.js";
 export const scriptGuide = `
 Tagged groups: makeshift.taggedGroups() lists named face/edge sets, current members and
@@ -182,5 +183,6 @@ the script does not silently accept a clamped offset. Run makeshift inspect/rend
 completion to check the accepted result.
 
 ${topologyGuide}
+${meshFitGuide}
 ${decoratorGuide}
 `;

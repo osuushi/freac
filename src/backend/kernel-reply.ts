@@ -19,6 +19,8 @@ export type KernelReply<Input extends KernelRequest> = Input extends {
   kind: infer Kind extends keyof QueryReplies;
 }
   ? QueryReplies[Kind]
-  : Input extends { kind: "inspect" }
-    ? KernelResult<"inspect">
-    : KernelResult;
+  : Input extends { kind: "fit-mesh" }
+    ? KernelResult & { fit: import("../model/mesh-fit.js").MeshFitStatistics }
+    : Input extends { kind: "inspect" }
+      ? KernelResult<"inspect">
+      : KernelResult;

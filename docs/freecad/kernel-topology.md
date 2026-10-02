@@ -1097,3 +1097,21 @@ an inaccurate neighboring single-loop fill carrying a roughly 0.0059 mm vertex
 bound; reversing the edit then merged endpoints around a 0.0006 mm span. The ruled
 construction and measured boundary precision checks allow that move and its
 reverse after reopening, without increasing tolerances or relying on edit history.
+
+## Shared bicubic mesh reconstruction (2026-10-02)
+
+Source observation at configured OCCT commit
+`a016080bf6738d6aeae020badee4e888ad1540a5`:
+[`Geom_BezierSurface::Geom_BezierSurface`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Geom/Geom_BezierSurface.hxx)
+accepts a rectangular array of poles, with polynomial degree one less than the
+pole count in each direction. A 4-by-4 array therefore represents a bicubic patch.
+[`BRepBuilderAPI_Sewing`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepBuilderAPI/BRepBuilderAPI_Sewing.hxx)
+accepts a connectivity tolerance and exposes free-edge and multiple-edge counts.
+These observations use public API declarations; no upstream implementation was copied.
+
+Makeshift inference: jointly fitted shared boundary poles allow the fitting
+allowance and kernel sewing tolerance to remain independent. Sewing alone does
+not certify target approximation, normal continuity, or solid validity. The
+mesh-fitting operation measures these separately and passes the assembled solid
+through the existing strict B-rep checks. See the current
+[mesh-fitting contract](../architecture/mesh-fitting.md) for sampling limitations.

@@ -1,6 +1,7 @@
 #include "kernel.h"
 #include "erosion.h"
 #include "measurement.h"
+#include "mesh-fit.h"
 #include "timing.h"
 #include <boost/property_tree/json_parser.hpp>
 #include <BRepTools.hxx>
@@ -119,6 +120,58 @@ std::vector<Operand> operands(const Tree& input) {
     }
     return result;
 }
+namespace {
+void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
+    if (input.get<std::string>("kind") == "fit-mesh") {
+        std::ostringstream output; mesh_fit::reconstruct(output,input);
+        reply << output.str(); return;
+    }
+    if (input.get<std::string>("kind") == "export-step") {
+        std::ostringstream output; exportStep(output, input);
+        reply << output.str(); return;
+    }
+    const auto bodies = operands(input); std::string mode;
+    timing.phase("operands");
+    if (input.get<std::string>("kind") == "topology") {
+        std::ostringstream output; output << std::setprecision(17);
+        inspectTopology(output, input, bodies);
+        reply << output.str(); return;
+    }
+    if (input.get<std::string>("kind") == "measure") {
+        std::ostringstream output; measureSelection(output, input, bodies);
+        reply << output.str(); return;
+    }
+    if (input.get<std::string>("kind") == "edge-finish-selection") {
+        std::ostringstream output;
+        edgeFinishSelection(output, input, bodies);
+        reply << output.str(); return;
+    }
+    if (input.get<std::string>("kind") == "offset-sketch") {
+        std::ostringstream output; offsetSketch(output, input);
+        reply << output.str(); return;
+    }
+    if (input.get<std::string>("kind") == "sections") {
+        std::ostringstream output; sketchSections(output, input, bodies);
+        reply << output.str(); return;
+    }
+    if (input.get<std::string>("kind") == "project") {
+        std::ostringstream output; projectCurves(output, input, bodies);
+        reply << output.str(); return;
+    }
+    std::vector<std::string> participants;
+    const auto results = calculate(input, bodies, mode, participants);
+    timing.phase("calculate");
+    std::ostringstream output; output << std::setprecision(17) << "{\"mode\":" << quoted(mode) << ",\"participants\":[";
+    for (size_t i = 0; i < participants.size(); i++) { if (i) output << ','; output << quoted(participants[i]); }
+    output << "],\"results\":[";
+    const double deflection = input.get<std::string>("kind") == "inspect"
+        ? input.get<double>("deflection", 0.05) : 0.05;
+    for (size_t i = 0; i < results.size(); i++) { if (i) output << ','; present(output, results[i], deflection); }
+    timing.phase("presentation");
+    reply << output.str() << "]}";
+    timing.phase("write");
+}
+}
 int main() {
     const char* configuredThreads = std::getenv("MAKESHIFT_KERNEL_THREADS");
     if (!configuredThreads) configuredThreads = std::getenv("FREAC_KERNEL_THREADS");
@@ -133,51 +186,9 @@ int main() {
         try {
             Tree input; std::istringstream stream(line); boost::property_tree::read_json(stream, input);
             timing.operation(input.get<std::string>("kind")); timing.phase("parse");
-            if (input.get<std::string>("kind") == "export-step") {
-                std::ostringstream output; exportStep(output, input);
-                std::cout << output.str() << std::endl; continue;
-            }
-            const auto bodies = operands(input); std::string mode;
-            timing.phase("operands");
-            if (input.get<std::string>("kind") == "topology") {
-                std::ostringstream output; output << std::setprecision(17);
-                inspectTopology(output, input, bodies);
-                std::cout << output.str() << std::endl; continue;
-            }
-            if (input.get<std::string>("kind") == "measure") {
-                std::ostringstream output; measureSelection(output, input, bodies);
-                std::cout << output.str() << std::endl; continue;
-            }
-            if (input.get<std::string>("kind") == "edge-finish-selection") {
-                std::ostringstream output;
-                edgeFinishSelection(output, input, bodies);
-                std::cout << output.str() << std::endl;
-                continue;
-            }
-            if (input.get<std::string>("kind") == "offset-sketch") {
-                std::ostringstream output; offsetSketch(output, input);
-                std::cout << output.str() << std::endl; continue;
-            }
-            if (input.get<std::string>("kind") == "sections") {
-                std::ostringstream output; sketchSections(output, input, bodies);
-                std::cout << output.str() << std::endl; continue;
-            }
-            if (input.get<std::string>("kind") == "project") {
-                std::ostringstream output; projectCurves(output, input, bodies);
-                std::cout << output.str() << std::endl; continue;
-            }
-            std::vector<std::string> participants;
-            const auto results = calculate(input, bodies, mode, participants);
-            timing.phase("calculate");
-            std::ostringstream output; output << std::setprecision(17) << "{\"mode\":" << quoted(mode) << ",\"participants\":[";
-            for (size_t i = 0; i < participants.size(); i++) { if (i) output << ','; output << quoted(participants[i]); }
-            output << "],\"results\":[";
-            const double deflection = input.get<std::string>("kind") == "inspect"
-                ? input.get<double>("deflection", 0.05) : 0.05;
-            for (size_t i = 0; i < results.size(); i++) { if (i) output << ','; present(output, results[i], deflection); }
-            timing.phase("presentation");
-            std::cout << output.str() << "]}" << std::endl;
-            timing.phase("write");
+            std::ostringstream output;
+            request(output,input,timing);
+            std::cout << output.str() << std::endl;
         } catch (const erosion::AllowanceFailure& e) {
             std::cout << "{\"error\":" << quoted(e.what());
             if (std::isfinite(e.allowance))
