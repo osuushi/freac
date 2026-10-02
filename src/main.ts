@@ -10,6 +10,7 @@ import { DocumentSession } from "./host/document-session.js";
 import { installFixtureCapture } from "./host/fixture-capture.js";
 import { IPadSession } from "./host/ipad-session.js";
 import { nativeExecutable } from "./host/native-paths.js";
+import { rememberWindowSize, restoreWindowSize } from "./host/window-size.js";
 
 const directory = dirname(fileURLToPath(import.meta.url));
 const icon = join(
@@ -66,8 +67,7 @@ async function createWindow(): Promise<void> {
   const window = new BrowserWindow({
     title: "Freac",
     icon,
-    width: 1280,
-    height: 850,
+    ...restoreWindowSize(),
     show: !hidden,
     backgroundColor: "#f8f9fb",
     webPreferences: {
@@ -80,6 +80,7 @@ async function createWindow(): Promise<void> {
     },
   });
   documentWindow = window;
+  rememberWindowSize(window);
   window.webContents.on("did-start-loading", () => meshCalculator.close());
   window.webContents.on("render-process-gone", () => meshCalculator.close());
   window.on("closed", () => {
