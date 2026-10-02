@@ -186,6 +186,8 @@ export class TrimControls {
     this.render();
   };
   private render(): void {
+    this.brush.root.hidden =
+      this.editor.tool !== "trim" || !this.editor.world.active || !this.option;
     const r = this.editor.world.canvas.getBoundingClientRect(),
       sketch = this.stroke?.gesture.sketch ?? this.editor.sketch,
       frame = sketch?.plane ?? this.editor.world.activeFrame;
@@ -241,7 +243,6 @@ export class TrimControls {
   private update = (): void => {
     const active = this.editor.tool === "trim" && !!this.editor.world.active;
     this.svg.style.display = active ? "" : "none";
-    this.brush.root.hidden = !active;
     for (const input of this.brush.root.querySelectorAll("input"))
       input.disabled = this.editor.blocked || !!this.stroke;
     if (!active) {

@@ -15,8 +15,9 @@ and the click uses the same cut policy. Repeated T retains the tool. Outside a
 plane, T asks for an unambiguous spatial target; it never chooses XY arbitrarily.
 Split, extend, offset, sketch fillet and chamfer follow the same local lifecycle.
 
-Holding Option in Trim shows a circular brush in sketch coordinates. The top
-slider and numeric mm field set its diameter; physical bracket/brace keys resize
+Holding Option in Trim shows a circular brush in sketch coordinates and the top
+diameter controls. The slider and numeric mm field appear only while Option is
+held and hide on release or focus loss. Physical bracket/brace keys resize
 it while Option is held, including macOS Option-translated characters. The circle
 follows the pointer and camera scale. Every finite trim span touched by the disk
 is highlighted in full, including coincident portions removed by the rewrite.

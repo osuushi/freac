@@ -25,10 +25,13 @@ export async function trimBrushControlsRoute(page, name) {
   ]);
   const p = await at(page, 0, 1),
     circle = page.locator(".trim-brush-circle");
+  const controls = page.locator(".trim-brush-controls");
+  assert.equal(await controls.isVisible(), false);
   await diameter(page, 2.2);
   const delivered = await movePointer(page, p);
   await page.keyboard.down("Alt");
   await circle.waitFor({ state: "visible" });
+  assert.equal(await controls.isVisible(), true);
   assert.equal(await highlights(page).count(), 2);
   const points = (await circle.getAttribute("points"))
     .split(" ")
@@ -42,11 +45,14 @@ export async function trimBrushControlsRoute(page, name) {
   await page.keyboard.press("Shift+BracketLeft");
   assert.equal(await circle.getAttribute("data-diameter"), "2.2");
   await page.keyboard.up("Alt");
+  assert.equal(await controls.isVisible(), false);
   assert.equal(await circle.isVisible(), false);
   const slider = page.getByRole("slider", { name: "Brush diameter slider" });
+  await page.keyboard.down("Alt");
   await slider.focus();
   await page.keyboard.press("Home");
   await page.keyboard.press("ArrowRight");
+  await page.keyboard.up("Alt");
   assert.equal(await circle.getAttribute("data-diameter"), "0.2");
   await diameter(page, 0);
   assert.equal(
@@ -60,6 +66,16 @@ export async function trimBrushControlsRoute(page, name) {
   await page.keyboard.press("BracketRight");
   assert.equal(await circle.getAttribute("data-diameter"), "0.2");
   await page.keyboard.up("Alt");
+  await brushControlVisibility(page, p);
+  await page.screenshot({ path: `.cache/sketch-review/${name}-trim-brush-controls.png` });
+  console.log(
+    `${name}: brush circle/mm diameter, slider, Option bracket/brace keys, stationary modifier preview and tool re-entry passed`,
+  );
+}
+
+async function brushControlVisibility(page, p) {
+  const controls = page.locator(".trim-brush-controls"),
+    circle = page.locator(".trim-brush-circle");
   await diameter(page, 1);
   await page.mouse.move(p.x, p.y);
   await page.keyboard.down("Alt");
@@ -69,11 +85,13 @@ export async function trimBrushControlsRoute(page, name) {
   await page.keyboard.press("v");
   assert.equal(await page.locator(".trim-brush-controls").isVisible(), false);
   await page.keyboard.press("t");
+  assert.equal(await controls.isVisible(), false);
+  await page.keyboard.down("Alt");
+  assert.equal(await controls.isVisible(), true);
   assert.equal(await circle.getAttribute("data-diameter"), "1");
-  await page.screenshot({ path: `.cache/sketch-review/${name}-trim-brush-controls.png` });
-  console.log(
-    `${name}: brush circle/mm diameter, slider, Option bracket/brace keys, stationary modifier preview and tool re-entry passed`,
-  );
+  await page.evaluate(() => window.dispatchEvent(new Event("blur")));
+  assert.equal(await controls.isVisible(), false);
+  await page.keyboard.up("Alt");
 }
 
 export async function trimBrushStrokeRoute(page, name) {
@@ -110,8 +128,9 @@ export async function trimBrushStrokeRoute(page, name) {
     "stroke remains temporary through release",
   );
   await page.screenshot({ path: `.cache/sketch-review/${name}-trim-brush-stroke.png` });
-  await page.mouse.up();
   await page.keyboard.up("Alt");
+  assert.equal(await page.locator(".trim-brush-controls").isVisible(), false);
+  await page.mouse.up();
   const after = (await inspect(page)).document;
   const curves = after.sketches[0].curves;
   assert.equal(curves.length, 6);
@@ -125,10 +144,12 @@ export async function trimBrushStrokeRoute(page, name) {
   }
   assert.deepEqual(curves.slice(-2), original.sketches[0].curves.slice(-2));
   assert.equal(await highlights(page).count(), 0);
+  await page.keyboard.down("Alt");
   assert.equal(
     await page.getByRole("spinbutton", { name: "Brush diameter", exact: true }).isEnabled(),
     true,
   );
+  await page.keyboard.up("Alt");
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original, "one Undo restores the entire stroke");
   await chooseTool(page, "redo", "redo");
