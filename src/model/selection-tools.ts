@@ -1,10 +1,12 @@
 import type { SketchEditor } from "../sketch/editor.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
+import { selectVisibleTools } from "./select-visible.js";
 import { type Refinement, refinements, refineSelection } from "./selection-refinement.js";
 
 export class SelectionTools {
   private disposers: (() => void)[] = [];
   constructor(private editor: SketchEditor) {
+    this.disposers.push(selectVisibleTools(editor));
     for (const [action, label] of refinements)
       this.disposers.push(
         toolCatalog(editor).register({

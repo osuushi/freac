@@ -59,17 +59,18 @@ function installShortcuts(
       }
       if (
         !input &&
-        !editor.isDragging &&
         (event.metaKey || event.ctrlKey) &&
-        event.key.toLowerCase() === "a"
+        (event.code === "KeyA" || event.key.toLowerCase() === "a")
       ) {
+        if (event.altKey && event.shiftKey) return;
         event.preventDefault();
-        if (editor.sketch) {
-          editor.tool = "select";
-          editor.creationArmed = false;
-          editor.select(editor.sketch.curves.map((curve) => curve.id));
-          editor.refresh();
-        }
+        void toolCatalog(editor).invoke(
+          event.altKey
+            ? "select-all-sketches"
+            : event.shiftKey
+              ? "select-all-bodies"
+              : "select-all-entities",
+        );
         return;
       }
       if (input || event.metaKey || event.ctrlKey) return;
