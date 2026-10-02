@@ -11,6 +11,16 @@ founder feedback update these contracts before further tools depend on them.
 
 ### Plane, tool and selection
 
+- Command/Ctrl-A selects all visible whole bodies and sketches in Modeling; in a
+  planar workspace it selects all curves in the active sketch and switches to Select.
+  Command/Ctrl-Shift-A selects all visible bodies; Command/Ctrl-Alt-A selects all
+  visible whole sketches. These typed variants leave the planar workspace for
+  Modeling. All three replace selection, respect individual hiding, isolation and
+  global body visibility. Ordinary Select All stays with File/Edit and keyboard
+  commands; the body/sketch variants appear in Tools under Select. Reference planes keep
+  their separate single-reference selection. Text fields, tool search and the agent
+  retain their own selection keys; active edits must finish or cancel first.
+
 - Hidden sketches and bodies remain selectable in the Entities panel, including
   when all bodies are hidden. Selection does not reveal them; Delete/Backspace
   removes them through ordinary document history. Viewport picking still skips them.

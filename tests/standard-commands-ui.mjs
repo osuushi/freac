@@ -7,12 +7,22 @@ import { drag, inspect, reset } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-const hidden = ["undo", "redo", "new", "open", "save", "save-as", "close", "delete"];
+const hidden = [
+  "undo",
+  "redo",
+  "new",
+  "open",
+  "save",
+  "save-as",
+  "close",
+  "delete",
+  "select-all-entities",
+];
 async function searchRoute(page) {
   const before = (await inspect(page)).document;
   await page.getByRole("button", { name: "Tools", exact: true }).click();
   const menu = page.getByRole("dialog", { name: "Find a tool" });
-  for (const query of ["undo", "redo", "close", "document", "delete", "uni"]) {
+  for (const query of ["undo", "redo", "close", "document", "delete", "select all", "uni"]) {
     await page.getByRole("combobox", { name: "Find a tool" }).fill(query);
     for (const id of hidden) assert.equal(await menu.locator(`[data-command="${id}"]`).count(), 0);
   }
@@ -25,7 +35,7 @@ async function searchRoute(page) {
   assert.deepEqual((await inspect(page)).document, before);
 }
 
-async function geometryRoute(page) {
+async function geometryRoute(page, name) {
   await chooseTool(page, "sketch on xy", "sketch-xy");
   await page.keyboard.press("r");
   await drag(page, [0, 0], [20, 10]);
@@ -34,6 +44,14 @@ async function geometryRoute(page) {
   assert.equal((await inspect(page)).document.sketches.length, 0);
   await page.keyboard.press("Control+Shift+z");
   assert.deepEqual((await inspect(page)).document.sketches, drawn);
+  if (name !== "electron") {
+    await page.getByRole("button", { name: "File / Edit", exact: true }).tap();
+    await page
+      .getByRole("menu", { name: "File and edit" })
+      .locator('[data-command="select-all-entities"]')
+      .tap();
+    assert.equal((await inspect(page)).selectedCurves.length, 4);
+  }
   await page.keyboard.press("Control+a");
   await page.keyboard.press("Delete");
   assert.equal((await inspect(page)).document.sketches[0].curves.length, 0);
@@ -52,7 +70,7 @@ async function route(page, name) {
     assert.equal(await page.getByRole("dialog", { name: "Find a tool" }).isVisible(), true);
     await page.keyboard.press("Escape");
   }
-  await geometryRoute(page);
+  await geometryRoute(page, name);
   const original = (await inspect(page)).document.sketches;
   const directory = await mkdtemp(join(tmpdir(), "freac-standard-commands-"));
   try {

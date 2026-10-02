@@ -71,7 +71,7 @@ actions. Catalog names must reflect implemented capabilities. Deferred features
 are not advertised as disabled tools.
 
 Standard file/edit actions stay out of Tools search and category browsing: Undo,
-Redo, New, Open, Save, Save As, Close and Delete. Their ordinary keyboard shortcuts
+Redo, New, Open, Save, Save As, Close, Delete and Select All. Their ordinary keyboard shortcuts
 and desktop File/Edit menus remain available. The browser's **freac** header button
 opens File/Edit for pointer/touch access; the usual New/Open/Save shortcuts also work. CAD-specific
 tools keep their shortcuts and searchable entries. Command registration and

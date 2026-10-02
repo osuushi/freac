@@ -7,6 +7,7 @@ const standardShortcuts = {
   "save-as": "Meta+Shift+s",
   close: "Meta+w",
   delete: "Delete",
+  "select-all-entities": "Meta+a",
 };
 
 /** Invoke real Tools entries or ordinary standard shortcuts, never a hidden edit path. */
