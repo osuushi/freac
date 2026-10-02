@@ -14,11 +14,23 @@ async function radius(page, value) {
   await inspect(page);
 }
 async function guide(page, side) {
-  const dot = page.locator(".bow-handle").nth(side > 0 ? 1 : 0);
-  await dot.waitFor({ state: "visible" });
-  const box = await dot.boundingBox();
-  assert.ok(box);
-  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  // Overlay refresh replaces SVG nodes. Resolve and measure in one browser
+  // turn so a visible handle cannot detach between the wait and measurement.
+  const point = await page.waitForFunction(
+    (index) => {
+      const dot = document.querySelectorAll(".bow-handle")[index];
+      const box = dot?.getBoundingClientRect();
+      return box && box.width > 0 && box.height > 0
+        ? { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+        : false;
+    },
+    side > 0 ? 1 : 0,
+  );
+  try {
+    return await point.jsonValue();
+  } finally {
+    await point.dispose();
+  }
 }
 async function bow(page, side, target) {
   const a = await guide(page, side),
