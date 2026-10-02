@@ -13,6 +13,7 @@ export class TrimControls {
   private pointer: Point | null = null;
   private start: Point | null = null;
   private span: TrimSpan | null = null;
+  private intersectionsOnly = false;
   constructor(
     private editor: SketchEditor,
     overlay: HTMLElement,
@@ -27,6 +28,7 @@ export class TrimControls {
       "pointermove",
       (event) => {
         if (editor.tool !== "trim" || editor.blocked || event.buttons) return;
+        this.intersectionsOnly = event.shiftKey;
         this.pointer = { x: event.clientX, y: event.clientY };
         this.update();
       },
@@ -48,6 +50,7 @@ export class TrimControls {
         const start = this.start;
         this.start = null;
         if (!start || event.button !== 0 || editor.blocked || editor.tool !== "trim") return;
+        this.intersectionsOnly = event.shiftKey;
         this.pointer = { x: event.clientX, y: event.clientY };
         if (distance(start, this.pointer) > 4) return;
         const choices = this.targets();
@@ -62,10 +65,17 @@ export class TrimControls {
       },
       options,
     );
+    window.addEventListener("keydown", this.modifiers, options);
+    window.addEventListener("keyup", this.modifiers, options);
     window.addEventListener("blur", () => void this.cancel(), options);
     editor.world.changed.add(this.update);
     this.update();
   }
+  private modifiers = (event: KeyboardEvent): void => {
+    if (this.intersectionsOnly === event.shiftKey) return;
+    this.intersectionsOnly = event.shiftKey;
+    this.update();
+  };
   private targets(): TrimSpan[] {
     const sketch = this.editor.sketch,
       p = this.pointer;
@@ -79,7 +89,7 @@ export class TrimControls {
       .sort((a, b) => a.d - b.d);
     return near
       .filter((c) => c.d <= near[0].d + 1)
-      .map((c) => trimAt(c.curve, sketch.curves, point))
+      .map((c) => trimAt(c.curve, sketch.curves, point, this.intersectionsOnly))
       .sort((a, b) => trimSpanLength(a) - trimSpanLength(b));
   }
   private async apply(span: TrimSpan): Promise<void> {
@@ -118,6 +128,7 @@ export class TrimControls {
     }
   }
   private cancel(): void {
+    this.intersectionsOnly = false;
     this.start = null;
     this.span = null;
     this.pointer = null;

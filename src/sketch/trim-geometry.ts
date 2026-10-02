@@ -44,13 +44,17 @@ function extent(curve: Curve): number {
       ? curve.radius * turn
       : arcCircle(curve).radius * Math.abs(arcDomain(curve).sweep);
 }
-export function trimSpans(curve: Curve, others: readonly Curve[]): TrimSpan[] {
+export function trimSpans(
+  curve: Curve,
+  others: readonly Curve[],
+  intersectionsOnly = false,
+): TrimSpan[] {
   const cuts: number[] = curve.kind === "circle" ? [] : [0, 1];
   for (const other of others) {
     if (other.id === curve.id) continue;
     const points = [
-      ...curveIntersections(curve, other),
-      ...(other.kind === "circle" ? [] : [other.a, other.b]),
+      ...curveIntersections(curve, other, !intersectionsOnly),
+      ...(intersectionsOnly || other.kind === "circle" ? [] : [other.a, other.b]),
     ];
     for (const p of points)
       if (distance(p, closestOnCurve(curve, p)) <= tolerance) cuts.push(trimParameter(curve, p));
@@ -69,9 +73,14 @@ export function trimSpans(curve: Curve, others: readonly Curve[]): TrimSpan[] {
   const starts = curve.kind === "circle" ? ordered : ordered.slice(0, -1);
   return starts.map((start, i) => ({ curve, start, end: ordered[i + 1] ?? ordered[0] + 1 }));
 }
-export function trimAt(curve: Curve, others: readonly Curve[], p: Point): TrimSpan {
+export function trimAt(
+  curve: Curve,
+  others: readonly Curve[],
+  p: Point,
+  intersectionsOnly = false,
+): TrimSpan {
   const t = trimParameter(curve, closestOnCurve(curve, p));
-  const spans = trimSpans(curve, others);
+  const spans = trimSpans(curve, others, intersectionsOnly);
   return (
     spans.find((s) => {
       const v = curve.kind === "circle" && t < s.start ? t + 1 : t;
