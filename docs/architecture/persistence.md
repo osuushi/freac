@@ -28,9 +28,11 @@ a storage research project. No migration framework for hypothetical old versions
 
 ## Native document lifecycle
 
-Electron remembers the document window's regular width and height on close and
+Electron remembers the document window's displayed width and height on close,
+including a zoomed/maximized window that fills the available screen, and
 restores them on the next launch or window creation, limited to the primary display's
 current work area. Missing or invalid preferences use the default 1280 × 850 size.
+Fullscreen and minimized windows retain their normal restore size instead.
 Window size is a host preference, independent of document contents and Undo.
 
 Electron keeps one document window. The host owns the current path and saved-content

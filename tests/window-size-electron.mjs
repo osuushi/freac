@@ -3,14 +3,21 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { _electron } from "playwright";
+import { createServer } from "vite";
 
 const directory = await mkdtemp(join(tmpdir(), "freac-window-size-"));
 const preference = join(directory, "window-size.json");
 let app;
+const server = await createServer({ server: { host: "127.0.0.1", port: 0 } });
+await server.listen();
 async function launch() {
   app = await _electron.launch({
     args: [".", `--user-data-dir=${directory}`],
-    env: { ...process.env, FREAC_TEST_HIDDEN: "1" },
+    env: {
+      ...process.env,
+      FREAC_TEST_HIDDEN: "1",
+      FREAC_DEV_URL: server.resolvedUrls.local[0],
+    },
   });
   const page = await app.firstWindow();
   await page.waitForFunction(() => !!window.freacInspect);
@@ -53,6 +60,38 @@ try {
   assert.equal(restored.width, resized.width);
   assert.equal(restored.height, resized.height);
   await close();
+  await launch();
+  const filled = await app.evaluate(({ BrowserWindow, screen }) => {
+    const window = BrowserWindow.getAllWindows()[0];
+    window.setBounds(screen.getPrimaryDisplay().workArea);
+    window.maximize();
+    const { width, height } = window.getBounds();
+    return { width, height };
+  });
+  await close();
+  assert.deepEqual(JSON.parse(await readFile(preference, "utf8")), filled);
+  const filledRestored = await launch();
+  assert.equal(filledRestored.width, filled.width);
+  assert.equal(filledRestored.height, filled.height);
+  await close();
+  await launch();
+  const devSize = await app.evaluate(({ BrowserWindow }) => {
+    const window = BrowserWindow.getAllWindows()[0];
+    window.setSize(980, 660);
+    const { width, height } = window.getBounds();
+    return { width, height };
+  });
+  // Exercise terminal Ctrl-C reaching Electron directly.
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  const child = app.process();
+  const exited = new Promise((resolve) => child.once("exit", resolve));
+  child.kill("SIGINT");
+  await exited;
+  app = undefined;
+  const devRestored = await launch();
+  assert.equal(devRestored.width, devSize.width);
+  assert.equal(devRestored.height, devSize.height);
+  await close();
   await writeFile(preference, '{"width":999999,"height":999999}');
   const oversized = await launch();
   assert.equal(oversized.width, oversized.available.width);
@@ -65,8 +104,11 @@ try {
     assert.equal(fallback.height, initial.height);
     await close();
   }
-  console.log("Hidden Electron: resize/quit/relaunch, screen fit and invalid preferences passed");
+  console.log(
+    "Hidden dev Electron: screen-filling size, quit/SIGINT relaunch and invalid preferences passed",
+  );
 } finally {
   await close();
+  await server.close();
   await rm(directory, { recursive: true, force: true });
 }

@@ -32,7 +32,10 @@ export function restoreWindowSize(): { width: number; height: number } {
 
 export function rememberWindowSize(window: BrowserWindow): void {
   window.on("close", () => {
-    const { width, height } = window.getNormalBounds();
+    // A screen-filling (zoomed/maximized) window should reopen at its displayed
+    // size, not the smaller restore bounds retained by the window manager.
+    const { width, height } =
+      window.isFullScreen() || window.isMinimized() ? window.getNormalBounds() : window.getBounds();
     const path = preferencePath();
     try {
       // Finish this tiny preference write before the last window can quit the app.
