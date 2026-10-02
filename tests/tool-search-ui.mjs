@@ -10,7 +10,7 @@ await withUiRuntimes(async (page, name) => {
   const before = (await inspect(page)).document;
   await page.getByRole("button", { name: "Tools", exact: true }).click();
   const input = page.getByRole("combobox", { name: "Find a tool" });
-  for (const query of ["cstr", "cnpl", "cp", "rfpl"]) {
+  for (const query of ["cstr", "cnpl", "cp", "rfpl", "cope", "cole"]) {
     await input.fill(query);
     assert.equal(
       await page.locator('[data-command="construction-plane"]').getAttribute("aria-disabled"),
@@ -18,16 +18,23 @@ await withUiRuntimes(async (page, name) => {
       query,
     );
   }
-  await input.fill("cstr");
-  assert.equal(
-    await page.locator('[role="option"][aria-selected="true"]').getAttribute("data-command"),
-    "construction-plane",
-  );
+  for (const [query, id] of [
+    ["rect", "rectangle"],
+    ["cstr", "construction-plane"],
+    ["cope", "construction-plane"],
+  ]) {
+    await input.fill(query);
+    assert.equal(
+      await page.locator('[role="option"][aria-selected="true"]').getAttribute("data-command"),
+      id,
+      query,
+    );
+  }
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, before, "Search does not edit geometry");
   await orient(page, [1, 1, 1]);
   await page.keyboard.press("Meta+f");
-  await input.fill("cstr");
+  await input.fill("cope");
   await page.keyboard.press("Enter");
   await pickPlane(page, "XY");
   await page.keyboard.press("Enter");
@@ -49,6 +56,6 @@ await withUiRuntimes(async (page, name) => {
   );
   await page.keyboard.press("Escape");
   console.log(
-    `${name}: sparse search, keyboard plane creation, Undo/Redo and disabled result pass`,
+    `${name}: ranked search, keyboard plane creation, Undo/Redo and disabled result pass`,
   );
 });
