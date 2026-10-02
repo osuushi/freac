@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { at, drag, inspect } from "./ui-helpers.mjs";
+import { at, close, drag, inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
@@ -71,10 +71,37 @@ async function run(page, name) {
   await page.keyboard.press("Control+a");
   assert.deepEqual(await selection(), [...bodies, ...sketches]);
 
+  await bulkEditingRoute(page, original);
   await visibilityRoute(page, original, bodies, sketches);
   console.log(
     `${name}: visible selection shortcuts, menu, hiding/isolation, text focus and Delete/Undo passed`,
   );
+}
+
+async function bulkEditingRoute(page, original) {
+  await page.keyboard.press("Meta+Shift+a");
+  await page.getByRole("button", { name: "Move body X", exact: true }).click();
+  await page.getByRole("textbox", { name: "Body translation X", exact: true }).fill("3");
+  await page.keyboard.press("Enter");
+  const moved = (await inspect(page)).document;
+  moved.bodies.forEach((body, index) => {
+    close(body.center[0], original.bodies[index].center[0] + 3);
+    close(body.volume, original.bodies[index].volume);
+  });
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
+  await chooseTool(page, "redo", "redo");
+  assert.deepEqual((await inspect(page)).document, moved);
+  await chooseTool(page, "undo", "undo");
+  await page.getByRole("button", { name: "Select Sketch 3", exact: true }).click();
+  await page.keyboard.press("Enter");
+  assert.equal((await inspect(page)).activeSketch, original.sketches[2].id);
+  await page.keyboard.press("Meta+a");
+  await chooseTool(page, "clear sketch", "clear-sketch");
+  assert.equal((await inspect(page)).document.sketches[2].curves.length, 0);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, original);
+  await chooseTool(page, "return to modeling", "modeling");
 }
 
 async function visibilityRoute(page, original, bodies, sketches) {
