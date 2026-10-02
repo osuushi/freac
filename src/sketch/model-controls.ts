@@ -135,7 +135,7 @@ export class ModelControls {
           editor.world.active ||
           editor.isDragging ||
           editor.blocked ||
-          editor.interactions.current?.kind === "body-move"
+          ["body-move", "placement"].includes(editor.interactions.current?.kind ?? "")
         )
           return;
         const interaction = editor.interactions.current;

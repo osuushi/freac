@@ -127,7 +127,9 @@ export class PlacementControls {
       sketch = sketches[0];
     if (event.button || !sketch || this.session || this.editor.blocked) return;
     event.preventDefault();
-    const lease = this.editor.interactions.acquire("placement", () => this.cancel());
+    const lease = this.editor.interactions.acquire("placement", () => this.cancel(), undefined, {
+      navigation: "when-released",
+    });
     if (!lease) return;
     this.session = {
       sketch,
@@ -146,6 +148,16 @@ export class PlacementControls {
       valid: true,
       lease,
     };
+    const session = this.session;
+    lease.trackHistory(
+      this.root,
+      () => ({ value: session.value, duplicate: session.duplicate }),
+      (state) => {
+        session.duplicate = state.duplicate;
+        this.input.value = String(state.value);
+        this.preview(state.value);
+      },
+    );
     this.input.setAttribute("aria-label", `${rotate ? "Rotation" : "Translation"} ${axis}`);
     this.input.value = "0";
     if (event.pointerId !== -1) lease.capture(event.currentTarget as Element, event.pointerId);

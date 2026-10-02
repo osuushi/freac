@@ -5,21 +5,13 @@ export async function performHistory(
   direction: "undo" | "redo",
 ): Promise<void> {
   const interaction = editor.interactions.current;
-  if (direction === "undo" && interaction?.finish && !editor.isDragging) {
-    const accepted = await interaction.finish();
-    if (!accepted) {
-      if (editor.interactions.current === interaction) await editor.interactions.cancel();
-      return;
-    }
-    await editor.store.settled();
-    await editor.store.request({ kind: "undo" });
-    editor.pivot = null;
-    editor.overlaps = null;
-    editor.activeHandle = undefined;
+  if (interaction?.history) {
+    if (interaction.captured || editor.blocked) return;
+    await interaction.history.navigate(direction);
     editor.refresh();
     return;
   }
-  if (editor.blocked || editor.isDragging) return;
+  if (interaction?.finish || editor.blocked || editor.isDragging) return;
   editor.numeric.cancel();
   await editor.interactions.cancel();
   await editor.store.settled();

@@ -24,8 +24,7 @@ export async function extrudeRoute(page, name) {
   await page.keyboard.press("Enter");
   state = await inspect(page);
   assert.equal(state.document.bodies.length, 1);
-  // Undo from a live modal operation first accepts its candidate, then undoes
-  // that new history entry, leaving the prior body and no active interaction.
+  // Undo rewinds the temporary extrusion without accepting or leaving the tool.
   await undoModalExtrusion(page, pick);
   await page.mouse.click(pick.x, pick.y);
   state = await inspect(page);
@@ -100,10 +99,17 @@ async function undoModalExtrusion(page, pick) {
   assert.ok((await inspect(page)).preview);
   await page.keyboard.press("Meta+z");
   const state = await inspect(page);
-  assert.equal(state.interaction, null);
+  assert.equal(state.interaction.kind, "extrude");
   assert.equal(state.preview, null);
   assert.equal(state.document.bodies.length, 1);
   close(state.document.bodies[0].volume, 3000);
+  await page.keyboard.press("Meta+Shift+z");
+  assert.ok((await inspect(page)).preview);
+  await page.keyboard.press("Escape");
+  assert.equal((await inspect(page)).interaction, null);
+  // Local navigation keeps the input selection; clear it before the next fresh pick.
+  await page.keyboard.press("Escape");
+  await inspect(page);
 }
 
 async function reopen(page, name, splitBodies) {

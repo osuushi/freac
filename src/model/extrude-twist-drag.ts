@@ -138,13 +138,15 @@ class TwistDrag {
       previous = this.drag;
     if (!previous) return;
     this.drag = null;
-    tool.lease()?.releaseCapture();
     delete tool.sphere.dataset.snapped;
     if (cancel) {
       tool.origin = previous.origin;
       tool.angle = previous.value;
       tool.changed();
-    } else if (!previous.moved && previous.kind === "angle") {
+    }
+    // Restore a cancelled gesture before release records its completed parameter checkpoint.
+    tool.lease()?.releaseCapture();
+    if (!cancel && !previous.moved && previous.kind === "angle") {
       tool.input.focus();
       tool.input.select();
     }

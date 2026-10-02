@@ -31,9 +31,13 @@ export function sketchTools(editor: SketchEditor): () => void {
         label: id === "undo" ? "Undo" : "Redo",
         category: "Document & Edit",
         shortcut: id === "undo" ? "⌘Z" : "⇧⌘Z",
-        allowBusy: id === "undo",
-        reason: () =>
-          (id === "undo" ? editor.store.canUndo : editor.store.canRedo) ? null : `Nothing to ${id}`,
+        allowBusy: false,
+        reason: () => {
+          const interaction = editor.interactions.current;
+          if (interaction?.finish && !interaction.history) return `Nothing to ${id} in this tool`;
+          const history = interaction?.history ?? editor.store;
+          return (id === "undo" ? history.canUndo : history.canRedo) ? null : `Nothing to ${id}`;
+        },
         run: () => editor.history(id),
       }),
     );

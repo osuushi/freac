@@ -61,6 +61,9 @@ export class ScaleControls {
     this.widget.accept.onclick = () => void this.finish();
     this.widget.cancel.onclick = () => void this.cancel();
     this.widget.factors.forEach((input, index) => {
+      input.onfocus = () => {
+        if (!this.lease) this.begin();
+      };
       input.oninput = () => {
         if (!this.lease) this.begin();
         if (this.widget.linked.checked)
@@ -129,6 +132,23 @@ export class ScaleControls {
     this.originalIds = new Set(e.sketch?.curves.map((c) => c.id));
     this.valid = true;
     this.latest = this.pending = null;
+    this.lease.trackHistory(
+      this.widget.root,
+      () => ({
+        factors: this.widget.values(),
+        pivot: this.operationPivot,
+        linked: this.widget.linked.checked,
+      }),
+      async (state) => {
+        this.operationPivot = state.pivot;
+        this.widget.linked.checked = state.linked;
+        this.widget.factors.forEach((input, i) => {
+          input.value = String(state.factors[i]);
+        });
+        this.queue();
+        await this.running;
+      },
+    );
     e.message = "";
     e.notice =
       "Transform · Option resizes about anchor · Shift scales uniformly · Enter accepts · Escape cancels";

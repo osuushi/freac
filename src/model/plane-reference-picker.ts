@@ -53,6 +53,7 @@ export class PlaneReferencePicker {
       if (this.accepts && !this.accepts(frame)) return;
       this.hover.clear();
       choose(frame);
+      this.editor.interactions.current?.history?.checkpoint();
     };
     this.editor.world.planePickerLabel = "Use plane";
     this.editor.world.planePicker = (id) => this.choose?.(structuredClone(planes[id]));

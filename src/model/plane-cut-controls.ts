@@ -94,6 +94,21 @@ export class PlaneCutControls {
     e.modeling.targets = [];
     this.valid = false;
     this.pending = null;
+    this.lease.trackHistory(
+      e.world.canvas,
+      () => this.pending?.frame ?? null,
+      async (frame) => {
+        if (frame) {
+          this.queue(frame);
+          await this.running;
+        } else {
+          this.pending = null;
+          this.valid = false;
+          this.lease?.show(null);
+          await e.store.request({ kind: "discard" });
+        }
+      },
+    );
     this.available.clear();
     e.modeling.hover = null;
     this.picker.start(

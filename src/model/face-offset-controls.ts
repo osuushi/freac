@@ -121,6 +121,19 @@ export class FaceOffsetControls {
     this.distance = 0;
     this.valid = true;
     this.previews.clear();
+    this.lease.trackHistory(
+      this.widget.root,
+      () => ({
+        distance: this.previews.latest?.distance ?? this.distance,
+        mode: this.quantity.mode,
+      }),
+      async (state) => {
+        this.quantity.setMode(state.mode);
+        this.widget.input.value = String(this.quantity.value(state.distance));
+        this.queue(state.distance);
+        await this.previews.settle();
+      },
+    );
     this.editor.notice = this.blend
       ? "Resize fillet · drag outward to add material · enter radius · Enter to accept · Escape to cancel"
       : "Offset faces · positive adds material · Enter to accept · Escape to cancel";

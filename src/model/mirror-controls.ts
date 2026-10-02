@@ -87,6 +87,21 @@ export class MirrorControls {
     this.valid = false;
     this.latest = this.pending = null;
     this.widget.open(e);
+    this.lease.trackHistory(
+      this.widget.root,
+      () => ({
+        reference: this.reference,
+        offset: this.widget.offset.value,
+        keep: this.widget.keep.checked,
+      }),
+      async (state) => {
+        this.reference = state.reference;
+        this.widget.offset.value = state.offset;
+        this.widget.keep.checked = state.keep;
+        this.queue();
+        await this.running;
+      },
+    );
     e.select([]);
     e.modeling.targets = [];
     e.modeling.hover = null;
@@ -103,6 +118,7 @@ export class MirrorControls {
     this.reference = planeReference(planes[id]);
     this.widget.offset.value = "0";
     this.queue();
+    this.lease.history?.checkpoint();
   }
   private events(): void {
     const e = this.editor,
@@ -132,6 +148,7 @@ export class MirrorControls {
         this.reference = reference;
         this.widget.offset.value = "0";
         this.queue();
+        this.lease?.history?.checkpoint();
       },
       options,
     );
