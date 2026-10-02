@@ -6,7 +6,7 @@ import { safeWrite } from "./safe-write.js";
 export async function prepareAgentSkills(home: string, application: string): Promise<void> {
   for (const relative of ["SKILL.md", "references/recovery.md", "scripts/inspect_3mf.py"]) {
     const source = join(application, "agent-skills", "mesh-recovery", relative);
-    const destination = join(home, "skills", "freac-mesh-recovery", relative);
+    const destination = join(home, "skills", "makeshift-mesh-recovery", relative);
     await mkdir(dirname(destination), { recursive: true, mode: 0o700 });
     if ((await realpath(dirname(destination))) !== dirname(destination))
       throw new Error("The managed agent skill directory contains a linked path.");

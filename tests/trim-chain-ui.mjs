@@ -10,11 +10,11 @@ await withUiRuntimes(
   async (page, name) => {
     await reset(page);
     await openDocument(page, {
-      name: "projected-ovals.freac",
+      name: "projected-ovals.makeshift",
       mimeType: "application/json",
       buffer: Buffer.from(
         JSON.stringify({
-          format: "freac",
+          format: "makeshift",
           version: 1,
           document: { units: "mm", sketches: [sketch], bodies: [] },
         }),

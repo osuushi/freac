@@ -128,7 +128,9 @@ async function unrelatedPreviewDuringMove(page, document) {
   const [moving, untouched] = document.bodies.map(({ id }) => id);
   await page.waitForFunction(
     (ids) =>
-      ids.every((id) => window.freacInspect().decoratorPreviewBounds.some((b) => b.body === id)),
+      ids.every((id) =>
+        window.makeshiftInspect().decoratorPreviewBounds.some((b) => b.body === id),
+      ),
     [moving, untouched],
   );
   const before = (await inspect(page)).decoratorPreviewBounds;
@@ -142,7 +144,7 @@ async function unrelatedPreviewDuringMove(page, document) {
   await page.waitForFunction(
     ({ body, x }) =>
       window
-        .freacInspect()
+        .makeshiftInspect()
         .decoratorPreviewBounds.some(
           (bounds) => bounds.body === body && Math.abs(bounds.min[0] - x - 5) < 0.1,
         ),

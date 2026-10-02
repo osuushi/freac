@@ -86,7 +86,10 @@ export async function orientableArrowViews(page, handle, root, normal, name, sec
   await page.keyboard.down("Control");
   await page.mouse.wheel(0, -45);
   await page.keyboard.up("Control");
-  await page.waitForFunction((before) => window.freacInspect().camera.height !== before, before);
+  await page.waitForFunction(
+    (before) => window.makeshiftInspect().camera.height !== before,
+    before,
+  );
   await check();
   assert.deepEqual((await inspect(page)).document, original);
 }

@@ -22,7 +22,7 @@ export function writePortableArchive(model: string, files: PortableFiles): Uint8
   let data: Uint8Array;
   if (portable) {
     const { document, camera } = JSON.parse(model);
-    data = strToU8(JSON.stringify({ format: "freac", version: 2, document, camera }));
+    data = strToU8(JSON.stringify({ format: "makeshift", version: 2, document, camera }));
   } else data = strToU8(model);
   if (
     data.length + Object.values(files).reduce((sum, file) => sum + file.length, 0) >
@@ -50,8 +50,8 @@ export function readPortableArchive(data: Uint8Array): PortableArchive {
   const model = entries["model.json"];
   if (!model) throw new Error("Missing model.json.");
   const parsed = JSON.parse(strFromU8(model));
-  if (parsed?.format !== "freac" || parsed.version !== 2 || !parsed.document)
-    throw new Error("Unsupported Freac file format.");
+  if (!["makeshift", "freac"].includes(parsed?.format) || parsed.version !== 2 || !parsed.document)
+    throw new Error("Unsupported Makeshift file format.");
   delete entries["model.json"];
   validatePortable(entries);
   const camera = validateCameraState(parsed.camera);

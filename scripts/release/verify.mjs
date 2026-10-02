@@ -4,14 +4,14 @@ import { open, readdir, readFile, realpath, stat } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { dependencies, inspectMachO } from "./native.mjs";
 
-const app = resolve(".build/packages/Freac-darwin-arm64/Freac.app");
+const app = resolve(".build/packages/Makeshift-darwin-arm64/Makeshift.app");
 const resources = join(app, "Contents/Resources");
 const run = (command, args) => execFileSync(command, args, { encoding: "utf8" });
 const metadata = JSON.parse(await readFile(join(resources, "build.json"), "utf8"));
 const packaged = JSON.parse(await readFile(join(resources, "app/package.json"), "utf8"));
 assert.equal(packaged.version, metadata.version, "Updater version must match the feed");
 const updateConfig = await readFile(join(resources, "updates.json"), "utf8").catch(() => null);
-assert.equal(updateConfig !== null, process.env.FREAC_SIGN === "1");
+assert.equal(updateConfig !== null, process.env.MAKESHIFT_SIGN === "1");
 if (updateConfig)
   assert.deepEqual(
     JSON.parse(updateConfig),
@@ -80,8 +80,8 @@ async function check(directory) {
 await check(app);
 assert(binaries >= 20, "Unexpectedly few native binaries");
 for (const component of ["solver", "kernel", "mesh", "agent-scope"])
-  assert((await stat(join(resources, "native", `freac-${component}`))).mode & 0o111);
-if (process.env.FREAC_SIGN === "1") {
+  assert((await stat(join(resources, "native", `makeshift-${component}`))).mode & 0o111);
+if (process.env.MAKESHIFT_SIGN === "1") {
   run("codesign", ["--verify", "--deep", "--strict", "--verbose=2", app]);
   run("xcrun", ["stapler", "validate", app]);
   run("spctl", ["--assess", "--type", "execute", "--verbose=2", app]);

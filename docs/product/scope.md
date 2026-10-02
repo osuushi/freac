@@ -24,4 +24,4 @@ Do not build a new geometry kernel or a new general constraint solver as the
 initial strategy. Evaluate component reuse. Own product semantics, history,
 selection intent and interaction state rather than mirroring a host application's
 object tree. Preserve the old prototype as behavioral evidence; its UI and tests
-are not product acceptance for Freac.
+are not product acceptance for Makeshift.

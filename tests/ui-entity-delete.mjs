@@ -16,7 +16,7 @@ export async function entityDeleteRoute(page, name) {
   assert.deepEqual(state.document.bodies, []);
   assert.equal(state.document.sketches[0]?.id, sketchId);
   assert.deepEqual(state.modelingSelection, []);
-  let history = await page.evaluate(() => window.freacHistory());
+  let history = await page.evaluate(() => window.makeshiftHistory());
   assert.deepEqual(history.at(-1).operation, {
     kind: "delete-entities",
     parameters: { bodyIds: [bodyId], sketchIds: [] },
@@ -27,7 +27,7 @@ export async function entityDeleteRoute(page, name) {
   state = await inspect(page);
   assert.deepEqual(state.document.bodies, []);
   assert.deepEqual(state.document.sketches, []);
-  history = await page.evaluate(() => window.freacHistory());
+  history = await page.evaluate(() => window.makeshiftHistory());
   assert.deepEqual(history.at(-1).operation, {
     kind: "delete-entities",
     parameters: { bodyIds: [], sketchIds: [sketchId] },

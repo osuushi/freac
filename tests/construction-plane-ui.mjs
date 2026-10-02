@@ -69,7 +69,7 @@ async function route(page, name) {
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document.constructionPlanes[0].frame.origin, [7, 0, 15]);
   const saved = (await inspect(page)).document;
-  const path = resolve(`.cache/plane-probe/${name}-plane.freac`);
+  const path = resolve(`.cache/plane-probe/${name}-plane.makeshift`);
   await saveDocument(page, path);
   await openDocument(page, path);
   await settled(page);

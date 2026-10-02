@@ -6,8 +6,11 @@ import { launchElectron } from "./native-documents.mjs";
 import { drag, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-const root = await mkdtemp(join(tmpdir(), "freac-updates-"));
-const app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+const root = await mkdtemp(join(tmpdir(), "makeshift-updates-"));
+const app = await launchElectron({
+  args: ["."],
+  env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+});
 try {
   const page = await app.firstWindow();
   await settled(page);
@@ -35,11 +38,11 @@ try {
   await drag(page, [-10, -6], [10, 6]);
   await page.keyboard.press("Escape");
   await settled(page);
-  const before = await page.evaluate(() => JSON.stringify(window.freacInspect().document));
+  const before = await page.evaluate(() => JSON.stringify(window.makeshiftInspect().document));
 
   // The OS download/install transport is stubbed; document handling is the real app.
   await app.evaluate(({ autoUpdater }) => {
-    autoUpdater.emit("update-downloaded", {}, "", "Freac test update");
+    autoUpdater.emit("update-downloaded", {}, "", "Makeshift test update");
   });
   assert.match((await prompts()).at(-1), /update is ready/);
   assert.equal(await app.evaluate(() => globalThis.installs), 0);
@@ -48,10 +51,13 @@ try {
     globalThis.updateResponse = 0;
   });
   await checkMenu();
-  await page.waitForFunction(() => !window.freacInspect().busy);
+  await page.waitForFunction(() => !window.makeshiftInspect().busy);
   await waitForPrompts(4);
   assert.equal(await app.evaluate(() => globalThis.installs), 0);
-  assert.equal(await page.evaluate(() => JSON.stringify(window.freacInspect().document)), before);
+  assert.equal(
+    await page.evaluate(() => JSON.stringify(window.makeshiftInspect().document)),
+    before,
+  );
 
   // Canceling the save-file picker must also leave the updater pending.
   await app.evaluate(({ dialog }) => {
@@ -60,10 +66,10 @@ try {
   });
   await checkMenu();
   await waitForPrompts(6);
-  await page.waitForFunction(() => !window.freacInspect().busy);
+  await page.waitForFunction(() => !window.makeshiftInspect().busy);
   assert.equal(await app.evaluate(() => globalThis.installs), 0);
 
-  const file = join(root, "before-update.freac");
+  const file = join(root, "before-update.makeshift");
   await app.evaluate(({ dialog }, file) => {
     dialog.showSaveDialog = async () => ({ canceled: false, filePath: file });
   }, file);
@@ -74,7 +80,7 @@ try {
   }
   assert.equal(await app.evaluate(() => globalThis.installs), 1);
   assert((await readFile(file)).length > 100);
-  assert.equal((await page.evaluate(() => window.freacDocument.status())).edited, false);
+  assert.equal((await page.evaluate(() => window.makeshiftDocument.status())).edited, false);
   // A native installation error must restore the ordinary close/save guard.
   await app.evaluate(({ autoUpdater }) => {
     autoUpdater.emit("error", new Error("Simulated installer failure"));
@@ -84,7 +90,7 @@ try {
   await drag(page, [15, 10], [25, 20]);
   await page.keyboard.press("Escape");
   await settled(page);
-  assert.equal((await page.evaluate(() => window.freacDocument.status())).edited, true);
+  assert.equal((await page.evaluate(() => window.makeshiftDocument.status())).edited, true);
   const count = (await prompts()).length;
   await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].close());
   await waitForPrompts(count + 1);
@@ -102,7 +108,7 @@ try {
 async function checkMenu() {
   await app.evaluate(({ Menu }) => {
     Menu.getApplicationMenu()
-      .items.find((item) => item.label === "Freac")
+      .items.find((item) => item.label === "Makeshift")
       .submenu.items.find((item) => item.label === "Check for Updates…")
       .click();
   });

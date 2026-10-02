@@ -10,7 +10,7 @@ export async function selectedSketchRoute(page, name) {
   await clearSelection(page);
   await orient(page, [0.4, -1, 0.7]);
   const original = (await inspect(page)).document;
-  const history = await page.evaluate(() => window.freacHistory());
+  const history = await page.evaluate(() => window.makeshiftHistory());
   assert.equal((await pick(page, [0, 0, 0])).modelingSelection[0]?.kind, "face");
   await page
     .getByRole("button", { name: /^Select Sketch/ })
@@ -43,7 +43,7 @@ export async function selectedSketchRoute(page, name) {
   await orient(page, [0, -0.3, -1]);
   assert.equal((await pick(page, [0, 0, 0])).modelingSelection[0]?.kind, "profile");
   assert.deepEqual((await inspect(page)).document, original);
-  assert.deepEqual(await page.evaluate(() => window.freacHistory()), history);
+  assert.deepEqual(await page.evaluate(() => window.makeshiftHistory()), history);
   console.log(
     `${name}: selected sketch occluded/visible region picking, deselection, visibility and unchanged history passed`,
   );

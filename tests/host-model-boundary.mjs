@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 
 export async function hostModelBoundary(page) {
   const result = await page.evaluate(async () => {
-    const before = await window.freacModel({ kind: "read" });
-    const status = await window.freacDocument.status();
+    const before = await window.makeshiftModel({ kind: "read" });
+    const status = await window.makeshiftDocument.status();
     const errors = [];
     for (const request of [
       { kind: "new" },
@@ -13,7 +13,7 @@ export async function hostModelBoundary(page) {
       { kind: "toString" },
     ]) {
       try {
-        await window.freacModel(request);
+        await window.makeshiftModel(request);
         errors.push(null);
       } catch (error) {
         errors.push(error.message);
@@ -23,8 +23,8 @@ export async function hostModelBoundary(page) {
       before,
       status,
       errors,
-      after: await window.freacModel({ kind: "read" }),
-      afterStatus: await window.freacDocument.status(),
+      after: await window.makeshiftModel({ kind: "read" }),
+      afterStatus: await window.makeshiftDocument.status(),
     };
   });
   assert.match(result.errors[0], /Use document commands/);

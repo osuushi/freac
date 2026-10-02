@@ -7,7 +7,7 @@ import { compileScript } from "./compile-script.js";
 import { request } from "./request.js";
 
 export async function runScript(path: string): Promise<unknown> {
-  const directory = await mkdtemp(join(tmpdir(), "freac-script-"));
+  const directory = await mkdtemp(join(tmpdir(), "makeshift-script-"));
   let token: string | undefined;
   const send = (action: ScriptRequest["action"], operation?: ScriptOperation) =>
     request("script", undefined, { action, token, operation });

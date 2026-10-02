@@ -40,7 +40,7 @@ function fileDialog(
   finish: (path: string | null) => void,
 ): void {
   const hint = document.createElement("p");
-  hint.textContent = "Files on the computer running Freac";
+  hint.textContent = "Files on the computer running Makeshift";
   const path = document.createElement("input");
   path.setAttribute("aria-label", "Computer folder path");
   const list = document.createElement("div");
@@ -125,7 +125,7 @@ function fileDialog(
     button("Cancel", () => finish(null)),
   );
   if (request.kind === "save")
-    name.value = request.defaultPath?.split(/[\\/]/).at(-1) ?? "Untitled.freac";
+    name.value = request.defaultPath?.split(/[\\/]/).at(-1) ?? "Untitled.makeshift";
   void load(request.defaultPath);
 }
 function button(label: string, action: () => void): HTMLButtonElement {

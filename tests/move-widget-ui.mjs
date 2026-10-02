@@ -17,7 +17,10 @@ const [name] = runtimeNames(["chromium", "webkit", "electron"], ["chromium"]);
 let server, browser, app, page;
 try {
   if (name === "electron") {
-    app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+    app = await launchElectron({
+      args: ["."],
+      env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+    });
     page = await app.firstWindow();
     await app.evaluate(({ BrowserWindow }) =>
       BrowserWindow.getAllWindows()[0].setContentSize(1280, 800),
@@ -42,7 +45,7 @@ try {
   await moveFieldsRoute(page, name);
   await rotationSnappingRoute(page, name);
   await sketchPlacementWidgetRoute(page, name);
-  if (!process.env.FREAC_PLACEMENT_ONLY) {
+  if (!process.env.MAKESHIFT_PLACEMENT_ONLY) {
     await moveToolRoute(page, name);
     await page.screenshot({ path: `.cache/sketch-review/${name}-move-widget-sketch.png` });
     await bodyMoveRoute(page, name);

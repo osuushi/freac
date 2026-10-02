@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 import { chromium, webkit } from "playwright";
 import { createServer } from "vite";
 import { checkViewPrograms } from "./agent-view-programs.mjs";
+import { queryBrowserInspection } from "./inspection-browser-query.mjs";
 import { launchElectron } from "./native-documents.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { at, drag, inspect, settled } from "./ui-helpers.mjs";
@@ -23,7 +24,10 @@ let app,
 await mkdir(".cache/sketch-review", { recursive: true });
 try {
   if (name === "electron") {
-    app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+    app = await launchElectron({
+      args: ["."],
+      env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+    });
     page = await app.firstWindow();
   } else {
     server = await createServer({ server: { port: 0, watch: null, hmr: false } });
@@ -32,7 +36,7 @@ try {
     page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
     // Exercise the shared renderer contract; only the desktop supplies its native IPC adapter.
     await page.addInitScript(() => {
-      window.freacInspection = {
+      window.makeshiftInspection = {
         onRequest: (callback) => {
           window.readInspection = callback;
           return () => {
@@ -47,7 +51,7 @@ try {
   await plate(page);
   if (app) {
     await page.evaluate(() =>
-      window.freacAgent.request({
+      window.makeshiftAgent.request({
         kind: "configure",
         preferences: {
           preset: "custom",
@@ -59,7 +63,8 @@ try {
     );
     await page.getByRole("button", { name: "Open agent terminal" }).click();
     await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
-    workspace = (await page.evaluate(() => window.freacAgent.request({ kind: "read" }))).workspace;
+    workspace = (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" })))
+      .workspace;
   }
   await clearSelection(page);
   await orient(page, [0.4, -1, 0.7]);
@@ -138,7 +143,7 @@ try {
     sketchGeometry.profiles,
   );
   if (app) {
-    const source = `const sources = ${JSON.stringify(sketchGeometry.profiles)}; await freac.sweep({sources,path:[{kind:"line",a:[0,0,0],b:[0,0,5]}],mode:"new"});`;
+    const source = `const sources = ${JSON.stringify(sketchGeometry.profiles)}; await makeshift.sweep({sources,path:[{kind:"line",a:[0,0,0],b:[0,0,5]}],mode:"new"});`;
     await writeFile(join(workspace, "inspect-profile-sweep.ts"), source);
     const initial = (await inspect(page)).document;
     await query("run", "inspect-profile-sweep.ts");
@@ -218,7 +223,7 @@ try {
   throw error;
 } finally {
   if (app) {
-    await page.evaluate(() => window.freacAgent.request({ kind: "stop" })).catch(() => {});
+    await page.evaluate(() => window.makeshiftAgent.request({ kind: "stop" })).catch(() => {});
     await app.close();
   }
   await browser?.close();
@@ -232,59 +237,15 @@ async function unchanged() {
     camera: state.camera,
     targets: state.modelingSelection,
     points: state.selectionTargets,
-    history: await page.evaluate(() => window.freacHistory()),
+    history: await page.evaluate(() => window.makeshiftHistory()),
   };
 }
 async function query(command, entity) {
-  if (!app)
-    return page.evaluate(
-      async ({ command, entity, modulePath }) => {
-        const context = window.readInspection(
-          command === "render",
-          false,
-          command === "select" ? JSON.stringify(entity.split(" ")) : undefined,
-        );
-        if (command === "select" || command === "context") return { units: "mm", context };
-        const document = window.freacInspect().document;
-        if (command === "faces") {
-          const { queryFaces } = await import(
-            modulePath.replace("inspection-geometry.ts", "face-query.ts")
-          );
-          return { units: "mm", faces: queryFaces(document, context) };
-        }
-        const { inspectionOverview, findInspectionTarget, targetGeometry, measurable } =
-          await import(modulePath);
-        if (command === "render")
-          return { ...context, width: context.image.width, height: context.image.height };
-        if (command === "inspect" && !entity)
-          return { ...inspectionOverview(document, context), context };
-        const targets = entity ? [findInspectionTarget(document, entity)] : context.selection;
-        const wanted = measurable(targets);
-        const reply = wanted.length
-          ? await (
-              await fetch("/sketch-api", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ kind: "measure", targets: wanted }),
-              })
-            ).json()
-          : {};
-        return {
-          context,
-          targets: targets.map((target) => ({
-            target,
-            geometry: targetGeometry(document, target),
-          })),
-          measurement: reply.measurement ?? null,
-          measurementError: reply.error,
-        };
-      },
-      { command, entity, modulePath: `/@fs/${resolve("src/agent/inspection-geometry.ts")}` },
-    );
+  if (!app) return queryBrowserInspection(page, command, entity);
   const prefix = `query-${++counter}`;
   await page.locator(".agent-screen textarea").focus();
   await page.keyboard.type(
-    `freac ${command}${entity ? ` ${entity}` : ""} > ${prefix}.json 2> ${prefix}.err; printf '%s' "$?" > ${prefix}.done`,
+    `makeshift ${command}${entity ? ` ${entity}` : ""} > ${prefix}.json 2> ${prefix}.err; printf '%s' "$?" > ${prefix}.done`,
   );
   await page.keyboard.press("Enter");
   let exit;

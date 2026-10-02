@@ -26,7 +26,7 @@ async function tealPixels(page, png) {
   }, png.toString("base64"));
 }
 
-const name = process.env.FREAC_TEST_BROWSER ?? "electron";
+const name = process.env.MAKESHIFT_TEST_BROWSER ?? "electron";
 const session = name === "electron" ? await gearSession() : await scriptBrowser(name);
 try {
   const { page, workspace } = session;
@@ -36,7 +36,7 @@ try {
     (async (...args) =>
       JSON.parse(
         (
-          await run(session.env.FREAC_CLI, args, {
+          await run(session.env.MAKESHIFT_CLI, args, {
             env: session.env,
             cwd: workspace,
             timeout: 30000,

@@ -21,7 +21,7 @@ export async function deleteFeatureRoute(page, name, electron, kind) {
   close(state.document.bodies[0].volume, 2000);
   assert.equal(state.document.bodies[0].id, body.id);
   assert.equal(await page.getByRole("button", { name: "Accept deletion", exact: true }).count(), 0);
-  let history = await page.evaluate(() => window.freacHistory());
+  let history = await page.evaluate(() => window.makeshiftHistory());
   assert.equal(history.at(-1).operation.kind, "delete-topology");
   assert.equal(history.at(-1).outcome, "changed");
   assert.deepEqual(
@@ -56,7 +56,7 @@ export async function deleteFeatureRoute(page, name, electron, kind) {
   assert.deepEqual(state.document, reopened);
   assert.equal(state.interaction, null);
   assert.ok(state.modelingSelection.some((t) => t.face === top.id));
-  history = await page.evaluate(() => window.freacHistory());
+  history = await page.evaluate(() => window.makeshiftHistory());
   const failure = history.at(-1);
   assert.equal(failure.outcome, "failed");
   assert.equal(failure.operation.kind, "delete-topology");
@@ -69,7 +69,7 @@ export async function deleteFeatureRoute(page, name, electron, kind) {
   close(state.preview.bodies[0].volume, 2400);
   await page.getByRole("button", { name: "Accept face offset", exact: true }).click();
   await inspect(page);
-  history = await page.evaluate(() => window.freacHistory());
+  history = await page.evaluate(() => window.makeshiftHistory());
   assert.deepEqual(
     history.find((entry) => entry.id === failure.id),
     failure,
@@ -114,7 +114,7 @@ export async function deleteEdgeRoute(page, name) {
   assert.equal(state.preview, null);
   assert.deepEqual(state.document, after);
   assert.match(await page.getByRole("status").textContent(), /different surfaces/);
-  const history = await page.evaluate(() => window.freacHistory());
+  const history = await page.evaluate(() => window.makeshiftHistory());
   const failure = history.at(-1);
   assert.equal(failure.outcome, "failed");
   assert.match(failure.error, /different surfaces/);
@@ -122,7 +122,7 @@ export async function deleteEdgeRoute(page, name) {
   assert.deepEqual((await inspect(page)).document, before, "Undo skips the rejected deletion");
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, after);
-  assert.equal((await page.evaluate(() => window.freacHistory())).at(-1).error, failure.error);
+  assert.equal((await page.evaluate(() => window.makeshiftHistory())).at(-1).error, failure.error);
   console.log(
     `${name}: immediate edge dissolve, Undo/Redo skip failure, retained sharp-edge diagnostic passed`,
   );

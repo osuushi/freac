@@ -78,7 +78,7 @@ try {
         await page.goto(server.resolvedUrls.local[0]);
         const measurements = await page.evaluate(measureExportWorkers, {
           scenario,
-          compressionPath: process.env.FREAC_BENCH_COMPRESSION
+          compressionPath: process.env.MAKESHIFT_BENCH_COMPRESSION
             ? `/@fs/${resolve("tests/export-compression-benchmark.mjs")}`
             : undefined,
           previewPath: `/@fs/${resolve("src/decorators/preview-worker.ts")}?worker`,

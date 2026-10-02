@@ -1,10 +1,10 @@
-# Freac licensing
+# Makeshift licensing
 
-Copyright © 2026 Freac contributors.
+Copyright © 2026 Makeshift contributors.
 
-Freac's original code is licensed under the GNU Lesser General Public License,
+Makeshift's original code is licensed under the GNU Lesser General Public License,
 version 2.1 or (at your option) any later version (SPDX: LGPL-2.1-or-later).
-See [LICENSE](LICENSE) for the full terms. Freac is provided without warranty,
+See [LICENSE](LICENSE) for the full terms. Makeshift is provided without warranty,
 including without any implied warranty of merchantability or fitness for a
 particular purpose.
 
@@ -16,6 +16,6 @@ respective terms. Generated release notices identify the shipped versions.
 
 Binary releases include offline notices under Help → Third-party licenses.
 Distribute the matching source archive together with the application. Recipients
-may modify and rebuild Freac and replace its LGPL components; the source archive
+may modify and rebuild Makeshift and replace its LGPL components; the source archive
 contains instructions for rebuilding and locally signing a modified macOS app.
 Apple signing credentials are not needed to build a locally modified copy.

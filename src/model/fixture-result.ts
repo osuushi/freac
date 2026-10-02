@@ -10,7 +10,7 @@ export function fixtureResult(parent: HTMLElement) {
   file.draggable = true;
   file.setAttribute("aria-label", "Download captured fixture");
   const hint = document.createElement("span");
-  hint.textContent = window.freacFixtureFile
+  hint.textContent = window.makeshiftFixtureFile
     ? "Drag file to attach · click to download"
     : "Download file to attach";
   const result = document.createElement("input");
@@ -28,8 +28,8 @@ export function fixtureResult(parent: HTMLElement) {
   };
   const reveal = document.createElement("button");
   reveal.textContent = "Show in folder";
-  reveal.hidden = !window.freacFixtureFile;
-  reveal.onclick = () => window.freacFixtureFile?.reveal();
+  reveal.hidden = !window.makeshiftFixtureFile;
+  reveal.onclick = () => window.makeshiftFixtureFile?.reveal();
   const close = document.createElement("button");
   close.textContent = "Dismiss";
   close.onclick = () => {
@@ -39,9 +39,9 @@ export function fixtureResult(parent: HTMLElement) {
   output.addEventListener("pointerdown", (event) => event.stopPropagation());
   output.addEventListener("click", (event) => event.stopPropagation());
   file.ondragstart = (event) => {
-    if (window.freacFixtureFile) {
+    if (window.makeshiftFixtureFile) {
       event.preventDefault();
-      window.freacFixtureFile.drag();
+      window.makeshiftFixtureFile.drag();
     }
   };
   output.append(file, hint, result, copy, reveal, close);

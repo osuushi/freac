@@ -94,9 +94,9 @@ async function route(page, name) {
   await inspect(page);
   assert.deepEqual((await labels()).slice(-2), ["Plane 2", "Datum"]);
   const saved = (await inspect(page)).document.entityPresentation;
-  const directory = await mkdtemp(join(tmpdir(), "freac-organization-"));
+  const directory = await mkdtemp(join(tmpdir(), "makeshift-organization-"));
   try {
-    const path = join(directory, "organized.freac");
+    const path = join(directory, "organized.makeshift");
     await saveDocument(page, path);
     await openDocument(page, path);
     assert.deepEqual((await inspect(page)).document.entityPresentation, saved);
@@ -165,7 +165,11 @@ try {
   if (names.includes("electron")) {
     const app = await launchElectron({
       args: ["."],
-      env: { ...process.env, FREAC_DEV_URL: server.resolvedUrls.local[0], FREAC_TEST_HIDDEN: "1" },
+      env: {
+        ...process.env,
+        MAKESHIFT_DEV_URL: server.resolvedUrls.local[0],
+        MAKESHIFT_TEST_HIDDEN: "1",
+      },
     });
     try {
       const page = await app.firstWindow();

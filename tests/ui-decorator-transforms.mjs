@@ -8,7 +8,7 @@ export async function decoratorTransformRoute(page) {
   const settings = before.decorators[0].settings;
   const bodyId = before.bodies[0].id;
   await page.waitForFunction(
-    (id) => window.freacInspect().decoratorPreviewBounds.some((bounds) => bounds.body === id),
+    (id) => window.makeshiftInspect().decoratorPreviewBounds.some((bounds) => bounds.body === id),
     bodyId,
   );
   const originalBounds = (await inspect(page)).decoratorPreviewBounds.find(
@@ -26,7 +26,7 @@ export async function decoratorTransformRoute(page) {
   assert.equal(state.preview.decorators[0].problem, undefined);
   await page.waitForFunction(
     ({ id, width }) => {
-      const bounds = window.freacInspect().decoratorPreviewBounds.find((b) => b.body === id);
+      const bounds = window.makeshiftInspect().decoratorPreviewBounds.find((b) => b.body === id);
       return bounds && bounds.max[0] - bounds.min[0] > width * 1.3;
     },
     { id: bodyId, width: originalWidth },
@@ -78,7 +78,7 @@ async function movePreviewRoute(page, before, bodyId, originalBounds) {
   );
   await page.waitForFunction(
     ({ id, x }) => {
-      const bounds = window.freacInspect().decoratorPreviewBounds.find((b) => b.body === id);
+      const bounds = window.makeshiftInspect().decoratorPreviewBounds.find((b) => b.body === id);
       return bounds && Math.abs(bounds.min[0] - x - 5) < 0.1;
     },
     { id: bodyId, x: originalBounds.min[0] },
@@ -87,7 +87,7 @@ async function movePreviewRoute(page, before, bodyId, originalBounds) {
   assert.deepEqual((await inspect(page)).document, before);
   await page.waitForFunction(
     ({ id, x }) => {
-      const bounds = window.freacInspect().decoratorPreviewBounds.find((b) => b.body === id);
+      const bounds = window.makeshiftInspect().decoratorPreviewBounds.find((b) => b.body === id);
       return bounds && Math.abs(bounds.min[0] - x) < 0.1;
     },
     { id: bodyId, x: originalBounds.min[0] },
@@ -102,7 +102,7 @@ async function movePreviewRoute(page, before, bodyId, originalBounds) {
     await page.mouse.move(start.x + [24, 48, 72, 48][i % 4], start.y);
     await page.waitForTimeout(55);
     const bounds = await page.evaluate(
-      (id) => window.freacInspect().decoratorPreviewBounds.find((b) => b.body === id),
+      (id) => window.makeshiftInspect().decoratorPreviewBounds.find((b) => b.body === id),
       bodyId,
     );
     if (bounds && Math.abs(bounds.min[0] - originalBounds.min[0]) > 0.1)
@@ -116,14 +116,14 @@ async function movePreviewRoute(page, before, bodyId, originalBounds) {
   assert.ok(Math.abs(displacement) > 0.1);
   await page.waitForFunction(
     ({ id, x }) => {
-      const bounds = window.freacInspect().decoratorPreviewBounds.find((b) => b.body === id);
+      const bounds = window.makeshiftInspect().decoratorPreviewBounds.find((b) => b.body === id);
       return bounds && Math.abs(bounds.min[0] - x) < 0.1;
     },
     { id: bodyId, x: originalBounds.min[0] + displacement },
   );
   await page.waitForFunction(
     ({ id, triangles }) =>
-      window.freacInspect().decoratorPreviewBounds.find((b) => b.body === id)?.triangles ===
+      window.makeshiftInspect().decoratorPreviewBounds.find((b) => b.body === id)?.triangles ===
       triangles,
     { id: bodyId, triangles: originalBounds.triangles },
   );

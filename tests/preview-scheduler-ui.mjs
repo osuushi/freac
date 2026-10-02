@@ -18,7 +18,7 @@ async function latestOffset(page, input, held, requests, flags, original, area) 
   await input.fill("4");
   held.get(2).release.resolve();
   await waitForDelivery(held.get(4));
-  const pending = await page.evaluate(() => window.freacInspect());
+  const pending = await page.evaluate(() => window.makeshiftInspect());
   close(pending.preview.bodies[0].volume, area * 7, "superseded verified image remains visible");
   assert.deepEqual(pending.document, original);
   assert.deepEqual(requests, [1, 2, 4], "only the latest waiting target reaches the kernel");
@@ -59,7 +59,7 @@ async function clampedOffset(page, cleanupChecks, original) {
   await clamped.fill("-10");
   await page.waitForFunction(
     () =>
-      !window.freacInspect().busy &&
+      !window.makeshiftInspect().busy &&
       !document.querySelector('[aria-label="Accept face offset"]')?.disabled,
   );
   const state = await inspect(page);

@@ -62,7 +62,7 @@ export async function planeCutRoute(page, name) {
   await falsePositiveReference(page, original);
   await faceSubset(page, original, name);
   const imprinted = (await inspect(page)).document;
-  const path = resolve(`.cache/plane-probe/${name}-imprint.freac`);
+  const path = resolve(`.cache/plane-probe/${name}-imprint.makeshift`);
   await saveDocument(page, path);
   await openDocument(page, path);
   assert.deepEqual(

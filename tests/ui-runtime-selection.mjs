@@ -4,21 +4,21 @@ import test from "node:test";
 import { runtimeNames } from "./ui-runtime.mjs";
 
 test("UI runtime selection preserves defaults and rejects unsupported/empty routes", () => {
-  const previous = process.env.FREAC_TEST_BROWSER;
+  const previous = process.env.MAKESHIFT_TEST_BROWSER;
   try {
-    delete process.env.FREAC_TEST_BROWSER;
+    delete process.env.MAKESHIFT_TEST_BROWSER;
     assert.deepEqual(runtimeNames(["chromium", "webkit"]), ["chromium", "webkit"]);
     assert.deepEqual(runtimeNames(undefined, ["chromium"]), ["chromium"]);
     assert.throws(() => runtimeNames([]), /at least one/);
     assert.throws(() => runtimeNames(["chromium"], ["webkit"]), /supported and nonempty/);
     for (const name of ["chromium", "webkit", "electron"]) {
-      process.env.FREAC_TEST_BROWSER = name;
+      process.env.MAKESHIFT_TEST_BROWSER = name;
       assert.deepEqual(runtimeNames(), [name]);
     }
     assert.throws(() => runtimeNames(["chromium", "webkit"]), /Unsupported/);
   } finally {
-    if (previous === undefined) delete process.env.FREAC_TEST_BROWSER;
-    else process.env.FREAC_TEST_BROWSER = previous;
+    if (previous === undefined) delete process.env.MAKESHIFT_TEST_BROWSER;
+    else process.env.MAKESHIFT_TEST_BROWSER = previous;
   }
 });
 test("ordinary standalone launchers fail before running any route for a typo", () => {
@@ -38,11 +38,11 @@ test("ordinary standalone launchers fail before running any route for a typo", (
     "tests/agent-loft.mjs",
   ]) {
     const result = spawnSync(process.execPath, [path], {
-      env: { ...process.env, FREAC_TEST_BROWSER: "chromuim" },
+      env: { ...process.env, MAKESHIFT_TEST_BROWSER: "chromuim" },
       encoding: "utf8",
       timeout: 15000,
     });
     assert.equal(result.status, 1, path);
-    assert.match(result.stderr, /Unsupported FREAC_TEST_BROWSER: chromuim/, path);
+    assert.match(result.stderr, /Unsupported MAKESHIFT_TEST_BROWSER: chromuim/, path);
   }
 });

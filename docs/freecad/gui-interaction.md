@@ -5,16 +5,16 @@ This chapter inspects GUI code and selected tests. It does not reproduce the
 founder's bugs or establish that upstream fixes exist in the installed FreeCAD.
 Lessons for the web client are recommendations, not copied architecture.
 
-Freac face-entry follow-up: a semantic face center and normal do not specify the
+Makeshift face-entry follow-up: a semantic face center and normal do not specify the
 deterministic sketch corner and U/V axes. The native query and presentation now
-share derived face frames, with [bounded native evidence](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/face-frame-publication.md).
+share derived face frames, with [bounded native evidence](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/face-frame-publication.md).
 Review caught a doubly translated test fixture and a read-only test that checked
 only nonempty saves; independent expected coordinates and before/after archive
-equality replaced those weak checks. This is Freac evidence, not a new upstream
+equality replaced those weak checks. This is Makeshift evidence, not a new upstream
 source claim; the inspected FreeCAD revision is unchanged. Frame wire exposure
 and ordinary face entry remain unverified.
 
-## Freac implementation follow-up: creation and editor lifetimes
+## Makeshift implementation follow-up: creation and editor lifetimes
 
 Reset sketch editor, 2026-09-14: founder review exposed that showing endpoint
 handles after creation must not implicitly select those points for movement.
@@ -23,26 +23,26 @@ travel starts drawing from its snapped location. Hover remains a separate guide;
 Option bypasses geometry attraction while a toolbar toggle controls grid snapping.
 The ordinary-input `tests/ui-point-intent.mjs` route checks joined independent
 segments, selection on mouseup, endpoint movement, edge/center starts and the
-independent snap controls in Chromium, WebKit and hidden Electron. This is Freac
+independent snap controls in Chromium, WebKit and hidden Electron. This is Makeshift
 runtime evidence, with the upstream inspected revision unchanged. It does not
 establish touch/Pencil behavior or inferred persistent coincidence constraints.
 
 
-The later [FACE profile selection check](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/face-profile-selection.md)
-adds two independent Freac lessons. A body-first coincident-hit policy appropriate
+The later [FACE profile selection check](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/face-profile-selection.md)
+adds two independent Makeshift lessons. A body-first coincident-hit policy appropriate
 for an original extrusion base can block selecting a new sketch profile on a
 face; use explicit workspace context rather than globally reversing the tie.
 Transparent grid lines can still write depth and hide coincident sketch edges.
 Before/after ordinary WebKit/Electron screenshots isolated that depth-write
 effect from color contrast. The pinned upstream revision is unchanged; this is
-Freac runtime evidence, not a claim about the native FreeCAD renderer.
+Makeshift runtime evidence, not a claim about the native FreeCAD renderer.
 
-Freac integration following `01147f2` separates release-time creation from a
+Makeshift integration following `01147f2` separates release-time creation from a
 revision-bound editor for accepted geometry. Dismissing fields does not delete
 the rectangle, and a generation check prevents a late response from reopening
 an abandoned editor. Undo discards unfinished field text before changing history;
 otherwise ordinary button focus changes can accidentally create another command.
-These are Freac implementation lessons, not claims about upstream behavior.
+These are Makeshift implementation lessons, not claims about upstream behavior.
 
 Ordinary pointer/keyboard tests in hidden Electron and headless WebKit verified
 blank-click and orbit acceptance, invalid-value preservation, re-entry and
@@ -54,32 +54,32 @@ The face-editing follow-up exposed a coincident-hit case: the source region and
 an extrusion's base occupy the same plane. Ordinary underside selection in
 hidden Electron selected the region, while the corresponding WebKit run selected
 the body. Sorting intersections by distance alone does not define that tie.
-Freac's bounded 3D policy now needs body preference for coincident hits, while
-preserving a genuinely nearer region. This is a Freac runtime finding; the
+Makeshift's bounded 3D policy now needs body preference for coincident hits, while
+preserving a genuinely nearer region. This is a Makeshift runtime finding; the
 upstream inspected revision remains `78e4038a564e4c8bfebb40119b41d67531232223`.
 See face-editing evidence (historical; `git show 2485a97:docs/evidence/face-edit-handoff.md`) for the regression
 and final verification. It does not establish a general pick-cycling policy.
 
 ## Entry must resolve context before tearing down the old context
 
-Freac's workspace integration adds a related failure probe: a region cell ID
+Makeshift's workspace integration adds a related failure probe: a region cell ID
 can recur in another workspace or a later revision. The renderer now qualifies
 picking by workspace and discards selected region tokens across document,
 session or revision changes. It does not infer durable geometry from a repeated
 cell ID. Extrusion captures the selected workspace normal, and local controls
 retain the full world-space anchor. Focused ownership/geometry checks and the
-ordinary XY regression are recorded in [the evidence](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/workspace-picking-extrusion.md).
+ordinary XY regression are recorded in [the evidence](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/workspace-picking-extrusion.md).
 Vertical-plane UI checks are recorded in the later
-[entry evidence](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/origin-plane-entry.md). This is Freac implementation
+[entry evidence](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/origin-plane-entry.md). This is Makeshift implementation
 evidence; the inspected upstream revision above is unchanged.
 
 The rectangle migration also exposed a distinction between field-value rendering
 and preview positioning: calling the former on every input would overwrite
-partial numeric text. Freac keeps those paths separate. Gestures capture plane
+partial numeric text. Makeshift keeps those paths separate. Gestures capture plane
 context, projection and snap data once, while accepted editor targets resolve by
 workspace. Missing targets close controls even after a successful reply. See
-[captured-context evidence](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/sketch-context-tools.md) for focused checks,
-the ordinary XY regression and subsequent vertical UI coverage. This adds Freac
+[captured-context evidence](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/sketch-context-tools.md) for focused checks,
+the ordinary XY regression and subsequent vertical UI coverage. This adds Makeshift
 lessons without changing the upstream source claims below.
 
 Origin-plane entry then exposed a visual counterexample: labels had distinct
@@ -87,7 +87,7 @@ projected anchors but still overlapped as rendered buttons. Measured rectangle
 placement and screenshot review were needed alongside hit/entry tests. A stored
 workspace can also disappear when Undo removes its first drawing; the controller
 retains that same empty origin context rather than silently choosing XY. The
-[entry evidence](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/origin-plane-entry.md) separates those ordinary checks
+[entry evidence](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/origin-plane-entry.md) separates those ordinary checks
 from remaining device and navigation coverage. Upstream revision is unchanged.
 
 `Gui::Document::trySetEdit` resolves parent/subobject context before
@@ -97,7 +97,7 @@ to find the new sketch's parent. It then sets the edit document, starts the view
 provider, connects the editing viewer and signals edit mode.
 [Document.cpp L682-L730](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Gui/Document.cpp#L682-L730).
 
-**Freac implication:** capture an immutable entry intent (workspace, plane,
+**Makeshift implication:** capture an immutable entry intent (workspace, plane,
 revision and approached camera context), validate it, and only then replace the
 old editing session. Never infer the next workspace from selection after cleanup.
 Probe switching between overlapping sketches while the previous session has a
@@ -111,7 +111,7 @@ It clears editing state and coordinates a booked transaction. This is an explici
 reentrancy/lifetime defense, not incidental boilerplate.
 [Document.cpp L760-L801](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Gui/Document.cpp#L760-L801).
 
-**Freac implication:** disposal must be idempotent; callbacks and delayed replies
+**Makeshift implication:** disposal must be idempotent; callbacks and delayed replies
 must verify session identity. Model deletion and UI session disposal are distinct.
 Clearing the active workspace should transition to a valid empty state. Probe
 clear/delete during dimension editing and while a preview response is in flight.
@@ -123,7 +123,7 @@ view provider `doubleClicked`, and may record a macro command; it can fall back
 to ordinary Qt tree behavior. It does not automatically share an addon's viewport
 entry policy. [Tree.cpp L2121-L2179](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Gui/Tree.cpp#L2121-L2179).
 
-**Freac implication:** navigator and viewport should dispatch the same semantic
+**Makeshift implication:** navigator and viewport should dispatch the same semantic
 entry command, with different hit-resolution inputs. A component-specific
 `doubleClick` hook should not secretly choose another editor. Test the same
 workspace identity through both entry points, then draw into it.
@@ -135,7 +135,7 @@ and checks whether an add/remove/preselection message still agrees with current
 state before forwarding it to view providers and observers.
 [Selection.cpp L600-L646](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Gui/Selection/Selection.cpp#L600-L646).
 
-**Freac implication:** selection and hover are state transitions, not unrestricted
+**Makeshift implication:** selection and hover are state transitions, not unrestricted
 recursive UI callbacks. Use one owner per gesture/tool, and revision/session
 checks for asynchronous updates. Do not copy the global singleton as a requirement.
 Probe an observer or incoming model update that removes the target during a
@@ -150,7 +150,7 @@ not walking every nested hierarchy may leave stray selection.
 `SelectionObserver` detaches on destruction, showing explicit subscription lifetime
 ownership. [Selection.cpp L94-L120](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Gui/Selection/Selection.cpp#L94-L120).
 
-**Freac implication:** invalidate hover, selection, snap candidate, active handle,
+**Makeshift implication:** invalidate hover, selection, snap candidate, active handle,
 inline field and pending command references together. Each subscription belongs
 to a disposable document/session. Test repeated document open/close and deletion
 of linked/nested targets, including delayed messages from the closed document.
@@ -163,7 +163,7 @@ preferences, editing mode, an active scene grabber, movement threshold and a
 handle under the cursor. Once it starts a drag it clears the double-click
 candidate. [NavigationStyle.cpp L2010-L2067](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Gui/Navigation/NavigationStyle.cpp#L2010-L2067).
 
-**Freac implication:** use explicit pointer capture/gesture ownership. Tool, camera,
+**Makeshift implication:** use explicit pointer capture/gesture ownership. Tool, camera,
 box selection, and dimension handles cannot independently claim the same release.
 Treat drag, click and double-click as distinct recognized gestures. Probe tiny
 movement, release outside the canvas, cancellation, and double-click after a drag.
@@ -175,19 +175,19 @@ the canvas; a web implementation must also define lost-pointer cancellation.
 
 ## Upstream tests and limitations
 
-Freac follow-up (2026-09-13): normal lost-pointer-capture cleanup initially
+Makeshift follow-up (2026-09-13): normal lost-pointer-capture cleanup initially
 removed the rectangle dimension panel; ownership-aware cleanup fixed release.
 Extrusion completion also needed separation from cancellation's planar camera
-reset. These are Freac findings, not new upstream claims about inspected revision
-78e4038a564e4c8bfebb40119b41d67531232223. See [runtime evidence](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/d3b-feedback.md)
+reset. These are Makeshift findings, not new upstream claims about inspected revision
+78e4038a564e4c8bfebb40119b41d67531232223. See [runtime evidence](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/d3b-feedback.md)
 for tested engines and coverage gaps.
 
 The first founder review rejected implicit XY entry, grouped dimension panels,
 dark defaults and sketch-mode extrusion. The correction separates tool intent
 from plane context and projects individual controls beside geometry. A follow-up
 probe caught R being ignored when a plane button retained focus; ordinary-key
-testing now includes that route. See [spatial feedback evidence](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/spatial-feedback.md).
-This is Freac runtime evidence; upstream source provenance above is unchanged.
+testing now includes that route. See [spatial feedback evidence](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/spatial-feedback.md).
+This is Makeshift runtime evidence; upstream source provenance above is unchanged.
 
 `testSelectionUsesActiveGateWithoutKeepingRejectionReason` checks a query can
 accept/reject without changing selection/preselection or the gate's prior reason.
@@ -201,10 +201,10 @@ layout, native accessibility, IME input or touch/Pencil delivery. Keep those as
 explicit future acceptance concerns instead of assuming a web stack removes them.
 
 
-## Freac D4 implementation lesson (2026-09-13)
+## Makeshift D4 implementation lesson (2026-09-13)
 
 The inspected upstream revision remains
-`78e4038a564e4c8bfebb40119b41d67531232223`; this adds Freac runtime evidence,
+`78e4038a564e4c8bfebb40119b41d67531232223`; this adds Makeshift runtime evidence,
 not a new claim about FreeCAD behavior. An external terminal command can finish
 while a user tool is pending. Dropping that notification leaves the viewport
 stale; retain and coalesce it, then refresh after the tool settles. Cancel only
@@ -217,20 +217,20 @@ must not affect a reopened session, and panel close must finish before opening
 a replacement shell. Hidden Electron verified close/reopen; injected lifecycle
 tests cover obsolete callbacks. Source reload with model recovery, remote
 reconnect, and physical iPad input remain gaps. See
-[terminal evidence](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/d4-terminal-preflight.md).
+[terminal evidence](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/d4-terminal-preflight.md).
 
 
-The subsequent [D4 agent/user handoff](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/d4-agent-handoff.md) retained
+The subsequent [D4 agent/user handoff](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/d4-agent-handoff.md) retained
 one live conversation while mouse actions changed the revision. A held agent
 revision was rejected after mouse Undo/Redo; a fresh agent query could instead
-act on the new state. This is Freac runtime evidence for the revision boundary,
+act on the new state. This is Makeshift runtime evidence for the revision boundary,
 not evidence for universal topology remapping or committed-parameter editing.
 The upstream inspection revision above is unchanged.
 
-## Freac face-entry implementation lesson (2026-09-14)
+## Makeshift face-entry implementation lesson (2026-09-14)
 
 The upstream inspection revision remains
-`78e4038a564e4c8bfebb40119b41d67531232223`; this is independent Freac evidence.
+`78e4038a564e4c8bfebb40119b41d67531232223`; this is independent Makeshift evidence.
 Entry must retain the selected semantic face across asynchronous editor dismissal,
 then resolve its fresh frame without allocating drawing. Capturing a plane alone
 would lose the support relationship. The cap route now passes ordinary input
@@ -238,12 +238,12 @@ in headless WebKit and hidden Electron, including dimension edits and re-entry.
 Passing those assertions still missed a profile visibility defect after closing
 the editor. Read-only native presentation showed correct world-space vertices;
 visual inspection was necessary to distinguish rendering from lost geometry.
-See [entry evidence](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/face-entry.md) for explicit coverage gaps.
+See [entry evidence](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/face-entry.md) for explicit coverage gaps.
 
-## Freac point-chooser follow-up (2026-09-14)
+## Makeshift point-chooser follow-up (2026-09-14)
 
 Upstream revision is unchanged; no upstream code was copied for this increment.
-Freac's point chooser exposed a concrete lifecycle failure: reopening the same
+Makeshift's point chooser exposed a concrete lifecycle failure: reopening the same
 junction on Shift replaced the button just before Shift-click. Keeping the menu
 identity stable for unchanged candidate point keys resolves that race. Explicit
 point choices narrow a point drag; ordinary whole-curve Shift/Control selection

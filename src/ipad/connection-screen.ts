@@ -21,7 +21,7 @@ export class ConnectionScreen {
   }
 }
 export function installTabletChrome(app: HTMLElement): void {
-  if (!window.freacRemote) return;
+  if (!window.makeshiftRemote) return;
   const warning = document.createElement("div");
   warning.className = "wifi-banner";
   warning.textContent = wifiWarning;

@@ -26,7 +26,7 @@ async function acuteHintRoute(page, name) {
   await page.keyboard.down("Control");
   await page.mouse.wheel(0, -100);
   await page.keyboard.up("Control");
-  await page.waitForFunction((h) => window.freacInspect().camera.height < h, height);
+  await page.waitForFunction((h) => window.makeshiftInspect().camera.height < h, height);
   await inspect(page);
   const after = await filletGuidePoint(page);
   const newOrigin = await at(page, 0, 0);
@@ -77,13 +77,13 @@ export async function filletCursorRoute(page, name) {
   assert.deepEqual((await inspect(page)).document, original);
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, rounded);
-  const path = resolve(`.cache/sketch-review/${name}-fillet-cursor.freac`);
+  const path = resolve(`.cache/sketch-review/${name}-fillet-cursor.makeshift`);
   await saveDocument(page, path);
   await chooseTool(page, "new document", "new");
-  await page.waitForFunction(() => window.freacInspect().document.sketches.length === 0);
+  await page.waitForFunction(() => window.makeshiftInspect().document.sketches.length === 0);
   await openDocument(page, path);
   await page.waitForFunction(
-    (id) => window.freacInspect().document.sketches[0]?.id === id,
+    (id) => window.makeshiftInspect().document.sketches[0]?.id === id,
     rounded.sketches[0].id,
   );
   assert.deepEqual((await inspect(page)).document, { ...rounded, bodies: rounded.bodies ?? [] });

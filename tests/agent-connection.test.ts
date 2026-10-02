@@ -58,7 +58,7 @@ test("inspections wait without blocking status or authenticated cancellation; fa
     assert.deepEqual(calls, ["selection"]);
     assert.match(
       (await (await send(connection, { command: "status" }, "wrong")).reply()).error,
-      /Invalid Freac connection/,
+      /Invalid Makeshift connection/,
     );
     assert.deepEqual(await (await send(connection, { command: "status" })).reply(), {
       result: { command: "status" },

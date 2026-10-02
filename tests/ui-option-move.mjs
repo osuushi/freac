@@ -93,7 +93,7 @@ export async function optionMoveRoute(page, name) {
 }
 async function archive(page, name) {
   const saved = (await inspect(page)).document;
-  const path = resolve(`.cache/sketch-review/${name}-option-move.freac`);
+  const path = resolve(`.cache/sketch-review/${name}-option-move.makeshift`);
   await saveDocument(page, path);
   await reset(page);
   await openDocument(page, path);

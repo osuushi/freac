@@ -17,7 +17,7 @@ async function run(page, name) {
     await page.screenshot({ path: `.cache/sketch-review/${name}-scale-failure.png` });
     console.log(
       await page.evaluate(() => ({
-        state: window.freacInspect(),
+        state: window.makeshiftInspect(),
         status: document.querySelector("[role=status]")?.textContent,
       })),
     );

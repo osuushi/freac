@@ -2,11 +2,11 @@ import { scriptTypes } from "./script-types.js";
 import { viewTypes } from "./view-types.js";
 
 /** Standalone declarations distributed with the CLI; no application-private imports. */
-const declarations = `/** CLI results and the typed freac scripting API. */
+const declarations = `/** CLI results and the typed makeshift scripting API. */
 export type Vector = [number, number, number];
 export interface Plane { origin: Vector; u: Vector; v: Vector }
-export interface FreacStatus {
-  application: "Freac";
+export interface MakeshiftStatus {
+  application: "Makeshift";
   document: { name: string; saved: boolean; edited: boolean; units: "mm" };
   capabilities: readonly ("help" | "docs" | "types" | "status" | "selection" | "select" | "inspect" | "render" | "run" | "view" | "faces" | "context")[];
 }
@@ -34,7 +34,7 @@ export interface ViewContext {
   clipping: { kind: "visual"; plane: Plane; equations: number[][] } | null;
 }
 /** select: resulting UI selection, with no geometry mutation. */
-export interface FreacSelect { units: "mm"; context: ViewContext }
+export interface MakeshiftSelect { units: "mm"; context: ViewContext }
 export interface Distance { value: number; points: [Vector, Vector] }
 export interface Measurement {
   properties: { label: string; value: number; unit: "mm" | "mm²" | "°" }[];
@@ -42,8 +42,8 @@ export interface Measurement {
   distance?: Distance; minimumGap?: Distance; maximumGap?: Distance;
   approximate?: boolean; gapReason?: string;
 }
-/** selection and inspect ID. Geometry fields depend on target kind; see freac docs. */
-export interface FreacSelection {
+/** selection and inspect ID. Geometry fields depend on target kind; see makeshift docs. */
+export interface MakeshiftSelection {
   units: "mm"; context: ViewContext;
   targets: { target: Target; geometry: Record<string, unknown> }[];
   measurement: Measurement | null; measurementError?: string;
@@ -55,7 +55,7 @@ export interface BodySummary {
   faces: string[]; edges: string[]; visible: boolean;
 }
 /** inspect without ID. */
-export interface FreacOverview {
+export interface MakeshiftOverview {
   taggedGroups: readonly TaggedGroup[];
   decorators: readonly DecoratorInstance[];
   decoratorDefinitions: readonly DecoratorDefinition[];
@@ -70,7 +70,7 @@ export interface FreacOverview {
     constraints: number; groups: { id: string; kind: "rectangle" }[] }[];
 }
 /** render. The path is machine-local and expires with this Agent launch. */
-export interface FreacRender extends ViewContext {
+export interface MakeshiftRender extends ViewContext {
   units: "mm"; path: string; width: number; height: number; note: string;
 }
 ${viewTypes}
@@ -79,7 +79,11 @@ ${scriptTypes}`;
 export function typesFor(mode: "modeling" | "view"): string {
   return (
     declarations +
-    `\ndeclare global { const freac: ${mode === "view" ? "FreacView" : "FreacScript"}; }\n`
+    `\ndeclare global {
+      const makeshift: ${mode === "view" ? "MakeshiftView" : "MakeshiftScript"};
+      /** Compatibility alias for scripts saved before the Makeshift rename. */
+      const freac: typeof makeshift;
+    }\n`
   );
 }
 export const types = typesFor("modeling");

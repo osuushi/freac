@@ -88,7 +88,10 @@ async function publish(root, cache, entry, key) {
 }
 
 export async function setupDependencies(root, cache) {
-  if (process.platform !== "darwin" || process.env.FREAC_DEPENDENCY_CACHE === "0") {
+  if (
+    process.platform !== "darwin" ||
+    (process.env.MAKESHIFT_DEPENDENCY_CACHE ?? process.env.FREAC_DEPENDENCY_CACHE) === "0"
+  ) {
     install(root);
     return "bypass";
   }

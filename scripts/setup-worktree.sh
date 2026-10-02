@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
-freac_setup_started=$SECONDS
+makeshift_setup_started=$SECONDS
 timed() {
   local label="$1" started=$SECONDS status=0
   shift
@@ -12,11 +12,11 @@ timed() {
 # Match the native macOS SDK settings used by the main workspace/release build.
 export CMAKE_OSX_ARCHITECTURES="${CMAKE_OSX_ARCHITECTURES:-$(node -p 'process.arch === "arm64" ? "arm64" : "x86_64"')}"
 export MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-14.0}"
-freac_main_workspace="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
-timed "dependencies" node scripts/worktree-dependencies.mjs "$freac_main_workspace/.cache/dependencies"
+makeshift_main_workspace="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+timed "dependencies" node scripts/worktree-dependencies.mjs "$makeshift_main_workspace/.cache/dependencies"
 # Shared compiler outputs; CMake build directories remain checkout-local.
 if command -v ccache >/dev/null 2>&1; then
-  export CCACHE_DIR="${CCACHE_DIR:-$freac_main_workspace/.cache/ccache}"
+  export CCACHE_DIR="${CCACHE_DIR:-$makeshift_main_workspace/.cache/ccache}"
   export CCACHE_BASEDIR="${CCACHE_BASEDIR:-$(pwd -P)}"
   export CCACHE_MAXSIZE="${CCACHE_MAXSIZE:-2G}"
   # Persist settings in CMake so later dev/build commands use the same cache.
@@ -25,19 +25,19 @@ if command -v ccache >/dev/null 2>&1; then
 else
   echo "ccache unavailable; native builds uncached (brew install ccache)."
 fi
-export FREAC_MESH_ARCHIVE_CACHE="${FREAC_MESH_ARCHIVE_CACHE:-$freac_main_workspace/.cache/mesh-archives}"
-if [ "$freac_main_workspace" != "$(pwd -P)" ]; then
+export MAKESHIFT_MESH_ARCHIVE_CACHE="${MAKESHIFT_MESH_ARCHIVE_CACHE:-${FREAC_MESH_ARCHIVE_CACHE:-$makeshift_main_workspace/.cache/mesh-archives}}"
+if [ "$makeshift_main_workspace" != "$(pwd -P)" ]; then
   mkdir -p .cache
-  for freac_cache in solver release-inputs; do
-    if [ ! -e ".cache/$freac_cache" ] && [ ! -L ".cache/$freac_cache" ] && [ -d "$freac_main_workspace/.cache/$freac_cache" ]; then
-      ln -s "$freac_main_workspace/.cache/$freac_cache" ".cache/$freac_cache"
+  for makeshift_cache in solver release-inputs; do
+    if [ ! -e ".cache/$makeshift_cache" ] && [ ! -L ".cache/$makeshift_cache" ] && [ -d "$makeshift_main_workspace/.cache/$makeshift_cache" ]; then
+      ln -s "$makeshift_main_workspace/.cache/$makeshift_cache" ".cache/$makeshift_cache"
     fi
   done
   # Consume the installed SDK, never another checkout's mutable CMake build tree.
-  freac_sdk="$freac_main_workspace/.cache/kernel/sdk"
-  if [ -z "${OCCT_ROOT:-}" ] && [ -f "$freac_sdk/.freac-sdk.json" ] && node scripts/sdk-provenance.mjs "$freac_sdk"; then
-    if lipo "$freac_sdk/lib/libTKernel.dylib" -verify_arch $CMAKE_OSX_ARCHITECTURES; then
-      export OCCT_ROOT="$freac_sdk"
+  makeshift_sdk="$makeshift_main_workspace/.cache/kernel/sdk"
+  if [ -z "${OCCT_ROOT:-}" ] && [ -f "$makeshift_sdk/.freac-sdk.json" ] && node scripts/sdk-provenance.mjs "$makeshift_sdk"; then
+    if lipo "$makeshift_sdk/lib/libTKernel.dylib" -verify_arch $CMAKE_OSX_ARCHITECTURES; then
+      export OCCT_ROOT="$makeshift_sdk"
       echo "Using main workspace OCCT SDK: $OCCT_ROOT"
     fi
   fi
@@ -52,4 +52,4 @@ timed "mesh" npm run setup:mesh
 if command -v ccache >/dev/null 2>&1; then
   ccache --show-stats
 fi
-echo "Worktree setup total: $((SECONDS - freac_setup_started))s"
+echo "Worktree setup total: $((SECONDS - makeshift_setup_started))s"

@@ -5,21 +5,21 @@ import { chooseTool } from "./ui-tools.mjs";
 
 async function verifyScrollPan(page, before) {
   await page.evaluate(() => {
-    window.freacTestWheelDeltas = [];
+    window.makeshiftTestWheelDeltas = [];
     window.addEventListener(
       "wheel",
-      (event) => window.freacTestWheelDeltas.push([event.deltaX, event.deltaY]),
+      (event) => window.makeshiftTestWheelDeltas.push([event.deltaX, event.deltaY]),
       { capture: true },
     );
   });
   await page.mouse.move(980, 620);
   await page.mouse.wheel(80, 60);
   await page.waitForFunction(
-    (x) => window.freacInspect().projection.origin.x !== x,
+    (x) => window.makeshiftInspect().projection.origin.x !== x,
     before.projection.origin.x,
   );
   const after = await inspect(page);
-  const wheelDeltas = await page.evaluate(() => window.freacTestWheelDeltas);
+  const wheelDeltas = await page.evaluate(() => window.makeshiftTestWheelDeltas);
   assert.ok(wheelDeltas.length > 0);
   const [deltaX, deltaY] = wheelDeltas.reduce(([x, y], [dx, dy]) => [x + dx, y + dy], [0, 0]);
   assert.equal(after.activePlane, "XY", "Ordinary scroll retains sketch mode");
@@ -40,7 +40,7 @@ export async function cameraRoute(page, name) {
   const before = await inspect(page);
   const scrollPan = await verifyScrollPan(page, before);
   await orbitDrag(page, 80, -60);
-  await page.waitForFunction(() => window.freacInspect().activePlane === null);
+  await page.waitForFunction(() => window.makeshiftInspect().activePlane === null);
   const rotated = await inspect(page);
   assert.notDeepEqual(
     rotated.camera.target,
@@ -60,7 +60,7 @@ export async function cameraRoute(page, name) {
   await page.mouse.move(900, 560, { steps: 6 });
   await page.mouse.up({ button: "right" });
   await page.waitForFunction(
-    (target) => window.freacInspect().camera.target.some((v, i) => v !== target[i]),
+    (target) => window.makeshiftInspect().camera.target.some((v, i) => v !== target[i]),
     aligned.camera.target,
   );
   const panned = await inspect(page);
@@ -78,7 +78,7 @@ export async function cameraRoute(page, name) {
   await page.mouse.wheel(0, -25); // Same browser event path as Chromium trackpad pinch.
   await page.keyboard.up("Control");
   await page.waitForFunction(
-    (height) => window.freacInspect().camera.height < height,
+    (height) => window.makeshiftInspect().camera.height < height,
     panned.camera.height,
   );
   const state = await inspect(page);
@@ -99,13 +99,13 @@ async function animatedEntry(page, name) {
   await reset(page);
   const target = await findRaycastPoint(page, "XY");
   const entry = await page.evaluate((point) => {
-    const before = window.freacInspect().camera;
+    const before = window.makeshiftInspect().camera;
     document
       .querySelector("canvas")
       .dispatchEvent(
         new MouseEvent("dblclick", { bubbles: true, clientX: point.x, clientY: point.y }),
       );
-    return { before, after: window.freacInspect().camera };
+    return { before, after: window.makeshiftInspect().camera };
   }, target);
   assert.equal(entry.after.moving, true, "Plane entry starts a camera transition");
   assert.deepEqual(
@@ -114,10 +114,10 @@ async function animatedEntry(page, name) {
     "Entry does not jump before painting",
   );
   await page.waitForFunction((position) => {
-    const camera = window.freacInspect().camera;
+    const camera = window.makeshiftInspect().camera;
     return camera.moving && camera.position.some((value, index) => value !== position[index]);
   }, entry.before.position);
-  const middle = await page.evaluate(() => window.freacInspect().camera);
+  const middle = await page.evaluate(() => window.makeshiftInspect().camera);
   const aligned = await inspect(page);
   assert.equal(aligned.camera.moving, false);
   assert.notDeepEqual(aligned.camera.position, entry.before.position);
@@ -137,7 +137,7 @@ async function animatedEntry(page, name) {
     document
       .querySelector("canvas")
       ?.dispatchEvent(new MouseEvent("dblclick", { clientX: x, clientY: y, bubbles: true }));
-    return window.freacInspect();
+    return window.makeshiftInspect();
   }, region);
   assert.equal(started.camera.moving, true, "Region entry animates its framing");
   const framed = await inspect(page);
@@ -154,7 +154,7 @@ async function animatedEntry(page, name) {
       .dispatchEvent(
         new MouseEvent("dblclick", { bubbles: true, clientX: point.x, clientY: point.y }),
       );
-    return window.freacInspect().camera.moving;
+    return window.makeshiftInspect().camera.moving;
   }, nextTarget);
   assert.equal(moving, true);
   await page.mouse.move(1000, 600);
@@ -162,7 +162,7 @@ async function animatedEntry(page, name) {
   const interrupted = await inspect(page);
   await page.waitForTimeout(350);
   assert.deepEqual(
-    await page.evaluate(() => window.freacInspect().camera),
+    await page.evaluate(() => window.makeshiftInspect().camera),
     interrupted.camera,
     "Navigation interruption prevents a late camera jump",
   );
@@ -281,7 +281,7 @@ async function orbitChecks(page, state, document) {
     const previous = { position: state.camera.position, up: state.camera.up };
     await orbitDrag(page, dx, -dy);
     await page.waitForFunction((previous) => {
-      const camera = window.freacInspect().camera;
+      const camera = window.makeshiftInspect().camera;
       return (
         camera.position.some((v, i) => v !== previous.position[i]) ||
         camera.up.some((v, i) => v !== previous.up[i])

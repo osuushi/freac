@@ -4,9 +4,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 // macOS authoring utility; generated assets are committed for all build hosts.
-const source = "assets/branding/freac-icon-antique-f-v3.png";
-const temporary = await mkdtemp(join(tmpdir(), "freac-icons-"));
-const iconset = join(temporary, "freac.iconset");
+const source = "assets/branding/makeshift-icon.png";
+const temporary = await mkdtemp(join(tmpdir(), "makeshift-icons-"));
+const iconset = join(temporary, "makeshift.iconset");
 const resize = (size, output) =>
   execFileSync("sips", ["-z", String(size), String(size), source, "--out", output], {
     stdio: "ignore",
@@ -19,8 +19,8 @@ try {
     resize(size, join(iconset, `icon_${size}x${size}.png`));
     resize(size * 2, join(iconset, `icon_${size}x${size}@2x.png`));
   }
-  execFileSync("iconutil", ["-c", "icns", iconset, "-o", "packaging/icons/freac.icns"]);
-  resize(512, "assets/public/freac.png");
+  execFileSync("iconutil", ["-c", "icns", iconset, "-o", "packaging/icons/makeshift.icns"]);
+  resize(512, "assets/public/makeshift.png");
   resize(180, "assets/public/apple-touch-icon.png");
   // ICO directory with PNG payloads, supported by modern Windows/Electron.
   const sizes = [16, 32, 48, 64, 128, 256];
@@ -42,7 +42,7 @@ try {
     images.push(png);
     offset += png.length;
   }
-  await writeFile("packaging/icons/freac.ico", Buffer.concat([header, ...images]));
+  await writeFile("packaging/icons/makeshift.ico", Buffer.concat([header, ...images]));
 } finally {
   await rm(temporary, { recursive: true, force: true });
 }

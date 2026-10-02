@@ -50,7 +50,7 @@ export async function circleRoute(page, name) {
     await chooseTool(page, "redo", "redo");
     close((await circles(page)).at(-1).radius, 6);
     await orient(page, [0.5, 0.5, 1]);
-    await page.waitForFunction(() => window.freacInspect().activePlane === null);
+    await page.waitForFunction(() => window.makeshiftInspect().activePlane === null);
   }
   await page.reload();
   assert.equal((await circles(page)).length, 3);

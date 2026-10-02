@@ -8,7 +8,7 @@ import { AgentProcess } from "../src/host/agent-process.js";
 import { AgentSettings, agentPreferences } from "../src/host/agent-settings.js";
 
 test("Codex configuration is separate, explicit env overrides survive, preferences are private", async () => {
-  const root = await mkdtemp(join(tmpdir(), "freac-agent-settings-"));
+  const root = await mkdtemp(join(tmpdir(), "makeshift-agent-settings-"));
   try {
     const settings = new AgentSettings(root);
     const value = { ...defaultAgentPreferences, env: { CODEX_TEST_EXPLICIT: "yes" } };
@@ -33,7 +33,7 @@ test("Codex configuration is separate, explicit env overrides survive, preferenc
 test("PTY stop kills a child that ignores TERM and retains workspace files", {
   skip: process.platform === "win32",
 }, async () => {
-  const root = await mkdtemp(join(tmpdir(), "freac-agent-process-"));
+  const root = await mkdtemp(join(tmpdir(), "makeshift-agent-process-"));
   const pty = new AgentProcess();
   try {
     await pty.start(

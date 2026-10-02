@@ -17,7 +17,10 @@ let server, browser, app;
 try {
   let page;
   if (name === "electron") {
-    app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+    app = await launchElectron({
+      args: ["."],
+      env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+    });
     page = await app.firstWindow();
     assert.equal(
       await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),
@@ -34,21 +37,21 @@ try {
   page.on("pageerror", (error) => {
     throw error;
   });
-  if (process.env.FREAC_FACE_SHARED_ONLY) {
+  if (process.env.MAKESHIFT_FACE_SHARED_ONLY) {
     await roundedFaceMoveRoute(page, name, app, "shared-cylinder-move");
-  } else if (process.env.FREAC_FACE_GENERAL_ONLY) {
+  } else if (process.env.MAKESHIFT_FACE_GENERAL_ONLY) {
     await roundedFaceMoveRoute(page, name, app);
     await planarFaceMoveRoute(page, name, false, -6);
     await planarFaceMoveRoute(page, name, true, -6, true);
     await planarFaceMoveRoute(page, name, true, 4, true);
-  } else if (process.env.FREAC_FACE_FEATURES_ONLY) {
-    for (const sides of process.env.FREAC_FACE_ROUND_ONLY ? [0] : [3, 6, 0])
+  } else if (process.env.MAKESHIFT_FACE_FEATURES_ONLY) {
+    for (const sides of process.env.MAKESHIFT_FACE_ROUND_ONLY ? [0] : [3, 6, 0])
       for (const pocket of [false, true]) await planarFaceMoveRoute(page, name, pocket, sides);
   } else {
     await cylinderFaceMoveRoute(page, name);
-    if (!process.env.FREAC_FACE_PLANAR_ONLY && !process.env.FREAC_FACE_CYLINDER_ONLY)
+    if (!process.env.MAKESHIFT_FACE_PLANAR_ONLY && !process.env.MAKESHIFT_FACE_CYLINDER_ONLY)
       await faceMoveRoute(page, name, app);
-    if (!process.env.FREAC_FACE_HOLE_ONLY && !process.env.FREAC_FACE_CYLINDER_ONLY) {
+    if (!process.env.MAKESHIFT_FACE_HOLE_ONLY && !process.env.MAKESHIFT_FACE_CYLINDER_ONLY) {
       await planarFaceMoveRoute(page, name);
       await planarFaceMoveRoute(page, name, true);
       await bodyMoveRoute(page, name);

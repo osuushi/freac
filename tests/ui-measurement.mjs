@@ -32,7 +32,7 @@ export async function pick(page, point, shift = false) {
 export async function measurementRoute(page, name) {
   await plate(page);
   const original = (await inspect(page)).document;
-  const history = await page.evaluate(() => window.freacHistory());
+  const history = await page.evaluate(() => window.makeshiftHistory());
   await readout(page, "Line angle", "90 °");
   await readout(page, "Maximum gap", "20 mm");
   assert.equal(await page.locator(".measurement-witnesses line").count(), 2);
@@ -58,7 +58,7 @@ export async function measurementRoute(page, name) {
     line,
   );
   assert.deepEqual((await inspect(page)).document, original);
-  const afterHistory = await page.evaluate(() => window.freacHistory());
+  const afterHistory = await page.evaluate(() => window.makeshiftHistory());
   assert.deepEqual(
     afterHistory.filter((entry) => entry.operation.kind !== "selection"),
     history.filter((entry) => entry.operation.kind !== "selection"),

@@ -3,20 +3,20 @@ import { inspect } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export const modelingScript = `
-const plane = await freac.constructionPlane({frame:{origin:[0,0,0],u:[1,0,0],v:[0,1,0]}});
-const s = await freac.createSketch({plane:plane.frame,curves:[{kind:"circle",center:{x:0,y:0},radius:2}]});
-const scaled = await freac.scale({kind:"curves",sketchId:s.sketch,ids:s.curves,pivot:[0,0,0],factor:2});
-const solid = await freac.extrude({sources:scaled.sketches.find(x=>x.sketch===s.sketch)!.profiles,distance:8,symmetric:true,mode:"new"});
-const grown = await freac.scale({kind:"solids",ids:[solid.bodies[0].id],faces:[],edges:[],pivot:[0,0,0],factor:2});
+const plane = await makeshift.constructionPlane({frame:{origin:[0,0,0],u:[1,0,0],v:[0,1,0]}});
+const s = await makeshift.createSketch({plane:plane.frame,curves:[{kind:"circle",center:{x:0,y:0},radius:2}]});
+const scaled = await makeshift.scale({kind:"curves",sketchId:s.sketch,ids:s.curves,pivot:[0,0,0],factor:2});
+const solid = await makeshift.extrude({sources:scaled.sketches.find(x=>x.sketch===s.sketch)!.profiles,distance:8,symmetric:true,mode:"new"});
+const grown = await makeshift.scale({kind:"solids",ids:[solid.bodies[0].id],faces:[],edges:[],pivot:[0,0,0],factor:2});
 const frame: {origin:[number,number,number];u:[number,number,number];v:[number,number,number]} = {origin:[0,0,2],u:[1,0,0],v:[0,1,0]};
-const marked = await freac.imprint({targets:grown.bodies.map(b=>({body:b.id,faces:b.faces})),frame});
+const marked = await makeshift.imprint({targets:grown.bodies.map(b=>({body:b.id,faces:b.faces})),frame});
 if(marked.bodies[0].faces.length<=grown.bodies[0].faces.length) throw new Error("No imprint edges");
-const split = await freac.splitBody({targets:marked.bodies.map(b=>({body:b.id})),frame});
+const split = await makeshift.splitBody({targets:marked.bodies.map(b=>({body:b.id})),frame});
 if(split.bodies.length!==2) throw new Error("Expected two halves");
-await freac.scale({kind:"sketches",ids:[s.sketch],pivot:[0,0,0],factor:0.5});
-await freac.constructionPlane({id:plane.plane,frame:{origin:[0,0,2],u:[1,0,0],v:[0,1,0]}});
-const extra = await freac.constructionPlane({frame});
-await freac.deleteConstructionPlane({id:extra.plane});
+await makeshift.scale({kind:"sketches",ids:[s.sketch],pivot:[0,0,0],factor:0.5});
+await makeshift.constructionPlane({id:plane.plane,frame:{origin:[0,0,2],u:[1,0,0],v:[0,1,0]}});
+const extra = await makeshift.constructionPlane({frame});
+await makeshift.deleteConstructionPlane({id:extra.plane});
 `;
 export async function agentModelingRoute(page, run) {
   const original = (await inspect(page)).document;

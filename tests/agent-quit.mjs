@@ -5,11 +5,14 @@ import { launchElectron } from "./native-documents.mjs";
 import { drag, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-const app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+const app = await launchElectron({
+  args: ["."],
+  env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+});
 try {
   const page = await app.firstWindow();
   await page.evaluate(() =>
-    window.freacAgent.request({
+    window.makeshiftAgent.request({
       kind: "configure",
       preferences: {
         preset: "custom",
@@ -25,24 +28,24 @@ try {
   await chooseTool(page, "rectangle", "rectangle");
   await drag(page, [-10, -6], [10, 6]);
   await settled(page);
-  const before = await page.evaluate(() => JSON.stringify(window.freacInspect().document));
+  const before = await page.evaluate(() => JSON.stringify(window.makeshiftInspect().document));
   assert.equal(
     JSON.parse(before).sketches[0].curves.length,
     4,
     "fixture draws real geometry before script cancellation",
   );
   const input = page.locator(".agent-screen textarea");
-  const workspace = (await page.evaluate(() => window.freacAgent.request({ kind: "read" })))
+  const workspace = (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" })))
     .workspace;
   await writeFile(
     join(workspace, "pending.ts"),
     `
-await freac.createSketch({plane:"XY",curves:[{kind:"circle",center:{x:0,y:0},radius:5}]});
+await makeshift.createSketch({plane:"XY",curves:[{kind:"circle",center:{x:0,y:0},radius:5}]});
 console.error("candidate ready"); while (true) {}
 `,
   );
   await input.focus();
-  await page.keyboard.type("freac run pending.ts 2> pending.err");
+  await page.keyboard.type("makeshift run pending.ts 2> pending.err");
   await page.keyboard.press("Enter");
   try {
     await page.getByRole("button", { name: "Cancel script", exact: true }).waitFor();
@@ -51,7 +54,7 @@ console.error("candidate ready"); while (true) {}
       "Script launch diagnostics:",
       await readFile(join(workspace, "pending.err"), "utf8").catch(String),
     );
-    console.error(await page.evaluate(() => window.freacAgent.request({ kind: "read" })));
+    console.error(await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" })));
     throw error;
   }
   for (let i = 0; i < 200; i++) {
@@ -81,10 +84,13 @@ console.error("candidate ready"); while (true) {}
       await new Promise((resolve) => setTimeout(resolve, 20));
     }
     assert.equal(await app.evaluate(() => globalThis.quitPrompts.length), responses.length);
-    assert.equal(await page.evaluate(() => JSON.stringify(window.freacInspect().document)), before);
-    assert.equal(await page.evaluate(() => window.freacInspect().busy), false);
     assert.equal(
-      (await page.evaluate(() => window.freacAgent.request({ kind: "read" }))).running,
+      await page.evaluate(() => JSON.stringify(window.makeshiftInspect().document)),
+      before,
+    );
+    assert.equal(await page.evaluate(() => window.makeshiftInspect().busy), false);
+    assert.equal(
+      (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" }))).running,
       false,
     );
   }

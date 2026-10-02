@@ -1,9 +1,9 @@
 ---
 name: finalize
-description: Finish a Freac worktree or a coherent chunk of work already in the main checkout by reviewing it, adding needed tests, running relevant checks, and integrating it into local main.
+description: Finish a Makeshift worktree or a coherent chunk of work already in the main checkout by reviewing it, adding needed tests, running relevant checks, and integrating it into local main.
 ---
 
-# Finalize Freac work
+# Finalize Makeshift work
 
 Use this when asked to finalize completed work. The result is a reviewed, tested commit on local `main`, or a precise account of the blocker. Follow the current `AGENTS.md` and [verification and delivery process](../../../docs/process/verification-and-delivery.md); the active user request and actual diff define the scope. An old `TICKETS.md` entry does not authorize a different increment.
 

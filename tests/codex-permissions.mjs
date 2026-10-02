@@ -10,9 +10,9 @@ import {
 } from "../.build/host/host/agent-settings.js";
 import { prepareAgentSkills } from "../.build/host/host/agent-skills.js";
 
-const codex = process.env.FREAC_CODEX_EXECUTABLE;
-assert(codex, "Set FREAC_CODEX_EXECUTABLE to the installed Codex CLI");
-const root = await realpath(await mkdtemp(join(tmpdir(), "freac-permissions-")));
+const codex = process.env.MAKESHIFT_CODEX_EXECUTABLE;
+assert(codex, "Set MAKESHIFT_CODEX_EXECUTABLE to the installed Codex CLI");
+const root = await realpath(await mkdtemp(join(tmpdir(), "makeshift-permissions-")));
 const workspace = join(root, "workspace"),
   home = join(root, "codex");
 const run = promisify(execFile);
@@ -27,7 +27,7 @@ try {
   );
   await writeFile(
     join(workspace, ".codex", "config.toml"),
-    'developer_instructions="FREAC_WORKSPACE_IS_TRUSTED"\n',
+    'developer_instructions="MAKESHIFT_WORKSPACE_IS_TRUSTED"\n',
   );
   await mkdir(home);
   await writeFile(
@@ -49,7 +49,7 @@ approvals_reviewer="user"
   const options = { cwd: workspace, env, timeout: 20000, maxBuffer: 4 * 1024 * 1024 };
   const args = [...codexPermissionOverrides(), ...(await workspaceTrustOverride(workspace))];
   const prompt = await run(codex, ["debug", "prompt-input", ...args], options);
-  assert.match(prompt.stdout, /FREAC_WORKSPACE_IS_TRUSTED/);
+  assert.match(prompt.stdout, /MAKESHIFT_WORKSPACE_IS_TRUSTED/);
   assert.doesNotMatch(prompt.stdout, /PARENT_CONFIG_MUST_STAY_OUT/);
   assert.match(prompt.stdout, /workspace-write/);
   assert.match(prompt.stdout, /mesh-recovery/);

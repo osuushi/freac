@@ -47,7 +47,7 @@ export async function symmetricSketchRoute(page, name) {
     assert.equal(JSON.stringify((await inspect(page)).document), saved);
   }
   const saved = (await inspect(page)).document;
-  const path = resolve(`.cache/sketch-review/${name}-symmetric.freac`);
+  const path = resolve(`.cache/sketch-review/${name}-symmetric.makeshift`);
   await saveDocument(page, path);
   await reset(page);
   await openDocument(page, path);

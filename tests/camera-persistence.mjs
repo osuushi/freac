@@ -5,14 +5,14 @@ import { join } from "node:path";
 import { _electron } from "playwright";
 import { inspect, settled } from "./ui-helpers.mjs";
 
-const root = await mkdtemp(join(tmpdir(), "freac-camera-"));
-const path = join(root, "Camera.freac");
+const root = await mkdtemp(join(tmpdir(), "makeshift-camera-"));
+const path = join(root, "Camera.makeshift");
 let app;
 try {
   async function launch() {
     const instance = await _electron.launch({
       args: [".", `--user-data-dir=${join(root, "profile")}`],
-      env: { ...process.env, FREAC_TEST_HIDDEN: "1" },
+      env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
     });
     const page = await instance.firstWindow();
     page.setDefaultTimeout(15000);
@@ -44,7 +44,7 @@ try {
   assert.notDeepEqual(moved.target, initial.target);
   assert.notDeepEqual(moved.position, initial.position);
   await page.keyboard.press("Meta+s");
-  await page.waitForFunction(async () => (await window.freacDocument.status()).path !== null);
+  await page.waitForFunction(async () => (await window.makeshiftDocument.status()).path !== null);
   const archived = JSON.parse(await readFile(path, "utf8"));
   assert.deepEqual(archived.camera, {
     position: moved.position,
@@ -53,10 +53,10 @@ try {
     height: moved.height,
   });
   await page.keyboard.press("Meta+n");
-  await page.waitForFunction(async () => (await window.freacDocument.status()).path === null);
+  await page.waitForFunction(async () => (await window.makeshiftDocument.status()).path === null);
   assert.deepEqual((await inspect(page)).camera.target, initial.target);
   await page.keyboard.press("Meta+o");
-  await page.waitForFunction(async () => (await window.freacDocument.status()).path !== null);
+  await page.waitForFunction(async () => (await window.makeshiftDocument.status()).path !== null);
   const reopened = (await inspect(page)).camera;
   assert.deepEqual(reopened.target, moved.target);
   assert.deepEqual(reopened.position, moved.position);

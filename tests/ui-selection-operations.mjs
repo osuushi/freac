@@ -114,7 +114,7 @@ export async function selectionOperationsRoute(page, name) {
   close(state.document.bodies[0].center[0], original.bodies[0].center[0] + 3);
   close(state.document.bodies[0].volume, original.bodies[0].volume);
   assert.equal(
-    (await page.evaluate(() => window.freacHistory())).at(-1).operation.kind,
+    (await page.evaluate(() => window.makeshiftHistory())).at(-1).operation.kind,
     "transform-bodies",
   );
   await undo(page, original);
@@ -143,7 +143,7 @@ export async function selectionOperationsRoute(page, name) {
   assert.deepEqual((await inspect(page)).document.bodies, []);
   assert.deepEqual((await inspect(page)).document.sketches, original.sketches);
   assert.equal(
-    (await page.evaluate(() => window.freacHistory())).at(-1).operation.kind,
+    (await page.evaluate(() => window.makeshiftHistory())).at(-1).operation.kind,
     "delete-entities",
   );
   await undo(page, original);

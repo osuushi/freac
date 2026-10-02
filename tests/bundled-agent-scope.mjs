@@ -7,11 +7,11 @@ import { AgentProcess } from "../.build/host/host/agent-process.js";
 import { bundleNative, inspectMachO } from "../scripts/release/native.mjs";
 
 assert.equal(process.platform, "darwin", "This checks the macOS release bundle");
-const root = await mkdtemp(join(tmpdir(), "freac-scope-bundle-"));
-const agent = new AgentProcess(join(root, "native", "freac-agent-scope"));
+const root = await mkdtemp(join(tmpdir(), "makeshift-scope-bundle-"));
+const agent = new AgentProcess(join(root, "native", "makeshift-agent-scope"));
 try {
   await bundleNative(join(root, "native"), resolve(process.env.OCCT_ROOT ?? ".cache/kernel/sdk"));
-  const helper = join(root, "native", "freac-agent-scope");
+  const helper = join(root, "native", "makeshift-agent-scope");
   assert.ok((await stat(helper)).mode & 0o111);
   execFileSync("codesign", ["--verify", "--strict", helper]);
   assert.match(inspectMachO(helper, "-l"), /minos 14\.0/);

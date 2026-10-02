@@ -7,12 +7,12 @@ export type FaceInfo = FaceBase & (
   | { surface: "cone"; plane: null; cylinder: null; cone: { apex: Vector; axis: Vector; semiAngle: number; outward: 1 | -1 } }
   | { surface: "other"; plane: null; cylinder: null }
 );
-export interface FreacView {
+export interface MakeshiftView {
   /** All accepted faces, including hidden bodies. Filter visible when requested. */
   faces(): Promise<FaceInfo[]>;
   /** Current view and ordered explicit targets, without kernel measurements. */
   context(): Promise<ViewContext>;
   /** Immediate selection change; outside geometry Undo. Empty replacement clears. */
-  select(ids: readonly string[], mode?: "replace" | "add" | "remove"): Promise<FreacSelect>;
+  select(ids: readonly string[], mode?: "replace" | "add" | "remove"): Promise<MakeshiftSelect>;
 }
 `;

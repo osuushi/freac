@@ -103,7 +103,7 @@ async function workflow(page, name) {
   close((await inspect(page)).document.bodies[1].center[0], 2);
   await chooseTool(page, "undo", "undo");
   await page.waitForFunction(
-    () => Math.abs(window.freacInspect().document.bodies[1].center[0]) < 1e-6,
+    () => Math.abs(window.makeshiftInspect().document.bodies[1].center[0]) < 1e-6,
   );
   assert.deepEqual((await inspect(page)).document, accepted);
   await bodyArchiveRoute(page, `${name}-erosion`);

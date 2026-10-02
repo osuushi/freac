@@ -19,13 +19,13 @@ export async function reverseHoleRoute(page, name) {
   await inspect(page);
   await chooseTool(page, "return to modeling", "modeling");
   await openDocument(page, {
-    name: "reverse-hole.freac",
+    name: "reverse-hole.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
-  await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
+  await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 1);
   await orient(page, [0.7, -0.6, 0.4]);
   const original = (await inspect(page)).document;
   await selectRegion(page);

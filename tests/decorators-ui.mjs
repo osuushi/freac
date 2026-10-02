@@ -21,7 +21,7 @@ import { chooseTool, toolEnabled } from "./ui-tools.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
 const names = runtimeNames(["chromium", "webkit", "electron"], ["chromium", "webkit"]);
-const native = process.env.FREAC_TEST_BROWSER === "electron";
+const native = process.env.MAKESHIFT_TEST_BROWSER === "electron";
 const server = native ? null : await createServer({ server: { port: 0 } });
 await server?.listen();
 try {
@@ -29,7 +29,7 @@ try {
     native ? { electron: null } : { chromium, webkit },
   ).filter(([name]) => names.includes(name))) {
     const app = native
-      ? await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } })
+      ? await launchElectron({ args: ["."], env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" } })
       : null;
     const browser = engine ? await engine.launch({ headless: true }) : null;
     try {

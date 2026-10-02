@@ -30,9 +30,9 @@ const source = {
 await withUiRuntimes(async (page, name) => {
   await reset(page);
   await openDocument(page, {
-    name: "cylinder-projection-source.freac",
+    name: "cylinder-projection-source.makeshift",
     mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify({ format: "freac", version: 1, document: source })),
+    buffer: Buffer.from(JSON.stringify({ format: "makeshift", version: 1, document: source })),
   });
   await page.getByRole("button", { name: "Hide Sketch 1", exact: true }).click();
   const before = (await inspect(page)).document;
@@ -57,7 +57,7 @@ await withUiRuntimes(async (page, name) => {
   await chooseMiddle(page);
   await page.screenshot({ path: `.cache/sketch-review/${name}-projection-junctions-filled.png` });
   await extrudeMiddle(page, accepted);
-  const file = resolve(`.cache/sketch-review/${name}-projection-junctions.freac`);
+  const file = resolve(`.cache/sketch-review/${name}-projection-junctions.makeshift`);
   await saveDocument(page, file);
   await reset(page);
   await openDocument(page, file);

@@ -90,7 +90,7 @@ export function codexPermissionOverrides(): string[] {
   ];
 }
 
-/** Trust only this Freac-owned workspace, using a launch-local Codex override. */
+/** Trust only this Makeshift-owned workspace, using a launch-local Codex override. */
 export async function workspaceTrustOverride(workspace: string): Promise<string[]> {
   const path = await realpath(workspace);
   return [

@@ -12,9 +12,9 @@ import {
   writePortableArchive,
 } from "../.build/host/model/portable-archive.js";
 
-const executable = process.env.FREAC_CODEX_EXECUTABLE;
-assert(executable, "Set FREAC_CODEX_EXECUTABLE to the installed Codex executable.");
-const root = await mkdtemp(join(tmpdir(), "freac-codex-portability-"));
+const executable = process.env.MAKESHIFT_CODEX_EXECUTABLE;
+assert(executable, "Set MAKESHIFT_CODEX_EXECUTABLE to the installed Codex executable.");
+const root = await mkdtemp(join(tmpdir(), "makeshift-codex-portability-"));
 const pty = new AgentProcess();
 const workspace = new AgentWorkspace(join(root, "workspaces"));
 try {

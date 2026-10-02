@@ -49,7 +49,10 @@ const [name] = runtimeNames(["chromium", "webkit", "electron"], ["chromium"]);
 let server, browser, app, page;
 try {
   if (name === "electron") {
-    app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+    app = await launchElectron({
+      args: ["."],
+      env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+    });
     page = await app.firstWindow();
     assert.equal(
       await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),
@@ -73,7 +76,7 @@ try {
   });
   console.log(
     await page?.evaluate(() => ({
-      selection: window.freacInspect().modelingSelection,
+      selection: window.makeshiftInspect().modelingSelection,
       notice: document.querySelector("[role=status]")?.textContent,
     })),
   );

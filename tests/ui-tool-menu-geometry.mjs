@@ -102,11 +102,11 @@ async function shellAndHistory(page) {
   await page.keyboard.press("Escape");
 }
 async function filesAndDiscovery(page, name) {
-  const path = resolve(`.cache/sketch-review/${name}-menu.freac`);
+  const path = resolve(`.cache/sketch-review/${name}-menu.makeshift`);
   await saveDocument(page, path);
   await chooseTool(page, "new document", "new");
   await openDocument(page, path);
-  await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
+  await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 1);
   close((await inspect(page)).document.bodies[0].volume, 1084);
   for (const format of ["stl", "3mf"])
     await exportDocument(page, format, resolve(`.cache/sketch-review/${name}-menu.${format}`));

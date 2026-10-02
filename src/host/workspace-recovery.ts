@@ -30,7 +30,7 @@ export async function recoverWorkspaceFiles(
       )
         files[path] = bytes;
     } catch {
-      /* Other legacy conversations remain in the local Freac home. */
+      /* Other legacy conversations remain in the local Makeshift home. */
     }
   }
   return files;

@@ -1,12 +1,14 @@
-# FreAC
+# Makeshift
 
-**Free Agentic CAD**
+<img src="assets/public/makeshift.png" alt="Makeshift logo" width="160" />
+
+**CAD with a coding agent**
 
 A CAD application for sketching, direct solid modeling, and working with a coding
 agent on the same drawing. Build shapes by hand, refine them with dimensions and
 constraints, or let an agent inspect your model and make edits through scripts.
 
-FreAC is in active development. You can build and run it from source today;
+Makeshift is in active development. You can build and run it from source today;
 the desktop build is verified on macOS with Apple Silicon. Linux and Windows
 are intended targets but have not yet been verified.
 
@@ -23,7 +25,7 @@ are intended targets but have not yet been verified.
   perform supported modeling operations through scripts. Each successful modeling
   script can be undone as one edit.
 - **Save and share.** Keep your model, workspace files, and supported agent
-  conversations together in a `.freac` document. Export solids as STEP, or meshes
+  conversations together in a `.makeshift` document. Export solids as STEP, or meshes
   as STL or 3MF.
 
 Some complex solid edits may be rejected. A failed calculation preserves the
@@ -31,7 +33,7 @@ accepted model, so you can adjust the operation and try again.
 
 ## Get started
 
-Freac's original code is [LGPL-2.1-or-later](COPYING.md). See the
+Makeshift's original code is [LGPL-2.1-or-later](COPYING.md). See the
 [macOS release guide](docs/releases.md) for packaging, signing and source distribution.
 
 You’ll need Node.js 24, a C++20 compiler and CMake. Setup downloads verified,
@@ -52,7 +54,7 @@ npm start
 
 The first setup downloads and compiles the geometry libraries, which can take a
 while. Installation and the first Electron launch need network access. Once setup
-is complete, use `npm start` to build and open FreAC.
+is complete, use `npm start` to build and open Makeshift.
 
 ### Make your first solid
 
@@ -85,7 +87,7 @@ Use the Edit menu for Undo and Redo; view changes do not alter the model.
 
 ## Agent terminal
 
-Open **Agent** to start your configured coding agent. FreAC includes a Codex
+Open **Agent** to start your configured coding agent. Makeshift includes a Codex
 preset; install the agent separately, then use **Settings** to choose its
 executable and launch options. The Codex preset keeps its configuration and login
 separate from your other installations. A Custom configuration can launch another
@@ -96,11 +98,11 @@ selection, rendering a view, and running modeling scripts. You can continue
 editing the resulting geometry with the ordinary tools. **Cancel script** discards
 an unfinished modeling operation; Undo restores the model after an accepted one.
 Changes to workspace files are outside geometry Undo.
-Run `freac help` in the terminal for the available commands.
+Run `makeshift help` in the terminal for the available commands.
 
-Drop files onto the Agent pane, or use **Attach file…** in its header. Freac copies
+Drop files onto the Agent pane, or use **Attach file…** in its header. Makeshift copies
 them into the drawing's `attachments/` workspace folder and inserts each relative
-path at the terminal cursor. Attached files travel with the saved `.freac` document.
+path at the terminal cursor. Attached files travel with the saved `.makeshift` document.
 A batch over 20 MiB triggers a size warning; the workspace has a 64 MiB total
 limit. For a 3MF reference, ask Codex to use `$mesh-recovery` with its path.
 
@@ -110,11 +112,14 @@ stops it before the usual unsaved-work prompt.
 
 ## Your files
 
-Use **File → Save**, **Save As**, and **Open** for `.freac` documents. Saved files
+Use **File → Save**, **Save As**, and **Open** for `.makeshift` documents. Saved files
 include the model and agent workspace files; Codex conversations travel with the
 drawing too. Credentials and launch settings stay on your computer.
 
-FreAC prompts before replacing or closing unsaved work. Reopening a document
+Existing `.freac` documents also open in Makeshift. Saved scripts using the former
+`freac` command or scripting object continue to work.
+
+Makeshift prompts before replacing or closing unsaved work. Reopening a document
 starts fresh Undo history, and there is no geometry autosave, so save regularly.
 To recover retained agent files, stop the agent and use
 **Settings → Recover agent files…**.
@@ -128,7 +133,7 @@ not smooth editable CAD solids and some receiving apps may not support them.
 
 ## iPad interface
 
-The experimental iPad interface connects to FreAC running on your computer.
+The experimental iPad interface connects to Makeshift running on your computer.
 Finish the current tool, click **iPad**, and scan the QR code from an iPad on the
 same network. Keep the desktop app running. **Return to computer** switches
 editing back to the desktop; only one device controls the drawing at a time.

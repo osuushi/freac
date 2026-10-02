@@ -9,7 +9,7 @@ import { NativeCalculator } from "../.cache/sketch-tests/src/backend/native-calc
 const kernel = new NativeCalculator(
   resolve(
     process.argv[2] ||
-      `.build/kernel/bin/freac-kernel${process.platform === "win32" ? ".exe" : ""}`,
+      `.build/kernel/bin/makeshift-kernel${process.platform === "win32" ? ".exe" : ""}`,
   ),
   "Sweep benchmark",
 );

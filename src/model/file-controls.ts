@@ -10,14 +10,14 @@ import type { PortableFiles } from "./portable-files.js";
 
 /** Data-only archive: opening never evaluates stored expressions or scripts. */
 export function fileControls(editor: SketchEditor, container: HTMLElement): () => void {
-  if (window.freacDocument) return nativeFileControls(editor, window.freacDocument);
+  if (window.makeshiftDocument) return nativeFileControls(editor, window.makeshiftDocument);
   let files: PortableFiles = {};
   const codec = new BrowserArchive();
   const input = document.createElement("input");
   input.type = "file";
-  input.accept = ".freac,application/json";
+  input.accept = ".makeshift,.freac,application/json";
   input.hidden = true;
-  input.setAttribute("aria-label", "Open Freac file");
+  input.setAttribute("aria-label", "Open Makeshift file");
   container.append(input);
   const disposeExport = exportControls(editor);
   const blocked = () => editor.blocked || !!editor.interactions.current;

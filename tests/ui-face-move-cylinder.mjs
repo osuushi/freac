@@ -14,13 +14,13 @@ export async function cylinderFaceMoveRoute(page, name) {
   await chooseTool(page, "return to modeling", "modeling");
   await inspect(page);
   await openDocument(page, {
-    name: "hole-in-cylinder.freac",
+    name: "hole-in-cylinder.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
-  await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
+  await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 1);
   const original = (await inspect(page)).document;
   await orient(page, [0, 0.3, 1]);
   await worldClick(page, [9, 0, 40]);

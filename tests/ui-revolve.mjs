@@ -15,7 +15,7 @@ export async function revolveRoute(page, name, electron, cleanup = false) {
   await page.keyboard.down("Control");
   await page.mouse.wheel(0, -90);
   await page.keyboard.up("Control");
-  await page.waitForFunction(() => window.freacInspect().camera.height < 40);
+  await page.waitForFunction(() => window.makeshiftInspect().camera.height < 40);
   await page.keyboard.press("r");
   await drag(page, [5, 0], [7, 2]);
   await page.keyboard.press("l");

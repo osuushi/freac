@@ -9,7 +9,7 @@ export class MeshCalculator {
   constructor(
     private executable = resolve(
       ".build/mesh/bin",
-      process.platform === "win32" ? "freac-mesh.exe" : "freac-mesh",
+      process.platform === "win32" ? "makeshift-mesh.exe" : "makeshift-mesh",
     ),
   ) {}
   calculate(input: ArrayBuffer): Promise<ArrayBuffer> {

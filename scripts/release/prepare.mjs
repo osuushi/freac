@@ -11,7 +11,7 @@ const output = resolve(".build/release");
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 const metadata = {
-  ...releaseVersion(process.env.FREAC_RELEASE_TIMESTAMP),
+  ...releaseVersion(process.env.MAKESHIFT_RELEASE_TIMESTAMP),
   commit: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
   architecture: "arm64",
   minimumMacOS: "14.0",

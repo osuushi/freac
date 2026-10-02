@@ -30,7 +30,7 @@ export async function shellRoute(page, name, electron) {
   );
   await page.keyboard.press("Enter");
   assert.deepEqual((await inspect(page)).document, original);
-  const failed = (await page.evaluate(() => window.freacHistory())).findLast(
+  const failed = (await page.evaluate(() => window.makeshiftHistory())).findLast(
     (e) => e.operation.kind === "shell",
   );
   assert.equal(failed.outcome, "failed");

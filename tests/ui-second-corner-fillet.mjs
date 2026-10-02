@@ -10,10 +10,10 @@ const fixture = JSON.parse(readFileSync("tests/fixtures/second-corner-fillet.jso
 export async function secondCornerFilletRoute(page, name) {
   await reset(page);
   await openDocument(page, {
-    name: "second-corner.freac",
+    name: "second-corner.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
   await chooseTool(page, "Sketch on XY", "sketch-xy");

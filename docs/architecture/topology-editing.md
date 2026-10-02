@@ -1,7 +1,7 @@
 # Script topology inspection and support replacement
 
 Scripts can compose edits from current geometry without a named tool for each user
-request. `freac.topology({body})` reads the current script candidate, including earlier
+request. `makeshift.topology({body})` reads the current script candidate, including earlier
 operations in the same transaction. It returns stable face/edge IDs, analytic support
 parameters, face area and conservative world bounds, ordered boundary-loop edge uses,
 periodic seam uses and edge-to-face adjacency. No BRep bytes or display indexes escape.
@@ -15,7 +15,7 @@ the forward support face, with `reversed` on the face giving solid orientation.
 A seam is one edge used twice, not two independent boundaries. Surface origins and
 axes do not alone describe bounded extents: inspect the loops and their edge geometry.
 
-`freac.replaceFace({body, face, surface})` supplies a replacement analytic support:
+`makeshift.replaceFace({body, face, surface})` supplies a replacement analytic support:
 
 - Cylinder: `{kind:"cylinder", origin, axis, radius}`.
 - Cone: `{kind:"cone", origin, axis, radius, semiAngle}`.
@@ -55,5 +55,5 @@ navigable Undo step. The accepted result remains ordinary editable materialized 
 
 No new manual tool or gesture is introduced. Existing viewport selection, movement,
 archive and history routes continue to operate on the result. The API is available
-in `freac run` so inspection and mutation can compose against one candidate; it is
-not part of the nontransactional `freac view` interface.
+in `makeshift run` so inspection and mutation can compose against one candidate; it is
+not part of the nontransactional `makeshift view` interface.

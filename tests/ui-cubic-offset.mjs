@@ -9,11 +9,11 @@ export async function cubicOffsetRoute(page, name) {
   const sketch = JSON.parse(await readFile("tests/fixtures/offset-cubic-section.json", "utf8"));
   await inspect(page);
   await openDocument(page, {
-    name: "cubic-section.freac",
+    name: "cubic-section.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
       JSON.stringify({
-        format: "freac",
+        format: "makeshift",
         version: 1,
         document: { units: "mm", sketches: [sketch] },
       }),
@@ -63,7 +63,7 @@ export async function cubicOffsetRoute(page, name) {
   const moved = (await inspect(page)).document.sketches[0];
   assert.deepEqual(moved.curves.slice(0, sketch.curves.length), sketch.curves);
   assert.notDeepEqual(moved.curves.slice(sketch.curves.length), added);
-  const path = resolve(`.cache/sketch-review/${name}-cubic-offset.freac`);
+  const path = resolve(`.cache/sketch-review/${name}-cubic-offset.makeshift`);
   await saveDocument(page, path);
   await reset(page);
   await openDocument(page, path);

@@ -14,7 +14,7 @@ The 52- and 26-turn calls hit the native calculator's 10-second deadline. Exact
 fixture replay of the 4-turn alternative succeeds five times and fails at the
 sixth union (z=20..24). The sixth swept tool and prior-five body each validate;
 an isolated OCCT Fuse reports completion without an algorithm error, but its
-result has an unorientable face and a non-closed wire. Freac's validation rejects
+result has an unorientable face and a non-closed wire. Makeshift's validation rejects
 it correctly. The agent's proposed +0.5 mm profile translation fails at the same
 sixth union; axial bounding-window overlap was not an established cause.
 

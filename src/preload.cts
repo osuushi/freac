@@ -5,21 +5,21 @@ import type { HostModelRequest } from "./host/model-request.js";
 import type { IPadStatus } from "./ipad/protocol.js";
 import type { ModelView } from "./sketch/model-api.js";
 
-contextBridge.exposeInMainWorld("freacMesh", {
+contextBridge.exposeInMainWorld("makeshiftMesh", {
   integrate: (input: ArrayBuffer) => ipcRenderer.invoke("mesh-export", input),
   cancel: () => ipcRenderer.invoke("mesh-export-cancel"),
 });
 
-contextBridge.exposeInMainWorld("freacFixture", (snapshot: unknown) =>
+contextBridge.exposeInMainWorld("makeshiftFixture", (snapshot: unknown) =>
   ipcRenderer.invoke("capture-fixture", snapshot),
 );
 
-contextBridge.exposeInMainWorld("freacFixtureFile", {
+contextBridge.exposeInMainWorld("makeshiftFixtureFile", {
   drag: () => ipcRenderer.send("drag-fixture"),
   reveal: () => ipcRenderer.send("reveal-fixture"),
 });
 
-contextBridge.exposeInMainWorld("freacIPad", {
+contextBridge.exposeInMainWorld("makeshiftIPad", {
   status: () => ipcRenderer.invoke("ipad-status"),
   start: () => ipcRenderer.invoke("ipad-start"),
   stop: () => ipcRenderer.invoke("ipad-stop"),
@@ -30,7 +30,7 @@ contextBridge.exposeInMainWorld("freacIPad", {
   },
 });
 
-contextBridge.exposeInMainWorld("freacScript", {
+contextBridge.exposeInMainWorld("makeshiftScript", {
   cancel: () => ipcRenderer.invoke("agent-script-cancel"),
   onState: (callback: (state: { running: boolean; view: ModelView }) => void) => {
     const listener = (
@@ -42,7 +42,7 @@ contextBridge.exposeInMainWorld("freacScript", {
   },
 });
 
-contextBridge.exposeInMainWorld("freacInspection", {
+contextBridge.exposeInMainWorld("makeshiftInspection", {
   onRequest: (
     callback: (render: boolean, acquireScript?: boolean, selection?: string) => InspectionView,
   ) => {
@@ -67,15 +67,15 @@ contextBridge.exposeInMainWorld("freacInspection", {
   },
 });
 
-contextBridge.exposeInMainWorld("freacAgent", {
+contextBridge.exposeInMainWorld("makeshiftAgent", {
   request: (request: AgentRequest) => ipcRenderer.invoke("agent", request),
 });
 
-contextBridge.exposeInMainWorld("freacModel", (request: HostModelRequest) =>
+contextBridge.exposeInMainWorld("makeshiftModel", (request: HostModelRequest) =>
   ipcRenderer.invoke("sketch", request),
 );
 
-contextBridge.exposeInMainWorld("freacDocument", {
+contextBridge.exposeInMainWorld("makeshiftDocument", {
   command: (command: string, camera?: unknown) =>
     ipcRenderer.invoke("document-command", command, camera),
   status: () => ipcRenderer.invoke("document-status"),

@@ -23,7 +23,7 @@ if (code !== 0) {
 }
 const child = spawn(electron, ["."], {
   stdio: "inherit",
-  env: { ...process.env, FREAC_DEV_URL: server.resolvedUrls.local[0] },
+  env: { ...process.env, MAKESHIFT_DEV_URL: server.resolvedUrls.local[0] },
 });
 let stopping = false;
 async function stop() {

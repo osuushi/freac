@@ -58,7 +58,7 @@ export async function offsetPlacementRoute(page, name) {
     await page.mouse.down();
     await page.mouse.move(box.x + 32 + arrow.x * scale, box.y + 32 + arrow.y * scale, { steps: 6 });
     await page.mouse.up();
-    await page.waitForFunction(() => !!window.freacInspect().preview);
+    await page.waitForFunction(() => !!window.makeshiftInspect().preview);
     const preview = await inspect(page);
     assert.ok(preview.preview);
     const radius = inward ? 2 : 12;

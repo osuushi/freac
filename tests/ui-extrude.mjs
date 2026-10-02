@@ -113,11 +113,11 @@ async function undoModalExtrusion(page, pick) {
 }
 
 async function reopen(page, name, splitBodies) {
-  const file = resolve(`.cache/sketch-review/${name}-solid.freac`);
+  const file = resolve(`.cache/sketch-review/${name}-solid.makeshift`);
   await saveDocument(page, file);
   await reset(page);
   await openDocument(page, file);
-  await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 2);
+  await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 2);
   const state = await inspect(page);
   assert.equal(state.document.sketches.length, 4);
   assert.deepEqual(

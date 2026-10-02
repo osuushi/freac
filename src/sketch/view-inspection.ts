@@ -37,7 +37,7 @@ function decoratorPreviewBounds(world: SketchEditor["world"]) {
 export function installViewInspection(editor: SketchEditor, sections: SectionControls): void {
   const world = editor.world;
   // Read-only inspection of accepted geometry and its projection; no hidden edit path.
-  Object.defineProperty(window, "freacInspect", {
+  Object.defineProperty(window, "makeshiftInspect", {
     value: () => {
       const frame = selectionFrame(editor),
         sketch = editor.sketch;
@@ -109,5 +109,5 @@ export function installViewInspection(editor: SketchEditor, sections: SectionCon
       });
     },
   });
-  Object.defineProperty(window, "freacHistory", { value: () => editor.store.history() });
+  Object.defineProperty(window, "makeshiftHistory", { value: () => editor.store.history() });
 }

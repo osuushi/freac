@@ -173,14 +173,14 @@ The valid 18 mm source also exceeded coverage limits with a 0.3 mm allowance;
 
 ## Scripting and checks
 
-`freac.erode({ids, thickness, allowance, keepOriginals})` uses the same calculation and script
+`makeshift.erode({ids, thickness, allowance, keepOriginals})` uses the same calculation and script
 atomicity as manual tools. Its result includes retained originals and any unaffected
 bodies, plus newly generated bodies. Empty results introduce no new bodies. `keepOriginals`
 defaults to true.
 
 Geometry/workflow regressions: `tests/body-erosion.test.ts` and the two captured
 models in `tests/body-erosion-capture.test.ts`. Independent coverage
-checks: `cmake -S native/kernel -B .build/kernel -DFREAC_KERNEL_TESTS=ON`, build, then
+checks: `cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_TESTS=ON`, build, then
 `ctest --test-dir .build/kernel -R erosion-coverage --output-on-failure`. UI acceptance:
 `node tests/erosion-ui.mjs` runs owned headless Chromium/WebKit and hidden Electron,
 including cavity rib cuts and final subtraction. Activate the repository's Node

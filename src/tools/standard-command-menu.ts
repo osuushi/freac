@@ -9,9 +9,9 @@ export class StandardCommandMenu {
   private trigger = document.createElement("button");
   private menu = document.createElement("div");
   constructor(private editor: SketchEditor) {
-    if (window.freacDocument) return;
+    if (window.makeshiftDocument) return;
     this.wrapper.className = "control-selector standard-command-selector";
-    this.trigger.innerHTML = "<strong>freac</strong>";
+    this.trigger.innerHTML = "<strong>Makeshift</strong>";
     this.trigger.setAttribute("aria-label", "File / Edit");
     this.trigger.setAttribute("aria-haspopup", "menu");
     this.trigger.setAttribute("aria-expanded", "false");

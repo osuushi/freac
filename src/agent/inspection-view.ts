@@ -90,7 +90,7 @@ function captureViewport(editor: SketchEditor): NonNullable<InspectionView["imag
 
 export function installInspection(editor: SketchEditor): () => void {
   return (
-    window.freacInspection?.onRequest((render, acquireScript, selection) => {
+    window.makeshiftInspection?.onRequest((render, acquireScript, selection) => {
       let view = inspectionView(editor, render);
       if (selection !== undefined) {
         changeAgentSelection(editor, selection);

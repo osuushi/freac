@@ -41,7 +41,7 @@ export async function extrusionPreviewRoute(page) {
     close((await inspect(page)).preview.bodies[0].volume, requests[0].distance * 600);
     await page.mouse.move(x, y - 100);
     await reachedPreview(gates[1], "second drag");
-    const intermediate = await page.evaluate(() => window.freacInspect());
+    const intermediate = await page.evaluate(() => window.makeshiftInspect());
     assert.ok(
       intermediate.preview,
       "Completed geometry must display even while another target is pending",

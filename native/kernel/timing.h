@@ -8,7 +8,8 @@
 class KernelTiming {
     using Clock = std::chrono::steady_clock;
     Clock::time_point start = Clock::now(), previous = start;
-    bool enabled = std::getenv("FREAC_KERNEL_TIMING") != nullptr;
+    bool enabled = std::getenv("MAKESHIFT_KERNEL_TIMING") != nullptr ||
+        std::getenv("FREAC_KERNEL_TIMING") != nullptr;
     std::string kind = "parse";
 public:
     explicit KernelTiming(const std::string& value = "parse") : kind(value) {}

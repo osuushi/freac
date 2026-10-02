@@ -25,9 +25,9 @@ try {
       await page.goto(server.resolvedUrls.local[0]);
       await inspect(page);
       await openDocument(page, {
-        name: "thread-boolean-sliver.freac",
+        name: "thread-boolean-sliver.makeshift",
         mimeType: "application/json",
-        buffer: Buffer.from(JSON.stringify({ format: "freac", version: 1, document })),
+        buffer: Buffer.from(JSON.stringify({ format: "makeshift", version: 1, document })),
       });
       const before = (await inspect(page)).document;
       const waiting = page.waitForEvent("download");

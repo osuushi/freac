@@ -10,18 +10,18 @@ import { chooseTool } from "./ui-tools.mjs";
 export async function exportCapture(page, name, app) {
   const body = JSON.parse(await readFile("tests/fixtures/filleted-export.json", "utf8"));
   await openDocument(page, {
-    name: "filleted-export.freac",
+    name: "filleted-export.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
       JSON.stringify({
-        format: "freac",
+        format: "makeshift",
         version: 1,
         document: { units: "mm", sketches: [], bodies: [body] },
       }),
     ),
   });
   await page.waitForFunction(
-    (id) => window.freacInspect().document.bodies?.[0]?.id === id,
+    (id) => window.makeshiftInspect().document.bodies?.[0]?.id === id,
     body.id,
   );
   const before = await inspect(page);

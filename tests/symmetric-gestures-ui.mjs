@@ -20,8 +20,8 @@ try {
           args: ["."],
           env: {
             ...process.env,
-            FREAC_TEST_HIDDEN: "1",
-            FREAC_DEV_URL: server.resolvedUrls.local[0],
+            MAKESHIFT_TEST_HIDDEN: "1",
+            MAKESHIFT_DEV_URL: server.resolvedUrls.local[0],
           },
         });
         page = await app.firstWindow();
@@ -32,8 +32,10 @@ try {
       }
       const errors = [];
       page.on("pageerror", (e) => errors.push(e.message));
-      if (process.env.FREAC_SYMMETRIC_ROUTE !== "extrude") await symmetricSketchRoute(page, name);
-      if (process.env.FREAC_SYMMETRIC_ROUTE !== "sketch") await symmetricExtrudeRoute(page, name);
+      if (process.env.MAKESHIFT_SYMMETRIC_ROUTE !== "extrude")
+        await symmetricSketchRoute(page, name);
+      if (process.env.MAKESHIFT_SYMMETRIC_ROUTE !== "sketch")
+        await symmetricExtrudeRoute(page, name);
       if (errors.length) throw new Error(errors.join("\n"));
     } finally {
       await browser?.close();

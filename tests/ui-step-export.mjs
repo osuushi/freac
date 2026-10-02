@@ -17,11 +17,11 @@ await withUiRuntimes(
     assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
     const box = await createBox(page);
     await openDocument(page, {
-      name: "mixed-step.freac",
+      name: "mixed-step.makeshift",
       mimeType: "application/json",
       buffer: Buffer.from(
         JSON.stringify({
-          format: "freac",
+          format: "makeshift",
           version: 1,
           document: { ...threaded, bodies: [...threaded.bodies, box] },
         }),

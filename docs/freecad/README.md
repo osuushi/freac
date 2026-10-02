@@ -2,11 +2,11 @@
 
 For the 2026-09-14 reset, use the [development process](../development-process.md)
 and [sketch-first design](../architecture.md) as architectural authority. These
-chapters retain earlier Freac inferences and prototype evidence; prescriptions
+chapters retain earlier Makeshift inferences and prototype evidence; prescriptions
 for model revisions, idempotent commands or a service graph are not requirements
 of the new single-user editor. Reuse concrete numerical and interaction lessons.
 
-An initial targeted source audit for agents building Freac. The objective is to
+An initial targeted source audit for agents building Makeshift. The objective is to
 retain FreeCAD's accumulated engineering lessons while choosing our own product
 model and UI. This is a reference library, not a claim of exhaustive coverage or
 a recommendation to copy the entire FreeCAD architecture.
@@ -21,8 +21,8 @@ a recommendation to copy the entire FreeCAD architecture.
 | Viewport, navigator, selection, focus, lifecycle | [GUI/interaction](gui-interaction.md) | Context before cleanup; gesture ownership; queued notifications; deletion invalidation |
 
 Before implementation, read the applicable chapter and its source references.
-Each chapter distinguishes inspected mechanisms from Freac implications and
-unverified failure probes. Current founder instructions and Freac's [architecture topic docs](../architecture.md)
+Each chapter distinguishes inspected mechanisms from Makeshift implications and
+unverified failure probes. Current founder instructions and Makeshift's [architecture topic docs](../architecture.md)
 define intended behavior; upstream implementation does not override them.
 
 ## Most consequential lessons
@@ -54,7 +54,7 @@ See chapter citations for evidence; these summaries are not standalone API contr
 - Audit date: 2026-09-13. This is an upstream development snapshot, not evidence
   about the version loaded by the user's earlier FreeCAD installation.
 - Local reference: `.reference/FreeCAD`, approximately 116 MB at initial capture.
-  It is a shallow sparse checkout, ignored by Freac; no upstream source is vendored
+  It is a shallow sparse checkout, ignored by Makeshift; no upstream source is vendored
   in this repository's commit. Individual additional test files may be hydrated
   on demand. Follow immutable GitHub links without needing the checkout.
 - Method: three bounded Luna source audits, manager GUI source audit, review and
@@ -88,9 +88,9 @@ original; extracting actual code requires separate provenance/license assessment
 | Part/OCCT | Shape wrappers, mapped Boolean path, fillet binding, mesh API | Deep generated/modified/deleted mapping internals, healing and tolerance stress cases |
 | Import/export | Basic shape STEP/IGES paths and version-specific export handling | XCAF metadata, units, assemblies, round-trip losses |
 | GUI | Entry/reset, selection notifications, deletion, drag arbitration | Spatial rendering quality, IME/accessibility, platform focus, touch/Pencil |
-| Build/distribution | CMake module boundary and pixi dependency constraints | Reproducible Freac builds, install/signing/updating, license review |
+| Build/distribution | CMake module boundary and pixi dependency constraints | Reproducible Makeshift builds, install/signing/updating, license review |
 | PartDesign | Only shallow module/feature-boundary context | Body/Tip, supports, attachments, transformed/nested coordinate contexts |
-| Other workbenches | Not audited | Audit only when a Freac feature needs them |
+| Other workbenches | Not audited | Audit only when a Makeshift feature needs them |
 
 Earlier proof plans are preserved in [Git history](../history/README.md#retired-prototype).
 Use the current user request and architecture to select additional audits.
@@ -98,7 +98,7 @@ Use the current user request and architecture to select additional audits.
 ## Updating this knowledge
 
 For each new finding, record: upstream revision; path/function and precise source
-link; mechanism or regression; Freac implication; failure probe; evidence actually
+link; mechanism or regression; Makeshift implication; failure probe; evidence actually
 run; and what remains uncertain. Cite an upstream regression test when available,
 but inspect what it asserts rather than relying on its name. Preserve old evidence
 when a newer source changes behavior. Do not mark an audited topic implemented.

@@ -64,9 +64,9 @@ await withUiRuntimes(async (page, name) => {
   assert.equal((await inspect(page)).document.taggedGroups[0].name, "Mounting rim");
   await chooseTool(page, "redo", "redo");
   const saved = (await inspect(page)).document.taggedGroups;
-  const directory = await mkdtemp(join(tmpdir(), "freac-tags-"));
+  const directory = await mkdtemp(join(tmpdir(), "makeshift-tags-"));
   try {
-    const path = join(directory, "tags.freac");
+    const path = join(directory, "tags.makeshift");
     await saveDocument(page, path);
     await openDocument(page, path);
     assert.deepEqual((await inspect(page)).document.taggedGroups, saved);

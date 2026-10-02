@@ -39,7 +39,7 @@ try {
       const menuBounds = await page.locator("#control-menu").boundingBox();
       const buttonBounds = await control.boundingBox();
       assert.ok(menuBounds.y >= buttonBounds.y + buttonBounds.height);
-      await page.screenshot({ path: `/tmp/freac-control-${name}.png` });
+      await page.screenshot({ path: `/tmp/makeshift-control-${name}.png` });
       await page.mouse.click(900, 650);
       assert.equal(await control.getAttribute("aria-expanded"), "false");
       await chooseTool(page, "Sketch on XY", "sketch-xy");
@@ -53,7 +53,7 @@ try {
       await page.mouse.move(980, 620);
       await page.mouse.wheel(0, -100);
       await page.waitForFunction(
-        (height) => window.freacInspect().camera.height < height,
+        (height) => window.makeshiftInspect().camera.height < height,
         before.camera.height,
       );
       const zoomed = await inspect(page);

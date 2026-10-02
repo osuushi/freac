@@ -72,7 +72,7 @@ are not advertised as disabled tools.
 
 Standard file/edit actions stay out of Tools search and category browsing: Undo,
 Redo, New, Open, Save, Save As, Close, Delete and Select All. Their ordinary keyboard shortcuts
-and desktop File/Edit menus remain available. The browser's **freac** header button
+and desktop File/Edit menus remain available. The browser's **makeshift** header button
 opens File/Edit for pointer/touch access; the usual New/Open/Save shortcuts also work. CAD-specific
 tools keep their shortcuts and searchable entries. Command registration and
 availability guards are shared across these entry points; hiding a command from
@@ -106,10 +106,10 @@ single-character queries only match word prefixes. Rank lexicographically:
 Source observation: fzf's [scoring criteria and constants](https://github.com/junegunn/fzf/blob/ccedd064ca56921a4235219516b3d834f60e7b91/src/algo/algo.go#L40-L155)
 reward word boundaries and consecutive chunks, penalize gaps, and give the first
 character extra boundary weight. [FuzzyMatchV2](https://github.com/junegunn/fzf/blob/ccedd064ca56921a4235219516b3d834f60e7b91/src/algo/algo.go#L428)
-searches for the best score. Freac adopts these principles with its own normalized
+searches for the best score. Makeshift adopts these principles with its own normalized
 word vocabulary, scoring implementation and explicit prefix tiers; it does not
 promise identical fzf ordering. The reference is MIT licensed; no upstream source
-was copied. Ranking examples and menu activation are verified by Freac's search
+was copied. Ranking examples and menu activation are verified by Makeshift's search
 and UI tests.
 
 An “Unavailable in this context” divider separates the groups. Alias matches may

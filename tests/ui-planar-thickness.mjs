@@ -10,10 +10,10 @@ export async function planarThicknessRoute(page) {
   const fixture = JSON.parse(await readFile("tests/fixtures/offset-planar-thickness.json", "utf8"));
   await reset(page);
   await openDocument(page, {
-    name: "planar-thickness.freac",
+    name: "planar-thickness.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
   await inspect(page);

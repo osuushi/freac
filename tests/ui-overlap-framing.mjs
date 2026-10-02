@@ -34,11 +34,11 @@ export async function overlapFraming(page, name) {
   const document = await framingDocument();
   // At this camera height the real target is smaller than one viewport pixel.
   await openDocument(page, {
-    name: "small-overlap.freac",
+    name: "small-overlap.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
       JSON.stringify({
-        format: "freac",
+        format: "makeshift",
         version: 1,
         document,
         camera: { position: [55, -70, 75], target: [0, 0, 10], up: [0, 0, 1], height: 10000 },

@@ -4,26 +4,26 @@ import { join, resolve } from "node:path";
 
 const release = resolve(".build/release");
 const metadata = JSON.parse(await readFile(join(release, "build.json"), "utf8"));
-const signed = process.env.FREAC_SIGN === "1";
+const signed = process.env.MAKESHIFT_SIGN === "1";
 if (signed && !process.env.APPLE_SIGNING_IDENTITY)
   throw new Error("APPLE_SIGNING_IDENTITY is required for signed releases");
 export default {
   outDir: ".build/packages",
   packagerConfig: {
-    name: "Freac",
-    executableName: "Freac",
-    icon: resolve("packaging/icons/freac"),
+    name: "Makeshift",
+    executableName: "Makeshift",
+    icon: resolve("packaging/icons/makeshift"),
     appBundleId: "com.osuushi.freac",
     appCategoryType: "public.app-category.graphics-design",
     appVersion: metadata.shortVersion,
     buildVersion: metadata.bundleVersion,
     extendInfo: {
-      FreacReleaseTimestamp: metadata.timestamp,
-      FreacCommit: metadata.commit,
+      MakeshiftReleaseTimestamp: metadata.timestamp,
+      MakeshiftCommit: metadata.commit,
       LSMinimumSystemVersion: "14.0",
     },
-    ...(process.env.FREAC_ELECTRON_ZIP_DIR
-      ? { electronZipDir: process.env.FREAC_ELECTRON_ZIP_DIR }
+    ...(process.env.MAKESHIFT_ELECTRON_ZIP_DIR
+      ? { electronZipDir: process.env.MAKESHIFT_ELECTRON_ZIP_DIR }
       : {}),
     darwinDarkModeSupport: true,
     // Loose resources also support the shipped Electron-as-Node agent CLI.
@@ -88,8 +88,8 @@ export default {
     {
       name: "@electron-forge/maker-dmg",
       config: {
-        name: `Freac-${metadata.tag}-arm64`,
-        title: "Freac",
+        name: `Makeshift-${metadata.tag}-arm64`,
+        title: "Makeshift",
         format: "ULFO",
         overwrite: true,
       },

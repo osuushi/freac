@@ -1,14 +1,14 @@
 # Exact solid calculator
 
-Freac-owned C++ adapter using OCCT 7.9.3, pinned by `scripts/setup-kernel.mjs` to
+Makeshift-owned C++ adapter using OCCT 7.9.3, pinned by `scripts/setup-kernel.mjs` to
 `a016080bf6738d6aeae020badee4e888ad1540a5`. OCCT is dynamically linked; upstream
-source is downloaded into the ignored cache, not copied into Freac source files.
+source is downloaded into the ignored cache, not copied into Makeshift source files.
 Its upstream distribution includes `LICENSE_LGPL_21.txt` and
 `OCCT_LGPL_EXCEPTION.txt`; retain these notices and corresponding source access
 when packaging the runtime. This directory does not introduce an application
 license decision or a binary distribution pipeline.
 
-Freac applies one dated, reproducible adaptation in `scripts/setup-kernel.mjs`:
+Makeshift applies one dated, reproducible adaptation in `scripts/setup-kernel.mjs`:
 rounded offset edge pipes receive an explicit 1e-7 mm approximation tolerance
 instead of OCCT's independent 1e-4 mm default. Re-run `npm run setup:kernel` after
 updating; its SDK cache key includes this script. An external `OCCT_ROOT` must
@@ -43,13 +43,13 @@ starts a fresh process. Accepted edits cannot be interrupted by that control.
 
 General and Shell-validation Booleans, sweep self-interference checks, face deletion and meshing use OCCT's built-in
 thread pool, using all detected logical processors by default.
-`FREAC_KERNEL_THREADS=1 npm run dev` selects serial execution for comparisons; positive values are capped at the machine's logical
+`MAKESHIFT_KERNEL_THREADS=1 npm run dev` selects serial execution for comparisons; positive values are capped at the machine's logical
 processor count. This does not parallelize document edits or every OCCT algorithm.
 TBB is not required: the pinned
 [OSD_Parallel implementation](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/OSD/OSD_Parallel.cxx#L176-L188)
 selects OCCT threads when TBB is absent.
 
-`FREAC_KERNEL_TIMING=1 npm run dev` prints parse, operand decode/validation,
+`MAKESHIFT_KERNEL_TIMING=1 npm run dev` prints parse, operand decode/validation,
 calculation, presentation and output timings on stderr for ordinary solid
 requests. Selection/projection and failures currently report total time plus the
 completed phases. Deletion logs healing build/validation; Shell logs preparation,
@@ -92,7 +92,7 @@ From a configured checkout, activate the repository's `.nvmrc` runtime, then run
 
 ```sh
 npx tsc -p tsconfig.test.json
-FREAC_KERNEL_TIMING=1 node tests/kernel-sweep-performance.mjs
+MAKESHIFT_KERNEL_TIMING=1 node tests/kernel-sweep-performance.mjs
 ```
 
 Optional arguments are executable path, case-name substring and warm sample count
@@ -134,7 +134,7 @@ The dedicated native distance comparison checks 62 samples around faces, edges,
 corners, interior points, trimmed holes, placed faces and spline surfaces:
 
 ```sh
-cmake -S native/kernel -B .build/kernel -DFREAC_KERNEL_TESTS=ON
+cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_TESTS=ON
 cmake --build .build/kernel --config Release --parallel 2
 ctest --test-dir .build/kernel -C Release --output-on-failure
 ```
@@ -156,4 +156,4 @@ validity remain required. This does not enlarge fuzzy tolerance or modify the
 accepted operand. The result may retain extra cylindrical face subdivisions.
 `tests/body-reverse-hole.test.ts` uses the captured tangent half-hole and exact
 material probes; `node tests/reverse-hole-ui.mjs` exercises ordinary input. Set
-`FREAC_TEST_BROWSER=webkit` or `electron` for the other supported test runtimes.
+`MAKESHIFT_TEST_BROWSER=webkit` or `electron` for the other supported test runtimes.

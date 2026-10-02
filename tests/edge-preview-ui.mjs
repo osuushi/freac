@@ -15,7 +15,7 @@ async function latestSize(page, selection, held, requests, flags, original) {
   await input.fill("4");
   held.get(3).release.resolve();
   await waitForDelivery(held.get(4));
-  const pending = await page.evaluate(() => window.freacInspect());
+  const pending = await page.evaluate(() => window.makeshiftInspect());
   assert.equal(pending.preview.bodies[0].volume, reply.view.candidate.bodies[0].volume);
   assert.deepEqual(pending.document, original);
   assert.deepEqual(
@@ -108,7 +108,7 @@ async function failedSelection(page, original) {
     await page.keyboard.press("f");
     await page.getByRole("button", { name: "Fillet edges", exact: true }).click();
     await page.waitForFunction(() => {
-      const state = window.freacInspect();
+      const state = window.makeshiftInspect();
       return !state.busy && state.interaction === null;
     });
     const state = await inspect(page);

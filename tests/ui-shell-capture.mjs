@@ -15,13 +15,13 @@ async function loadCapture(page) {
   await inspect(page);
   await chooseTool(page, "return to modeling", "modeling");
   await openDocument(page, {
-    name: "shell-capture.freac",
+    name: "shell-capture.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
-  await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
+  await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 1);
   await worldClick(page, [-9, -9, 32]);
   const state = await inspect(page);
   assert.equal(state.modelingSelection[0]?.face, fixture.opening);

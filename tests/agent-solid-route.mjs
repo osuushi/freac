@@ -9,17 +9,17 @@ import { chooseTool } from "./ui-tools.mjs";
 export const solidScript = `
 async function box(x:number) {
   const points=[{x,y:0},{x:x+20,y:0},{x:x+20,y:20},{x,y:20}];
-  const s=await freac.createSketch({plane:"XY",curves:points.map((a,i)=>({kind:"segment",a,b:points[(i+1)%4]}))});
-  return (await freac.extrude({sources:s.profiles,distance:10,mode:"new"})).bodies.at(-1)!;
+  const s=await makeshift.createSketch({plane:"XY",curves:points.map((a,i)=>({kind:"segment",a,b:points[(i+1)%4]}))});
+  return (await makeshift.extrude({sources:s.profiles,distance:10,mode:"new"})).bodies.at(-1)!;
 }
 const a=await box(0);
-const rounded=await freac.finishEdges({edges:a.edges.map(edge=>({body:a.id,edge})),mode:"fillet",size:1});
-const hollow=await freac.shell({selection:[{body:rounded.bodies[0].id,faces:[]}],thickness:-0.5});
+const rounded=await makeshift.finishEdges({edges:a.edges.map(edge=>({body:a.id,edge})),mode:"fillet",size:1});
+const hollow=await makeshift.shell({selection:[{body:rounded.bodies[0].id,faces:[]}],thickness:-0.5});
 if(hollow.bodies[0].volume>=1000) throw new Error("Expected hollow wall");
 const b=await box(30);
-const beveled=await freac.finishEdges({edges:b.edges.map(edge=>({body:b.id,edge})),mode:"chamfer",size:0.5});
+const beveled=await makeshift.finishEdges({edges:b.edges.map(edge=>({body:b.id,edge})),mode:"chamfer",size:0.5});
 const c=await box(40);
-const joined=await freac.booleanBodies({ids:[b.id,c.id],mode:"union",keepOriginals:false});
+const joined=await makeshift.booleanBodies({ids:[b.id,c.id],mode:"union",keepOriginals:false});
 if(joined.bodies.length!==2) throw new Error("Expected shell and union bodies");
 `;
 export async function agentSolidRoute(page, run, name) {
@@ -49,7 +49,7 @@ export async function agentSolidRoute(page, run, name) {
   assert.deepEqual((await inspect(page)).document, accepted);
   await mkdir(".cache/agent-solid-tools", { recursive: true });
   await page.screenshot({ path: `.cache/agent-solid-tools/${name}.png` });
-  const file = resolve(`.cache/agent-solid-tools/${name}.freac`);
+  const file = resolve(`.cache/agent-solid-tools/${name}.makeshift`);
   await saveDocument(page, file);
   await chooseTool(page, "undo", "undo");
   await assert.rejects(

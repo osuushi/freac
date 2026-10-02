@@ -38,7 +38,7 @@ async function processNumber(path: string): Promise<number> {
 test("natural root exit retains cleanup ownership and cannot affect another PTY", {
   skip: process.platform === "win32",
 }, async () => {
-  const root = await mkdtemp(join(tmpdir(), "freac-agent-natural-"));
+  const root = await mkdtemp(join(tmpdir(), "makeshift-agent-natural-"));
   const first = new AgentProcess(),
     second = new AgentProcess();
   try {
@@ -86,15 +86,20 @@ test("natural root exit retains cleanup ownership and cannot affect another PTY"
 test("gated launch preserves literal arguments, cwd, environment and root exit code", {
   skip: process.platform === "win32",
 }, async () => {
-  const root = await mkdtemp(join(tmpdir(), "freac-agent-launch-"));
+  const root = await mkdtemp(join(tmpdir(), "makeshift-agent-launch-"));
   const pty = new AgentProcess();
   const literal = 'literal `whoami` $(env) ; "quotes"';
   try {
     const starting = pty.start(
       "/bin/sh",
-      ["-c", 'printf "%s\\n%s\\n" "$1" "$FREAC_SCOPE_LITERAL" > result; exit 3', "test", literal],
+      [
+        "-c",
+        'printf "%s\\n%s\\n" "$1" "$MAKESHIFT_SCOPE_LITERAL" > result; exit 3',
+        "test",
+        literal,
+      ],
       root,
-      { ...process.env, FREAC_SCOPE_LITERAL: "preserved" },
+      { ...process.env, MAKESHIFT_SCOPE_LITERAL: "preserved" },
       80,
       24,
     );
@@ -114,7 +119,7 @@ test("gated launch preserves literal arguments, cwd, environment and root exit c
 test("natural exit also stops HUP/TERM-resistant shell job-control groups", {
   skip: process.platform === "win32",
 }, async () => {
-  const root = await mkdtemp(join(tmpdir(), "freac-agent-jobs-"));
+  const root = await mkdtemp(join(tmpdir(), "makeshift-agent-jobs-"));
   const pty = new AgentProcess();
   try {
     // Redirection creates the metadata file before ps writes its numeric result.
@@ -155,7 +160,7 @@ test("natural exit also stops HUP/TERM-resistant shell job-control groups", {
 test("failed scope inspection retires gated launch and permits a corrected Start", {
   skip: process.platform === "win32",
 }, async () => {
-  const root = await mkdtemp(join(tmpdir(), "freac-agent-failed-launch-"));
+  const root = await mkdtemp(join(tmpdir(), "makeshift-agent-failed-launch-"));
   const helper = join(root, "scope-helper");
   const pty = new AgentProcess(helper);
   try {
@@ -170,7 +175,7 @@ test("failed scope inspection retires gated launch and permits a corrected Start
       false,
       "failed inspection never launches the harness",
     );
-    await symlink(resolve(".build/host-native/bin/freac-agent-scope"), helper);
+    await symlink(resolve(".build/host-native/bin/makeshift-agent-scope"), helper);
     await pty.start("/bin/sh", ["-c", "touch corrected"], root, process.env, 80, 24);
     await waitFor(() => pty.status.exitCode === 0);
     await pty.stop();

@@ -43,7 +43,7 @@ function stl(source: ExportMesh[]): Uint8Array<ArrayBuffer> {
   const count = meshes.reduce((sum, mesh) => sum + mesh.triangles.length, 0);
   const bytes = new Uint8Array(84 + 50 * count),
     view = new DataView(bytes.buffer);
-  bytes.set(new TextEncoder().encode("Freac binary STL; coordinates in millimeters"));
+  bytes.set(new TextEncoder().encode("Makeshift binary STL; coordinates in millimeters"));
   view.setUint32(80, count, true);
   let offset = 84;
   for (const mesh of meshes)

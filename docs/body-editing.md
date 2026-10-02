@@ -287,7 +287,7 @@ does not supply the operations across their interfaces.
 
 There is commercial prior art: Siemens describes mixed facet/classic BRep models
 in [Parasolid Convergent Modeling](https://news.siemens.com/en-us/parasolid-convergent-modeling-mixed-models/).
-This establishes feasibility elsewhere, not support in Freac's OCCT path.
+This establishes feasibility elsewhere, not support in Makeshift's OCCT path.
 
 A more bounded possible first fallback is explicit conversion of selected whole
 bodies at a chosen approximation tolerance, followed by a dedicated mesh Boolean.
@@ -295,7 +295,7 @@ bodies at a chosen approximation tolerance, followed by a dedicated mesh Boolean
 for suitable manifold inputs. This is not a guarantee that tessellating an invalid
 BRep yields valid input, nor that approximate geometry preserves narrow features.
 
-Freac recommendation for later review: never silently replace exact accepted
+Makeshift recommendation for later review: never silently replace exact accepted
 geometry with a mesh. Preview conversion, expose tolerance and changed editing
 capabilities, preserve originals on request and Undo, and carry patch identity
 where correspondence is known. Do not promise exact conversion back to original

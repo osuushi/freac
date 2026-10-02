@@ -129,7 +129,7 @@ async function rotatedResizeAndExit(page, name) {
   const beforeOrbit = JSON.stringify((await inspect(page)).document);
   await page.screenshot({ path: `.cache/sketch-review/${name}-selection.png` });
   await orient(page, [0.5, 0.5, 1]);
-  await page.waitForFunction(() => window.freacInspect().activePlane === null);
+  await page.waitForFunction(() => window.makeshiftInspect().activePlane === null);
   assert.equal((await inspect(page)).activePlane, null);
   assert.equal(JSON.stringify((await inspect(page)).document), beforeOrbit);
   await chooseTool(page, "Sketch on XY", "sketch-xy");

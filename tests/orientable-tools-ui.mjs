@@ -28,8 +28,8 @@ try {
       args: ["."],
       env: {
         ...process.env,
-        FREAC_TEST_HIDDEN: "1",
-        FREAC_DEV_URL: server.resolvedUrls.local[0],
+        MAKESHIFT_TEST_HIDDEN: "1",
+        MAKESHIFT_DEV_URL: server.resolvedUrls.local[0],
       },
     });
     page = await app.firstWindow();
@@ -64,7 +64,10 @@ try {
     standaloneRotationRoute,
   };
   for (const [label, route] of Object.entries(routes)) {
-    if (process.env.FREAC_TOOL_ROUTE && !process.env.FREAC_TOOL_ROUTE.split(",").includes(label))
+    if (
+      process.env.MAKESHIFT_TOOL_ROUTE &&
+      !process.env.MAKESHIFT_TOOL_ROUTE.split(",").includes(label)
+    )
       continue;
     console.log(`${name}: starting ${label}`);
     await route(page, name, app);

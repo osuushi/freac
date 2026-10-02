@@ -20,7 +20,7 @@ explicit; changing UI focus must never silently retarget a running agent.
 
 Founder requested suppressing the directory-trust prompt on 2026-09-20. The Codex
 preset passes a launch-local `projects` override marking only the canonical current
-Freac workspace trusted, using the documented
+Makeshift workspace trusted, using the documented
 [project trust setting](https://developers.openai.com/codex/config-reference/).
 The preset also passes `project_root_markers=[]`, which confines project-config
 discovery to the launch directory. This prevents a Git repository above the
@@ -29,7 +29,7 @@ project boundary. Custom launches are unchanged. Sandbox and approval settings
 remain separate from this trust setting.
 
 The document carries notes, decisions, scripts and optional project skills.
-Freac supplies concise AGENTS.md guidance, API types and discoverable CLI help.
+Makeshift supplies concise AGENTS.md guidance, API types and discoverable CLI help.
 Basic inspection belongs in these defaults; specialist modeling recipes may become
 skills. No MCP is needed for the local application interface.
 
@@ -39,7 +39,7 @@ Keep three distinct locations:
 
 - Machine-local preferences, base harness configuration and credentials.
 - Document-owned workspace files and conversations, unpacked into a private working directory.
-- Regenerable Freac CLI/API documentation and temporary render/script output.
+- Regenerable Makeshift CLI/API documentation and temporary render/script output.
 
 The [portable workspace contract](persistence.md#portable-agent-workspace) defines
 version-2 ZIPs with model JSON, workspace files and Codex conversation records;
@@ -77,7 +77,7 @@ Conflicting lifecycle calls return busy; terminal ownership does not block ordin
 Area 3 adds generated orientation and a document-bound status connection below.
 
 Use a PTY in the desktop host, with a narrow preload interface for bytes, resizing
-and lifecycle. Spawn executable plus argument array directly. Prepend Freac's tool
+and lifecycle. Spawn executable plus argument array directly. Prepend Makeshift's tool
 directory to PATH and pass a private document-bound endpoint through environment.
 Child CLI calls inherit scope; no document/session identifiers in normal commands.
 On macOS, recover PATH from the user's interactive login shell before resolving
@@ -96,7 +96,7 @@ canvas approach. The implemented terminal uses Ghostty-web and node-pty;
 [the development guide](../development.md#agent-terminal-checks) describes its runtime checks and limits.
 
 Official [configuration documentation](https://developers.openai.com/codex/config-advanced/)
-places config and local state under CODEX_HOME. Set it to Freac-owned application
+places config and local state under CODEX_HOME. Set it to Makeshift-owned application
 data. [Skill discovery](https://developers.openai.com/codex/skills/) also includes
 HOME/.agents/skills and admin/system locations: CODEX_HOME alone is not full skill
 isolation. Verify supported discovery controls against the installed CLI before
@@ -105,15 +105,15 @@ skill disabling is documented, but completeness must be tested. Managed policy
 still applies. Environment separation is not an OS sandbox.
 
 [Authentication](https://developers.openai.com/codex/auth/) supports file, keyring,
-auto and ephemeral storage. Start with login inside Freac's configured environment;
+auto and ephemeral storage. Start with login inside Makeshift's configured environment;
 never automatically copy personal credentials or archive them. Verify keyring
 behavior with the supported CLI. Test propagation of CLI endpoint variables and
 PATH through Codex's shell environment policy and sandbox.
 
 ## Inspection, scripting and model ownership
 
-Proposed commands: `freac inspect`, `freac selection`, `freac render`,
-`freac run script.ts`, and `freac help`. Return compact structured data with stable
+Proposed commands: `makeshift inspect`, `makeshift selection`, `makeshift render`,
+`makeshift run script.ts`, and `makeshift help`. Return compact structured data with stable
 IDs, units and explicit errors. Selection includes ordered point/curve/face/body
 targets separately from render-owner IDs. Instructions explain that “this” usually
 means the current selection; a command reads selection at invocation, then retains
@@ -154,7 +154,7 @@ permission to implement the entire sequence before review.
 | --- | --- | --- |
 | 1. Terminal and harness launch | Configure and launch Codex; dock, resize, collapse, reopen, interrupt and stop while manual CAD remains usable. Review terminal feel and preferences. | Minimal document-bound working directory and explicit lifecycle below |
 | 2. Document workspace | Notes/scripts survive Save/Open/Save As; file-only edits trigger unsaved-work handling. Review portability and close/recovery behavior. | 1; archive/storage decision |
-| 3. Agent orientation | A fresh harness discovers Freac instructions, help and API files through its environment; an old process cannot reach a replacement document. | 1–2 |
+| 3. Agent orientation | A fresh harness discovers Makeshift instructions, help and API files through its environment; an old process cannot reach a replacement document. | 1–2 |
 | 4. Basic inspection | Select a face manually, ask what “this” is, inspect dimensions/IDs and obtain the current viewport image without changing the model. | 3 |
 | 5. Typed scripting | Type error leaves geometry untouched; a valid script creates geometry or edits selected geometry; cancel/failure, Undo/Redo and subsequent manual editing work. | 4; script transaction review |
 | 6. Richer visual inspection | Agent examines isolated bodies, labeled views and sections to answer a concrete geometry question. | 4; can precede some scripting expansion |
@@ -252,16 +252,16 @@ not geometry Undo. Generated CLI/help/types live in a private temporary director
 outside the archive. The launcher uses the app's Electron runtime as Node, so the
 user does not need a separate Node installation.
 
-`freac help`, `freac docs` and `freac types` describe the installed interface.
-`freac status` returns JSON with drawing name, saved/edited state, millimeter units
+`makeshift help`, `makeshift docs` and `makeshift types` describe the installed interface.
+`makeshift status` returns JSON with drawing name, saved/edited state, millimeter units
 and available commands. Area 4 adds the inspection commands below; script APIs
 remain later work. The declarations do not promise an unimplemented modeling API.
-PATH and `FREAC_CLI`, `FREAC_DOCS`, `FREAC_API_TYPES` expose command and documentation
+PATH and `MAKESHIFT_CLI`, `MAKESHIFT_DOCS`, `MAKESHIFT_API_TYPES` expose command and documentation
 locations. The Codex preset supplies launch-local `developer_instructions` and
 `shell_environment_policy.set` entries using the official
 [configuration interface](https://learn.chatgpt.com/docs/config-file/config-reference).
 This also provides orientation when an existing AGENTS.md or resumed conversation
-has different guidance. Freac does not overwrite the stored harness configuration.
+has different guidance. Makeshift does not overwrite the stored harness configuration.
 
 Each launch has a new private temporary file channel and capability. Requests have
 bounded size and timeout; the host accepts explicit inspection and script commands. It checks the captured
@@ -274,7 +274,7 @@ other software running as the same OS user.
 The Codex preset defaults each launch to workspace-write, on-request approvals and
 automatic approval review (Approve for me). Explicit user arguments follow these
 defaults and can override them; Custom is unchanged. Fresh and resumed launches
-explicitly select the current workspace. FREAC_WORKSPACE and launch guidance direct
+explicitly select the current workspace. MAKESHIFT_WORKSPACE and launch guidance direct
 file edits into that portable directory, not a remembered absolute path or its
 parent containing application state. Saved harness configuration is not rewritten.
 The file channel works in Codex 0.155.1's workspace-write sandbox without network
@@ -296,9 +296,9 @@ Only material ambiguity remaining after inspection requires a specific clarifica
 A fresh selected cylindrical face does not imply the entire body's length.
 This rule appears in launch guidance and current CLI docs, including resumed agents.
 
-`freac selection` reads the renderer's current ordered explicit targets and selected
+`makeshift selection` reads the renderer's current ordered explicit targets and selected
 world point coordinates. It never substitutes render-owner IDs for whole-curve
-selection. `freac inspect` returns a compact body/sketch inventory; `freac inspect ID`
+selection. `makeshift inspect` returns a compact body/sketch inventory; `makeshift inspect ID`
 describes accepted bodies, faces, edges, sketches, curves or editing groups. The
 host reads geometry from DocumentOwner, not from a second document store. Raw BRep,
 triangles and display signatures are excluded. Sketch coordinates carry their plane;
@@ -312,7 +312,7 @@ document during an asynchronous read. Existing per-launch revocation remains in 
 Queued redraws, including decorator fades, do not count as camera movement.
 No document revisions, retry ledgers or concurrent model mutation are introduced.
 
-`freac render` uses the normal composed viewport, including available decorator
+`makeshift render` uses the normal composed viewport, including available decorator
 previews and sketch foreground passes, to produce a PNG bounded to
 2048 pixels on the longest side, without changing camera, selection or history.
 HTML controls/labels are excluded; geometry selection highlights remain. Its JSON
@@ -328,14 +328,14 @@ accept/cancel an active model operation. Native Command-Q still belongs to the a
 
 ## Delivered first scripting contract
 
-`freac run script.ts` snapshots one source file, checks it using the bundled pinned
-TypeScript compiler and the same declarations printed by `freac types`, then runs
+`makeshift run script.ts` snapshots one source file, checks it using the bundled pinned
+TypeScript compiler and the same declarations printed by `makeshift types`, then runs
 the emitted module in a CLI child. That process inherits the harness's sandbox;
 arbitrary script code never executes inside DocumentOwner or the renderer. Source
 stays in the portable workspace; compiler output lives in a temporary directory.
 Additional source files/relative imports are outside this first API.
 
-The global `freac` API exposes awaited `createSketch`, `extrude`, `revolve`,
+The global `makeshift` API exposes awaited `createSketch`, `extrude`, `revolve`,
 `moveFaces`, `offsetFaces`, `transformBodies`, `constructionPlane`, `deleteConstructionPlane`,
 `splitBody`, `imprint`, `scale`, `sweep`, `booleanBodies`, `finishEdges`, `shell` and `erode`. It returns explicit generated sketch/profile/body/topology IDs
 for later calls. Sketch creation accepts ordinary segments, circles, arcs and cubic
@@ -403,7 +403,7 @@ cavities. See [erosion](erosion.md) for construction and verification limits.
 
 ### Mathematical path sweep
 
-`freac.sweep` takes ordinary profile/planar-face sources and 1–256 ordered world-space
+`makeshift.sweep` takes ordinary profile/planar-face sources and 1–256 ordered world-space
 line or cubic Bézier segments, plus the same Boolean modes and explicit targets as
 Extrude/Revolve. Endpoints coincide within 1e-7 mm; adjacent tangents must agree.
 Smooth closed paths are supported. The initial path point lies in the section plane
@@ -512,10 +512,10 @@ not promise CAD features absent from the manual application.
 Named body face/edge references are exposed as [tagged groups](tagged-groups.md).
 Scripts list and edit them with `taggedGroups()` and `editTaggedGroup`; direct
 `applyTaggedGroup` operations resolve membership against the current candidate.
-Overview and ID inspection include groups, and `freac select GROUP_ID` selects
+Overview and ID inspection include groups, and `makeshift select GROUP_ID` selects
 their current members with the ordinary add/remove behavior.
 
-`freac select ID...` replaces UI selection; `--add` and `--remove` preserve the
+`makeshift select ID...` replaces UI selection; `--add` and `--remove` preserve the
 order of unrelated targets, and `--clear` clears it. `--surface cylinder|plane|other`
 selects matching exact face metadata across all bodies, including hidden bodies
 without changing their visibility. Narrower requests use inspected stable IDs.
@@ -537,18 +537,18 @@ specific missing information, rather than forming a mandatory startup ritual.
 Fresh workspace AGENTS.md contains this operating guide. The same current guide is
 injected at launch, so resumed sessions receive updated capability/workflow guidance
 without overwriting saved user files. Detailed modeling/decorator references remain
-in `freac docs`. Guidance describes available operations, target scope and effects
+in `makeshift docs`. Guidance describes available operations, target scope and effects
 so the agent can choose from the current request and geometry. Do not add
 incident-specific corrections or examples of historical mistakes to startup prompts;
 put durable operation contracts in the detailed docs and types.
 
-`freac faces` returns all accepted faces with stable face/body IDs, edge IDs,
+`makeshift faces` returns all accepted faces with stable face/body IDs, edge IDs,
 body visibility and discriminated plane/cylinder/other support metadata. Cylinders
 include radius, origin, oriented axis and outward sign. Support metadata does not
 establish trimmed face extents; `other` is unclassified, not a specific surface class.
-Hidden bodies remain queryable. `freac context` reads view/selection without measurements.
+Hidden bodies remain queryable. `makeshift context` reads view/selection without measurements.
 
-`freac view script.ts` typechecks a single file with `FreacView`: `faces()`, `context()`
+`makeshift view script.ts` typechecks a single file with `MakeshiftView`: `faces()`, `context()`
 and `select(ids, mode?)`, where mode is replace/add/remove. It runs in a separate
 CLI child with the caller's permissions, using the ordinary inspection/selection
 transport and renderer validation. No geometry transaction is acquired. Calls are
@@ -556,7 +556,7 @@ sequential, bounded to 100 and a 60-second execution limit. Empty replacement cl
 selection; empty add/remove does nothing. Invalid/busy/incompatible selection rejects
 atomically. Successful selection changes apply immediately and retain ordinary
 selection history; a later script failure does not undo earlier selection changes.
-Modeling methods are unavailable in this mode. `freac run` retains its existing
+Modeling methods are unavailable in this mode. `makeshift run` retains its existing
 per-script geometry transaction. Queries read current accepted geometry at each call;
 view programs do not promise a frozen snapshot across calls.
 
@@ -567,7 +567,7 @@ Deterministic API, host-boundary and interaction checks remain in the ordinary t
 
 ## Composable topology editing
 
-`freac.topology` and `freac.replaceFace` operate on the script candidate; their
+`makeshift.topology` and `makeshift.replaceFace` operate on the script candidate; their
 [geometry and reconstruction contract](topology-editing.md) defines the current
 analytic replacement domain. These are lower-level inspection/support inputs,
 not a named taper command. They retain ordinary script atomicity and stable IDs.

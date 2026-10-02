@@ -27,7 +27,10 @@ export class AgentConnection {
   ) {}
 
   static async create(handle: AgentConnection["handle"]): Promise<AgentConnection> {
-    const connection = new AgentConnection(await mkdtemp(join(tmpdir(), "freac-agent-")), handle);
+    const connection = new AgentConnection(
+      await mkdtemp(join(tmpdir(), "makeshift-agent-")),
+      handle,
+    );
     connection.schedule();
     return connection;
   }
@@ -63,15 +66,15 @@ export class AgentConnection {
       let request: { capability?: unknown; command?: unknown; entity?: unknown; script?: unknown };
       try {
         const stat = await file.stat();
-        if (!stat.isFile() || stat.size > 262144) throw new Error("Invalid Freac request.");
+        if (!stat.isFile() || stat.size > 262144) throw new Error("Invalid Makeshift request.");
         const bytes = Buffer.alloc(262145);
         const { bytesRead } = await file.read(bytes);
-        if (bytesRead > 262144) throw new Error("Invalid Freac request.");
+        if (bytesRead > 262144) throw new Error("Invalid Makeshift request.");
         request = JSON.parse(bytes.subarray(0, bytesRead).toString("utf8"));
       } finally {
         await file.close();
       }
-      if (request?.capability !== this.capability) throw new Error("Invalid Freac connection.");
+      if (request?.capability !== this.capability) throw new Error("Invalid Makeshift connection.");
       if (
         typeof request.command !== "string" ||
         ![
@@ -85,7 +88,7 @@ export class AgentConnection {
           "script",
         ].includes(request.command)
       )
-        throw new Error("Unknown Freac command; run freac help.");
+        throw new Error("Unknown Makeshift command; run makeshift help.");
       if (
         request.entity !== undefined &&
         (!["inspect", "select"].includes(request.command as string) ||
@@ -114,13 +117,13 @@ export class AgentConnection {
       request.command === "script" && ["poll", "cancel"].includes(request.script?.action ?? "");
     if (control || request.command === "status") return this.handle(request, this.directory);
     // Bound waiting work while leaving transport slots for status and cancellation.
-    if (this.waiting >= 16) throw new Error("Too many pending Freac commands.");
+    if (this.waiting >= 16) throw new Error("Too many pending Makeshift commands.");
     this.waiting++;
     const pending = this.exclusive.then(async () => {
-      if (!this.active) throw new Error("This Freac connection has closed.");
+      if (!this.active) throw new Error("This Makeshift connection has closed.");
       // A caller that timed out removes its request; do not execute abandoned work.
       await access(path);
-      if (!this.active) throw new Error("This Freac connection has closed.");
+      if (!this.active) throw new Error("This Makeshift connection has closed.");
       return this.handle(request, this.directory);
     });
     this.exclusive = pending.catch(() => {});

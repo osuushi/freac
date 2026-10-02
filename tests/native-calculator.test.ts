@@ -7,7 +7,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { NativeCalculator } from "../src/backend/native-calculator.js";
 
 async function calculator(deadline = 3000) {
-  const dir = await mkdtemp(join(tmpdir(), "freac-calculator-"));
+  const dir = await mkdtemp(join(tmpdir(), "makeshift-calculator-"));
   const executable = join(dir, "calculator.mjs");
   const ready = join(dir, "ready");
   await writeFile(

@@ -5,18 +5,18 @@ import { join } from "node:path";
 import { readPortableArchive } from "../.build/host/model/portable-archive.js";
 import { launchElectron, saveDocument } from "./native-documents.mjs";
 
-const root = await mkdtemp(join(tmpdir(), "freac-quit-save-"));
+const root = await mkdtemp(join(tmpdir(), "makeshift-quit-save-"));
 try {
   for (const late of [false, true]) {
     const app = await launchElectron({
       args: ["."],
-      env: { ...process.env, FREAC_TEST_HIDDEN: "1" },
+      env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
     });
     try {
       const page = await app.firstWindow();
       page.setDefaultTimeout(10000);
       await page.evaluate(() =>
-        window.freacAgent.request({
+        window.makeshiftAgent.request({
           kind: "configure",
           preferences: {
             preset: "custom",
@@ -28,7 +28,7 @@ try {
       );
       await page.getByRole("button", { name: "Open agent terminal" }).click();
       await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
-      const workspace = (await page.evaluate(() => window.freacAgent.request({ kind: "read" })))
+      const workspace = (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" })))
         .workspace;
       if (late) {
         await page.locator(".agent-screen textarea").focus();
@@ -45,7 +45,7 @@ try {
         }
         await readFile(join(workspace, "ready"));
       }
-      const file = join(root, `${late}.freac`),
+      const file = join(root, `${late}.makeshift`),
         log = join(root, `${late}.jsonl`);
       await saveDocument(page, file);
       await app.evaluate(async ({ dialog }, log) => {

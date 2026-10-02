@@ -17,14 +17,14 @@ await mkdir(".cache/ipad", { recursive: true });
 const names = runtimeNames(["chromium", "webkit"]);
 const app = await launchElectron({
   args: ["."],
-  env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: "" },
+  env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1", MAKESHIFT_DEV_URL: "" },
 });
 try {
   const desktop = await app.firstWindow();
   await settled(desktop);
   await desktop.getByRole("button", { name: "Trackpad", exact: true }).click();
   await desktop.getByRole("button", { name: "Tablet", exact: true }).click();
-  await desktop.getByRole("heading", { name: "Freac on iPad" }).waitFor();
+  await desktop.getByRole("heading", { name: "Makeshift on iPad" }).waitFor();
   assert.equal(await desktop.locator("canvas").count(), 0);
   assert.match(await desktop.locator(".wifi-warning").innerText(), /Only use on secure Wi-Fi/);
   const url = await desktop.locator(".ipad-addresses a").first().getAttribute("href");
@@ -40,7 +40,7 @@ try {
   for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
     names.includes(name),
   )) {
-    if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
+    if (process.env.MAKESHIFT_TEST_BROWSER && process.env.MAKESHIFT_TEST_BROWSER !== name) continue;
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({
@@ -78,9 +78,9 @@ try {
         4,
         JSON.stringify(
           await page.evaluate(async () => ({
-            state: window.freacInspect(),
+            state: window.makeshiftInspect(),
             status: document.querySelector(".status")?.textContent,
-            history: await window.freacHistory(),
+            history: await window.makeshiftHistory(),
           })),
         ),
       );
@@ -101,11 +101,11 @@ try {
       document = await tabletSolidRoute(page, name);
       await tabletAgentRoute(page);
       await chooseTool(page, "save document", "save");
-      const path = resolve(`.cache/ipad/${name}.freac`);
+      const path = resolve(`.cache/ipad/${name}.makeshift`);
       await rm(path, { force: true });
       await page.getByLabel("Computer folder path").fill(resolve(".cache/ipad"));
       await page.getByLabel("Computer folder path").press("Enter");
-      await page.getByLabel("File name").fill(`${name}.freac`);
+      await page.getByLabel("File name").fill(`${name}.makeshift`);
       await page.locator("dialog").getByRole("button", { name: "Save", exact: true }).click();
       await settled(page);
       assert.ok((await readFile(path)).length > 100);
@@ -113,7 +113,7 @@ try {
       await chooseTool(page, "open document", "open");
       await page
         .locator("dialog")
-        .getByRole("button", { name: `${name}.freac`, exact: true })
+        .getByRole("button", { name: `${name}.makeshift`, exact: true })
         .click();
       await page.locator("dialog").getByRole("button", { name: "Open", exact: true }).click();
       await settled(page);
@@ -156,7 +156,7 @@ try {
     assert.equal(
       await desktop.evaluate(async () => {
         try {
-          await window.freacModel({ kind: "read" });
+          await window.makeshiftModel({ kind: "read" });
           return false;
         } catch {
           return true;

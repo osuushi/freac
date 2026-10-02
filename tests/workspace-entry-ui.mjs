@@ -25,9 +25,9 @@ try {
 async function openBody(page) {
   await inspect(page);
   await openDocument(page, {
-    name: "entry.freac",
+    name: "entry.makeshift",
     mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify({ format: "freac", version: 1, document: fixture })),
+    buffer: Buffer.from(JSON.stringify({ format: "makeshift", version: 1, document: fixture })),
   });
   await orient(page, [0, 0, 1]);
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
@@ -127,7 +127,7 @@ async function pendingScale(page) {
     }
     assert.equal(await toolEnabled(page, "Sketch on YZ", "sketch-yz"), false);
     await page.mouse.dblclick(margin.x, margin.y);
-    assert.equal(await page.evaluate(() => window.freacInspect().activePlane), null);
+    assert.equal(await page.evaluate(() => window.makeshiftInspect().activePlane), null);
     release.resolve();
     assert.equal((await inspect(page)).activePlane, null);
     await page.getByRole("button", { name: "Cancel transform scale", exact: true }).click();

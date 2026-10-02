@@ -19,7 +19,7 @@ await mkdir(".cache/sketch-review", { recursive: true });
 async function run(page, name, app) {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.waitForFunction(() => !!window.freacInspect);
+  await page.waitForFunction(() => !!window.makeshiftInspect);
   await modelToolsRoute(page, name);
   if (process.argv.includes("--adjacent")) {
     for (const route of [
@@ -41,7 +41,7 @@ async function run(page, name, app) {
 if (process.argv.includes("--electron")) {
   const app = await launchElectron({
     args: ["."],
-    env: { ...process.env, FREAC_TEST_HIDDEN: "1" },
+    env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
   });
   try {
     await run(await app.firstWindow(), "electron", app);

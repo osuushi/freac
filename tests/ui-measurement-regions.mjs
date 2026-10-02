@@ -17,7 +17,7 @@ export async function regionMeasurementRoute(page, name) {
   await plate(page);
   await clearSelection(page);
   const original = (await inspect(page)).document;
-  const history = await page.evaluate(() => window.freacHistory());
+  const history = await page.evaluate(() => window.makeshiftHistory());
   await below(page);
   let state = await pick(page, [5, 5, 0]);
   assert.equal(state.modelingSelection[0]?.kind, "profile");
@@ -31,7 +31,7 @@ export async function regionMeasurementRoute(page, name) {
   await readout(page, "Minimum gap", "10 mm");
   await readout(page, "Maximum gap", "10 mm");
   assert.deepEqual(state.document, original);
-  assert.deepEqual(await page.evaluate(() => window.freacHistory()), history);
+  assert.deepEqual(await page.evaluate(() => window.makeshiftHistory()), history);
   await clearSelection(page);
   await pick(page, [5, 5, 10]);
   await page.keyboard.press("Enter");

@@ -14,43 +14,43 @@ async function selectFace(page) {
   assert.equal((await inspect(page)).modelingSelection[0]?.face, fixture.face);
 }
 async function navigation(page) {
-  const initial = await page.evaluate(() => window.freacInspect().camera);
+  const initial = await page.evaluate(() => window.makeshiftInspect().camera);
   await page.mouse.move(1000, 620);
   await page.mouse.wheel(40, 30);
   await page.waitForFunction(
-    (target) => window.freacInspect().camera.target.some((v, i) => v !== target[i]),
+    (target) => window.makeshiftInspect().camera.target.some((v, i) => v !== target[i]),
     initial.target,
   );
-  const panned = await page.evaluate(() => window.freacInspect().camera);
+  const panned = await page.evaluate(() => window.makeshiftInspect().camera);
   await orient(page, [0.5, 0.5, 1]);
   await page.waitForFunction(
-    (position) => window.freacInspect().camera.position.some((v, i) => v !== position[i]),
+    (position) => window.makeshiftInspect().camera.position.some((v, i) => v !== position[i]),
     panned.position,
   );
   await page.keyboard.down("Control");
   await page.mouse.wheel(0, -20);
   await page.keyboard.up("Control");
   await page.waitForFunction(
-    (height) => window.freacInspect().camera.height < height,
+    (height) => window.makeshiftInspect().camera.height < height,
     initial.height,
   );
-  const beforeDrag = await page.evaluate(() => window.freacInspect().camera.target);
+  const beforeDrag = await page.evaluate(() => window.makeshiftInspect().camera.target);
   await page.mouse.down({ button: "middle" });
   await page.mouse.move(970, 600, { steps: 4 });
   await page.mouse.up({ button: "middle" });
   await page.waitForFunction(
-    (target) => window.freacInspect().camera.target.some((v, i) => v !== target[i]),
+    (target) => window.makeshiftInspect().camera.target.some((v, i) => v !== target[i]),
     beforeDrag,
   );
-  assert.equal(await page.evaluate(() => window.freacInspect().solving), true);
+  assert.equal(await page.evaluate(() => window.makeshiftInspect().solving), true);
 }
 export async function calculationRoute(page, name) {
   await reset(page);
   await openDocument(page, {
-    name: "slow-delete.freac",
+    name: "slow-delete.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
   await inspect(page);
@@ -71,7 +71,7 @@ export async function calculationRoute(page, name) {
       const frame = (now) => {
         window.calculationFrames.push(now - window.calculationFrameStart);
         window.calculationFrameStart = now;
-        if (window.freacInspect().solving) requestAnimationFrame(frame);
+        if (window.makeshiftInspect().solving) requestAnimationFrame(frame);
       };
       requestAnimationFrame(frame);
     });
@@ -89,7 +89,7 @@ export async function calculationRoute(page, name) {
     assert.deepEqual(state.modelingSelection, before.modelingSelection);
     assert.equal(state.preview, null);
     assert.equal(await toolEnabled(page, "undo", "undo"), undo);
-    const history = await page.evaluate(() => window.freacHistory());
+    const history = await page.evaluate(() => window.makeshiftHistory());
     assert.equal(history.at(-1).outcome, "cancelled");
     assert.match(history.at(-1).error, /cancelled/);
     const gaps = await page.evaluate(() => window.calculationFrames);

@@ -31,7 +31,7 @@ async function createBodyWithHole(page) {
 }
 
 async function geometryHistory(page) {
-  return (await page.evaluate(() => window.freacHistory()))
+  return (await page.evaluate(() => window.makeshiftHistory()))
     .filter((entry) => entry.outcome === "changed" && entry.operation.kind !== "selection")
     .map((entry) => entry.id);
 }
@@ -84,7 +84,7 @@ export async function bodyEdgesRoute(page, name) {
     "Edge selection never changes geometry or adds an edit",
   );
   assert.deepEqual(await geometryHistory(page), beforeHistory);
-  const undoDepth = (await page.evaluate(() => window.freacHistory())).length;
+  const undoDepth = (await page.evaluate(() => window.makeshiftHistory())).length;
   for (let i = 0; i < undoDepth && (await inspect(page)).document.bodies?.length; i++)
     await chooseTool(page, "undo", "undo");
   assert.equal(

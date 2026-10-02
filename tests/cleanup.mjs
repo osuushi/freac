@@ -23,8 +23,8 @@ try {
           args: ["."],
           env: {
             ...process.env,
-            FREAC_TEST_HIDDEN: "1",
-            FREAC_DEV_URL: server.resolvedUrls.local[0],
+            MAKESHIFT_TEST_HIDDEN: "1",
+            MAKESHIFT_DEV_URL: server.resolvedUrls.local[0],
           },
         });
         page = await app.firstWindow();
@@ -38,11 +38,11 @@ try {
       await autoUnionRoute(page, name);
       await cleanupRoute(
         page,
-        process.env.FREAC_CLEANUP_FIXTURE ? `${name}-fixture` : name,
+        process.env.MAKESHIFT_CLEANUP_FIXTURE ? `${name}-fixture` : name,
         app,
-        process.env.FREAC_CLEANUP_FIXTURE,
+        process.env.MAKESHIFT_CLEANUP_FIXTURE,
       );
-      if (!process.env.FREAC_CLEANUP_FIXTURE) {
+      if (!process.env.MAKESHIFT_CLEANUP_FIXTURE) {
         await bodyFilletRoute(page, name, app, true);
         await faceOffsetRoute(page, name, app, true);
         await revolveRoute(page, name, app, true);

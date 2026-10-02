@@ -103,7 +103,7 @@ async function route(page, name) {
   await chooseTool(page, "redo", "redo");
   near((await inspect(page)).document.bodies[0].volume, 720);
   await cut(page);
-  const path = resolve(`.cache/sketch-review/${name}-composition.freac`);
+  const path = resolve(`.cache/sketch-review/${name}-composition.makeshift`);
   await saveDocument(page, path);
   await openDocument(page, path);
   const reopened = (await inspect(page)).document;

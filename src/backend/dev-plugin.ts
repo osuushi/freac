@@ -7,7 +7,7 @@ import { DocumentOwner } from "./document-owner.js";
 export function sketchBackend(): Plugin {
   let owner: DocumentOwner | undefined;
   return {
-    name: "freac-sketch-backend",
+    name: "makeshift-sketch-backend",
     configureServer(server) {
       owner = new DocumentOwner();
       server.middlewares.use("/sketch-api", async (request, response) => {

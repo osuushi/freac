@@ -9,15 +9,18 @@ import { launchElectron, openDocument, saveDocument } from "./native-documents.m
 import { drag, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-const root = await mkdtemp(join(tmpdir(), "freac-persistence-"));
-const file = join(root, "drawing.freac"),
-  copy = join(root, "copy.freac");
-const app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+const root = await mkdtemp(join(tmpdir(), "makeshift-persistence-"));
+const file = join(root, "drawing.makeshift"),
+  copy = join(root, "copy.makeshift");
+const app = await launchElectron({
+  args: ["."],
+  env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+});
 let portable;
 try {
   const page = await app.firstWindow();
   await page.evaluate(() =>
-    window.freacAgent.request({
+    window.makeshiftAgent.request({
       kind: "configure",
       preferences: { preset: "custom", executable: "/bin/sh", args: ["-i"], env: {} },
     }),
@@ -30,11 +33,11 @@ try {
   await settled(page);
   const model = await page.evaluate(() =>
     JSON.stringify({
-      ...window.freacInspect().document,
-      bodies: window.freacInspect().document.bodies ?? [],
+      ...window.makeshiftInspect().document,
+      bodies: window.makeshiftInspect().document.bodies ?? [],
     }),
   );
-  const workspace = (await page.evaluate(() => window.freacAgent.request({ kind: "read" })))
+  const workspace = (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" })))
     .workspace;
   const input = page.locator(".agent-screen textarea");
   await input.focus();
@@ -60,18 +63,18 @@ try {
   assert.deepEqual([...portable.files["workspace/binary.dat"]], [0, 255, 128, 1]);
   assert(Object.keys(portable.files).some((p) => p.startsWith("conversations/")));
   assert(!Object.keys(portable.files).some((p) => p.includes("auth.json")));
-  await until(async () => !(await page.evaluate(() => window.freacDocument.status())).edited);
+  await until(async () => !(await page.evaluate(() => window.makeshiftDocument.status())).edited);
   const savedBytes = await readFile(file);
-  await symlink(file, join(workspace, "linked.freac"));
+  await symlink(file, join(workspace, "linked.makeshift"));
   await chooseTool(page, "save document", "save");
   await page.getByRole("status").filter({ hasText: "link or special" }).waitFor();
   assert.deepEqual(await readFile(file), savedBytes);
-  assert.equal((await page.evaluate(() => window.freacDocument.status())).edited, true);
-  await unlink(join(workspace, "linked.freac"));
+  assert.equal((await page.evaluate(() => window.makeshiftDocument.status())).edited, true);
+  await unlink(join(workspace, "linked.makeshift"));
   await input.focus();
   await page.keyboard.type('printf "changed" > notes.txt');
   await page.keyboard.press("Enter");
-  await until(async () => (await page.evaluate(() => window.freacDocument.status())).edited);
+  await until(async () => (await page.evaluate(() => window.makeshiftDocument.status())).edited);
   await app.evaluate(({ dialog }) => {
     dialog.showMessageBox = async () => ({ response: 1 });
   });
@@ -79,8 +82,8 @@ try {
   assert.equal(
     await page.evaluate(() =>
       JSON.stringify({
-        ...window.freacInspect().document,
-        bodies: window.freacInspect().document.bodies ?? [],
+        ...window.makeshiftInspect().document,
+        bodies: window.makeshiftInspect().document.bodies ?? [],
       }),
     ),
     model,
@@ -102,7 +105,7 @@ try {
     ),
     "changed",
   );
-  await until(async () => !(await page.evaluate(() => window.freacDocument.status())).edited);
+  await until(async () => !(await page.evaluate(() => window.makeshiftDocument.status())).edited);
   await app.evaluate(({ dialog }) => {
     dialog.showMessageBox = async (_w, o) => {
       if (o.buttons?.[0] === "Stop and continue")
@@ -120,7 +123,9 @@ try {
     globalThis.answerStop = null;
   });
   await settled(page);
-  await until(async () => (await page.evaluate(() => window.freacDocument.status())).path === null);
+  await until(
+    async () => (await page.evaluate(() => window.makeshiftDocument.status())).path === null,
+  );
   assert.equal(
     new TextDecoder().decode(
       readPortableArchive(await readFile(copy)).files["workspace/shutdown.txt"],
@@ -129,15 +134,15 @@ try {
   );
   await openDocument(page, file);
   await settled(page);
-  const restored = (await page.evaluate(() => window.freacAgent.request({ kind: "read" })))
+  const restored = (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" })))
     .workspace;
   assert.notEqual(restored, workspace);
   assert.equal(await readFile(join(restored, "notes.txt"), "utf8"), "remember this design");
   assert.equal(
     await page.evaluate(() =>
       JSON.stringify({
-        ...window.freacInspect().document,
-        bodies: window.freacInspect().document.bodies ?? [],
+        ...window.makeshiftInspect().document,
+        bodies: window.makeshiftInspect().document.bodies ?? [],
       }),
     ),
     model,
@@ -146,9 +151,9 @@ try {
     join(dirname(restored), "codex", "sessions", "rollout.jsonl"),
     "conversation-only edit\n",
   );
-  await until(async () => (await page.evaluate(() => window.freacDocument.status())).edited);
+  await until(async () => (await page.evaluate(() => window.makeshiftDocument.status())).edited);
   await chooseTool(page, "save document", "save");
-  await until(async () => !(await page.evaluate(() => window.freacDocument.status())).edited);
+  await until(async () => !(await page.evaluate(() => window.makeshiftDocument.status())).edited);
   // Recovery imports files/conversation without replacing geometry.
   await page.getByRole("button", { name: "Settings", exact: true }).click();
   await app.evaluate(({ dialog }, path) => {
@@ -157,19 +162,19 @@ try {
   await page.getByRole("button", { name: "Recover agent files…" }).click();
   await until(
     async () =>
-      (await page.evaluate(() => window.freacAgent.request({ kind: "read" }))).workspace !==
+      (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" }))).workspace !==
       restored,
   );
   assert.equal(
     await page.evaluate(() =>
       JSON.stringify({
-        ...window.freacInspect().document,
-        bodies: window.freacInspect().document.bodies ?? [],
+        ...window.makeshiftInspect().document,
+        bodies: window.makeshiftInspect().document.bodies ?? [],
       }),
     ),
     model,
   );
-  assert.equal((await page.evaluate(() => window.freacDocument.status())).edited, true);
+  assert.equal((await page.evaluate(() => window.makeshiftDocument.status())).edited, true);
   await page.screenshot({ path: ".cache/sketch-review/agent-persistence.png" });
   console.log(
     "PASS Electron portable workspace: real shell files, binary/conversation Save, Save As, dirty/cancel, Open and recovery",
@@ -185,8 +190,8 @@ try {
     .catch(() => {});
   const page = app.windows()[0];
   if (page && !page.isClosed()) {
-    await page.evaluate(() => window.freacAgent.request({ kind: "stop" })).catch(() => {});
-    await page.waitForFunction(() => !window.freacInspect().busy).catch(() => {});
+    await page.evaluate(() => window.makeshiftAgent.request({ kind: "stop" })).catch(() => {});
+    await page.waitForFunction(() => !window.makeshiftInspect().busy).catch(() => {});
   }
   await app.close();
 }
@@ -199,11 +204,11 @@ try {
       const page = await browser.newPage();
       await page.goto(server.resolvedUrls.local[0]);
       // Use the original portable payload for exact-byte browser preservation.
-      await page.getByLabel("Open Freac file").setInputFiles(copy);
+      await page.getByLabel("Open Makeshift file").setInputFiles(copy);
       await settled(page);
       const download = page.waitForEvent("download");
       await chooseTool(page, "save document", "save");
-      const path = join(root, `${name}.freac`);
+      const path = join(root, `${name}.makeshift`);
       await (await download).saveAs(path);
       assert.deepEqual(
         readPortableArchive(await readFile(path)).files,

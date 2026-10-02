@@ -18,16 +18,19 @@ let app,
   workspace,
   sequence = 0;
 const source = `
-const base = await freac.createSketch({plane:"XY",curves:[{kind:"circle",center:{x:0,y:0},radius:6}]});
-const shaft = await freac.extrude({sources:base.profiles,distance:12,mode:"new"});
+const base = await makeshift.createSketch({plane:"XY",curves:[{kind:"circle",center:{x:0,y:0},radius:6}]});
+const shaft = await makeshift.extrude({sources:base.profiles,distance:12,mode:"new"});
 const points = [{x:5,y:1},{x:6.5,y:0.5},{x:6.5,y:1.5}];
-const section = await freac.createSketch({plane:"XZ",curves:points.map((a,i)=>({kind:"segment",a,b:points[(i+1)%3]}))});
-await freac.revolve({sources:section.profiles,axis:{origin:[0,0,0],direction:[0,0,1]},angle:720,height:8,mode:"subtract",targets:[shaft.bodies[0].id]});
+const section = await makeshift.createSketch({plane:"XZ",curves:points.map((a,i)=>({kind:"segment",a,b:points[(i+1)%3]}))});
+await makeshift.revolve({sources:section.profiles,axis:{origin:[0,0,0],direction:[0,0,1]},angle:720,height:8,mode:"subtract",targets:[shaft.bodies[0].id]});
 `;
 try {
   await mkdir(".cache/sketch-review", { recursive: true });
   if (name === "electron") {
-    app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+    app = await launchElectron({
+      args: ["."],
+      env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+    });
     page = await app.firstWindow();
   } else {
     web = await scriptBrowser(name);
@@ -38,20 +41,21 @@ try {
   await reset(page);
   if (app) {
     await page.evaluate(() =>
-      window.freacAgent.request({
+      window.makeshiftAgent.request({
         kind: "configure",
         preferences: { preset: "custom", executable: "/bin/sh", args: ["-i"], env: {} },
       }),
     );
     await page.getByRole("button", { name: "Open agent terminal" }).click();
     await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
-    workspace = (await page.evaluate(() => window.freacAgent.request({ kind: "read" }))).workspace;
+    workspace = (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" })))
+      .workspace;
   }
   const empty = (await inspect(page)).document;
   await assert.rejects(
     () =>
       run(
-        `await freac.revolve({sources:[],axis:{origin:[0,0,0],direction:[0,0,1]},angle:720,height:"pitch",mode:"new"});`,
+        `await makeshift.revolve({sources:[],axis:{origin:[0,0,0],direction:[0,0,1]},angle:720,height:"pitch",mode:"new"});`,
       ),
     /typecheck failed/,
   );
@@ -94,8 +98,8 @@ try {
   assert.deepEqual((await inspect(page)).document, threaded);
   await orient(page, [0.7, -1, 0.6]);
   await page.screenshot({ path: `.cache/sketch-review/${name}-agent-helix.png` });
-  if (app) await page.evaluate(() => window.freacAgent.request({ kind: "stop" }));
-  const file = resolve(`.cache/sketch-review/${name}-agent-helix.freac`);
+  if (app) await page.evaluate(() => window.makeshiftAgent.request({ kind: "stop" }));
+  const file = resolve(`.cache/sketch-review/${name}-agent-helix.makeshift`);
   await saveDocument(page, file);
   await reset(page);
   await openDocument(page, file);
@@ -124,7 +128,7 @@ try {
   if (page) {
     await writeFile(
       `.cache/sketch-review/${name}-agent-helix-failure.json`,
-      JSON.stringify(await page.evaluate(() => window.freacInspect())),
+      JSON.stringify(await page.evaluate(() => window.makeshiftInspect())),
     );
     await page.screenshot({ path: `.cache/sketch-review/${name}-agent-helix-failure.png` });
   }
@@ -136,7 +140,7 @@ try {
       .click({ position: { x: 20, y: 20 } })
       .catch(() => {});
     await page?.keyboard.press("Escape").catch(() => {});
-    await page?.evaluate(() => window.freacAgent.request({ kind: "stop" })).catch(() => {});
+    await page?.evaluate(() => window.makeshiftAgent.request({ kind: "stop" })).catch(() => {});
     await app.close();
   }
   await web?.close();
@@ -164,7 +168,7 @@ async function run(source) {
   await writeFile(join(workspace, `${prefix}.ts`), source);
   if (web) {
     try {
-      await promisify(execFile)(web.env.FREAC_CLI, ["run", `${prefix}.ts`], {
+      await promisify(execFile)(web.env.MAKESHIFT_CLI, ["run", `${prefix}.ts`], {
         cwd: workspace,
         env: web.env,
         timeout: 30000,
@@ -177,7 +181,7 @@ async function run(source) {
   }
   await page.locator(".agent-screen textarea").focus();
   await page.keyboard.type(
-    `freac run ${prefix}.ts > ${prefix}.json 2> ${prefix}.err; printf '%s' "$?" > ${prefix}.done`,
+    `makeshift run ${prefix}.ts > ${prefix}.json 2> ${prefix}.err; printf '%s' "$?" > ${prefix}.done`,
   );
   await page.keyboard.press("Enter");
   for (let attempt = 0; attempt < 1000; attempt++) {

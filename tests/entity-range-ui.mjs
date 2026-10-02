@@ -97,7 +97,7 @@ async function route(page, name) {
   );
 }
 await mkdir(".cache/sketch-review", { recursive: true });
-const runtime = process.env.FREAC_TEST_BROWSER;
+const runtime = process.env.MAKESHIFT_TEST_BROWSER;
 const names = runtimeNames(["chromium", "webkit", "electron"]);
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
@@ -118,7 +118,11 @@ try {
   if (!runtime || runtime === "electron") {
     const app = await launchElectron({
       args: ["."],
-      env: { ...process.env, FREAC_DEV_URL: server.resolvedUrls.local[0], FREAC_TEST_HIDDEN: "1" },
+      env: {
+        ...process.env,
+        MAKESHIFT_DEV_URL: server.resolvedUrls.local[0],
+        MAKESHIFT_TEST_HIDDEN: "1",
+      },
     });
     try {
       const page = await app.firstWindow();

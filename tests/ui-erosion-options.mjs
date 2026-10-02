@@ -40,7 +40,7 @@ export async function erosionOptionsRoute(page, name) {
   await page.getByRole("button", { name: "Accept erosion" }).click();
   state = await inspect(page);
   assert.equal(state.document.bodies.length, 1);
-  const operation = (await page.evaluate(() => window.freacHistory())).at(-1).operation;
+  const operation = (await page.evaluate(() => window.makeshiftHistory())).at(-1).operation;
   assert.equal(operation.parameters.operation.thickness, 2);
   assert.equal(operation.parameters.operation.allowance, 1, "50% of 2 mm reaches geometry as 1 mm");
   assert.notEqual(state.document.bodies[0].id, original.bodies[0].id);

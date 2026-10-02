@@ -7,7 +7,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 const app = await launchElectron({
   args: ["."],
-  env: { ...process.env, FREAC_TEST_HIDDEN: "1" },
+  env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
 });
 try {
   const page = await app.firstWindow();

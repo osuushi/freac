@@ -19,11 +19,11 @@ const document = {
 export async function shellCalculationRoute(page, name) {
   await reset(page);
   await openDocument(page, {
-    name: "shell.freac",
+    name: "shell.makeshift",
     mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify({ format: "freac", version: 1, document })),
+    buffer: Buffer.from(JSON.stringify({ format: "makeshift", version: 1, document })),
   });
-  await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 3);
+  await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 3);
   const original = (await inspect(page)).document;
   for (let index = 1; index <= 3; index++)
     await page
@@ -40,7 +40,7 @@ export async function shellCalculationRoute(page, name) {
   assert.equal(state.interaction, null);
   assert.equal(state.preview, null);
   assert.deepEqual(state.document, original);
-  assert.equal((await page.evaluate(() => window.freacHistory())).at(-1).outcome, "cancelled");
+  assert.equal((await page.evaluate(() => window.makeshiftHistory())).at(-1).outcome, "cancelled");
   // The next real kernel job coalesces typed targets and can still accept exactly once.
   await input.fill("-4");
   await input.fill("-2");

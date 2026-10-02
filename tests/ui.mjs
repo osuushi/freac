@@ -100,9 +100,9 @@ import { useEdgeRoute, useLineEdgeRoute } from "./ui-use-edge.mjs";
 import { widgetNavigationRoute } from "./ui-widget-navigation.mjs";
 
 const browserEngines = { chromium, webkit };
-const requestedBrowser = process.env.FREAC_TEST_BROWSER;
+const requestedBrowser = process.env.MAKESHIFT_TEST_BROWSER;
 if (requestedBrowser && !(requestedBrowser in browserEngines))
-  throw new Error("FREAC_TEST_BROWSER must be chromium or webkit");
+  throw new Error("MAKESHIFT_TEST_BROWSER must be chromium or webkit");
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 await mkdir(".cache/sketch-review", { recursive: true });
@@ -120,7 +120,7 @@ try {
         if (message.type() === "error") errors.push(message.text());
       });
       await page.goto(server.resolvedUrls.local[0]);
-      await page.waitForFunction(() => !!window.freacInspect);
+      await page.waitForFunction(() => !!window.makeshiftInspect);
       await page.screenshot({ path: `.cache/sketch-review/${name}-world.png` });
       await planeTargetsRoute(page, name);
       for (const plane of ["XY", "XZ", "YZ"]) {
@@ -135,7 +135,7 @@ try {
         await page.mouse.move(900, 530, { steps: 4 });
         await page.mouse.up();
         await page.keyboard.up("Meta");
-        await page.waitForFunction(() => window.freacInspect().activePlane === null);
+        await page.waitForFunction(() => window.makeshiftInspect().activePlane === null);
         await page.getByRole("status").filter({ hasText: "Choose a plane" }).waitFor();
       }
       await bowDirectionRoute(page, name);

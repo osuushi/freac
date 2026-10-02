@@ -92,7 +92,7 @@ async function sharedPlanes(page, name) {
     await page.keyboard.press("r");
     await drag(page, [3, 3], [13, 9]);
     await orient(page, [0.5, 0.5, 1]);
-    await page.waitForFunction(() => window.freacInspect().activePlane === null);
+    await page.waitForFunction(() => window.makeshiftInspect().activePlane === null);
   }
   const doc = (await inspect(page)).document;
   assert.equal(doc.sketches.length, 3);

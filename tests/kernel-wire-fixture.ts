@@ -5,7 +5,7 @@ import type { KernelRequest } from "../src/backend/kernel-request.js";
 
 /** Observe actual stdin and optionally damage a real native reply at the wire boundary. */
 export async function kernelWireFixture() {
-  const directory = await mkdtemp(join(tmpdir(), "freac-kernel-wire-"));
+  const directory = await mkdtemp(join(tmpdir(), "makeshift-kernel-wire-"));
   const executable = join(directory, "kernel.mjs");
   const capture = join(directory, "input.jsonl");
   const damage = join(directory, "damage");
@@ -15,7 +15,7 @@ export async function kernelWireFixture() {
 import { spawn } from "node:child_process";
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { createInterface } from "node:readline";
-const child = spawn(${JSON.stringify(resolve(".build/kernel/bin/freac-kernel"))}, [], {stdio: "pipe"});
+const child = spawn(${JSON.stringify(resolve(".build/kernel/bin/makeshift-kernel"))}, [], {stdio: "pipe"});
 process.on("SIGTERM", () => child.kill());
 child.once("exit", () => process.exit());
 child.stderr.pipe(process.stderr);

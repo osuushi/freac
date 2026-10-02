@@ -6,9 +6,12 @@ import { launchElectron } from "./native-documents.mjs";
 import { at, drag, inspect, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-const root = await mkdtemp(join(tmpdir(), "freac-quit-operation-"));
-const file = join(root, "Committed.freac");
-const app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+const root = await mkdtemp(join(tmpdir(), "makeshift-quit-operation-"));
+const file = join(root, "Committed.makeshift");
+const app = await launchElectron({
+  args: ["."],
+  env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+});
 try {
   const page = await app.firstWindow();
   await settled(page);
@@ -33,7 +36,7 @@ try {
   assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
   assert.equal((await inspect(page)).preview.bodies[0].volume, 3000);
   await app.evaluate(({ app }) => app.quit());
-  await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
+  await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 1);
   await settled(page);
   assert.equal(await app.evaluate(() => globalThis.prompts), 1);
   assert.equal((await inspect(page)).preview, null);
@@ -60,7 +63,9 @@ try {
   });
   const reopened = await opening;
   await settled(reopened);
-  await reopened.waitForFunction(async () => (await window.freacDocument.status()).path === null);
+  await reopened.waitForFunction(
+    async () => (await window.makeshiftDocument.status()).path === null,
+  );
   await settled(reopened);
   await app.evaluate(({ dialog, Menu }, file) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [file] });
@@ -69,7 +74,7 @@ try {
       .submenu.items.find((item) => item.label === "Open…")
       .click();
   }, file);
-  await reopened.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
+  await reopened.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 1);
   await settled(reopened);
   assert.equal((await inspect(reopened)).document.bodies[0].volume, 3000);
   console.log(

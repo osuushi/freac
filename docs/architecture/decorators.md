@@ -384,7 +384,7 @@ accepted session's permission. Enablement itself remains session state outside
 Undo and archives. Ordinary inspection lists bundled source/schema, instances and
 built-in fields; face inspection includes its attachments. Thread inspection uses
 the same cylinder partition, settings resolution and highlighted local warnings.
-`freac docs/types` carries the authoring and typed command contracts.
+`makeshift docs/types` carries the authoring and typed command contracts.
 
 ## Mesh export and preview
 
@@ -514,7 +514,7 @@ Measure preview and export on short/long threads and batches; do not promise
 near-instant generation before measuring cold and warm worker runs.
 
 3MF uses lossless ZIP level 3; compression changes archive size, not mesh precision
-or contents. Set `FREAC_BENCH_COMPRESSION=1` for a level 0/1/3/6 comparison
+or contents. Set `MAKESHIFT_BENCH_COMPRESSION=1` for a level 0/1/3/6 comparison
 on identical exported contents, with decompressed-byte verification.
 
 The reproducible worker benchmark is `node tests/decorator-performance.mjs` after

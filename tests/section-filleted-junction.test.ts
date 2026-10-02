@@ -17,7 +17,7 @@ test("filleted section retains native vertex joins through copying, extrusion an
   try {
     const document = readArchive(
       JSON.stringify({
-        format: "freac",
+        format: "makeshift",
         version: 1,
         document: {
           units: "mm",

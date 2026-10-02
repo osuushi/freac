@@ -32,7 +32,7 @@ export interface InspectionView {
 }
 declare global {
   interface Window {
-    freacInspection?: {
+    makeshiftInspection?: {
       onRequest(
         callback: (render: boolean, acquireScript?: boolean, selection?: string) => InspectionView,
       ): () => void;

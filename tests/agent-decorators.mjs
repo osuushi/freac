@@ -17,10 +17,13 @@ let app,
   counter = 0;
 try {
   if (name === "electron") {
-    app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+    app = await launchElectron({
+      args: ["."],
+      env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+    });
     page = await app.firstWindow();
     await page.evaluate(() =>
-      window.freacAgent.request({
+      window.makeshiftAgent.request({
         kind: "configure",
         preferences: {
           preset: "custom",
@@ -32,7 +35,8 @@ try {
     );
     await page.getByRole("button", { name: "Open agent terminal" }).click();
     await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
-    workspace = (await page.evaluate(() => window.freacAgent.request({ kind: "read" }))).workspace;
+    workspace = (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" })))
+      .workspace;
   } else {
     web = await scriptBrowser(name);
     ({ page, workspace } = web);
@@ -40,14 +44,14 @@ try {
   page.setDefaultTimeout(20000);
   await settled(page);
   await assert.rejects(
-    () => run('await freac.editDecorator({action:"settings",ids:[],patch:{pitch:[]}});'),
+    () => run('await makeshift.editDecorator({action:"settings",ids:[],patch:{pitch:[]}});'),
     /typecheck failed/,
   );
   await agentDecoratorRoute(page, run, app ? command : undefined);
   console.log(`PASS ${name}: decorator script transport and standalone type declarations`);
 } finally {
   if (app) {
-    await page.evaluate(() => window.freacAgent.request({ kind: "stop" })).catch(() => {});
+    await page.evaluate(() => window.makeshiftAgent.request({ kind: "stop" })).catch(() => {});
     await app.close();
   }
   await web?.close();
@@ -63,7 +67,7 @@ async function command(input) {
   const prefix = `command-${++counter}`;
   if (web) {
     try {
-      const { stdout } = await promisify(execFile)(web.env.FREAC_CLI, input.split(" "), {
+      const { stdout } = await promisify(execFile)(web.env.MAKESHIFT_CLI, input.split(" "), {
         cwd: workspace,
         env: web.env,
         timeout: 30000,
@@ -76,7 +80,7 @@ async function command(input) {
   }
   await page.locator(".agent-screen textarea").focus();
   await page.keyboard.type(
-    `freac ${input} > ${prefix}.json 2> ${prefix}.err; printf '%s' "$?" > ${prefix}.done`,
+    `makeshift ${input} > ${prefix}.json 2> ${prefix}.err; printf '%s' "$?" > ${prefix}.done`,
   );
   await page.keyboard.press("Enter");
   for (let i = 0; i < 1000; i++) {

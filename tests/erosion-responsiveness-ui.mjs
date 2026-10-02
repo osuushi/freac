@@ -17,7 +17,7 @@ async function enter(page) {
   await page.getByRole("combobox", { name: "Find a tool" }).fill("erode");
   await page.locator('[data-command="erode"]').click();
   await page.waitForFunction(() => {
-    const state = window.freacInspect();
+    const state = window.makeshiftInspect();
     return state.interaction?.kind === "erode" && state.busy;
   });
   assert.equal(await thickness(page).inputValue(), "1");
@@ -54,7 +54,10 @@ async function cancellation(page, original) {
     assert.equal(state.preview, null);
     assert.deepEqual(state.document, original);
     assert.equal(await page.locator(".erosion-widget").isVisible(), false);
-    assert.equal((await page.evaluate(() => window.freacHistory())).at(-1).outcome, "cancelled");
+    assert.equal(
+      (await page.evaluate(() => window.makeshiftHistory())).at(-1).outcome,
+      "cancelled",
+    );
   }
 }
 
@@ -89,7 +92,7 @@ async function suggestedAllowance(page, name, original) {
   await page.getByRole("button", { name: "Accept erosion", exact: true }).click();
   const accepted = (await inspect(page)).document;
   assert.equal(accepted.bodies.length, 2);
-  const operation = (await page.evaluate(() => window.freacHistory())).at(-1).operation;
+  const operation = (await page.evaluate(() => window.makeshiftHistory())).at(-1).operation;
   assert.ok(Math.abs(operation.parameters.operation.allowance - (4 * value) / 100) < 1e-10);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
@@ -108,10 +111,10 @@ async function suggestedAllowance(page, name, original) {
 await withUiRuntimes(
   async (page, name) => {
     await openDocument(page, {
-      name: "erosion-towers.freac",
+      name: "erosion-towers.makeshift",
       mimeType: "application/json",
       buffer: Buffer.from(
-        JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+        JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
       ),
     });
     const original = (await inspect(page)).document;

@@ -129,7 +129,9 @@ export function findInspectionTarget(document: SketchDocument, id: string): Insp
     if (sketch.groups.some((g) => g.id === id))
       return { kind: "group", sketch: sketch.id, group: id };
   }
-  throw new Error("Unknown geometry ID. Run freac inspect or freac selection for current IDs.");
+  throw new Error(
+    "Unknown geometry ID. Run makeshift inspect or makeshift selection for current IDs.",
+  );
 }
 export function inspectionOverview(document: SketchDocument, view: InspectionView) {
   return {

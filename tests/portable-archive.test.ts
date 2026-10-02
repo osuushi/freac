@@ -14,6 +14,18 @@ import { readPortableArchive, writePortableArchive } from "../src/model/portable
 const document = { units: "mm" as const, sketches: [] };
 const model = documentArchive(document);
 
+test("the former portable ZIP tag keeps attached files and conversation bytes", () => {
+  const files = {
+    "workspace/old-script.ts": strToU8("await freac.decorators();"),
+    "conversations/codex/sessions/old.jsonl": strToU8('{"type":"session_meta"}\n'),
+  };
+  const legacy = zipSync({
+    "model.json": strToU8(JSON.stringify({ format: "freac", version: 2, document })),
+    ...files,
+  });
+  assert.deepEqual(readPortableArchive(legacy), { document, files });
+});
+
 test("portable ZIP and legacy archives retain model, binary files and conversations", () => {
   const files = {
     "workspace/notes.md": strToU8("Keep a 3 mm wall.\n"),
@@ -60,7 +72,7 @@ test("resume chooses the last active main conversation, not a newer subagent", (
 });
 
 test("recovery imports a first-increment workspace and only its matching conversation", async () => {
-  const root = await mkdtemp(join(tmpdir(), "freac-old-workspace-"));
+  const root = await mkdtemp(join(tmpdir(), "makeshift-old-workspace-"));
   try {
     const old = join(root, "workspaces", "document-old"),
       home = join(root, "codex");
@@ -96,7 +108,7 @@ test("archives reject escapes, ambiguous names, private harness data, symlinks a
     assert.throws(() =>
       readPortableArchive(
         zipSync({
-          "model.json": strToU8('{"format":"freac","version":2,"document":{}}'),
+          "model.json": strToU8('{"format":"makeshift","version":2,"document":{}}'),
           [path]: strToU8("x"),
         }),
       ),
@@ -119,7 +131,7 @@ test("archives reject escapes, ambiguous names, private harness data, symlinks a
 });
 
 test("workspace dirty state, extraction and conversation-only changes exclude machine data", async () => {
-  const root = await mkdtemp(join(tmpdir(), "freac-portable-test-"));
+  const root = await mkdtemp(join(tmpdir(), "makeshift-portable-test-"));
   const workspace = new AgentWorkspace(root);
   try {
     await workspace.ensure();

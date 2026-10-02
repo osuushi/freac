@@ -155,7 +155,7 @@ export async function mirrorBodyRoute(page, name) {
 }
 
 async function archive(page, name, before) {
-  const path = resolve(`.cache/sketch-review/${name}-mirror.freac`);
+  const path = resolve(`.cache/sketch-review/${name}-mirror.makeshift`);
   await saveDocument(page, path);
   await reset(page);
   await openDocument(page, path);

@@ -1,36 +1,36 @@
 # FreeCAD/OCCT kernel audit (pinned source)
 
-Freac's [captured subtraction constructor](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/recipe-refresh.md) exposed
+Makeshift's [captured subtraction constructor](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/recipe-refresh.md) exposed
 a cache/publication counterexample: returning a correct Boolean volume did not
 ensure the accepted operation stored the Boolean solid. Independent cavity and
-retained-material probes now inspect the stored result. This is Freac runtime
+retained-material probes now inspect the stored result. This is Makeshift runtime
 evidence, not a change to the pinned upstream findings below.
 
-Scope: `/Users/adacohen/projects/freac/.reference/FreeCAD`, revision `78e4038a564e4c8bfebb40119b41d67531232223`. Links are immutable GitHub links to that revision. No source/build/install changes were made.
+Scope: `/Users/adacohen/projects/makeshift/.reference/FreeCAD`, revision `78e4038a564e4c8bfebb40119b41d67531232223`. Links are immutable GitHub links to that revision. No source/build/install changes were made.
 
-## Freac face-edit helper follow-up
+## Makeshift face-edit helper follow-up
 
-The helper built after Freac `a4dac00` resolves six faces from a validated
+The helper built after Makeshift `a4dac00` resolves six faces from a validated
 rectangular capture and source-edge correspondence, not OCCT face enumeration
 order. Review required bijective geometric correspondence: distinct source IDs
 can still repeat the same edge. Tests now measure exact returned face geometry
 and orientation independently of the helper metadata, including located shapes.
 See face-edit evidence (historical; `git show 2485a97:docs/evidence/face-edit-handoff.md`) for exact coverage.
-This is Freac runtime evidence; the upstream inspected revision above is unchanged.
+This is Makeshift runtime evidence; the upstream inspected revision above is unchanged.
 It does not establish naming through arbitrary face splits, Booleans or fillets.
 
-The subsequent Freac signed-extrusion helper keeps profile/terminal cap identity
+The subsequent Makeshift signed-extrusion helper keeps profile/terminal cap identity
 separate from sorted world-height bounds. Both signs and outward face offsets
-have focused exact-geometry evidence in [signed extrusion](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/signed-extrusion.md).
+have focused exact-geometry evidence in [signed extrusion](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/signed-extrusion.md).
 Review also distinguished a face's plane from its arbitrary parameter origin:
 an adjacent edit can move that origin tangentially while the plane stays fixed.
-These are Freac implementation lessons; the inspected upstream revision is
+These are Makeshift implementation lessons; the inspected upstream revision is
 unchanged and general support/topology mapping remains unverified.
 
-## Freac face-boundary runtime follow-up
+## Makeshift face-boundary runtime follow-up
 
 The 2026-09-15 boundary selection checks count edge occurrences in exact face
-wires, not tessellation edges or distinct adjacent-face counts. Initially Freac
+wires, not tessellation edges or distinct adjacent-face counts. Initially Makeshift
 passed region-walking circle splits into extrusion, producing artificial
 arc-bounded side faces. The circular-edge follow-up rejoins these spans and sends
 complete circles as closed kernel edges: one cylindrical wall, with one seam
@@ -39,20 +39,20 @@ visible/selectable/snappable edges. Native tests in `tests/body-boundary.test.ts
 and `tests/circular-profile.test.ts` cover annuli, a locally generated OCCT
 periodic-cylinder fixture, coordinate planes, signed distances and partial
 major/minor circular regions. Ordinary UI tests verify complete-rim picking and
-seam rejection in Chromium/WebKit/hidden Electron. This is Freac runtime evidence, not a new upstream
+seam rejection in Chromium/WebKit/hidden Electron. This is Makeshift runtime evidence, not a new upstream
 source inference. Stable edge IDs are assigned after kernel presentation and
 face references are regenerated from BRep on archive load.
 
-## Freac projection contour follow-up (2026-10-01)
+## Makeshift projection contour follow-up (2026-10-01)
 
 Exact face-wire boundaries omit apparent contours that are not topology edges.
-Freac now obtains those 3D curves using OCCT 7.9.3 HLR and passes them through the
+Makeshift now obtains those 3D curves using OCCT 7.9.3 HLR and passes them through the
 same analytic/bounded cubic projection conversion as explicit edges. Native tests
 in `tests/projection-sources.test.ts` independently check cylindrical side bounds,
 a spherical outline with only a periodic seam and degenerate pole edges, collapsed
 implicit box edges, trimmed sketch-region spans/holes and both projection directions.
 The sphere exposed null spatial curves at the poles: implicit degenerate edges
-must be skipped before reading their curves. These are Freac runtime observations;
+must be skipped before reading their curves. These are Makeshift runtime observations;
 no new claim about the pinned FreeCAD source and no upstream code copying is involved.
 The later tilted-cylinder capture exposed another distinction: a side endpoint
 lies on the exact rim's interior, but independent whole-rim cubic fitting can miss
@@ -61,7 +61,7 @@ both rim loops closing. `tests/projection-junctions.test.ts` checks the absent
 captured cell, both body/curved-face reprojection paths, exact junction endpoints,
 independent silhouette/cell areas and downstream extrusion. Splitting exact rims at
 contour contacts before fitting preserves closure without enlarging region tolerance.
-These are additional Freac runtime findings, not upstream source claims.
+These are additional Makeshift runtime findings, not upstream source claims.
 Arbitrary freeform contour robustness and large-model HLR performance remain unproven.
 
 ## Bounded face-movement experiment (2026-09-16)
@@ -85,7 +85,7 @@ requests reject. Face/edge-count guards are fixture-specific and do not prove
 general preservation of unshared boundaries or swept-path collision safety.
 Multiple cylindrical holes, spheres, arbitrary face sets, topology ID
 continuation and editor interaction remain untested. See the README for commands.
-No upstream code was copied; these are Freac runtime observations.
+No upstream code was copied; these are Makeshift runtime observations.
 
 The rectangular-pocket follow-up (`native/kernel/tests/pocket-move-probe.cpp`)
 removes/heals four selected walls and a floor. Their oriented, extended planes
@@ -144,7 +144,7 @@ and clearance remain required. Untouched planar and cylindrical faces are suppor
 Independent expected-solid differences and reverse edits pass for all six shapes;
 incomplete selections, boundary/neighbor contact, nonconvex and disconnected patches
 reject. Backend tests also preserve face IDs through acceptance, Undo/Redo and
-reopening. This is bounded Freac runtime evidence, not arbitrary surface movement
+reopening. This is bounded Makeshift runtime evidence, not arbitrary surface movement
 or swept-path safety, and no new upstream implementation was copied.
 
 The later same-support extension extracts the healed/current-body Boolean
@@ -159,7 +159,7 @@ Attachment overlap after healing and selected trimmed-face membership are checke
 disconnected extracted volumes reject. The older analytic retrimming path remains.
 The founder's rounded-wall capture and toroidal face IDs survive backend reopen
 and re-edit; the capture also passes ordinary UI controls in all three runtimes.
-These are Freac runtime findings, not general freeform/curved-support movement or
+These are Makeshift runtime findings, not general freeform/curved-support movement or
 new source-derived claims; no upstream code was copied.
 
 The 14:54 shared-cylinder movement capture exposed a separate identity bug:
@@ -172,9 +172,9 @@ co-spherical patches, partial overlap, enlarged patches, enumeration order,
 misleading history and ambiguity rejection. These sphere tests establish matching,
 not new spherical-feature movement support. The captured translation and rotation
 preserve individual IDs through backend reopen and reverse edits; existing hole
-tilt/retrim remains covered. This is Freac runtime evidence, not new upstream code.
+tilt/retrim remains covered. This is Makeshift runtime evidence, not new upstream code.
 
-## Freac boundary-reconnection experiment
+## Makeshift boundary-reconnection experiment
 
 The 2026-09-17 experiment uses one boundary graph for edge and face selections.
 Selected boundaries transform rigidly, complete enclosed faces travel with them,
@@ -195,7 +195,7 @@ faces; edge IDs require a bijection checked by lengths and bidirectional sampled
 distances. Fitting/sewing tolerance is 1e-6 mm. These are bounded numerical checks,
 not certified global surface-error or swept-motion proofs. Tangency and original
 interior curvature are not enforced; nonplanar multiply bounded faces outside the
-periodic-band case still reject. This is Freac runtime evidence, not a new upstream
+periodic-band case still reject. This is Makeshift runtime evidence, not a new upstream
 source inference; no upstream implementation was copied.
 
 Runtime follow-up when removing the comparison path: partial feature selections
@@ -208,11 +208,11 @@ radius-8 shoulder, reported volume differs from the analytic value by about
 5.1e-6 mm³ on 1964.5 mm³; the UI volume comparison uses 1e-8 relative tolerance,
 while coordinate checks remain at 1e-6 mm.
 
-## Freac face-offset runtime follow-up
+## Makeshift face-offset runtime follow-up
 
 The 2026-09-15 current-body path uses OCCT 7.9.3 `BRepOffset_MakeOffset`, zero
 general offset, individual `SetOffsetOnFace` distances, and intersection joins.
-This is independent Freac runtime evidence in `tests/body-offset.test.ts`, not
+This is independent Makeshift runtime evidence in `tests/body-offset.test.ts`, not
 new FreeCAD source evidence or a claim of arbitrary surface support.
 
 Planar face +2 mm beside a Ø3 through-hole gives the expected increased plate
@@ -241,7 +241,7 @@ Electron. Physical iPad input and Linux/Windows builds remain unverified here.
 
 ### Existing blend editing and chamfer direction correction
 
-Subsequent Freac runtime checks (`tests/body-blend-resize.test.ts`) use
+Subsequent Makeshift runtime checks (`tests/body-blend-resize.test.ts`) use
 `BRepAlgoAPI_Defeaturing` on current recognized constant-radius patches, then
 `BRepFilletAPI_MakeFillet` on the recovered intersections of their supporting
 faces. Convex/concave cylinder strips, a toroidal rim and a sphere with three
@@ -256,12 +256,12 @@ oriented normal from its parameter axes agrees with the oriented triangles and
 actual signed face displacement (`tests/body-chamfer.test.ts`). Typed signed
 offsets were already correct. Ordinary pointer tests in `tests/ui-blend-edit.mjs`
 verify outward drag adds material for planar/conical chamfers and a toroidal
-fillet in Chromium, WebKit and hidden Electron. These are Freac runtime findings,
+fillet in Chromium, WebKit and hidden Electron. These are Makeshift runtime findings,
 not new upstream source claims or general freeform-offset evidence.
 
 ### Automatic normal-offset face chains
 
-Freac now takes the transitive closure of shared-edge tangent faces using OCCT's
+Makeshift now takes the transitive closure of shared-edge tangent faces using OCCT's
 `BRepLib::ContinuityOfFaces` (G1 or better). The same native function supplies
 presentation membership and operation selection. This stops at sharp boundaries;
 it does not group disconnected faces by approximate normal or curvature.
@@ -269,12 +269,12 @@ Normal-offset closure includes support walls; existing-fillet radius groups rema
 separate. Native tests check equivalent requests from each member of a rounded
 corner, toroidal rim and spherical corner offsets, and curved radius collapse.
 `tests/ui-offset-chain.mjs` exercises rounded wall and chamfer strips through
-ordinary clicks/drags in Chromium, WebKit and hidden Electron. These are Freac
+ordinary clicks/drags in Chromium, WebKit and hidden Electron. These are Makeshift
 runtime findings, not a general arbitrary-surface feasibility claim.
 
 ### Planar contact and topology consumption
 
-Freac's stepped-prism reproduction showed why validity alone is insufficient:
+Makeshift's stepped-prism reproduction showed why validity alone is insufficient:
 the old offset could return a valid BRep with split coplanar seams and, for inward
 motion beyond the step, an incorrect unchanged volume. The corrected operation
 assigns a contacted parallel face only the travel remaining after contact.
@@ -289,10 +289,10 @@ checked. Result-face correspondence supplies transient preview highlighting;
 merged faces get fresh IDs. Invalid solid orientation/material reversal is rejected,
 and the application searches back to verified geometry for failed normal offsets.
 Pointer tests cover reversal, achieved numeric distance, Undo and archive reopening.
-These are Freac runtime findings; they do not establish arbitrary surface-contact
+These are Makeshift runtime findings; they do not establish arbitrary surface-contact
 reconstruction or allow accepting invalid kernel results.
 
-## Freac edge-fillet runtime follow-up
+## Makeshift edge-fillet runtime follow-up
 
 The 2026-09-15 native fillet path uses OCCT 7.9.3, checks selected edge ownership,
 verifies each edge enters a contour, and now discovers required contour edges on
@@ -302,7 +302,7 @@ Native tests verify both Fillet and Chamfer expand a circular rim made from two
 tangent arcs and produce the same volume as explicit full-chain selection. Sharp
 box edges remain single edges, including in mixed-body selections. Ordinary UI
 tests verify straight/arc/straight chain expansion on an extruded rounded sketch
-in Chromium/WebKit/hidden Electron. These are Freac runtime observations. Results are
+in Chromium/WebKit/hidden Electron. These are Makeshift runtime observations. Results are
 validated as one nonempty solid per input body. Modified/generated correspondence
 is filtered by topology type; an edge's generated blend face gets a new face ID.
 
@@ -310,11 +310,11 @@ is filtered by topology type; an edge's generated blend face gets a new face ID.
 edges, circular rims, shared multi-body requests, invalid recovery and preserved
 identities across Undo/reopen. A 15 mm radius succeeds on a 20 mm square corner;
 the 20 mm complete-support-consumption request fails in this kernel. After founder
-feedback, Freac brackets this failure against verified geometry and returns a legal
+feedback, Makeshift brackets this failure against verified geometry and returns a legal
 size approaching the limit. The same local feasibility path constrains symmetric
 chamfers; `tests/body-chamfer.test.ts` checks convex/concave/circular volumes,
 shared-body edits, large requests, zero and history. This is a conservative numerical
-boundary for the current selection, not proof of a global maximum. These are bounded Freac runtime results,
+boundary for the current selection, not proof of a global maximum. These are bounded Makeshift runtime results,
 not a general fillet-feasibility guarantee or a new upstream source inference.
 
 ## Revolve and constant-pitch helix follow-up
@@ -325,10 +325,10 @@ Frenet mode. It separately checks orientation and applies tolerance/healing work
 [FeatureHelix.cpp, execute](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/PartDesign/App/FeatureHelix.cpp#L360-L408).
 This was API evidence; no upstream implementation was copied.
 
-Freac inference: a constant-pitch cylindrical helix's Frenet frame rotates about
+Makeshift inference: a constant-pitch cylindrical helix's Frenet frame rotates about
 its axis at the same angular rate as the path. Preserving the initial radial
 section orientation gives the requested screw motion. Zero height instead uses
-OCCT's dedicated analytic revolution. Freac runtime tests in
+OCCT's dedicated analytic revolution. Makeshift runtime tests in
 `tests/body-revolve.test.ts` check full/partial and signed revolutions, mixed
 line/arc profiles, holes, translated/rotated axes, straight cap-edge axes, Boolean
 results, independent materialization, history and archive reopening. Helical tests
@@ -356,7 +356,7 @@ an analytic plane through the axis. Each side sweeps in pieces of at most 180°;
 transformed copies at constant pitch union into the result. Holes subtract inside
 each piece **before** pieces union, so another turn may fill a swept cavity.
 The final solid passes BRep validity, positive orientation and self-intersection
-checks. Multiple disjoint solids remain valid output. This is Freac runtime work,
+checks. Multiple disjoint solids remain valid output. This is Makeshift runtime work,
 not a claim that FreeCAD implements this union policy; no upstream code was copied.
 
 `tests/body-screw-union.test.ts` preserves minimal versions of both captures and
@@ -376,7 +376,7 @@ accepted BRep directly gave one solid, 8 vertices, 15 edges and 8 faces.
 Nevertheless, the shared contact vertex has **two disconnected surface fans**:
 its boundary is not a strict 2-manifold. Every edge still has two face uses, so
 an edge-incidence-only manifold check would miss it. Kernel-valid and strictly
-manifold must not be treated as synonyms in Freac's claims.
+manifold must not be treated as synonyms in Makeshift's claims.
 A direct native diagnostic both cut and fused an R1 sphere at the contact; both
 results passed the same kernel checks. These probes show that the contact need
 not prevent later Booleans, not that arbitrary fillets, offsets or downstream
@@ -393,16 +393,16 @@ inference from its appearance or the kernel validity flag.
 
 ## Kernel and App mechanisms
 
-Freac's subsequent [cut evaluator and face-history checks](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/cut-evaluation.md)
+Makeshift's subsequent [cut evaluator and face-history checks](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/cut-evaluation.md)
 map complete copied operand face sets onto actual result occurrences. A deleted
 tool cap is ordinary history, not a missing-source error. Another failure probe
 showed that the center of mass of a holed face can lie in its aperture: two OUT
 classifications there do not establish reversed face orientation. The final
 checks use explicit semantic normals and known cavity-boundary probes, with no
-orientation repair. These are independent Freac runtime lessons; the inspected
+orientation repair. These are independent Makeshift runtime lessons; the inspected
 upstream revisions remain unchanged and general split-face naming remains open.
 
-Freac's initial [Boolean helper evidence](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/boolean-kernel.md) adds
+Makeshift's initial [Boolean helper evidence](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/boolean-kernel.md) adds
 independent runtime checks without new upstream source inspection. Matching
 volume alone also fails for a pocket: a same-size tool at a block corner removes
 the same volume as an interior cap cavity. The corrected fixture uses explicit
@@ -445,11 +445,11 @@ transfer and write status. It has an OCCT-version-guarded shape-processing
 workaround for 7.9+ and comments about header string encoding. This is concrete
 evidence that exchanging a shape needs more than calling a writer, and changing
 kernel versions can alter required integration. Do not blindly transplant the
-workaround: reproduce its necessity against Freac's selected version.
+workaround: reproduce its necessity against Makeshift's selected version.
 [TopoShape.cpp L896-L936](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Part/App/TopoShape.cpp#L896-L936).
 Full XCAF/assembly metadata and units are outside this first-pass audit.
 
-### Freac STEP representation (2026-10-01)
+### Makeshift STEP representation (2026-10-01)
 
 Source observation at configured OCCT 7.9.3 commit
 `a016080bf6738d6aeae020badee4e888ad1540a5`:
@@ -462,7 +462,7 @@ can produce a `tessellated_solid` without a manifold BRep link; its
 [`TopoDSToStep_MakeTessellatedItem::Init` face conversion](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/TopoDSToStep/TopoDSToStep_MakeTessellatedItem.cxx#L112-L175)
 uses attached triangulation for a `triangulated_face` without requiring a surface.
 
-Freac inference: preserve ordinary solids as exact BReps and carry decorated
+Makeshift inference: preserve ordinary solids as exact BReps and carry decorated
 bodies as native AP242 meshes, without thousands of manufactured planar CAD faces
 or an incorrect nominal-solid alternate representation. Warn about mesh editability
 and receiving-app support, with an explicit underlying-exact-solid export choice.
@@ -493,7 +493,7 @@ These upstream test groups are especially relevant: `testTopoShapeFuse`, `testTo
 
 ### Independent P0b execution, 2026-09-13
 
-The [native proof](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p0b-native-components.md) built OCCT 7.9.3 at
+The [native proof](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p0b-native-components.md) built OCCT 7.9.3 at
 `a016080bf6738d6aeae020badee4e888ad1540a5`, separately from the audited FreeCAD
 environment. On Darwin arm64 it used actual PlaneGCS output to construct a
 rectangle with a circular hole and a prism, with validity, measured area/volume
@@ -503,7 +503,7 @@ This is runtime evidence for that integration only, not for all OCCT operations.
 Inspected OCCT source reinforces separate validation: `BRepBuilderAPI_MakeFace::Add`
 documents conditions on its wires that it does not check
 ([pinned MakeFace header](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepBuilderAPI/BRepBuilderAPI_MakeFace.hxx#L250-L272)).
-Freac implication: a completed constructor does not prove the selected region's
+Makeshift implication: a completed constructor does not prove the selected region's
 intent. The proof measures mass properties using exact geometry, not triangulation
 ([BRepGProp declarations](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepGProp/BRepGProp.hxx#L125-L203)).
 It maps unique edges before counting the two analytic circular boundaries; raw
@@ -516,12 +516,12 @@ Use a revisioned domain record above the kernel: model revision, source feature/
 
 ### Independent bounded arrangement probe, 2026-09-13
 
-The [region proof](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p0-regions.md) uses pinned OCCT 7.9.3
+The [region proof](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p0-regions.md) uses pinned OCCT 7.9.3
 [`BRepAlgoAPI_Splitter::Build`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepAlgoAPI/BRepAlgoAPI_Splitter.hxx)
 with a padded support face and input line tools. Runtime checks on Darwin arm64
 produced two area-100 cells for the crossing fixture, preserved the area set
 under reordered/reversed input, and produced 70/130 after translation and an
-off-center crossing. Freac owns support construction, exterior exclusion and
+off-center crossing. Makeshift owns support construction, exterior exclusion and
 source correspondence; these are not an automatic sketch-region service.
 
 Counterexamples shape the boundary: a horizontal line alone has zero cells;
@@ -539,7 +539,7 @@ remain unverified by this line-segment probe.
 
 ### Exact shape round-trip probe, 2026-09-13
 
-The [binary BRep proof](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p0-roundtrip.md) independently exercises
+The [binary BRep proof](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p0-roundtrip.md) independently exercises
 OCCT 7.9.3 [`BinTools::Write` and `Read`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BinTools/BinTools.hxx).
 A fresh process reloads a box with a cylindrical through-hole and validates
 surface area 737.69911184307739 mm², volume 937.1681469282039 mm³, one solid,
@@ -551,7 +551,7 @@ crash-atomic saves or general corrupt-file handling.
 
 ### Relocated native candidate, 2026-09-13
 
-The [stage probe](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p0-stage.md) copied the kernel and statically linked
+The [stage probe](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p0-stage.md) copied the kernel and statically linked
 solver proof into a fresh bundle, rewrote only copied Mach-O search paths and
 ad-hoc signed those copies. On Darwin arm64, fresh processes ran solver/kernel,
 recovery, repeated changes and exact BRep read with development DYLD overrides
@@ -564,7 +564,7 @@ for unexercised modules, source/relinking compliance or the coding-agent runtime
 
 ### Reusable boundary ownership probe, 2026-09-13
 
-The [P1a adapter proof](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p1a-adapters.md) uses
+The [P1a adapter proof](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p1a-adapters.md) uses
 [`BRepBuilderAPI_Copy(shape, true, false)`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepBuilderAPI/BRepBuilderAPI_Copy.hxx)
 to copy topology and geometry without triangulation. A copied face is checked
 as non-partner to its source; changing its placement leaves the source placement
@@ -581,7 +581,7 @@ treated null as zero volume. That control flow cannot establish equivalence.
 The corrected comparison checks completion and errors before interpreting the
 result, then checks result validity and finite absolute difference volume.
 Fresh-process and malformed-solid acceptance is recorded separately in the
-[P1c report](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p1c-restore.md); source availability is not that evidence.
+[P1c report](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p1c-restore.md); source availability is not that evidence.
 
 In OCCT 7.9.3, `IsDone()` is inherited through
 [`BRepAlgoAPI_Algo`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepAlgoAPI/BRepAlgoAPI_Algo.hxx),
@@ -590,18 +590,18 @@ and [`BRepBuilderAPI_Command::IsDone`](https://github.com/Open-Cascade-SAS/OCCT/
 An audit that searched only the immediate Boolean headers incorrectly reported
 it unavailable. Follow the inheritance chain before declaring an API absent.
 [`BRepAlgoAPI_BuilderAlgo::SetNonDestructive`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepAlgoAPI/BRepAlgoAPI_BuilderAlgo.hxx)
-documents that argument shapes are not modified in that mode; Freac also uses
+documents that argument shapes are not modified in that mode; Makeshift also uses
 copied operands in this bounded comparison. These facts do not make Boolean
 equivalence a general durable topology identity scheme.
 
 ### Independent presentation query, 2026-09-13
 
-Freac now meshes copied operation solids and current planar cells through a separate
+Makeshift now meshes copied operation solids and current planar cells through a separate
 `Document::presentation()` query. The inspected OCCT revision remains
 `a016080bf6738d6aeae020badee4e888ad1540a5`.
 [`BRepMesh_IncrementalMesh`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepMesh/BRepMesh_IncrementalMesh.hxx)
 and [`BRep_Tool::Triangulation`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRep/BRep_Tool.hxx)
-provide the native mesh and its location. Freac applies the location transform,
+provide the native mesh and its location. Makeshift applies the location transform,
 corrects reversed-face winding and tags meshes by document/session/revision/owner.
 It does not persist triangle identity or derived meshes in document history.
 
@@ -615,7 +615,7 @@ setting; curved-model quality, performance and generalized picking remain gaps.
 
 ### Framed exact geometry and orientation
 
-Freac runtime work at commit `f6f45dc` adds a local/world rectangular-prism
+Makeshift runtime work at commit `f6f45dc` adds a local/world rectangular-prism
 adapter using the same OCCT 7.9.3 revision above; no additional upstream source
 inspection is claimed. Copy/transform history identifies corresponding faces,
 but the adapter resolves the occurrence in the returned solid to retain its
@@ -627,12 +627,12 @@ Manager-run frame and framed-prism tests pass for translated, bottom, vertical
 side and rotated planes, including negative depth. Canonical point and shape
 transforms share one rigid matrix; independently normalizing slightly skewed
 basis vectors could otherwise make their conversions disagree. These are bounded
-Freac findings, not universal topology naming or face-support persistence.
+Makeshift findings, not universal topology naming or face-support persistence.
 See `git show 3a4615641204f3a90683c590f52bfe3f81b29f87:docs/evidence/plane-frame.md` for commands and remaining integration gaps.
 
 ### Workspace integration review
 
-The subsequent Freac origin-workspace integration separates plane-local captured
+The subsequent Makeshift origin-workspace integration separates plane-local captured
 boundaries from world-space solids and presentation. This adds no upstream
 source claim; the inspected OCCT revision remains the one recorded above.
 Candidate evaluation and archive reconstruction must resolve the frame in the
@@ -644,20 +644,20 @@ its local capture unchanged, independently in current, undo and redo history.
 Another counterexample is identity in presentation: arrangement cell IDs can
 repeat across planes. Mesh ownership must include the workspace, even when
 operation IDs are document-wide. See
-[origin workspace evidence](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/origin-workspaces.md) for verification
+[origin workspace evidence](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/origin-workspaces.md) for verification
 status and limits; face-supported workspaces and general topology remain open.
 
-The next [face-support resolver proof](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/face-workspace-resolver.md)
+The next [face-support resolver proof](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/face-workspace-resolver.md)
 uses a document-local operation/capture/semantic-face reference to derive the
 current frame through a candidate dependency graph. Nested-support and cycle
 probes exercise that boundary before public command or archive integration.
 Incoming pick revision validation remains distinct from the stored attachment's
-lifetime. This adds Freac implementation evidence only; the inspected upstream
+lifetime. This adds Makeshift implementation evidence only; the inspected upstream
 revisions and general topology coverage remain unchanged.
 
 ### Pocket result mapping and editing probes
 
-Freac commits `9bfea8c`, `ca935a4` and `cf85a95` add bounded runtime evidence
+Makeshift commits `9bfea8c`, `ca935a4` and `cf85a95` add bounded runtime evidence
 for planar Boolean result faces and cut-owned offsets using the same pinned
 OCCT revision above. This is independent implementation evidence, not a new
 FreeCAD source audit. Actual result occurrences supply orientation; operand
@@ -674,22 +674,22 @@ Another failure probe distinguishes a deleted tool start face from an actual
 collapsing offset. Rejecting a deleted key cannot demonstrate collapse handling.
 The corrected floor test applies the full depth toward the opposing plane and
 checks the specific collapse diagnostic while preserving accepted state.
-See [mapped faces](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/cut-result-faces.md) and
-[cut offsets](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/cut-face-offset.md). These helpers do not establish
+See [mapped faces](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/cut-result-faces.md) and
+[cut offsets](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/cut-face-offset.md). These helpers do not establish
 general Boolean topology stability, cut-face sketch support, or UI usability.
 
-The subsequent [staged refresh probe](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/supported-operation-refresh.md)
+The subsequent [staged refresh probe](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/supported-operation-refresh.md)
 demonstrates why unchanged volume is insufficient for dependent geometry: moving
 a producer shifts two attached solids while both retain volume 20 mm³. Replacement
 solids are staged before assignment; a later collapsing operation leaves the
-earlier cached bounds unchanged. This is independent Freac runtime evidence with
+earlier cached bounds unchanged. This is independent Makeshift runtime evidence with
 the same OCCT revision, not a new upstream finding. Public command and persistence
 integration remain separate checks.
 
 ### Pocket interaction follow-through
 
-Freac commits `32c6e7b`, `7d86b9c` and `d8544aa` connect mapped result faces to
-spatial editing and used-profile visibility. This is Freac implementation
+Makeshift commits `32c6e7b`, `7d86b9c` and `d8544aa` connect mapped result faces to
+spatial editing and used-profile visibility. This is Makeshift implementation
 evidence using the previously recorded native dependencies, not a new upstream
 source audit. Cavity depth has an explicit inverse relationship to signed
 outward face motion; translating a floor guide must use that same relationship
@@ -702,24 +702,24 @@ matches complete workspace-qualified capture boundaries to current regions,
 including source versions and parameter spans, and hides matching profiles in
 3D. Planar mode restores them. Remembered cell IDs alone would conflate distinct
 workspaces and would not survive normal region regeneration reliably.
-See [renderer integration evidence](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/pocket-renderer-integration.md)
+See [renderer integration evidence](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/pocket-renderer-integration.md)
 for actual runtime coverage and remaining limits.
 
-## Freac curved closure follow-up (2026-09-14)
+## Makeshift curved closure follow-up (2026-09-14)
 
 Founder review exposed a display/model boundary error: polygonizing a circle
 before region detection disconnected line endpoints snapped to the actual circle.
-Freac now constructs directed analytic curve spans and finds closed boundaries
+Makeshift now constructs directed analytic curve spans and finds closed boundaries
 before tessellation. The circle/line wedge regression verifies independent analytic
 areas, rotated non-quadrant joins and real gaps; ordinary UI tests check visible
-fill through zoom and Delete/Undo. This is Freac implementation evidence, with
+fill through zoom and Delete/Undo. This is Makeshift implementation evidence, with
 upstream revision unchanged and no upstream code copied. It does not establish
 arc-tool editing, selectable holes or use as kernel operation boundaries.
 
-## Freac arc-domain follow-up (2026-09-14)
+## Makeshift arc-domain follow-up (2026-09-14)
 
 No new upstream source was copied or inspected; the recorded FreeCAD revision
-is unchanged. Freac's standalone arcs now use endpoints plus signed bulge as
+is unchanged. Makeshift's standalone arcs now use endpoints plus signed bulge as
 independent geometry. The existing analytic boundary walker accepts their bounded
 angular domains; circle intersections are filtered to those domains before
 forming regions. Display sampling remains downstream. Independent tests cover
@@ -728,14 +728,14 @@ the supporting circle. Ordinary Chromium/WebKit/hidden Electron input verifies
 arc/line fill, editing and Undo. Curved constraints and trim rewriting remain
 unimplemented; this is geometry/interaction evidence, not a PlaneGCS arc proof.
 
-## Freac interactive kernel scheduling follow-up (2026-09-16)
+## Makeshift interactive kernel scheduling follow-up (2026-09-16)
 
 OCCT parallelism does not require concurrent application-document edits or TBB.
 Source observation at pinned OCCT `a016080bf6738d6aeae020badee4e888ad1540a5`:
 [`OSD_Parallel::ToUseOcctThreads`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/OSD/OSD_Parallel.cxx#L176-L188)
 defaults to OCCT threads without TBB;
 [`BRepAlgoAPI_BuilderAlgo::IntersectShapes/BuildResult`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepAlgoAPI/BRepAlgoAPI_BuilderAlgo.cxx#L120-L141)
-forwards the operation's parallel flag to its filler/builder. Freac inference:
+forwards the operation's parallel flag to its filler/builder. Makeshift inference:
 keep one calculator request active while parallelizing work inside that request.
 Actual runtime verification and the repeatable synthetic benchmark are recorded in
 [the native calculator README](../../native/kernel/README.md#interactive-performance).
@@ -749,9 +749,9 @@ Source observation in the pinned OCCT 7.9.3 headers (commit
 allow separate face/edge unification and protection of edges against face merging,
 and vertices against edge concatenation. `SetSafeInputMode` and `History` support
 non-mutating input and correspondence. No upstream implementation was copied;
-Freac calls the existing LGPL component through its public API.
+Makeshift calls the existing LGPL component through its public API.
 
-Freac inference: bound optional cleanup with protected face boundaries and remote
+Makeshift inference: bound optional cleanup with protected face boundaries and remote
 vertices, rather than refining an entire body after each edit. Actual native
 regressions verify whole/partial box cleanup, cylindrical ribs, body separation,
 volume, identities, Undo, no-op history and preservation of older extrusion ribs.
@@ -778,7 +778,7 @@ FreeCAD's pinned
 [`ExtrusionHelper::makeElementDraft`](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Part/App/ExtrusionHelper.cpp#L574-L723)
 provides another offset/ruled-loft precedent; it is evidence, not copied code.
 
-Freac inference: use a true lateral offset rather than scaling about a centroid.
+Makeshift inference: use a true lateral offset rather than scaling about a centroid.
 Offset outer and hole boundaries in opposite directions, validate end-section
 nesting and nonzero area, and reject collisions. Straight/circular boundaries use
 parallel contours and ruled solids; cubic/general boundaries use the draft sweep.
@@ -802,7 +802,7 @@ converts trimmed curves to B-splines and normalizes their parameters.
 [`Approx_CurvilinearParameter`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Approx/Approx_CurvilinearParameter.hxx#L22-L74)
 offers approximate arc-length parameterization and reports its maximum 3D error.
 
-Freac inference: disable compatibility optimization for intentional twisting,
+Makeshift inference: disable compatibility optimization for intentional twisting,
 align offset-wire edges before rotation, and reparameterize general drafted
 sections to reduce artificial correspondence changes along the loft. Exact
 Bézier-to-B-spline conversion is not the source of draft approximation; the
@@ -819,7 +819,7 @@ The drawn-cubic interaction passes Chromium/WebKit and hidden Electron.
 The kernel can also emit untranslated French exceptions: for example,
 [`BRepLProp::Continuity`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepLProp/BRepLProp.cxx#L52-L58)
 throws `Courbes non jointives` when the evaluated endpoints differ beyond its
-tolerance. Freac translates that message to “The operation could not join the
+tolerance. Makeshift translates that message to “The operation could not join the
 curves within tolerance.” at the native boundary and preserves the raw diagnostic
 on stderr. The founder's screenshot establishes the displayed exception, not
 which kernel call or model caused it; reproducing that geometry needs a captured fixture.
@@ -830,11 +830,11 @@ Source observation at configured OCCT 7.9.3 commit
 `a016080bf6738d6aeae020badee4e888ad1540a5`:
 [`BRepAlgoAPI_Defeaturing` input contract and `AddFaceToRemove`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepAlgoAPI/BRepAlgoAPI_Defeaturing.hxx#L27-L126)
 accept solid inputs and face removals, build a new shape, and expose history and
-warnings. Faces absent from the input are ignored by OCCT. Freac therefore resolves
+warnings. Faces absent from the input are ignored by OCCT. Makeshift therefore resolves
 all selected IDs before calculation and rejects warnings or any surviving selected
 face. No upstream implementation was copied; this calls the existing LGPL component.
 
-Freac runtime checks restore box geometry after hole/pocket/boss and fillet/chamfer
+Makeshift runtime checks restore box geometry after hole/pocket/boss and fillet/chamfer
 removal, comparing both Boolean differences against an independently saved stock.
 Scoped same-domain edge removal preserves volume; a sharp edge or a partially
 removable edge set rejects atomically. Mixed face/rim removal, multi-body failure,
@@ -856,18 +856,18 @@ opening selection therefore needs a distinct closed-hollow construction.
 [`BOPAlgo_ArgumentAnalyzer::TestSelfInterferences`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BOPAlgo/BOPAlgo_ArgumentAnalyzer.cxx#L340-L390)
 uses the Boolean self-interference checker independently of BRep validity.
 
-Freac inference: use arc joins for the surface distance envelope, a checked Boolean
+Makeshift inference: use arc joins for the surface distance envelope, a checked Boolean
 difference for closed hollows, and independent validity, orientation, collision,
 containment, opening and offset-correspondence checks before accepting. Keep strict
 requested thickness and atomic failure. Unsupported freeform verification must
 reject instead of pretending the kernel's success flag establishes validity.
 No upstream implementation was copied; this uses the existing LGPL OCCT component.
 
-Freac runtime evidence: box/cylinder/concave/filleted examples, multiple and adjacent
+Makeshift runtime evidence: box/cylinder/concave/filleted examples, multiple and adjacent
 openings, spherical/toroidal closed hollows and through-hole collisions are exercised
 in `tests/body-shell-geometry.test.ts`; lifecycle tests cover IDs, atomic rejection,
 Undo/Redo and reopened ordinary edits. Rounded outward box joins carry 1.1e-6 mm
-vertex tolerances even with 1e-7 mm construction tolerance. Freac bounds topology
+vertex tolerances even with 1e-7 mm construction tolerance. Makeshift bounds topology
 at 2e-6 mm separately from 1e-6 mm geometric checks. These bounded numerical tests
 do not certify arbitrary offsets; the current contract is
 [Shell](../architecture/shell.md), including rejection of unverified freeform offsets.
@@ -879,7 +879,7 @@ provide tolerance-bounded analytic recognition, not a proof of exact equivalence
 [`BRepTools_Modifier::ModifiedShape`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepTools/BRepTools_Modifier.lxx#L24-L31)
 returns its local map entry; the
 [`Rebuild` orientation assignment](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepTools/BRepTools_Modifier.cxx#L605-L614)
-is not the cumulative orientation within the solid. Freac therefore gets mapped
+is not the cumulative orientation within the solid. Makeshift therefore gets mapped
 face orientations from the rebuilt solid before checking signed offsets.
 
 Runtime evidence: the founder's two fillet supports recognize as cylinders with
@@ -905,11 +905,11 @@ including orientation handling, and returns null when unavailable. Its
 [API contract](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Geom/Geom_OffsetSurface.hxx#L350-L354)
 explicitly describes an equivalent surface.
 
-Freac inference: offset correspondence can project onto that exact equivalent
+Makeshift inference: offset correspondence can project onto that exact equivalent
 instead of the generic offset wrapper, retaining the same samples and tolerance
 and falling back to the wrapper when no equivalent exists. This avoids unnecessary
 numerical projection; it is not fitted approximation or weaker validation.
-Freac implementation uses the library API; no upstream code was copied.
+Makeshift implementation uses the library API; no upstream code was copied.
 Runtime checks and measured timings belong in test results and the local brief.
 
 ## Sweep validation performance (2026-09-21)
@@ -920,7 +920,7 @@ against the trimmed face. Its internal extrema retains the surface adaptor's add
 [`BOPAlgo_ArgumentAnalyzer::TestSelfInterferences`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BOPAlgo/BOPAlgo_ArgumentAnalyzer.cxx#L340-L371)
 forwards the parallel setting to its non-destructive self-interference checker.
 
-Freac inference: keep one stable-address query per loft face, accept a sample only
+Makeshift inference: keep one stable-address query per loft face, accept a sample only
 when a classified face point is within the existing section tolerance, and retain
 the general shape-distance fallback for edge/corner or unsuccessful projections.
 This retains every sampling station; it is not a reduction of the accuracy target.
@@ -938,9 +938,9 @@ Source observation at the configured OCCT 7.9.3 commit
 [`GeomProjLib::Curve2d`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/GeomProjLib/GeomProjLib.hxx)
 projects a spatial curve onto a surface over its parameter interval and reports
 approximation tolerance; a failed projection returns a null handle. This public
-API is already used by Freac's cylindrical Shell preparation.
+API is already used by Makeshift's cylindrical Shell preparation.
 
-Freac inference: if moved boundaries still lie on an existing cylinder, retain
+Makeshift inference: if moved boundaries still lie on an existing cylinder, retain
 that support instead of attempting a generic surface fill. Preserve each original
 periodic parameter branch, including both occurrences of the seam. Check spatial/
 parameter correspondence, resulting topology tolerances and the existing solid
@@ -962,7 +962,7 @@ checks the maximum distance between a SameParameter edge and its face representa
 [`BRepTools_Modifier::ModifiedShape`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepTools/BRepTools_Modifier.lxx#L24-L31)
 requires membership in its map; tool-side origins must bypass a target-body copy map.
 
-Freac inference: after a failed subtraction yields invalid cylindrical faces,
+Makeshift inference: after a failed subtraction yields invalid cylindrical faces,
 partition only their corresponding source cylinders and rebuild the cut once.
 Operate on a deep copy, carry copy/division/Boolean correspondence, and validate
 source volume and precision before reuse. New split edges initialized with a
@@ -985,7 +985,7 @@ partitioned. No upstream code was copied; existing OCCT linking/licensing applie
 Captured Face Offset follow-up: OCCT's pinned
 [`BRepLib::BuildCurve3d`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepLib/BRepLib.cxx#L295-L440)
 keeps an existing spatial curve, or reconstructs one from a pcurve when absent.
-Freac inference: a coarse generated intersection curve can be rebuilt from its
+Makeshift inference: a coarse generated intersection curve can be rebuilt from its
 accurate pcurve, then checked independently against every incident surface and
 endpoint. This uses the public API; no upstream implementation was copied.
 Runtime verification on the captured hollow bend: sharp intersection offsets of
@@ -1004,7 +1004,7 @@ can deep-copy geometry independently of triangulation. [`Geom_OffsetSurface`](ht
 represents normal-distance offsets of regular supports; its existence alone does
 not establish a valid non-self-intersecting solid.
 
-Freac inference: recompute spline boundary correspondence on a deep copy at the
+Makeshift inference: recompute spline boundary correspondence on a deep copy at the
 existing construction precision, then require the unchanged strict solid checks.
 Use cumulative face orientations from the copied solid. Validate generic offsets
 against the signed offset support across C2 spans and check sampled normal
@@ -1031,11 +1031,11 @@ an estimated relative volume error. The face integrator
 integrates parameter spans with nested adaptive quadrature. These are inspected
 public APIs/implementation, not copied code.
 
-Freac runtime observation: ordinary adaptive integration reports the captured
+Makeshift runtime observation: ordinary adaptive integration reports the captured
 hollow bend as 8131.907774 mm³, while span integration reports 8132.078228 mm³.
 The false conservation rejection occurs despite a tiny reported integration error.
 Point-reference span integration is very slow on the small XZ split fragment;
-an exterior plane reference measures it promptly. Freac therefore retries a
+an exterior plane reference measures it promptly. Makeshift therefore retries a
 failed ordinary volume comparison with span integration from one exterior
 reference plane shared by source and pieces. Estimated absolute integration
 errors consume the unchanged conservation allowance; they do not enlarge it.
@@ -1053,7 +1053,7 @@ uses its independent 1e-4 default. The
 [`GeomFill_Pipe::Perform` call](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepOffset/BRepOffset_Offset.cxx#L1104-L1108)
 receives this tolerance, not the outer Shell construction tolerance.
 
-Freac adaptation: the setup script changes this call to pass 1e-7 explicitly;
+Makeshift adaptation: the setup script changes this call to pass 1e-7 explicitly;
 the original pinned archive plus this dated script reproduce the modified LGPL
 component. Runtime investigation of the captured notched cylinder measured rounded
 join mismatch up to 4.1e-5 mm with the default. More accurate pipe construction,
@@ -1074,7 +1074,7 @@ approximates its plate surface with a separate B-spline approximation;
 all final boundary points. These local source observations informed use of the
 public API; no upstream implementation was copied.
 
-Freac inference: constrain inner wires, trim them on the resulting support, and
+Makeshift inference: constrain inner wires, trim them on the resulting support, and
 independently validate final spatial/parameter boundary agreement. A tiny
 out-of-plane movement can require substantially more approximation pieces than
 a single-loop fill. Increasing representation capacity must not increase the
@@ -1090,7 +1090,7 @@ zero-distance solution; length checks and both sampling directions remain.
 
 Source observation: pinned
 [`BRepFill::Face`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepFill/BRepFill.cxx#L210)
-constructs a ruled support between oriented edges. Freac uses this public API for
+constructs a ruled support between oriented edges. Makeshift uses this public API for
 four-sided reconnections only when all four output boundaries match the requested
 curves. Runtime verification of moving an individual capsule quarter-face exposed
 an inaccurate neighboring single-loop fill carrying a roughly 0.0059 mm vertex

@@ -46,7 +46,7 @@ export async function makePlate(page) {
 async function verifiedOffsetReady(page) {
   await page.waitForFunction(
     () =>
-      !window.freacInspect().busy &&
+      !window.makeshiftInspect().busy &&
       !document.querySelector('.face-offset-widget [aria-label="Accept face offset"]')?.disabled,
   );
 }
@@ -184,7 +184,7 @@ async function sharedOffset(page, name) {
   await page.screenshot({ path: `.cache/sketch-review/${name}-shared-offset.png` });
   await page.waitForFunction(
     () =>
-      !window.freacInspect().busy &&
+      !window.makeshiftInspect().busy &&
       document.querySelector(".face-offset-widget .commit-cleanup")?.getAttribute("aria-busy") ===
         "false",
   );

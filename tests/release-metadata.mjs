@@ -11,13 +11,13 @@ test("static preview feed names the exact timestamped ZIP and packaged numeric v
     architecture: "arm64",
     minimumMacOS: "14.0",
   };
-  const feed = updateFeed(metadata, "osuushi/freac");
+  const feed = updateFeed(metadata, "osuushi/makeshift");
   assert.equal(feed.currentRelease, "2026.265.52512");
   assert.equal(feed.releases[0].version, feed.currentRelease);
   assert.equal(feed.releases[0].updateTo.version, feed.currentRelease);
   assert.equal(
     feed.releases[0].updateTo.url,
-    "https://github.com/osuushi/freac/releases/download/20260922T143512Z/Freac-20260922T143512Z-arm64.zip",
+    "https://github.com/osuushi/makeshift/releases/download/20260922T143512Z/Makeshift-20260922T143512Z-arm64.zip",
   );
   for (const change of [
     { version: "0.2.0" },
@@ -25,7 +25,7 @@ test("static preview feed names the exact timestamped ZIP and packaged numeric v
     { architecture: "x64" },
     { minimumMacOS: "15.0" },
   ])
-    assert.throws(() => updateFeed({ ...metadata, ...change }, "osuushi/freac"));
+    assert.throws(() => updateFeed({ ...metadata, ...change }, "osuushi/makeshift"));
   assert.throws(() => updateFeed(metadata, "https://elsewhere.test"));
 });
 

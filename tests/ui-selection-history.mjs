@@ -162,7 +162,7 @@ async function traverseSuffix(page, original) {
 async function drawLines(page) {
   await reset(page);
   assert.deepEqual(
-    await page.evaluate(() => window.freacHistory()),
+    await page.evaluate(() => window.makeshiftHistory()),
     [],
     "New resets selection history",
   );

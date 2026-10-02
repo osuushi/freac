@@ -10,14 +10,14 @@ import { inspect } from "../../tests/ui-helpers.mjs";
 import { cases, revisionFixture } from "./gear-cases.mjs";
 import { gearSession, run } from "./gear-session.mjs";
 
-const model = process.env.FREAC_EVAL_MODEL ?? "gpt-6-astra";
-const effort = process.env.FREAC_EVAL_EFFORT ?? "low";
+const model = process.env.MAKESHIFT_EVAL_MODEL ?? "gpt-6-astra";
+const effort = process.env.MAKESHIFT_EVAL_EFFORT ?? "low";
 const variant =
-  process.env.FREAC_EVAL_VARIANT ?? (process.env.FREAC_EVAL_SKILL ? "skill" : "baseline");
+  process.env.MAKESHIFT_EVAL_VARIANT ?? (process.env.MAKESHIFT_EVAL_SKILL ? "skill" : "baseline");
 const output = resolve(
-  process.env.FREAC_EVAL_OUTPUT ?? `.cache/gear-eval/${Date.now()}-${variant}`,
+  process.env.MAKESHIFT_EVAL_OUTPUT ?? `.cache/gear-eval/${Date.now()}-${variant}`,
 );
-const names = (process.env.FREAC_EVAL_CASES ?? "pair,compound,revision").split(",");
+const names = (process.env.MAKESHIFT_EVAL_CASES ?? "pair,compound,revision").split(",");
 const hash = (s) => createHash("sha256").update(s).digest("hex");
 await mkdir(output, { recursive: true });
 for (const name of names) {
@@ -37,12 +37,13 @@ for (const name of names) {
       );
     }
     let prompt = task.prompt;
-    if (process.env.FREAC_EVAL_SKILL) {
-      const skill = join(workspace, ".agents/skills/freac-gear-trains");
-      await cp(resolve(process.env.FREAC_EVAL_SKILL), skill, { recursive: true });
-      prompt += " Use the freac-gear-trains skill in .agents/skills/freac-gear-trains/SKILL.md.";
+    if (process.env.MAKESHIFT_EVAL_SKILL) {
+      const skill = join(workspace, ".agents/skills/makeshift-gear-trains");
+      await cp(resolve(process.env.MAKESHIFT_EVAL_SKILL), skill, { recursive: true });
+      prompt +=
+        " Use the makeshift-gear-trains skill in .agents/skills/makeshift-gear-trains/SKILL.md.";
     }
-    const executable = process.env.FREAC_CODEX_EXECUTABLE ?? "codex";
+    const executable = process.env.MAKESHIFT_CODEX_EXECUTABLE ?? "codex";
     const args = [
       "exec",
       "--ignore-user-config",
@@ -70,10 +71,10 @@ for (const name of names) {
       prompt,
       commit: (await run("git", ["rev-parse", "HEAD"])).stdout.trim(),
       cliVersion: (await run(executable, ["--version"])).stdout.trim(),
-      guideHash: hash(await readFile(env.FREAC_DOCS)),
-      typesHash: hash(await readFile(env.FREAC_API_TYPES)),
-      skillHash: process.env.FREAC_EVAL_SKILL
-        ? hash(await readFile(join(process.env.FREAC_EVAL_SKILL, "SKILL.md")))
+      guideHash: hash(await readFile(env.MAKESHIFT_DOCS)),
+      typesHash: hash(await readFile(env.MAKESHIFT_API_TYPES)),
+      skillHash: process.env.MAKESHIFT_EVAL_SKILL
+        ? hash(await readFile(join(process.env.MAKESHIFT_EVAL_SKILL, "SKILL.md")))
         : null,
     };
     await writeFile(join(directory, "metadata.json"), JSON.stringify(metadata, null, 2));
@@ -125,7 +126,7 @@ for (const name of names) {
       recursive: true,
       filter: (path) => !path.endsWith("eval-env.txt"),
     });
-    await saveDocument(page, join(directory, "model.freac"));
+    await saveDocument(page, join(directory, "model.makeshift"));
     await page.screenshot({ path: join(directory, "screen.png") });
     console.log(
       `${name}: ${result.elapsedMs} ms, ${result.commands.length} commands, error=${error}`,

@@ -14,17 +14,17 @@ async function open(page, index) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await chooseTool(page, "return to modeling", "modeling");
   await openDocument(page, {
-    name: "capture.freac",
+    name: "capture.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
       JSON.stringify({
-        format: "freac",
+        format: "makeshift",
         version: 1,
         document: { ...fixture.document, bodies: [fixture.document.bodies[index]] },
       }),
     ),
   });
-  await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
+  await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 1);
   return (await inspect(page)).document;
 }
 async function history(page, original) {

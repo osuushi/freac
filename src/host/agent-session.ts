@@ -194,7 +194,7 @@ export class AgentSession {
         cwd,
         env,
         () => {
-          if (this.workspace.cwd !== cwd) throw new Error("This Freac connection has closed.");
+          if (this.workspace.cwd !== cwd) throw new Error("This Makeshift connection has closed.");
           return this.documentStatus();
         },
         (command, entity, directory) => this.inspect(command, entity, directory),

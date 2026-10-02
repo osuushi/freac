@@ -11,7 +11,7 @@ export async function orientationCubeRoute(page, name) {
   assert.equal(before.document.sketches.length, 1, "Rectangle creation reaches the real solver");
   await page.getByRole("button", { name: "Top view", exact: true }).click();
   assert.equal((await inspect(page)).activePlane, null);
-  const history = await page.evaluate(() => window.freacHistory());
+  const history = await page.evaluate(() => window.makeshiftHistory());
   const cube = page.locator(".orientation-cube");
   const bounds = await cube.boundingBox();
   const center = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
@@ -67,7 +67,7 @@ export async function orientationCubeRoute(page, name) {
   await visible.focus();
   await page.keyboard.press("Enter");
   await inspect(page);
-  assert.deepEqual(await page.evaluate(() => window.freacHistory()), history);
+  assert.deepEqual(await page.evaluate(() => window.makeshiftHistory()), history);
   await page.mouse.move(center.x, center.y);
   await page.mouse.down();
   await page.mouse.move(center.x + 24, center.y + 18, { steps: 6 });

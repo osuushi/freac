@@ -8,7 +8,7 @@ import { compileScript } from "./compile-script.js";
 
 /** View programs run with the caller's permissions and never acquire a geometry transaction. */
 export async function runView(path: string): Promise<unknown> {
-  const directory = await mkdtemp(join(tmpdir(), "freac-view-"));
+  const directory = await mkdtemp(join(tmpdir(), "makeshift-view-"));
   const abort = new AbortController();
   const interrupt = () => abort.abort();
   for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"] as const) process.once(signal, interrupt);

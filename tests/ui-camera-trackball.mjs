@@ -89,7 +89,7 @@ async function centerTurntable(page) {
   await page.mouse.up();
   await page.keyboard.up("Meta");
   assert.equal(
-    await page.evaluate(() => window.freacInspect().camera.moving),
+    await page.evaluate(() => window.makeshiftInspect().camera.moving),
     true,
     "Center drag also starts release leveling",
   );
@@ -113,7 +113,7 @@ async function releaseLeveling(page, bounds) {
   const before = await inspect(page);
   await page.mouse.up();
   await page.keyboard.up("Meta");
-  const immediate = await page.evaluate(() => window.freacInspect().camera);
+  const immediate = await page.evaluate(() => window.makeshiftInspect().camera);
   assert.equal(immediate.moving, true, "Mouse-up starts leveling animation");
   const after = await inspect(page);
   assert.notDeepEqual(after.camera.up, before.camera.up, "Release corrects roll");

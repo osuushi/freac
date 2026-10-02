@@ -55,8 +55,8 @@ export async function generateNotices(destination, metadata) {
   await cp("node_modules/electron/dist/LICENSES.chromium.html", join(destination, "chromium.html"));
   entries.sort((a, b) => a.name.localeCompare(b.name));
   const runtime = JSON.parse(await readFile("packaging/runtime-sources.json", "utf8"));
-  const runtimeSource = `https://github.com/${process.env.GITHUB_REPOSITORY ?? "osuushi/freac"}/releases/tag/${runtime.releaseTag}`;
-  const intro = `Freac ${metadata.timestamp} (${metadata.commit}). This application uses Open CASCADE Technology and the FreeCAD PlaneGCS solver, covered by the GNU LGPL. Freac is provided without warranty. The matching Freac-${metadata.tag}-sources.tar.gz accompanies this release and contains Freac, adapted PlaneGCS and OCCT, Eigen and Boost sources and rebuild/replacement instructions. Keep that archive available to everyone receiving this app. You may modify and rebuild Freac and replace its LGPL components. Electron/Chromium corresponding sources (including FFmpeg and Blink/WebKit) are in the shared runtime source release: ${runtimeSource}`;
+  const runtimeSource = `https://github.com/${process.env.GITHUB_REPOSITORY ?? "osuushi/makeshift"}/releases/tag/${runtime.releaseTag}`;
+  const intro = `Makeshift ${metadata.timestamp} (${metadata.commit}). This application uses Open CASCADE Technology and the FreeCAD PlaneGCS solver, covered by the GNU LGPL. Makeshift is provided without warranty. The matching Makeshift-${metadata.tag}-sources.tar.gz accompanies this release and contains Makeshift, adapted PlaneGCS and OCCT, Eigen and Boost sources and rebuild/replacement instructions. Keep that archive available to everyone receiving this app. You may modify and rebuild Makeshift and replace its LGPL components. Electron/Chromium corresponding sources (including FFmpeg and Blink/WebKit) are in the shared runtime source release: ${runtimeSource}`;
   await writeFile(
     join(destination, "inventory.json"),
     `${JSON.stringify({ metadata, entries }, null, 2)}\n`,
@@ -65,7 +65,7 @@ export async function generateNotices(destination, metadata) {
     join(destination, "index.html"),
     `<!doctype html><html lang="en"><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
-<title>Freac — Third-party licenses</title><style>body{font:16px system-ui;max-width:900px;margin:40px auto;padding:0 24px;color:#263243;background:#f8f9fb}h1{font-size:28px}summary{cursor:pointer;padding:14px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px ui-monospace}details{border-bottom:1px solid #d6dce5}a{color:#275bba}p{line-height:1.6}</style>
+<title>Makeshift — Third-party licenses</title><style>body{font:16px system-ui;max-width:900px;margin:40px auto;padding:0 24px;color:#263243;background:#f8f9fb}h1{font-size:28px}summary{cursor:pointer;padding:14px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px ui-monospace}details{border-bottom:1px solid #d6dce5}a{color:#275bba}p{line-height:1.6}</style>
 <h1>Third-party licenses</h1><p>${htmlEscape(intro)}</p><p><a href="chromium.html">Chromium and Electron bundled component notices</a></p>
 ${entries.map((e) => `<details><summary>${htmlEscape(e.name)} — ${htmlEscape(e.version)} · ${htmlEscape(e.license)}</summary><p>${htmlEscape(e.source)}</p><pre>${htmlEscape(e.text)}</pre></details>`).join("\n")}</html>`,
   );
@@ -86,9 +86,9 @@ async function upstreamNotices(add, metadata) {
       input.url,
     );
   }
-  await add("Freac", metadata.timestamp, "LGPL-2.1-or-later", ["LICENSE", "COPYING.md"]);
+  await add("Makeshift", metadata.timestamp, "LGPL-2.1-or-later", ["LICENSE", "COPYING.md"]);
   await add(
-    "Open CASCADE Technology (Freac offset-join precision adaptation, 2026-09-23)",
+    "Open CASCADE Technology (Makeshift offset-join precision adaptation, 2026-09-23)",
     "7.9.3",
     "LGPL-2.1-only WITH OCCT-exception-1.0",
     [".cache/kernel/source/LICENSE_LGPL_21.txt", ".cache/kernel/source/OCCT_LGPL_EXCEPTION.txt"],

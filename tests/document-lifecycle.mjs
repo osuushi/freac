@@ -7,13 +7,13 @@ import { hostModelBoundary } from "./host-model-boundary.mjs";
 import { drag, inspect, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-const root = await mkdtemp(join(tmpdir(), "freac-documents-"));
-const path = join(root, "Drawing.freac");
+const root = await mkdtemp(join(tmpdir(), "makeshift-documents-"));
+const path = join(root, "Drawing.makeshift");
 let app, page;
 async function launch() {
   app = await _electron.launch({
     args: [".", `--user-data-dir=${join(root, "profile")}`],
-    env: { ...process.env, FREAC_TEST_HIDDEN: "1" },
+    env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
   });
   page = await app.firstWindow();
   page.setDefaultTimeout(15000);
@@ -60,7 +60,7 @@ async function savePath(value) {
   await app.evaluate((_, value) => globalThis.savePaths.push(value), value);
 }
 async function status() {
-  return page.evaluate(() => window.freacDocument.status());
+  return page.evaluate(() => window.makeshiftDocument.status());
 }
 async function undoGeometry(keyboard = false) {
   const before = (await inspect(page)).document;
@@ -69,7 +69,7 @@ async function undoGeometry(keyboard = false) {
     else await menu("Undo", "Edit");
     await settled(page);
     if (JSON.stringify((await inspect(page)).document) !== JSON.stringify(before)) return;
-    const history = (await page.evaluate(() => window.freacModel({ kind: "read-history" })))
+    const history = (await page.evaluate(() => window.makeshiftModel({ kind: "read-history" })))
       .history;
     assert.equal(
       history.filter((entry) => entry.state === "undone").at(-1).operation.kind,
@@ -98,7 +98,7 @@ try {
   await menu("Save");
   assert.deepEqual(
     await app.evaluate(() => globalThis.dialogDefaults.at(-1)),
-    { kind: "save", path: join(documents, "Untitled.freac") },
+    { kind: "save", path: join(documents, "Untitled.makeshift") },
     "First Save starts in Documents",
   );
   await draw();
@@ -128,17 +128,17 @@ try {
   await page.keyboard.press("Meta+Shift+z");
   await settled(page);
   assert.equal((await status()).edited, false, "Redo to saved contents clears edited state");
-  await savePath(join(root, "missing", "Failed.freac"));
+  await savePath(join(root, "missing", "Failed.makeshift"));
   await menu("Save As…");
   assert.equal((await status()).path, path, "Failed Save As retains original identity");
   assert.deepEqual(JSON.parse(await readFile(path, "utf8")).document.sketches, original.sketches);
-  const broken = join(root, "Broken.freac");
-  await writeFile(broken, '{"format":"freac","version":1,"document":{"units":"bad"}}');
+  const broken = join(root, "Broken.makeshift");
+  await writeFile(broken, '{"format":"makeshift","version":1,"document":{"units":"bad"}}');
   await app.evaluate((_, path) => globalThis.openPaths.push(path), broken);
   await menu("Open…");
   assert.deepEqual((await inspect(page)).document, original, "Failed Open retains geometry");
   assert.equal((await status()).path, path);
-  const copyPath = join(root, "Copy.freac");
+  const copyPath = join(root, "Copy.makeshift");
   await savePath(copyPath);
   await page.keyboard.press("Meta+Shift+s");
   await page.waitForTimeout(120);
@@ -195,7 +195,7 @@ try {
   await menu("Save");
   assert.deepEqual(
     await app.evaluate(() => globalThis.dialogDefaults.at(-1)),
-    { kind: "save", path: join(root, "Untitled.freac") },
+    { kind: "save", path: join(root, "Untitled.makeshift") },
     "Untitled Save uses remembered folder",
   );
   await app.evaluate((_, path) => globalThis.openPaths.push(path), path);
@@ -211,10 +211,10 @@ try {
   );
   page = await app.firstWindow();
   await settled(page);
-  await page.waitForFunction(async () => (await window.freacDocument.status()).path === null);
+  await page.waitForFunction(async () => (await window.makeshiftDocument.status()).path === null);
   assert.equal((await status()).path, null, "New works with no open macOS window");
   await draw();
-  const savedOnNew = join(root, "Saved-on-new.freac");
+  const savedOnNew = join(root, "Saved-on-new.makeshift");
   await savePath(savedOnNew);
   await answer(0);
   await menu("New");

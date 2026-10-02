@@ -35,9 +35,9 @@ const cases = [
   ],
 ];
 for (const threads of [1, 2, 4]) {
-  process.env.FREAC_KERNEL_THREADS = String(threads);
+  process.env.MAKESHIFT_KERNEL_THREADS = String(threads);
   const kernel = new NativeCalculator(
-    resolve(process.argv[2] ?? ".build/kernel/bin/freac-kernel"),
+    resolve(process.argv[2] ?? ".build/kernel/bin/makeshift-kernel"),
     "Kernel benchmark",
   );
   try {

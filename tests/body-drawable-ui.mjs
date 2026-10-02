@@ -12,7 +12,7 @@ function sameDrawables(before, after, label) {
     created: after.created - before.created,
     disposed: after.disposed - before.disposed,
   };
-  if (process.env.FREAC_RENDER_BASELINE === "1") console.log(`${label}:`, delta);
+  if (process.env.MAKESHIFT_RENDER_BASELINE === "1") console.log(`${label}:`, delta);
   else {
     assert.deepEqual(delta, { created: 0, disposed: 0 }, label);
     assert.deepEqual(
@@ -49,13 +49,13 @@ await withUiRuntimes(
     await chooseTool(page, "Hide bodies", "hide-bodies");
     state = await inspect(page);
     sameDrawables(before, state.bodyRendering, `${name} hide`);
-    if (process.env.FREAC_RENDER_BASELINE !== "1")
+    if (process.env.MAKESHIFT_RENDER_BASELINE !== "1")
       assert.ok(state.bodyRendering.faces.every((face) => !face.visible));
     await chooseTool(page, "Show bodies", "show-bodies");
     state = await inspect(page);
     sameDrawables(before, state.bodyRendering, `${name} show`);
     await page.screenshot({ path: `.cache/sketch-review/${name}-body-drawable.png` });
-    if (process.env.FREAC_RENDER_BASELINE !== "1") await bodyMutation(page, name);
+    if (process.env.MAKESHIFT_RENDER_BASELINE !== "1") await bodyMutation(page, name);
     console.log(`${name}: body drawable inspection complete`);
   },
   { allowed: ["chromium", "webkit", "electron"] },

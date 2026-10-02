@@ -22,7 +22,7 @@ function request(kind: "project" | "extrude", curve: object) {
 for (const kind of ["project", "extrude"] as const)
   test(`native ${kind} uses the same explicit curve decoder and survives invalid inputs`, async () => {
     const calculator = new NativeCalculator<object, KernelResult & { curves: { kind: string }[] }>(
-      resolve(".build/kernel/bin/freac-kernel"),
+      resolve(".build/kernel/bin/makeshift-kernel"),
       "Curve decoder probe",
     );
     try {

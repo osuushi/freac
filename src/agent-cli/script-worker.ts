@@ -84,7 +84,8 @@ process.on(
         transformBodies: (input) =>
           call({ kind: "transformBodies", input }) as ReturnType<ScriptApi["transformBodies"]>,
       };
-      Object.defineProperty(globalThis, "freac", { value: Object.freeze(api) });
+      Object.defineProperty(globalThis, "makeshift", { value: Object.freeze(api) });
+      Object.defineProperty(globalThis, "freac", { value: api });
       void execute();
     }
   },

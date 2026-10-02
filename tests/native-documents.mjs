@@ -7,7 +7,7 @@ import { chooseTool } from "./ui-tools.mjs";
 const sessions = new WeakMap();
 /** Existing geometry suites discard between cases; lifecycle tests answer prompts explicitly. */
 export async function launchElectron(options) {
-  const directory = await mkdtemp(join(tmpdir(), "freac-ui-"));
+  const directory = await mkdtemp(join(tmpdir(), "makeshift-ui-"));
   let app;
   try {
     app = await _electron.launch({
@@ -55,14 +55,14 @@ export async function openDocument(page, file) {
   }
   let path = file;
   if (typeof file !== "string") {
-    path = join(session.directory, "fixture.freac");
+    path = join(session.directory, "fixture.makeshift");
     await writeFile(path, file.buffer);
   }
   await session.app.evaluate(({ dialog }, path) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] });
   }, path);
   await chooseTool(page, "open document", "open");
-  await page.waitForFunction(() => !window.freacInspect().busy);
+  await page.waitForFunction(() => !window.makeshiftInspect().busy);
 }
 
 export async function saveDocument(page, path) {
@@ -82,8 +82,8 @@ export async function saveDocument(page, path) {
   }, path);
   for (let attempt = 0; attempt < 200; attempt++) {
     const saved = await page.evaluate(async (path) => {
-      const status = await window.freacDocument.status();
-      return status.path === path && !status.edited && !window.freacInspect().busy;
+      const status = await window.makeshiftDocument.status();
+      return status.path === path && !status.edited && !window.makeshiftInspect().busy;
     }, path);
     if (saved) return;
     await new Promise((resolve) => setTimeout(resolve, 25));

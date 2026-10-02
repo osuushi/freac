@@ -8,7 +8,7 @@ import { NativeCalculator } from "./native-calculator.js";
 export class SolidCalculator extends NativeCalculator<KernelRequest, unknown> {
   static readonly executable = resolve(
     ".build/kernel/bin",
-    process.platform === "win32" ? "freac-kernel.exe" : "freac-kernel",
+    process.platform === "win32" ? "makeshift-kernel.exe" : "makeshift-kernel",
   );
   private superseded = false;
   constructor(executable = SolidCalculator.executable) {

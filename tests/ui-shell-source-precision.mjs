@@ -25,13 +25,13 @@ export async function shellSourcePrecisionRoute(page, name) {
   await inspect(page);
   await chooseTool(page, "return to modeling", "modeling");
   await openDocument(page, {
-    name: "shell-input.freac",
+    name: "shell-input.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
-  await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
+  await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 1);
   for (let i = 1; i <= fixture.document.sketches.length; i++)
     await page.getByRole("button", { name: `Hide Sketch ${i}`, exact: true }).click();
   await worldClick(page, [16, 5, 14]);

@@ -36,9 +36,9 @@ const curved = await fixture((owner) => roundBody(owner, [10]));
 async function open(page, document) {
   await inspect(page);
   await openDocument(page, {
-    name: "picking.freac",
+    name: "picking.makeshift",
     mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify({ format: "freac", version: 1, document })),
+    buffer: Buffer.from(JSON.stringify({ format: "makeshift", version: 1, document })),
   });
   return inspect(page);
 }

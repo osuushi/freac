@@ -51,13 +51,13 @@ export async function roundedFaceMoveRoute(page, name, electron, file = "fillete
   await inspect(page);
   await chooseTool(page, "return to modeling", "modeling");
   await openDocument(page, {
-    name: `${file}.freac`,
+    name: `${file}.makeshift`,
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
-  await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
+  await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 1);
   const original = (await inspect(page)).document;
   await selectRounded(page, ids);
   assert.equal((await inspect(page)).modelingSelection.length, ids.length);

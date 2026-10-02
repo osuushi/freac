@@ -8,7 +8,7 @@ import type { DialogRequest } from "./protocol.js";
 import { Rpc } from "./rpc.js";
 
 export function connectBrowser(): Promise<void> {
-  window.freacRemote = true;
+  window.makeshiftRemote = true;
   document.documentElement.classList.add("ipad-mode");
   const token = location.hash.slice(1) || sessionStorage.getItem("freac-pairing") || "";
   sessionStorage.setItem("freac-pairing", token);
@@ -16,7 +16,7 @@ export function connectBrowser(): Promise<void> {
   return new BrowserConnection().connect(token);
 }
 class BrowserConnection {
-  private screen = new ConnectionScreen("Connect to Freac", "Reconnect");
+  private screen = new ConnectionScreen("Connect to Makeshift", "Reconnect");
   private listeners = new Map<string, Set<(value: never) => void>>();
   private inspect:
     | ((render: boolean, acquireScript?: boolean, selection?: string) => InspectionView)
@@ -47,21 +47,23 @@ class BrowserConnection {
     };
   }
   private installAdapters(): void {
-    window.freacFixture = (snapshot) => this.rpc.request("capture-fixture", snapshot);
-    window.freacModel = (request) => this.rpc.request("model", request);
-    window.freacAgent = { request: (request) => this.rpc.request<AgentReply>("agent", request) };
-    window.freacDocument = {
+    window.makeshiftFixture = (snapshot) => this.rpc.request("capture-fixture", snapshot);
+    window.makeshiftModel = (request) => this.rpc.request("model", request);
+    window.makeshiftAgent = {
+      request: (request) => this.rpc.request<AgentReply>("agent", request),
+    };
+    window.makeshiftDocument = {
       command: (command, camera) => this.rpc.request("document-command", { command, camera }),
       status: () => this.rpc.request("document-status"),
       onCommand: (callback) => this.subscribe<DocumentCommand>("document-command", callback),
       onStatus: (callback) => this.subscribe<DocumentStatus>("document-status", callback),
     };
-    window.freacScript = {
+    window.makeshiftScript = {
       cancel: () => this.rpc.request("script-cancel"),
       onState: (callback) =>
         this.subscribe<{ running: boolean; view: ModelView }>("agent-script-state", callback),
     };
-    window.freacInspection = {
+    window.makeshiftInspection = {
       onRequest: (callback) => {
         this.inspect = callback;
         return () => {

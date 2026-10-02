@@ -23,14 +23,14 @@ try {
       if (name === "electron") {
         app = await launchElectron({
           args: ["."],
-          env: { ...process.env, FREAC_TEST_HIDDEN: "1" },
+          env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
         });
         page = await app.firstWindow();
         assert.equal(
           await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),
           false,
         );
-        assert.equal(await page.evaluate(() => typeof window.freacMesh?.integrate), "function");
+        assert.equal(await page.evaluate(() => typeof window.makeshiftMesh?.integrate), "function");
       } else {
         browser = await { chromium, webkit }[name].launch({ headless: true });
         page = await browser.newPage();
@@ -46,9 +46,9 @@ try {
       });
       await inspect(page);
       await openDocument(page, {
-        name: "threaded.freac",
+        name: "threaded.makeshift",
         mimeType: "application/json",
-        buffer: Buffer.from(JSON.stringify({ format: "freac", version: 1, document })),
+        buffer: Buffer.from(JSON.stringify({ format: "makeshift", version: 1, document })),
       });
       const before = (await inspect(page)).document;
       for (const format of ["3mf", "stl"]) {

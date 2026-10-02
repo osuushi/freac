@@ -38,7 +38,7 @@ through its center. The peak-to-valley radial depth is explicit.
 | Fine (default) | 2.4 mm | 0.4 mm | 0.4 mm nozzle, 0.2 mm layers, upright cylinder |
 | Coarse | 3.6 mm | 0.6 mm | 0.6 mm nozzle, 0.2 mm layers, upright cylinder |
 
-These are Freac design heuristics, not published printer qualifications. The flat
+These are Makeshift design heuristics, not published printer qualifications. The flat
 tops are approximately two nozzle widths across before seam adjustment, with
 radial depth spanning two/three assumed layers.
 [Prusa's modeling guidance](https://help.prusa3d.com/article/modeling-with-3d-printing-in-mind_164135)

@@ -1,6 +1,6 @@
 ---
 name: mesh-recovery
-description: Recover editable CAD solids from an attached 3MF mesh in Freac. Use when reconstructing mesh parts and checking the resulting solids against their source geometry.
+description: Recover editable CAD solids from an attached 3MF mesh in Makeshift. Use when reconstructing mesh parts and checking the resulting solids against their source geometry.
 ---
 
 # Recover CAD from a 3MF
@@ -10,9 +10,9 @@ workspace (earlier trial drawings may use `attachment-*/`). Read the requested
 file there and retain it for comparison. Attaching a
 file does not add geometry to the drawing.
 
-Start with `freac status`, `freac inspect`, and `freac types`. These describe the
-current drawing and the supported modeling operations. Use `freac run` for changes
-so they participate in Undo. Read `freac docs` for unfamiliar operations. Do not
+Start with `makeshift status`, `makeshift inspect`, and `makeshift types`. These describe the
+current drawing and the supported modeling operations. Use `makeshift run` for changes
+so they participate in Undo. Read `makeshift docs` for unfamiliar operations. Do not
 rewrite the live drawing archive or private application files to import geometry.
 
 ## Inspect first
@@ -33,11 +33,11 @@ include meshes, print arrangements and settings; none implies a feature history.
 Read [the recovery procedure](references/recovery.md) before fitting curves or
 fillets. Recover one distinct solid per printable part using analytic features
 where supported. Use the drawing's supported typed API for sketches, extrusions,
-booleans and blends. Read `freac types` rather than inventing an import command.
+booleans and blends. Read `makeshift types` rather than inventing an import command.
 
 If a required surface operation is unavailable, report that specific gap. An
 external CAD kernel can produce a separate candidate when the user wants that
-route, but a private archive encoder tied to one Freac build is not a general
+route, but a private archive encoder tied to one Makeshift build is not a general
 import interface. Never claim an external candidate has been imported into the
 current drawing until the application accepts and displays it.
 

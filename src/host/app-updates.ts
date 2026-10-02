@@ -19,7 +19,7 @@ export class AppUpdates {
     autoUpdater.on("error", (error) => this.failed(error));
     autoUpdater.on("update-not-available", () => {
       this.checking = false;
-      if (this.manual) void this.message("Freac is up to date.");
+      if (this.manual) void this.message("Makeshift is up to date.");
       this.manual = false;
     });
     autoUpdater.on("update-downloaded", (_event, _notes, name) => {
@@ -43,7 +43,7 @@ export class AppUpdates {
         throw new Error("Invalid update feed");
       autoUpdater.setFeedURL({ url, serverType: "json" });
       this.enabled = true;
-      if (process.env.FREAC_TEST_HIDDEN === "1") return;
+      if (process.env.MAKESHIFT_TEST_HIDDEN === "1") return;
       const initial = setTimeout(() => this.check(false), 30_000);
       const periodic = setInterval(() => this.check(false), 6 * 60 * 60 * 1000);
       initial.unref();
@@ -67,7 +67,7 @@ export class AppUpdates {
       return;
     }
     if (this.checking) {
-      if (manual) void this.message("Freac is checking for or downloading an update.");
+      if (manual) void this.message("Makeshift is checking for or downloading an update.");
       return;
     }
     this.manual = manual;
@@ -92,7 +92,7 @@ export class AppUpdates {
 
   private failed(error: unknown): void {
     this.checking = false;
-    console.error("Freac update failed:", error);
+    console.error("Makeshift update failed:", error);
     if (this.installing) {
       this.installing = false;
       this.installFailed();
@@ -114,7 +114,7 @@ export class AppUpdates {
     try {
       const result = await dialog.showMessageBox({
         type: "info",
-        message: "A Freac update is ready.",
+        message: "A Makeshift update is ready.",
         detail: `${this.release}\nRestart now, or keep working and install when you next quit. The active operation will be completed before the usual unsaved-work prompt.`,
         buttons: ["Restart to update", "Later"],
         defaultId: 1,

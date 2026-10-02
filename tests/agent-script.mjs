@@ -23,14 +23,17 @@ let app,
   counter = 0,
   scriptOutput = "";
 const box = `const p = [{x:-10,y:-10},{x:10,y:-10},{x:10,y:10},{x:-10,y:10}];
-const s = await freac.createSketch({plane:"XY",curves:p.map((a,i)=>({kind:"segment",a,b:p[(i+1)%4]}))});
-await freac.extrude({sources:s.profiles,distance:10,mode:"new"});`;
+const s = await makeshift.createSketch({plane:"XY",curves:p.map((a,i)=>({kind:"segment",a,b:p[(i+1)%4]}))});
+await makeshift.extrude({sources:s.profiles,distance:10,mode:"new"});`;
 try {
   if (name === "electron") {
-    app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+    app = await launchElectron({
+      args: ["."],
+      env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+    });
     page = await app.firstWindow();
     await page.evaluate(() =>
-      window.freacAgent.request({
+      window.makeshiftAgent.request({
         kind: "configure",
         preferences: {
           preset: "custom",
@@ -42,7 +45,8 @@ try {
     );
     await page.getByRole("button", { name: "Open agent terminal" }).click();
     await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
-    workspace = (await page.evaluate(() => window.freacAgent.request({ kind: "read" }))).workspace;
+    workspace = (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" })))
+      .workspace;
   } else {
     web = await scriptBrowser(name);
     ({ page, workspace } = web);
@@ -50,8 +54,12 @@ try {
   page.setDefaultTimeout(20000);
   await settled(page);
   const empty = (await inspect(page)).document;
+  await run(
+    'if (freac !== makeshift) throw new Error("Legacy scripting alias changed"); await freac.decorators();',
+  );
+  assert.deepEqual((await inspect(page)).document, empty);
   await assert.rejects(
-    () => run('await freac.extrude({sources:[], distance:"bad", mode:"new"});'),
+    () => run('await makeshift.extrude({sources:[], distance:"bad", mode:"new"});'),
     /typecheck failed/,
   );
   assert.deepEqual((await inspect(page)).document, empty);
@@ -72,9 +80,9 @@ try {
   await orient(page, [0.4, -1, 0.7]);
   const chosen = await pick(page, [-5, -10, 4]);
   assert.equal(chosen.modelingSelection[0].kind, "face");
-  await run(`const faces = freac.selection.filter(t=>t.kind==="face");
+  await run(`const faces = makeshift.selection.filter(t=>t.kind==="face");
 if(faces.length!==1) throw new Error("Expected selected face");
-await freac.offsetFaces({faces,distance:2});`);
+await makeshift.offsetFaces({faces,distance:2});`);
   const offset = (await inspect(page)).document;
   assert(Math.abs(offset.bodies[0].volume - 4400) < 1e-6);
   await undo();
@@ -86,7 +94,7 @@ await freac.offsetFaces({faces,distance:2});`);
   await page.getByRole("textbox", { name: "Face offset distance", exact: true }).fill("1");
   await settled(page);
   const preview = (await inspect(page)).preview;
-  await assert.rejects(() => run("void freac.selection;"), /current edit/);
+  await assert.rejects(() => run("void makeshift.selection;"), /current edit/);
   assert.deepEqual((await inspect(page)).preview, preview);
   await page.getByRole("button", { name: "Accept face offset", exact: true }).click();
   await settled(page);
@@ -103,24 +111,24 @@ await freac.offsetFaces({faces,distance:2});`);
   assert.deepEqual((await inspect(page)).document, before);
   assert((await history()).some((e) => e.state === "undone"));
   await assert.rejects(
-    () => run(`${box}\nawait freac.offsetFaces({faces:[],distance:NaN});`),
+    () => run(`${box}\nawait makeshift.offsetFaces({faces:[],distance:NaN});`),
     /Invalid script face offset/,
   );
   assert.deepEqual((await inspect(page)).document, before);
   const applied = (await history()).filter((e) => e.state === "applied").length;
-  await run("void freac.selection;");
+  await run("void makeshift.selection;");
   assert.equal((await history()).filter((e) => e.state === "applied").length, applied);
   const waiting = run(`${box}\nconsole.error("candidate ready"); while (true) {}`);
   const cancellation = assert.rejects(() => waiting, /ended|closed|cancelled/);
   await page.getByRole("button", { name: "Cancel script", exact: true }).waitFor();
   await candidateReady();
-  assert.deepEqual(await page.evaluate(() => window.freacInspect().document), before);
-  const camera = await page.evaluate(() => window.freacInspect().camera);
+  assert.deepEqual(await page.evaluate(() => window.makeshiftInspect().document), before);
+  const camera = await page.evaluate(() => window.makeshiftInspect().camera);
   const canvas = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
   await page.mouse.move(canvas.x + canvas.width / 2, canvas.y + canvas.height / 2);
   await page.mouse.wheel(30, 25);
   await page.waitForFunction(
-    (old) => JSON.stringify(window.freacInspect().camera) !== JSON.stringify(old),
+    (old) => JSON.stringify(window.makeshiftInspect().camera) !== JSON.stringify(old),
     camera,
   );
   await page.getByRole("button", { name: "Cancel script", exact: true }).click();
@@ -142,8 +150,8 @@ await freac.offsetFaces({faces,distance:2});`);
   await mkdir(".cache/sketch-review", { recursive: true });
   await page.screenshot({ path: `.cache/sketch-review/${name}-agent-script.png` });
   if (app) {
-    const file = resolve(".cache/sketch-review/agent-script.freac");
-    await page.evaluate(() => window.freacAgent.request({ kind: "stop" }));
+    const file = resolve(".cache/sketch-review/agent-script.makeshift");
+    await page.evaluate(() => window.makeshiftAgent.request({ kind: "stop" }));
     await saveDocument(page, file);
     const archive = readPortableArchive(await readFile(file));
     assert.equal(
@@ -186,13 +194,13 @@ await freac.offsetFaces({faces,distance:2});`);
   );
 } finally {
   if (app) {
-    await page.evaluate(() => window.freacAgent.request({ kind: "stop" })).catch(() => {});
+    await page.evaluate(() => window.makeshiftAgent.request({ kind: "stop" })).catch(() => {});
     await app.close();
   }
   await web?.close();
 }
 async function history() {
-  return page.evaluate(() => window.freacHistory());
+  return page.evaluate(() => window.makeshiftHistory());
 }
 async function undo() {
   await chooseTool(page, "undo", "undo");
@@ -208,7 +216,7 @@ async function run(source) {
   await writeFile(join(workspace, `${prefix}.ts`), source);
   if (web) {
     try {
-      const pending = promisify(execFile)(web.env.FREAC_CLI, ["run", `${prefix}.ts`], {
+      const pending = promisify(execFile)(web.env.MAKESHIFT_CLI, ["run", `${prefix}.ts`], {
         cwd: workspace,
         env: web.env,
         timeout: 30000,
@@ -227,7 +235,7 @@ async function run(source) {
   }
   await page.locator(".agent-screen textarea").focus();
   await page.keyboard.type(
-    `freac run ${prefix}.ts > ${prefix}.json 2> ${prefix}.err; printf '%s' "$?" > ${prefix}.done`,
+    `makeshift run ${prefix}.ts > ${prefix}.json 2> ${prefix}.err; printf '%s' "$?" > ${prefix}.done`,
   );
   await page.keyboard.press("Enter");
   for (let i = 0; i < 1000; i++) {

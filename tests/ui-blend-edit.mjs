@@ -54,7 +54,7 @@ async function roundEdit(page, name, mode) {
   await page.keyboard.down("Control");
   await page.mouse.wheel(0, -90);
   await page.keyboard.up("Control");
-  await page.waitForFunction(() => window.freacInspect().camera.height < 40);
+  await page.waitForFunction(() => window.makeshiftInspect().camera.height < 40);
   const original = (await inspect(page)).document;
   const face = original.bodies[0].faces.find((f) => (mode === "fillet" ? f.blend : f.offsetHandle));
   assert.ok(face);

@@ -11,11 +11,11 @@ for (const entry of erosionSpecialCases) {
     try {
       const source = await entry.build(owner);
       const before = owner.view.data;
-      if (process.env.FREAC_EROSION_ARTIFACTS) {
+      if (process.env.MAKESHIFT_EROSION_ARTIFACTS) {
         await mkdir(".cache/erosion-special", { recursive: true });
         await writeFile(
-          `.cache/erosion-special/${entry.name}.freac`,
-          JSON.stringify({ format: "freac", version: 1, document: before }),
+          `.cache/erosion-special/${entry.name}.makeshift`,
+          JSON.stringify({ format: "makeshift", version: 1, document: before }),
         );
       }
       const reply = await owner.call({

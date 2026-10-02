@@ -4,15 +4,15 @@ export interface NativeExportBridge {
 }
 declare global {
   interface Window {
-    freacMesh?: NativeExportBridge;
+    makeshiftMesh?: NativeExportBridge;
   }
 }
 
 /** Electron supplies IPC; browser development can use its local native backend. */
 export async function nativeExportClient(): Promise<NativeExportBridge | undefined> {
-  if (window.freacMesh) return window.freacMesh;
+  if (window.makeshiftMesh) return window.makeshiftMesh;
   // The iPad owns a separate transport and retains the portable worker path.
-  if (window.freacModel || location.protocol === "file:") return undefined;
+  if (window.makeshiftModel || location.protocol === "file:") return undefined;
   try {
     const response = await fetch("/mesh-export", { method: "GET" });
     if (

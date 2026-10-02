@@ -11,13 +11,13 @@ const fixture = JSON.parse(await readFile("tests/fixtures/shell-bent-sweep.json"
 export async function shellSweepRoute(page, name) {
   await reset(page);
   await openDocument(page, {
-    name: "bent-sweep.freac",
+    name: "bent-sweep.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
-  await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
+  await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 1);
   await orient(page, [0, -1, 1]);
   await worldClick(page, [-20, 0, 0]);
   await page.keyboard.down("Shift");

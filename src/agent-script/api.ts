@@ -76,7 +76,7 @@ export interface ScriptApi extends DecoratorScriptApi, TagScriptApi {
   erode(input: BodyErosion): Promise<SolidResult>;
   /** Fixed at script start. Point selections never imply whole-curve selection. */
   readonly selection: readonly InspectionTarget[];
-  /** Ordinary editable curves on an explicit plane; IDs assigned by Freac. */
+  /** Ordinary editable curves on an explicit plane; IDs assigned by Makeshift. */
   createSketch(input: SketchInput): Promise<SketchResult>;
   /** Extrude explicit closed profiles or planar faces using the ordinary solid kernel. */
   extrude(input: Extrusion): Promise<SolidResult>;

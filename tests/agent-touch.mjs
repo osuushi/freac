@@ -11,7 +11,7 @@ export async function observeAgentTerminal(page) {
         window.testTerminal = this.terminal;
       };
       // Exercise the remote dock's visual-viewport branch with the real browser viewport.
-      window.freacRemote = true;
+      window.makeshiftRemote = true;
     },
     `/@fs${resolve("src/agent/terminal.ts")}`,
   );
@@ -25,7 +25,9 @@ export async function agentTouchRoute(page, browserName) {
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => window.testTerminal.buffer.active.length > 750);
   await page.getByRole("button", { name: "Collapse agent terminal", exact: true }).focus();
-  const documentBefore = await page.evaluate(() => JSON.stringify(window.freacInspect().document));
+  const documentBefore = await page.evaluate(() =>
+    JSON.stringify(window.makeshiftInspect().document),
+  );
   let cdp;
   if (browserName === "chromium") cdp = await page.context().newCDPSession(page);
 
@@ -49,12 +51,12 @@ export async function agentTouchRoute(page, browserName) {
   // PTY output must not snap a reader back to the bottom.
   const offset = await page.evaluate(() => window.testTerminal.getViewportY());
   await page.evaluate(() =>
-    window.freacAgent.request({ kind: "write", data: "echo MORE-HISTORY\r" }),
+    window.makeshiftAgent.request({ kind: "write", data: "echo MORE-HISTORY\r" }),
   );
   await page.waitForTimeout(300);
   assert((await page.evaluate(() => window.testTerminal.getViewportY())) >= offset);
   assert.equal(
-    await page.evaluate(() => JSON.stringify(window.freacInspect().document)),
+    await page.evaluate(() => JSON.stringify(window.makeshiftInspect().document)),
     documentBefore,
   );
   const canvas = await page.locator(".agent-screen canvas").boundingBox();

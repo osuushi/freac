@@ -24,8 +24,8 @@ try {
       args: ["."],
       env: {
         ...process.env,
-        FREAC_TEST_HIDDEN: "1",
-        FREAC_DEV_URL: server.resolvedUrls.local[0],
+        MAKESHIFT_TEST_HIDDEN: "1",
+        MAKESHIFT_DEV_URL: server.resolvedUrls.local[0],
       },
     });
     page = await app.firstWindow();
@@ -56,8 +56,8 @@ try {
     tangentBowRoute,
   ]) {
     if (
-      process.env.FREAC_TEST_ROUTE &&
-      !process.env.FREAC_TEST_ROUTE.split(",").includes(route.name)
+      process.env.MAKESHIFT_TEST_ROUTE &&
+      !process.env.MAKESHIFT_TEST_ROUTE.split(",").includes(route.name)
     )
       continue;
     console.log(`${name}: starting ${route.name}`);

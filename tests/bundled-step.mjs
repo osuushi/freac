@@ -12,7 +12,7 @@ import { bundleNative, dependencies } from "../scripts/release/native.mjs";
 import { readStep } from "./step-readback.mjs";
 
 assert.equal(process.platform, "darwin", "This checks the macOS native bundle");
-const root = await mkdtemp(join(tmpdir(), "freac-step-bundle-"));
+const root = await mkdtemp(join(tmpdir(), "makeshift-step-bundle-"));
 const native = join(root, "native");
 let owner;
 try {
@@ -29,8 +29,8 @@ try {
       );
   }
   owner = new DocumentOwner(
-    new NativeSolver(join(native, "freac-solver")),
-    join(native, "freac-kernel"),
+    new NativeSolver(join(native, "makeshift-solver")),
+    join(native, "makeshift-kernel"),
   );
   const box = await prism(owner, square);
   const offset = await prism(

@@ -12,10 +12,10 @@ const fixture = JSON.parse(
 await withUiRuntimes(
   async (page, name) => {
     await openDocument(page, {
-      name: "projected-cylinder.freac",
+      name: "projected-cylinder.makeshift",
       mimeType: "application/json",
       buffer: Buffer.from(
-        JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+        JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
       ),
     });
     const before = (await inspect(page)).document;

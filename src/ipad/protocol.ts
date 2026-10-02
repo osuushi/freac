@@ -30,7 +30,7 @@ export interface DirectoryListing {
 }
 declare global {
   interface Window {
-    freacIPad?: IPadHost;
-    freacRemote?: boolean;
+    makeshiftIPad?: IPadHost;
+    makeshiftRemote?: boolean;
   }
 }

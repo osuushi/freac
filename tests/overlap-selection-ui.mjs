@@ -29,9 +29,9 @@ try {
 async function loadFixture(page) {
   await inspect(page);
   await openDocument(page, {
-    name: "overlap.freac",
+    name: "overlap.makeshift",
     mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify({ format: "freac", version: 1, document: fixture })),
+    buffer: Buffer.from(JSON.stringify({ format: "makeshift", version: 1, document: fixture })),
   });
   await inspect(page);
 }
@@ -150,7 +150,7 @@ await withUiRuntimes(
         });
       try {
         await touch.addInitScript(() => {
-          window.freacRemote = true;
+          window.makeshiftRemote = true;
         });
         await touch.goto(page.url());
         await loadFixture(touch);

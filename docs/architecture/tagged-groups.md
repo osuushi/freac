@@ -94,8 +94,8 @@ The scripting API exposes `taggedGroups()`, `editTaggedGroup` with create/update
 actions, and `applyTaggedGroup({id, operation})`. Direct operations currently cover
 offsetFaces, moveFaces, finishEdges, shell and scale through their existing handlers.
 Incompatible mixed member types reject atomically; nothing is silently dropped.
-`freac inspect` includes groups, `freac inspect GROUP_ID` returns one, and
-`freac select GROUP_ID` selects its members without changing geometry. Overlapping
+`makeshift inspect` includes groups, `makeshift inspect GROUP_ID` returns one, and
+`makeshift select GROUP_ID` selects its members without changing geometry. Overlapping
 group/individual selections are deduplicated. Scripts keep their ordinary atomic
 acceptance and rollback behavior.
 

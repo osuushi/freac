@@ -37,7 +37,7 @@ async function history(page, before, after) {
   assert.deepEqual((await inspect(page)).document, after);
 }
 async function archive(page, name, expected) {
-  const path = resolve(`.cache/sketch-review/${name}-scale.freac`);
+  const path = resolve(`.cache/sketch-review/${name}-scale.makeshift`);
   await saveDocument(page, path);
   await openDocument(page, path);
   const doc = (await inspect(page)).document;

@@ -49,7 +49,7 @@ export async function mixedSelectionRoute(page, name, electron) {
     "Unhealable face deletion must not remove the whole selected body",
   );
   assert.deepEqual(state.modelingSelection, selection);
-  assert.equal((await page.evaluate(() => window.freacHistory())).at(-1).outcome, "failed");
+  assert.equal((await page.evaluate(() => window.makeshiftHistory())).at(-1).outcome, "failed");
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document.bodies, [whole, partial]);
   await bodyArchiveRoute(page, `${name}-mixed-selection`, electron);

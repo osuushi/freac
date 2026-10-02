@@ -4,14 +4,14 @@ import { onModelKeydown } from "../sketch/model-keys.js";
 
 declare global {
   interface Window {
-    freacScript?: {
+    makeshiftScript?: {
       onState(callback: (state: { running: boolean; view: ModelView }) => void): () => void;
       cancel(): Promise<void>;
     };
   }
 }
 export function installScriptView(editor: SketchEditor, app: HTMLElement): () => void {
-  const api = window.freacScript;
+  const api = window.makeshiftScript;
   if (!api) return () => {};
   const root = document.createElement("div");
   root.className = "calculation-progress";

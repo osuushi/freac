@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import { chooseTool } from "./ui-tools.mjs";
 export async function settled(page) {
   await page.waitForFunction(() => {
-    const state = window.freacInspect?.();
+    const state = window.makeshiftInspect?.();
     return state && !state.busy && !state.camera.moving;
   });
 }
 export async function inspect(page) {
   await settled(page);
-  return page.evaluate(() => window.freacInspect());
+  return page.evaluate(() => window.makeshiftInspect());
 }
 export async function reset(page) {
   await settled(page);

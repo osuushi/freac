@@ -26,7 +26,7 @@ export interface DocumentHost {
 }
 declare global {
   interface Window {
-    freacDocument?: DocumentHost;
+    makeshiftDocument?: DocumentHost;
   }
 }
 

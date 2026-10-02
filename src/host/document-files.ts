@@ -121,8 +121,8 @@ export class DocumentFiles {
     if (!path || saveAs) {
       const result = await dialog.showSaveDialog(window, {
         title: "Save Document",
-        defaultPath: path ?? join(this.directory, "Untitled.freac"),
-        filters: [{ name: "Freac Document", extensions: ["freac"] }],
+        defaultPath: path ?? join(this.directory, "Untitled.makeshift"),
+        filters: [{ name: "Makeshift Document", extensions: ["makeshift"] }],
       });
       if (result.canceled || !result.filePath) return false;
       path = result.filePath;

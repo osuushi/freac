@@ -19,7 +19,7 @@ const names = [
   "cavity-breakthrough",
   "hollow-sphere",
 ];
-const requested = process.env.FREAC_EROSION_CASE;
+const requested = process.env.MAKESHIFT_EROSION_CASE;
 if (requested) assert.ok(names.includes(requested), `Unknown UI erosion case: ${requested}`);
 const cases = erosionSpecialCases.filter(
   (entry) => names.includes(entry.name) && (!requested || entry.name === requested),
@@ -30,7 +30,7 @@ for (const entry of cases) {
   try {
     await entry.build(owner);
     await writeFile(
-      `.cache/erosion-special/ui-${entry.name}.freac`,
+      `.cache/erosion-special/ui-${entry.name}.makeshift`,
       documentArchive(owner.view.data),
     );
   } finally {
@@ -41,7 +41,7 @@ await withUiRuntimes(
   async (page, runtime) => {
     for (const entry of cases) {
       await page.keyboard.press("Escape");
-      await openDocument(page, resolve(`.cache/erosion-special/ui-${entry.name}.freac`));
+      await openDocument(page, resolve(`.cache/erosion-special/ui-${entry.name}.makeshift`));
       await inspect(page);
       await page
         .getByRole("button", { name: /^Select Body / })

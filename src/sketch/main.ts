@@ -74,7 +74,7 @@ import { worldLabels } from "./world-labels.js";
 const app = document.querySelector<HTMLElement>("#app");
 if (!app) throw new Error("Missing app root");
 app.innerHTML = `<div id="world"></div><div id="overlay"></div>
-  <header><strong>freac</strong><span class="mode-label">Modeling</span></header>
+  <header><div class="brand"><img src="./makeshift.png" alt=""/><strong>Makeshift</strong></div><span class="mode-label">Modeling</span></header>
   <div class="status" role="status"></div><div class="navigation-hint">Two-finger scroll · pan &nbsp; ⌘-drag · orbit &nbsp; Pinch · zoom &nbsp; Hold · choose overlap</div>`;
 const host = app.querySelector<HTMLElement>("#world"),
   overlay = app.querySelector<HTMLElement>("#overlay"),

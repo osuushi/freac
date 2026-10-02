@@ -5,7 +5,7 @@ import { inspect, settled } from "./ui-helpers.mjs";
 
 export async function tabletAgentRoute(page) {
   await page.evaluate(() =>
-    window.freacAgent.request({
+    window.makeshiftAgent.request({
       kind: "configure",
       preferences: {
         preset: "custom",
@@ -17,7 +17,7 @@ export async function tabletAgentRoute(page) {
   );
   await page.getByRole("button", { name: "Open agent terminal", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
-  const workspace = (await page.evaluate(() => window.freacAgent.request({ kind: "read" })))
+  const workspace = (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" })))
     .workspace;
   const run = async (command, name) => {
     await page.locator(".agent-screen textarea").focus();
@@ -39,15 +39,15 @@ export async function tabletAgentRoute(page) {
     return readFile(join(workspace, `${name}.json`), "utf8");
   };
   const state = await inspect(page);
-  const overview = JSON.parse(await run("freac inspect", "inspect-ipad"));
+  const overview = JSON.parse(await run("makeshift inspect", "inspect-ipad"));
   assert.equal(overview.sketches.length, state.document.sketches.length);
-  const render = JSON.parse(await run("freac render", "render-ipad"));
+  const render = JSON.parse(await run("makeshift render", "render-ipad"));
   assert.equal((await readFile(render.path)).subarray(1, 4).toString(), "PNG");
   await writeFile(
     join(workspace, "ipad-script.ts"),
-    'await freac.createSketch({ plane:"XZ", curves:[{kind:"segment",a:{x:0,y:0},b:{x:10,y:10}}] });\n',
+    'await makeshift.createSketch({ plane:"XZ", curves:[{kind:"segment",a:{x:0,y:0},b:{x:10,y:10}}] });\n',
   );
-  await run("freac run ipad-script.ts", "script-ipad");
+  await run("makeshift run ipad-script.ts", "script-ipad");
   await settled(page);
   assert.equal((await inspect(page)).document.sketches.length, state.document.sketches.length + 1);
   await page.getByLabel("Modeling viewport", { exact: true }).focus();

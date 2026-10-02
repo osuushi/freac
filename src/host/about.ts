@@ -9,7 +9,7 @@ function resources(): string {
 }
 export async function showLicenses(): Promise<void> {
   if (licenses && !licenses.isDestroyed()) {
-    if (process.env.FREAC_TEST_HIDDEN !== "1") licenses.show();
+    if (process.env.MAKESHIFT_TEST_HIDDEN !== "1") licenses.show();
     return;
   }
   const path = join(resources(), "licenses/index.html");
@@ -24,10 +24,10 @@ export async function showLicenses(): Promise<void> {
     return;
   }
   licenses = new BrowserWindow({
-    title: "Freac — Third-party licenses",
+    title: "Makeshift — Third-party licenses",
     width: 900,
     height: 720,
-    show: process.env.FREAC_TEST_HIDDEN !== "1",
+    show: process.env.MAKESHIFT_TEST_HIDDEN !== "1",
     backgroundColor: "#f8f9fb",
     webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false },
   });
@@ -46,9 +46,9 @@ export async function showAbout(): Promise<void> {
     .then((value) => JSON.parse(value) as { timestamp: string; commit: string })
     .catch(() => null);
   const result = await dialog.showMessageBox({
-    title: "About Freac",
-    message: "Freac",
-    detail: `${metadata?.timestamp ?? app.getVersion()}\nFree Agentic CAD\nLicensed under LGPL-2.1-or-later.\nUses Open CASCADE Technology and FreeCAD PlaneGCS.\n${metadata?.commit ?? "Development build"}`,
+    title: "About Makeshift",
+    message: "Makeshift",
+    detail: `${metadata?.timestamp ?? app.getVersion()}\nCAD with a coding agent\nLicensed under LGPL-2.1-or-later.\nUses Open CASCADE Technology and FreeCAD PlaneGCS.\n${metadata?.commit ?? "Development build"}`,
     buttons: ["OK", "Third-party licenses"],
     defaultId: 0,
     cancelId: 0,

@@ -1,7 +1,7 @@
-# Developing FreAC
+# Developing Makeshift
 
 Build options and verification commands for contributors. For an introduction and
-everyday use, see [FreAC — Free Agentic CAD](../README.md).
+everyday use, see [Makeshift](../README.md).
 
 ## Setup and run
 
@@ -39,13 +39,13 @@ overrides apply. macOS release preparation copies/signs it with the calculators.
 into `.cache/mesh-inputs` and builds the stateless native export calculator in
 `.build/mesh`. Ordinary builds rebuild it from those prepared sources.
 `setup:kernel` downloads checksum-verified OCCT 7.9.3 source and builds the modeling
-libraries, STEP translator (`TKDESTEP`) and FreAC's separate solid calculator.
+libraries, STEP translator (`TKDESTEP`) and Makeshift's separate solid calculator.
 Its transitive toolkit dependencies are built without FreeType or X11; STEP
 export does not initialize graphics. This initial source build takes
 longer; its cache is `.cache/kernel` and the calculator is `.build/kernel`.
 Alternatively, set `OCCT_ROOT` to an installed SDK produced by this checkout's
 `setup:kernel` recipe, including `TKDESTEP`. A stock OCCT 7.9.3 SDK is not equivalent:
-Freac adapts rounded offset joins to shared-boundary precision. Setup and direct
+Makeshift adapts rounded offset joins to shared-boundary precision. Setup and direct
 CMake configuration require the recipe/build receipt, matching
 platform/architecture/deployment target and checksums of the installed SDK files.
 An older SDK without a receipt must be rebuilt; a version number or manually
@@ -80,7 +80,7 @@ the cache; later worktrees can reuse matching compiler outputs while retaining
 independent CMake build directories. `CMAKE_CXX_COMPILER_LAUNCHER`, `CCACHE_DIR`,
 `CCACHE_BASEDIR` and `CCACHE_MAXSIZE` overrides are preserved.
 Mesh archives are shared by SHA-256 under the main checkout's `.cache/mesh-archives`
-(`FREAC_MESH_ARCHIVE_CACHE` overrides this); extraction remains checkout-local.
+(`MAKESHIFT_MESH_ARCHIVE_CACHE` overrides this); extraction remains checkout-local.
 Existing local mesh archives seed that cache after checksum verification.
 For local macOS worktrees, completed dependency installations are cached under
 the main checkout's `.cache/dependencies`. A matching installation is copied with
@@ -92,7 +92,7 @@ Misses run `npm ci --prefer-offline --no-audit` and publish only after success.
 Local/workspace-linked dependencies bypass the snapshot. Only `node_modules` is
 captured; our current install hooks place their outputs there. If future lifecycle
 hooks generate files elsewhere, extend the setup recipe before caching those outputs.
-`FREAC_DEPENDENCY_CACHE=0 bash scripts/setup-worktree.sh` forces an ordinary install.
+`MAKESHIFT_DEPENDENCY_CACHE=0 bash scripts/setup-worktree.sh` forces an ordinary install.
 Standalone `npm ci` and CI/release installation are unchanged. Old snapshots can be
 discarded by removing the main checkout's `.cache/dependencies` when no setup is
 running; the next setup repopulates it. Run `npm audit` separately for dependency
@@ -145,13 +145,13 @@ these alongside the full unit suite and desktop host checks; it has no signing o
 publication steps. Workflow execution on GitHub is separate from local verification.
 
 Standalone UI launchers use `tests/ui-runtime.mjs` for runtime selection. Set
-`FREAC_TEST_BROWSER=chromium`, `webkit` or `electron` to select one supported
+`MAKESHIFT_TEST_BROWSER=chromium`, `webkit` or `electron` to select one supported
 runtime; a typo or unsupported runtime fails before launch. Existing dedicated
 geometry suites retain their declared defaults. Captured geometry, decorators,
 delayed delivery and physical-device checks remain separate from the ordinary gate.
 
 To repeat setup from committed source, create a separate checkout with
-`git worktree add --detach ../freac-clean HEAD`, enter it, activate `.nvmrc`,
+`git worktree add --detach ../makeshift-clean HEAD`, enter it, activate `.nvmrc`,
 and run the setup and check commands above. Start without copying `node_modules/`,
 `.build/` or `.cache/` from another checkout. The compiler and CMake remain system
 prerequisites; native sources and headers are downloaded and verified.
@@ -162,15 +162,15 @@ After native setup and `npm run build`, build the independent reader and run
 geometry and ordinary control acceptance:
 
 ```sh
-cmake -S native/kernel -B .build/kernel -DFREAC_KERNEL_TESTS=ON
+cmake -S native/kernel -B .build/kernel -DMAKESHIFT_KERNEL_TESTS=ON
 cmake --build .build/kernel --target step-readback --config Release --parallel 4
 npm test
 node tests/step-geometry.mjs
 node tests/bundled-step.mjs # macOS native relocation/signature check
 node tests/ui-step-export.mjs
-FREAC_TEST_BROWSER=chromium node tests/export-ui.mjs
-FREAC_TEST_BROWSER=webkit node tests/export-ui.mjs
-FREAC_TEST_BROWSER=electron node tests/export-ui.mjs
+MAKESHIFT_TEST_BROWSER=chromium node tests/export-ui.mjs
+MAKESHIFT_TEST_BROWSER=webkit node tests/export-ui.mjs
+MAKESHIFT_TEST_BROWSER=electron node tests/export-ui.mjs
 ```
 
 The reader checks exact surfaces, units, placement, volume, closed cavities and
@@ -181,27 +181,27 @@ hidden Electron. These checks do not certify third-party STEP application suppor
 ### Sketch and solid tools
 
 The orientable tool controls have a focused real-input suite. After `npm run build`,
-run `node tests/orientable-tools-ui.mjs` for Chromium; set `FREAC_TEST_BROWSER=webkit`
-or `FREAC_TEST_BROWSER=electron` for WebKit or hidden Electron. It covers operation
+run `node tests/orientable-tools-ui.mjs` for Chromium; set `MAKESHIFT_TEST_BROWSER=webkit`
+or `MAKESHIFT_TEST_BROWSER=electron` for WebKit or hidden Electron. It covers operation
 glyphs, camera projection, actual editing, cancellation, history and reopening.
-`FREAC_TOOL_ROUTE` optionally selects comma-separated route names from the runner.
+`MAKESHIFT_TOOL_ROUTE` optionally selects comma-separated route names from the runner.
 
 Mirror has a focused real-input suite for sketch and body reference picking,
 copy/replace, offset, cancellation, Undo/Redo, Save/Open and subsequent edits.
 After `npm run build`, run `node tests/mirror-ui.mjs` for headless Chromium/WebKit
-and hidden Electron. `FREAC_TEST_BROWSER=chromium`, `webkit` or `electron` limits
+and hidden Electron. `MAKESHIFT_TEST_BROWSER=chromium`, `webkit` or `electron` limits
 the run to that runtime.
 
 The limited interactive face Move tool has a focused real-input suite:
 
 ```sh
 npm run test:face-move
-FREAC_TEST_BROWSER=webkit npm run test:face-move
+MAKESHIFT_TEST_BROWSER=webkit npm run test:face-move
 npm run build
-FREAC_TEST_BROWSER=electron npm run test:face-move
-FREAC_FACE_FEATURES_ONLY=1 npm run test:face-move
-FREAC_FACE_GENERAL_ONLY=1 npm run test:face-move
-FREAC_FACE_SHARED_ONLY=1 npm run test:face-move
+MAKESHIFT_TEST_BROWSER=electron npm run test:face-move
+MAKESHIFT_FACE_FEATURES_ONLY=1 npm run test:face-move
+MAKESHIFT_FACE_GENERAL_ONLY=1 npm run test:face-move
+MAKESHIFT_FACE_SHARED_ONLY=1 npm run test:face-move
 ```
 
 Electron runs hidden. The suite covers hole/pocket/boss selection and movement,
@@ -212,9 +212,9 @@ The experimental edge Move prototype has its own ordinary-input route:
 
 ```sh
 npm run test:edge-move
-FREAC_TEST_BROWSER=webkit npm run test:edge-move
+MAKESHIFT_TEST_BROWSER=webkit npm run test:edge-move
 npm run build
-FREAC_TEST_BROWSER=electron npm run test:edge-move
+MAKESHIFT_TEST_BROWSER=electron npm run test:edge-move
 ```
 
 It exercises round and rectangular chamfer shoulders, the local boundary-normal
@@ -227,9 +227,9 @@ curved results, and uses the same path for hole/pocket/boss movement on planar s
 
 ```sh
 npm run test:reconnection
-FREAC_TEST_BROWSER=webkit npm run test:reconnection
+MAKESHIFT_TEST_BROWSER=webkit npm run test:reconnection
 npm run build
-FREAC_TEST_BROWSER=electron npm run test:reconnection
+MAKESHIFT_TEST_BROWSER=electron npm run test:reconnection
 ```
 
 The suite covers upper-rim/top-face movement, sideways reconnection, a single
@@ -237,12 +237,12 @@ chamfer edge, moving a reopened warped face, planar feature regressions and arch
 Use [the modeling contract](architecture/modeling-tools.md) to inspect the deformation
 choices. This does not establish general arbitrary-BRep support.
 
-The `FREAC_FACE_FEATURES_ONLY` UI route builds/selects/moves these six cases using
+The `MAKESHIFT_FACE_FEATURES_ONLY` UI route builds/selects/moves these six cases using
 ordinary controls; it accepts the same browser selection as the full suite.
-`FREAC_FACE_GENERAL_ONLY` opens the captured rounded-wall pocket and builds an
+`MAKESHIFT_FACE_GENERAL_ONLY` opens the captured rounded-wall pocket and builds an
 L-shaped boss plus L-shaped/rectangular through-holes through ordinary controls.
-It also accepts `FREAC_TEST_BROWSER=webkit` or `electron` (hidden).
-`FREAC_FACE_SHARED_ONLY` exercises the captured multi-wall hole whose distinct
+It also accepts `MAKESHIFT_TEST_BROWSER=webkit` or `electron` (hidden).
+`MAKESHIFT_FACE_SHARED_ONLY` exercises the captured multi-wall hole whose distinct
 faces share a cylinder. These routes now exercise the shared reconnection path.
 
 ### Slow calculations and performance
@@ -265,13 +265,13 @@ workloads running:
 ```sh
 npm test
 node tests/kernel-calculation-performance.mjs
-FREAC_KERNEL_TIMING=1 node tests/kernel-calculation-performance.mjs
+MAKESHIFT_KERNEL_TIMING=1 node tests/kernel-calculation-performance.mjs
 ```
 
 The benchmark accepts an optional kernel executable path for comparisons. Timings
 include input/output; native phase timings go to stderr. General Booleans, meshing,
 face deletion and Shell validation Booleans enable supported OCCT parallel paths,
-using all detected logical CPUs by default. `FREAC_KERNEL_THREADS` can limit the
+using all detected logical CPUs by default. `MAKESHIFT_KERNEL_THREADS` can limit the
 pool explicitly. A thread count does not guarantee that every algorithm or single
 feature can use all cores.
 
@@ -283,8 +283,8 @@ on Open. Desktop uses native file dialogs and unsaved-work prompts; paired iPad
 browses computer files, while the standalone web frontend uses upload/download.
 There is no geometry autosave.
 UI checks own headless Chromium/WebKit instances and close them after the run.
-To check just one engine, use `FREAC_TEST_BROWSER=chromium npm run test:ui`
-or `FREAC_TEST_BROWSER=webkit npm run test:ui`. Each run owns its server/backend.
+To check just one engine, use `MAKESHIFT_TEST_BROWSER=chromium npm run test:ui`
+or `MAKESHIFT_TEST_BROWSER=webkit npm run test:ui`. Each run owns its server/backend.
 Electron checks hide their window; on macOS they still require a desktop session.
 Linux browser prerequisites can be installed with Playwright's `install --with-deps`
 option in the test machine/VM. Linux/Windows builds and physical iPad interaction
@@ -328,19 +328,19 @@ npm run build
 npx tsc -p tsconfig.test.json
 node --test scripts/evals/gear-grade.test.mjs
 node scripts/evals/gear-render.mjs
-FREAC_EVAL_OUTPUT=.cache/gear-eval/my-run node scripts/evals/gear-trains.mjs
+MAKESHIFT_EVAL_OUTPUT=.cache/gear-eval/my-run node scripts/evals/gear-trains.mjs
 node scripts/evals/gear-grade.mjs .cache/gear-eval/my-run/{pair,compound,revision}
 node scripts/evals/gear-review.mjs .cache/gear-eval/my-run/{pair,compound,revision}
 ```
 
-Use `FREAC_EVAL_CASES=oblique`, `FREAC_EVAL_MODEL`, `FREAC_EVAL_EFFORT`, and
-`FREAC_CODEX_EXECUTABLE` to select cases and harness settings. Use a fresh output
-directory for each run. `FREAC_EVAL_VARIANT` labels a guidance experiment;
-`FREAC_EVAL_SKILL=/path/to/skill-folder` copies and explicitly invokes a candidate
-`freac-gear-trains` skill in the isolated document workspace.
+Use `MAKESHIFT_EVAL_CASES=oblique`, `MAKESHIFT_EVAL_MODEL`, `MAKESHIFT_EVAL_EFFORT`, and
+`MAKESHIFT_CODEX_EXECUTABLE` to select cases and harness settings. Use a fresh output
+directory for each run. `MAKESHIFT_EVAL_VARIANT` labels a guidance experiment;
+`MAKESHIFT_EVAL_SKILL=/path/to/skill-folder` copies and explicitly invokes a candidate
+`makeshift-gear-trains` skill in the isolated document workspace.
 
 Results retain dated prompts, model/effort, CLI version, reference hashes, command
-traces, timing, usage, authored files and `.freac` models. Review the trace and final
+traces, timing, usage, authored files and `.makeshift` models. Review the trace and final
 claims as well as `grade.json`: successful commands alone do not establish a good
 result. The grader independently derives ratios, axes, module, width, envelope and
 theoretical contact ratio from accepted geometry. It checks closed decorated export
@@ -351,7 +351,7 @@ These cases cover unshifted external Z-axis spur trains only. Sampled collision
 checks are not continuous motion, load, manufacture or arbitrary assembly validation.
 The deterministic `gear-render.mjs` check verifies that the agent image includes
 visible teeth while preserving model, camera and selection. It also supports
-`FREAC_TEST_BROWSER=chromium` and `webkit` for the shared capture implementation;
+`MAKESHIFT_TEST_BROWSER=chromium` and `webkit` for the shared capture implementation;
 the default Electron route uses the real CLI/host boundary.
 
 ### Terminal and interface checks
@@ -361,7 +361,7 @@ dependencies and prepares node-pty's macOS helper. After `npm run build`, run
 `node tests/agent-terminal.mjs` for hidden Electron and `node tests/agent-web.mjs`
 for isolated Chromium/WebKit with a real test PTY. Run `node tests/agent-persistence.mjs`
 for Save/Open/Save As, recovery and browser archive preservation. Set
-`FREAC_CODEX_EXECUTABLE` and run `node tests/codex-portability.mjs` for a local
+`MAKESHIFT_CODEX_EXECUTABLE` and run `node tests/codex-portability.mjs` for a local
 Codex transcript replay check without submitting a prompt. With that variable set,
 `node tests/agent-orientation.mjs` checks hidden Electron commands/lifecycle plus
 actual Codex prompt-input discovery and sandbox execution. These tests do not sign in
@@ -371,16 +371,16 @@ in hidden Electron, shell discovery, child-tool lookup and explicit PATH precede
 `node tests/codex-permissions.mjs` with the same executable variable checks workspace
 writes, automatic review and the parent-directory boundary using an isolated config.
 `node tests/agent-inspection.mjs` exercises CLI inspection in hidden Electron;
-`FREAC_TEST_BROWSER=chromium` or `webkit` exercises the shared inspection route.
+`MAKESHIFT_TEST_BROWSER=chromium` or `webkit` exercises the shared inspection route.
 `node tests/agent-quit-save.mjs` checks clean quit and final shutdown-write preservation.
 `node tests/agent-script.mjs` covers typed creation, selection edits, atomic Undo/Redo,
 failure/cancellation and manual re-editing in hidden Electron; set
-`FREAC_TEST_BROWSER=chromium` or `webkit` for the isolated shared-browser route.
+`MAKESHIFT_TEST_BROWSER=chromium` or `webkit` for the isolated shared-browser route.
 Electron also checks CPU-bound cancellation and script/model Save/Open; the
 orientation test exercises a real script through the installed Codex sandbox.
 `node tests/agent-revolve.mjs` covers manual Revolve plus a typed CLI helical cut,
 Undo/Redo, failed-script rollback, manual body movement and Save/Open; the same
-`FREAC_TEST_BROWSER` settings exercise Chromium/WebKit.
+`MAKESHIFT_TEST_BROWSER` settings exercise Chromium/WebKit.
 That test also records a native top-face offset failure after the helical cut;
 the rejected offset preserves the model and is not counted as successful editing.
 TypeScript is a pinned runtime dependency so script checking needs no personal compiler.
@@ -398,6 +398,6 @@ After `npm run build`:
 node tests/shell-ui.mjs
 node tests/selection-operations-ui.mjs
 node tests/delete-topology-ui.mjs
-FREAC_TEST_BROWSER=webkit node tests/delete-topology-ui.mjs
-FREAC_TEST_BROWSER=electron node tests/delete-topology-ui.mjs
+MAKESHIFT_TEST_BROWSER=webkit node tests/delete-topology-ui.mjs
+MAKESHIFT_TEST_BROWSER=electron node tests/delete-topology-ui.mjs
 ```

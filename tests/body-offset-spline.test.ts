@@ -157,7 +157,7 @@ test("captured offset supports history, reopened offset surfaces, reversal and m
 
 test("native freeform offset rejects wall crossing and radius collapse at the requested distance", async () => {
   const kernel = new NativeCalculator(
-    resolve(".build/kernel/bin/freac-kernel"),
+    resolve(".build/kernel/bin/makeshift-kernel"),
     "Offset regression",
   );
   try {

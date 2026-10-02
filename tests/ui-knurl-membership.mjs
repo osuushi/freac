@@ -34,7 +34,7 @@ export async function knurlMembershipRoute(page) {
   assert.equal(state.document.decorators[0].faces.length, 1);
   assert.deepEqual(state.document.decorators[0].frame, before.frame);
   await page.waitForFunction(() =>
-    window.freacInspect().decoratorPreviewBounds.some((b) => b.min[2] >= 4.99),
+    window.makeshiftInspect().decoratorPreviewBounds.some((b) => b.min[2] >= 4.99),
   );
   await page.getByRole("button", { name: "Continue knurling onto selection", exact: true }).click();
   state = await inspect(page);
@@ -61,7 +61,8 @@ export async function knurlMoveRoute(page) {
   await page.getByRole("button", { name: "Move body X", exact: true }).click();
   await page.locator(".body-transform-value").fill("12");
   await page.waitForFunction(
-    (id) => window.freacInspect().decoratorPreviewBounds.some((b) => b.body === id && b.min[0] > 3),
+    (id) =>
+      window.makeshiftInspect().decoratorPreviewBounds.some((b) => b.body === id && b.min[0] > 3),
     bodyId,
   );
   await page.keyboard.press("Enter");

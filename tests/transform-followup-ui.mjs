@@ -8,8 +8,8 @@ await withUiRuntimes(
     } catch (error) {
       console.log(
         await page.evaluate(() => ({
-          interaction: window.freacInspect().interaction,
-          moveMode: window.freacInspect().moveMode,
+          interaction: window.makeshiftInspect().interaction,
+          moveMode: window.makeshiftInspect().moveMode,
           status: document.querySelector("[role=status]")?.textContent,
         })),
       );

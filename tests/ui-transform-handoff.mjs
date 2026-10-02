@@ -73,7 +73,7 @@ export async function transformHandoffRoute(page, name) {
         }, interruption);
         await page.mouse.up();
         await page.evaluate(() => window.handoffTest.release());
-        await page.waitForFunction(() => window.freacInspect().interaction === null);
+        await page.waitForFunction(() => window.makeshiftInspect().interaction === null);
         const after = await inspect(page);
         assert.deepEqual(
           after.document,

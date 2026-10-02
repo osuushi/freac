@@ -114,7 +114,7 @@ tool and final requested parameters (including explicit cleanup), not a bare Acc
 Cancellation records the abandoned pending operation without an Undo step.
 
 A read-only `read-history` request exposes cloned metadata without Undo snapshots;
-`window.freacHistory()` and Capture fixture use this same path. Sketch inputs are
+`window.makeshiftHistory()` and Capture fixture use this same path. Sketch inputs are
 retained; Open diagnostics summarize IDs rather than copying complete BReps.
 Fixture captures use the system temporary directory in development and production,
 independent of the app launch directory; see [diagnostic fixtures](persistence.md#diagnostic-fixtures).

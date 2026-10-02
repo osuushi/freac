@@ -14,15 +14,18 @@ import { drag, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const run = promisify(execFile);
-const root = await mkdtemp(join(tmpdir(), "freac-orientation-test-"));
-const codex = process.env.FREAC_CODEX_EXECUTABLE;
-assert(codex, "Set FREAC_CODEX_EXECUTABLE to verify installed Codex orientation.");
-const app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+const root = await mkdtemp(join(tmpdir(), "makeshift-orientation-test-"));
+const codex = process.env.MAKESHIFT_CODEX_EXECUTABLE;
+assert(codex, "Set MAKESHIFT_CODEX_EXECUTABLE to verify installed Codex orientation.");
+const app = await launchElectron({
+  args: ["."],
+  env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+});
 try {
   const page = await app.firstWindow();
   page.setDefaultTimeout(10000);
   await page.evaluate(() =>
-    window.freacAgent.request({
+    window.makeshiftAgent.request({
       kind: "configure",
       preferences: {
         preset: "custom",
@@ -39,21 +42,21 @@ try {
   assert.equal(guide, startupGuide);
   await terminal(
     page,
-    "freac help > help.txt; freac docs > docs.txt; freac types > types.txt; freac status > status.json",
+    "makeshift help > help.txt; makeshift docs > docs.txt; makeshift types > types.txt; makeshift status > status.json",
   );
   await until(async () => JSON.parse(await readFile(join(first.cwd, "status.json"), "utf8")));
   assert.equal(
     JSON.parse(await readFile(join(first.cwd, "status.json"), "utf8")).application,
-    "Freac",
+    "Makeshift",
   );
   assert.match(
     await readFile(join(first.cwd, "help.txt"), "utf8"),
     /Inspection, selection control/,
   );
   assert.equal(await readFile(join(first.cwd, "docs.txt"), "utf8"), `${referenceGuide}\n`);
-  assert.match(await readFile(join(first.cwd, "types.txt"), "utf8"), /interface FreacStatus/);
-  assert.equal(await readFile(first.env.FREAC_DOCS, "utf8"), referenceGuide);
-  assert.equal(first.env.FREAC_WORKSPACE, first.cwd);
+  assert.match(await readFile(join(first.cwd, "types.txt"), "utf8"), /interface MakeshiftStatus/);
+  assert.equal(await readFile(first.env.MAKESHIFT_DOCS, "utf8"), referenceGuide);
+  assert.equal(first.env.MAKESHIFT_WORKSPACE, first.cwd);
 
   // Actual sandbox, real bundled Electron-as-Node launcher, no network exception.
   const home = join(root, "codex");
@@ -70,19 +73,19 @@ try {
   const options = { cwd: first.cwd, env, timeout: 20000, maxBuffer: 4 * 1024 * 1024 };
   const sandbox = await run(
     codex,
-    ["sandbox", "-c", 'sandbox_mode="workspace-write"', "--", "/bin/sh", "-c", "freac status"],
+    ["sandbox", "-c", 'sandbox_mode="workspace-write"', "--", "/bin/sh", "-c", "makeshift status"],
     options,
   );
   assert.equal(JSON.parse(sandbox.stdout).document.name, "Untitled");
   await writeFile(
     join(first.cwd, "sandbox-script.ts"),
     `
-const s = await freac.createSketch({plane:"XY",curves:[{kind:"circle",center:{x:0,y:0},radius:4}]});
-await freac.extrude({sources:s.profiles,distance:3,mode:"new"});
+const s = await makeshift.createSketch({plane:"XY",curves:[{kind:"circle",center:{x:0,y:0},radius:4}]});
+await makeshift.extrude({sources:s.profiles,distance:3,mode:"new"});
 throw new Error("sandbox script rollback");
 `,
   );
-  const beforeScript = await page.evaluate(() => window.freacInspect().document);
+  const beforeScript = await page.evaluate(() => window.makeshiftInspect().document);
   await assert.rejects(
     () =>
       run(
@@ -94,13 +97,13 @@ throw new Error("sandbox script rollback");
           "--",
           "/bin/sh",
           "-c",
-          "freac run sandbox-script.ts",
+          "makeshift run sandbox-script.ts",
         ],
         options,
       ),
     /sandbox script rollback/,
   );
-  assert.deepEqual(await page.evaluate(() => window.freacInspect().document), beforeScript);
+  assert.deepEqual(await page.evaluate(() => window.makeshiftInspect().document), beforeScript);
   const prompt = await run(
     codex,
     [
@@ -111,8 +114,8 @@ throw new Error("sandbox script rollback");
     ],
     options,
   );
-  assert.match(prompt.stdout, /You are running inside Freac/);
-  assert.match(prompt.stdout, /Working in Freac/);
+  assert.match(prompt.stdout, /You are running inside Makeshift/);
+  assert.match(prompt.stdout, /Working in Makeshift/);
   assert.match(prompt.stdout, /older absolute workspace paths are stale/);
   assert.match(prompt.stdout, /Execute a known operation directly/);
   console.log(
@@ -123,14 +126,14 @@ throw new Error("sandbox script rollback");
   await page.keyboard.press("r");
   await drag(page, [-10, -6], [10, 6]);
   await settled(page);
-  const model = await page.evaluate(() => JSON.stringify(window.freacInspect().document));
-  const file = join(root, "first.freac"),
-    copy = join(root, "renamed.freac");
+  const model = await page.evaluate(() => JSON.stringify(window.makeshiftInspect().document));
+  const file = join(root, "first.makeshift"),
+    copy = join(root, "renamed.makeshift");
   await saveDocument(page, file);
-  assert.equal((await status(first)).document.name, "first.freac");
+  assert.equal((await status(first)).document.name, "first.makeshift");
   await saveDocument(page, copy);
   assert.deepEqual((await status(first)).document, {
-    name: "renamed.freac",
+    name: "renamed.makeshift",
     saved: true,
     edited: false,
     units: "mm",
@@ -139,27 +142,31 @@ throw new Error("sandbox script rollback");
   assert(archive.files["workspace/AGENTS.md"]);
   assert(
     !Object.keys(archive.files).some((path) =>
-      /freac\.d\.ts|freac\.md|freac\.cmd|\.request|\.response/.test(path),
+      /makeshift\.d\.ts|makeshift\.md|makeshift\.cmd|\.request|\.response/.test(path),
     ),
   );
   await assert.rejects(
-    () => status({ ...first, env: { ...first.env, FREAC_CAPABILITY: "wrong" } }),
-    /Invalid Freac connection/,
+    () => status({ ...first, env: { ...first.env, MAKESHIFT_CAPABILITY: "wrong" } }),
+    /Invalid Makeshift connection/,
   );
-  assert.equal(await page.evaluate(() => JSON.stringify(window.freacInspect().document)), model);
+  assert.equal(
+    await page.evaluate(() => JSON.stringify(window.makeshiftInspect().document)),
+    model,
+  );
 
   // User guidance must survive restart byte-for-byte; old launch stays disconnected.
   const custom = "# My drawing\nKeep the wall at 3 mm.\n";
   await writeFile(join(first.cwd, "AGENTS.md"), custom);
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   await until(
-    async () => !(await page.evaluate(() => window.freacAgent.request({ kind: "read" }))).running,
+    async () =>
+      !(await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" }))).running,
   );
   await assert.rejects(() => status(first), /connection has closed/);
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   const restarted = await environment(page);
-  assert.notEqual(restarted.env.FREAC_ENDPOINT, first.env.FREAC_ENDPOINT);
+  assert.notEqual(restarted.env.MAKESHIFT_ENDPOINT, first.env.MAKESHIFT_ENDPOINT);
   assert.equal(await readFile(join(first.cwd, "AGENTS.md"), "utf8"), custom);
   await assert.rejects(() => status(first), /connection has closed/);
 
@@ -169,35 +176,40 @@ throw new Error("sandbox script rollback");
     });
   });
   await chooseTool(page, "new document", "new");
-  await until(async () => (await page.evaluate(() => window.freacDocument.status())).path === null);
+  await until(
+    async () => (await page.evaluate(() => window.makeshiftDocument.status())).path === null,
+  );
   await assert.rejects(() => status(restarted), /connection has closed/);
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   const second = await environment(page);
   assert.equal((await status(second)).document.name, "Untitled");
   await openDocument(page, file);
-  await until(async () => (await page.evaluate(() => window.freacDocument.status())).path === file);
+  await until(
+    async () => (await page.evaluate(() => window.makeshiftDocument.status())).path === file,
+  );
   await assert.rejects(() => status(second), /connection has closed/);
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
   const opened = await environment(page);
-  assert.equal((await status(opened)).document.name, "first.freac");
+  assert.equal((await status(opened)).document.name, "first.makeshift");
   await page.getByRole("button", { name: "Stop", exact: true }).click();
   await until(
-    async () => !(await page.evaluate(() => window.freacAgent.request({ kind: "read" }))).running,
+    async () =>
+      !(await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" }))).running,
   );
   await until(() => page.getByRole("button", { name: "Start", exact: true }).isEnabled());
   await app.evaluate(({ dialog }, path) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] });
     dialog.showMessageBox = async () => ({ response: 0 });
   }, dirname(first.cwd));
-  const recovered = await page.evaluate(() => window.freacAgent.request({ kind: "recover" }));
+  const recovered = await page.evaluate(() => window.makeshiftAgent.request({ kind: "recover" }));
   assert(!recovered.error, recovered.error);
   await assert.rejects(() => status(opened), /connection has closed/);
   assert.equal(await readFile(join(recovered.workspace, "AGENTS.md"), "utf8"), custom);
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
-  await terminal(page, "freac status; touch review-ready");
+  await terminal(page, "makeshift status; touch review-ready");
   await until(async () => {
     await readFile(join(recovered.workspace, "review-ready"));
     return true;
@@ -215,7 +227,7 @@ throw new Error("sandbox script rollback");
 } finally {
   const page = await app.firstWindow();
   await until(
-    async () => !(await page.evaluate(() => window.freacAgent.request({ kind: "stop" }))).error,
+    async () => !(await page.evaluate(() => window.makeshiftAgent.request({ kind: "stop" }))).error,
   ).catch(() => {});
   await app
     .evaluate(({ dialog }) => {
@@ -234,12 +246,13 @@ async function terminal(page, text) {
   await page.keyboard.press("Enter");
 }
 async function environment(page) {
-  const cwd = (await page.evaluate(() => window.freacAgent.request({ kind: "read" }))).workspace;
+  const cwd = (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" })))
+    .workspace;
   const file = join(cwd, "orientation-env.txt");
   await rm(file, { force: true });
   await terminal(
     page,
-    'printf "%s\\n" "$FREAC_CLI" "$FREAC_ENDPOINT" "$FREAC_CAPABILITY" "$FREAC_DOCS" "$FREAC_API_TYPES" "$FREAC_WORKSPACE" "$PATH" > orientation-env.txt',
+    'printf "%s\\n" "$MAKESHIFT_CLI" "$MAKESHIFT_ENDPOINT" "$MAKESHIFT_CAPABILITY" "$MAKESHIFT_DOCS" "$MAKESHIFT_API_TYPES" "$MAKESHIFT_WORKSPACE" "$PATH" > orientation-env.txt',
   );
   let values;
   await until(async () => {
@@ -248,12 +261,12 @@ async function environment(page) {
   });
   await rm(file);
   const keys = [
-    "FREAC_CLI",
-    "FREAC_ENDPOINT",
-    "FREAC_CAPABILITY",
-    "FREAC_DOCS",
-    "FREAC_API_TYPES",
-    "FREAC_WORKSPACE",
+    "MAKESHIFT_CLI",
+    "MAKESHIFT_ENDPOINT",
+    "MAKESHIFT_CAPABILITY",
+    "MAKESHIFT_DOCS",
+    "MAKESHIFT_API_TYPES",
+    "MAKESHIFT_WORKSPACE",
     "PATH",
   ];
   return {

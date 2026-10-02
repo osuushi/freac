@@ -23,7 +23,7 @@ try {
   for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
     names.includes(name),
   )) {
-    if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
+    if (process.env.MAKESHIFT_TEST_BROWSER && process.env.MAKESHIFT_TEST_BROWSER !== name) continue;
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1440, height: 950 } });
@@ -36,7 +36,11 @@ try {
   if (names.includes("electron")) {
     const app = await launchElectron({
       args: ["."],
-      env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: server.resolvedUrls.local[0] },
+      env: {
+        ...process.env,
+        MAKESHIFT_TEST_HIDDEN: "1",
+        MAKESHIFT_DEV_URL: server.resolvedUrls.local[0],
+      },
     });
     try {
       const page = await app.firstWindow();

@@ -1,8 +1,8 @@
 # Electron 44.3.0 corresponding sources
 
-This source-only prerelease accompanies Freac builds using Electron 44.3.0.
+This source-only prerelease accompanies Makeshift builds using Electron 44.3.0.
 Keep it accessible to everyone receiving those builds. These assets are reused
-across Freac releases and must not be deleted while distributing those versions.
+across Makeshift releases and must not be deleted while distributing those versions.
 They are optional downloads for using the app, required materials for rebuilding
 or modifying the bundled runtime. No Apple account or signing key is needed for
 a local rebuild.
@@ -11,7 +11,7 @@ The complete Chromium 152.0.7977.78 source archive includes its bundled source
 dependencies (including FFmpeg and Blink/WebKit). Electron's archive includes its
 patches, DEPS pins, build configuration and build instructions. Preserve the
 third-party licenses in those trees. The archives are unmodified upstream inputs;
-Freac does not patch its Electron runtime. See runtime-sources.json for exact
+Makeshift does not patch its Electron runtime. See runtime-sources.json for exact
 checksums and Electron's commit.
 
 Download all six Chromium parts and concatenate in filename order:
@@ -31,7 +31,7 @@ patches select Chromium and other dependencies; fetch any remaining permissive
 build dependencies with the documented gclient workflow. Use an arm64 Release
 build on macOS. Electron's production build configuration is in build/args/release.gn.
 Use the rebuilt Electron distribution with Electron Packager's electronZipDir
-option (available through forge.config.js), then package Freac with signing off.
-See docs/releases.md in Freac's matching source archive for local signing and
+option (available through forge.config.js), then package Makeshift with signing off.
+See docs/releases.md in Makeshift's matching source archive for local signing and
 replacement instructions. Apple's original notarization does not apply to your
 modified copy; it is not necessary for a local rebuild.

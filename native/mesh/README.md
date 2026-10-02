@@ -1,6 +1,6 @@
 # Native export mesh integration
 
-`freac-mesh` evaluates temporary decorator-export mesh operations. It has no
+`makeshift-mesh` evaluates temporary decorator-export mesh operations. It has no
 application document, BRep state, or Undo history. The renderer worker retains
 procedural generation and final packing/validation/encoding. `MeshPlan` records
 only the Boolean, clipping and primitive operations used by current decorators.
@@ -26,7 +26,7 @@ required. All upstream source remains unmodified in ignored `.cache/mesh-inputs`
   parallel evaluation. CrossSection, language bindings and upstream tests are
   excluded from this executable.
 
-No upstream implementation is copied into Freac's sources. Manifold and TBB are
+No upstream implementation is copied into Makeshift's sources. Manifold and TBB are
 statically linked into a separate process, avoiding TBB symbol conflicts with
 other calculators. Release preparation packages that executable and both license
 inventories; the matching source distribution includes the pinned archives.
@@ -45,7 +45,7 @@ its process, escalates to forced termination after 250 ms and drains exit before
 reuse. Worker termination discards procedural generation and pending results.
 No partial file is published. Application exit, renderer reload and renderer crash
 also close the calculator. The default parallel cap is four threads (or the
-reported hardware count if lower). `FREAC_MESH_THREADS=1..8` is a diagnostic override
+reported hardware count if lower). `MAKESHIFT_MESH_THREADS=1..8` is a diagnostic override
 for native benchmarking, not a document setting.
 
 Conservative operand bounds construct cylindrical clipping tools without forcing

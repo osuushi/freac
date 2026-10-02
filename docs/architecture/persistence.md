@@ -97,14 +97,14 @@ or separate-body semantics. 3MF explicitly declares millimeters, shares vertex
 indexes and keeps one model object/build item per body in an OPC ZIP package per
 the [3MF Core specification](https://github.com/3MFConsortium/spec_core/blob/master/3MF%20Core%20Specification.md).
 Placement is baked into vertices. Exports contain geometry only, without printer,
-material or slicing settings. Exact editable geometry remains in the Freac file.
+material or slicing settings. Exact editable geometry remains in the Makeshift file.
 
 ## STEP export
 
 STEP exports the same visible accepted bodies and world placement as STL/3MF,
 excluding sketches and temporary previews. The native OCCT writer produces AP242
 with explicit millimeter units and separate body products. This is geometry
-exchange, without Freac IDs, constraints, decorator code/settings, feature history,
+exchange, without Makeshift IDs, constraints, decorator code/settings, feature history,
 entity names, colors or a product assembly hierarchy. Export does not change the
 accepted document, dirty state or Undo.
 
@@ -155,7 +155,7 @@ root exit; a private FIFO closes that member when the host exits. The host check
 its process-group and precise birth identity before
 signalling the session's groups, including interactive shell jobs. Natural exit
 also drains this cleanup. Exited/Start availability and final file capture wait for
-it. The read-only `freac-agent-scope` helper reports OS process identity; it owns no
+it. The read-only `makeshift-agent-scope` helper reports OS process identity; it owns no
 document and makes no termination decisions. This covers ordinary POSIX jobs;
 programs that deliberately create another OS session are outside that scope.
 Windows retains the existing ConPTY shutdown path and needs target verification.
@@ -165,7 +165,7 @@ The macOS adapter uses the group and birth fields declared in Apple's
 The Linux adapter reads session/group/start-time fields from
 [/proc/pid/stat](https://www.man7.org/linux/man-pages/man5/proc_pid_stat.5.html).
 These are OS interface observations; the launch gate, retained member and cleanup
-policy are Freac's implementation. No upstream implementation was copied.
+policy are Makeshift's implementation. No upstream implementation was copied.
 
 Open checks ZIP metadata/expanded limits/CRC and model structure, prepares files in
 an isolated directory, then uses the normal model validation/materialization path
@@ -181,7 +181,7 @@ state. ZIP headers have a separate 8 MiB encoded allowance; they do not raise th
 expanded-content limit.
 
 Each document gets its own local Codex home beside (outside) its workspace. Base
-Freac configuration and auth are copied there at launch and synchronized locally on
+Makeshift configuration and auth are copied there at launch and synchronized locally on
 Stop/restart. Only session JSONL records enter the archive; credentials, preferences,
 SQLite indexes and caches do not. Resume selects the latest activity timestamp among
 main CLI conversations, excludes subagent sessions, and invokes `codex resume UUID
@@ -194,7 +194,7 @@ Working directories are retained rather than deleted automatically. Agent Settin
 provides Recover agent files: select a retained document folder and confirm importing
 its files/conversations into the current document, preserving geometry and marking
 it unsaved. Save then embeds the recovered content. Recovery also handles area 1 flat
-workspace folders and selects matching session metadata from Freac's former shared
+workspace folders and selects matching session metadata from Makeshift's former shared
 Codex home. It never imports personal Codex homes. Geometry autosave/crash recovery
 and automatic recovery selection remain outside this increment.
 
@@ -202,9 +202,22 @@ and automatic recovery selection remain outside this increment.
 
 Capture fixture is available in production and preserves the active tool, preview,
 accepted model and Undo. It writes a self-contained, timestamped JSON fixture under
-the OS temporary directory (freac-fixtures), independent of the working directory.
-Accepted/preview .freac sidecars remain available for local reproduction. The result
+the OS temporary directory (makeshift-fixtures), independent of the working directory.
+Accepted/preview .makeshift sidecars remain available for local reproduction. The result
 provides native Electron file drag, reveal, download and copy path; browsers download
 the same JSON bytes. Native actions resolve only the last capture for that window,
 never a renderer-supplied path. Captures are local, retained for attachment and subject
 to OS temporary-file cleanup; they are never automatically uploaded.
+
+## Makeshift naming compatibility
+
+New saves use `.makeshift` and the `makeshift` archive tag. The readers also accept
+the existing `freac` version 1 JSON and version 2 portable ZIP tags. Built-in
+decorator IDs, browser preference keys and the macOS bundle identifier remain
+stable. Existing desktop user-data directories are reused, keeping private agent
+settings, workspaces, window size and the last-opened drawing. An explicit
+`--user-data-dir` continues to take precedence. The former `freac` CLI command,
+scripting global and agent connection environment names remain compatibility aliases.
+Native SDK receipt names and recipe provenance retain their original vocabulary,
+allowing the same audited SDK to be reused without changing its contents.
+The earlier binary prototype format remains unsupported and unchanged.

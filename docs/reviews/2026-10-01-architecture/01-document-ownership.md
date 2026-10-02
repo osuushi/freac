@@ -4,7 +4,7 @@ Reviewed baseline: `59bc72668a33fba550c7d8ba14b8bb3ab28abe2a`. Scope: accepted d
 
 ## Assessment
 
-Freac has one accepted document and one ordinary snapshot history. The current design does not need replacement with command envelopes, public revisions, a service graph, or feature replay. Two concrete boundary defects deserve correction: cancellation is not checked at automatic publication, and acceptance validates less than Open/script processing. Both can be repaired inside the existing owner/store boundary.
+Makeshift has one accepted document and one ordinary snapshot history. The current design does not need replacement with command envelopes, public revisions, a service graph, or feature replay. Two concrete boundary defects deserve correction: cancellation is not checked at automatic publication, and acceptance validates less than Open/script processing. Both can be repaired inside the existing owner/store boundary.
 
 I read the current ownership, lifecycle, solver, solids, and implementation topic documents, and the relevant existing FreeCAD reference chapters. Historical protocol prescriptions in those chapters were not treated as requirements. All source references below refer to the baseline. Primary reported typecheck and Biome passing; I did not run their full suites.
 

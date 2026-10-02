@@ -43,13 +43,13 @@ function check(state, original, distance) {
 export async function flangeMoveRoute(page, name, electron) {
   await reset(page);
   await openDocument(page, {
-    name: "flange.freac",
+    name: "flange.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
-  await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
+  await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 1);
   const original = (await inspect(page)).document;
   await selectFlange(page);
   await chooseTool(page, "transform", "transform");

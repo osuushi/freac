@@ -13,7 +13,7 @@ export function validateDocument(document: SketchDocument): void {
     (document.bodies !== undefined && !Array.isArray(document.bodies)) ||
     (document.constructionPlanes !== undefined && !Array.isArray(document.constructionPlanes))
   )
-    throw new Error("Invalid Freac document");
+    throw new Error("Invalid Makeshift document");
   validateBodyAppearances(document);
   validateTags(document);
   validateDecorators(document);

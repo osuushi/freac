@@ -11,17 +11,17 @@ import { chooseTool } from "./ui-tools.mjs";
 const source = `
 const sections = [];
 for (const [z,radius] of [[0,5],[10,3]]) {
-  const sketch = await freac.createSketch({plane:{origin:[0,0,z],u:[1,0,0],v:[0,1,0]},curves:[{kind:"circle",center:{x:0,y:0},radius}]});
+  const sketch = await makeshift.createSketch({plane:{origin:[0,0,z],u:[1,0,0],v:[0,1,0]},curves:[{kind:"circle",center:{x:0,y:0},radius}]});
   sections.push(sketch.profiles[0]);
 }
-await freac.loft({sources:sections,ruled:true,mode:"new"});
+await makeshift.loft({sources:sections,ruled:true,mode:"new"});
 `;
 for (const name of runtimeNames(["chromium", "webkit"])) {
   const web = await scriptBrowser(name);
   try {
     const before = (await inspect(web.page)).document;
     await writeFile(join(web.workspace, "loft.ts"), source);
-    await promisify(execFile)(web.env.FREAC_CLI, ["run", "loft.ts"], {
+    await promisify(execFile)(web.env.MAKESHIFT_CLI, ["run", "loft.ts"], {
       cwd: web.workspace,
       env: web.env,
       timeout: 30000,
@@ -39,7 +39,7 @@ for (const name of runtimeNames(["chromium", "webkit"])) {
       source.replace("ruled:true", "ruled:true,alignment:[0,0.5]"),
     );
     await assert.rejects(
-      promisify(execFile)(web.env.FREAC_CLI, ["run", "bad-loft.ts"], {
+      promisify(execFile)(web.env.MAKESHIFT_CLI, ["run", "bad-loft.ts"], {
         cwd: web.workspace,
         env: web.env,
         timeout: 30000,
@@ -49,7 +49,7 @@ for (const name of runtimeNames(["chromium", "webkit"])) {
     await settled(web.page);
     assert.deepEqual((await inspect(web.page)).document, accepted);
     console.log(
-      `${name}: typed freac.loft CLI/compiler/worker, exact geometry, atomic Undo/Redo and rollback passed`,
+      `${name}: typed makeshift.loft CLI/compiler/worker, exact geometry, atomic Undo/Redo and rollback passed`,
     );
   } finally {
     await web.close();

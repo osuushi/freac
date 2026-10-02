@@ -9,22 +9,24 @@ export const run = promisify(execFile);
 export async function gearSession() {
   const app = await launchElectron({
     args: ["."],
-    env: { ...process.env, FREAC_TEST_HIDDEN: "1" },
+    env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
   });
   try {
     const page = await app.firstWindow();
     await page.evaluate(() =>
-      window.freacAgent.request({
+      window.makeshiftAgent.request({
         kind: "configure",
         preferences: { preset: "custom", executable: "/bin/sh", args: ["-i"], env: {} },
       }),
     );
     await page.getByRole("button", { name: "Open agent terminal" }).click();
     await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
-    const { workspace } = await page.evaluate(() => window.freacAgent.request({ kind: "read" }));
+    const { workspace } = await page.evaluate(() =>
+      window.makeshiftAgent.request({ kind: "read" }),
+    );
     await page.locator(".agent-screen textarea").focus();
     await page.keyboard.type(
-      'printf "%s\\n" "$FREAC_CLI" "$FREAC_ENDPOINT" "$FREAC_CAPABILITY" "$FREAC_DOCS" "$FREAC_API_TYPES" "$FREAC_WORKSPACE" "$PATH" > eval-env.txt',
+      'printf "%s\\n" "$MAKESHIFT_CLI" "$MAKESHIFT_ENDPOINT" "$MAKESHIFT_CAPABILITY" "$MAKESHIFT_DOCS" "$MAKESHIFT_API_TYPES" "$MAKESHIFT_WORKSPACE" "$PATH" > eval-env.txt',
     );
     await page.keyboard.press("Enter");
     let values;
@@ -38,19 +40,19 @@ export async function gearSession() {
     assert.equal(values.length, 7);
     await rm(join(workspace, "eval-env.txt"));
     const keys = [
-      "FREAC_CLI",
-      "FREAC_ENDPOINT",
-      "FREAC_CAPABILITY",
-      "FREAC_DOCS",
-      "FREAC_API_TYPES",
-      "FREAC_WORKSPACE",
+      "MAKESHIFT_CLI",
+      "MAKESHIFT_ENDPOINT",
+      "MAKESHIFT_CAPABILITY",
+      "MAKESHIFT_DOCS",
+      "MAKESHIFT_API_TYPES",
+      "MAKESHIFT_WORKSPACE",
       "PATH",
     ];
     const env = { ...process.env, ...Object.fromEntries(keys.map((k, i) => [k, values[i]])) };
     const cli = async (...args) =>
       JSON.parse(
         (
-          await run(env.FREAC_CLI, args, {
+          await run(env.MAKESHIFT_CLI, args, {
             env,
             cwd: workspace,
             timeout: 180000,
@@ -65,7 +67,7 @@ export async function gearSession() {
       env,
       cli,
       close: async () => {
-        await page.evaluate(() => window.freacAgent.request({ kind: "stop" })).catch(() => {});
+        await page.evaluate(() => window.makeshiftAgent.request({ kind: "stop" })).catch(() => {});
         await app.close();
       },
     };

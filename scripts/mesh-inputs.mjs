@@ -21,7 +21,8 @@ export const meshInputs = {
 };
 export async function prepareMeshInputs() {
   await mkdir(meshInputCache, { recursive: true });
-  const archiveCache = process.env.FREAC_MESH_ARCHIVE_CACHE;
+  const archiveCache =
+    process.env.MAKESHIFT_MESH_ARCHIVE_CACHE ?? process.env.FREAC_MESH_ARCHIVE_CACHE;
   if (archiveCache) await mkdir(archiveCache, { recursive: true });
   for (const [name, input] of Object.entries(meshInputs)) {
     const localArchive = resolve(meshInputCache, `${name}.tar.gz`);

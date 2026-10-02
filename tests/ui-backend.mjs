@@ -60,7 +60,7 @@ export async function delayedBackend(page, name) {
     await page.mouse.move(end.x, end.y, { steps: 8 });
     await page.mouse.up();
     await page.mouse.move(end.x + 100, end.y + 100);
-    assert.deepEqual(await page.evaluate(() => window.freacInspect().document), original);
+    assert.deepEqual(await page.evaluate(() => window.makeshiftInspect().document), original);
     await page.getByRole("status").filter({ hasText: "Solving sketch" }).waitFor();
     assert.equal(previews, 1, "Intermediate pointer updates cannot queue native requests");
     release();

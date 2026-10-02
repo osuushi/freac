@@ -6,7 +6,7 @@ import { settled } from "./ui-helpers.mjs";
 for (const [name, engine] of Object.entries({ chromium, webkit })) {
   const app = await launchElectron({
     args: ["."],
-    env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: "" },
+    env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1", MAKESHIFT_DEV_URL: "" },
   });
   let browser;
   try {

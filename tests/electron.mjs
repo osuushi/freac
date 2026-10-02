@@ -86,14 +86,17 @@ import { useEdgeRoute, useLineEdgeRoute } from "./ui-use-edge.mjs";
 import { widgetNavigationRoute } from "./ui-widget-navigation.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
-const app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+const app = await launchElectron({
+  args: ["."],
+  env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+});
 try {
   const page = await app.firstWindow();
   // Keep adaptive grid spacing independent of the runner's physical display.
   await page.setViewportSize({ width: 1280, height: 850 });
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.waitForFunction(() => !!window.freacInspect);
+  await page.waitForFunction(() => !!window.makeshiftInspect);
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.getByRole("status").filter({ hasText: "XY sketch" }).waitFor();
   assert.equal(

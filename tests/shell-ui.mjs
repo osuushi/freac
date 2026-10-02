@@ -34,8 +34,8 @@ try {
       args: ["."],
       env: {
         ...process.env,
-        FREAC_DEV_URL: server.resolvedUrls.local[0],
-        FREAC_TEST_HIDDEN: "1",
+        MAKESHIFT_DEV_URL: server.resolvedUrls.local[0],
+        MAKESHIFT_TEST_HIDDEN: "1",
       },
     });
     try {

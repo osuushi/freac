@@ -13,7 +13,7 @@ const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
   const engines =
-    process.env.FREAC_TEST_BROWSER === "electron" ? { electron: null } : { chromium, webkit };
+    process.env.MAKESHIFT_TEST_BROWSER === "electron" ? { electron: null } : { chromium, webkit };
   for (const [name, engine] of Object.entries(engines).filter(([name]) => names.includes(name))) {
     const browser = engine ? await engine.launch({ headless: true }) : null;
     const app = engine
@@ -22,8 +22,8 @@ try {
           args: [process.cwd()],
           env: {
             ...process.env,
-            FREAC_TEST_HIDDEN: "1",
-            FREAC_DEV_URL: server.resolvedUrls.local[0],
+            MAKESHIFT_TEST_HIDDEN: "1",
+            MAKESHIFT_DEV_URL: server.resolvedUrls.local[0],
           },
         });
     try {

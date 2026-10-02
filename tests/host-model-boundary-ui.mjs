@@ -10,12 +10,12 @@ import { runtimeNames } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const names = runtimeNames(["chromium", "webkit"]);
-const root = await mkdtemp(join(tmpdir(), "freac-model-boundary-"));
+const root = await mkdtemp(join(tmpdir(), "makeshift-model-boundary-"));
 let app;
 try {
   app = await launchElectron({
     args: ["."],
-    env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: "" },
+    env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1", MAKESHIFT_DEV_URL: "" },
   });
   const desktop = await app.firstWindow();
   await settled(desktop);
@@ -24,7 +24,7 @@ try {
   await drag(desktop, [0, 0], [20, 10]);
   await desktop.keyboard.press("Escape");
   await hostModelBoundary(desktop);
-  await saveDocument(desktop, join(root, "Drawing.freac"));
+  await saveDocument(desktop, join(root, "Drawing.makeshift"));
   await hostModelBoundary(desktop);
   console.log("electron: raw replacement rejected before and after native Save");
   await desktop.getByRole("button", { name: "Trackpad", exact: true }).click();
@@ -47,9 +47,9 @@ try {
       await page.locator("dialog").getByRole("button", { name: "Cancel", exact: true }).click();
       await creating;
       await settled(page);
-      assert.equal((await page.evaluate(() => window.freacDocument.status())).edited, true);
+      assert.equal((await page.evaluate(() => window.makeshiftDocument.status())).edited, true);
       await chooseTool(page, "save document", "save");
-      await page.waitForFunction(async () => !(await window.freacDocument.status()).edited);
+      await page.waitForFunction(async () => !(await window.makeshiftDocument.status()).edited);
       await hostModelBoundary(page);
       await page.close();
       console.log(

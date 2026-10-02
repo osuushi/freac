@@ -70,12 +70,15 @@ export async function bundleNative(destination, sdk) {
     ["agent-scope", "host-native"],
   ];
   for (const [component, build] of components) {
-    const name = `freac-${component}`;
+    const name = `makeshift-${component}`;
     const target = join(destination, name);
     await cp(resolve(`.build/${build}/bin/${name}`), target);
     await relocate(target);
   }
   // Relocation invalidates original signatures, including arm64 ad-hoc signatures.
-  for (const name of [...copied.keys(), ...components.map(([component]) => `freac-${component}`)])
+  for (const name of [
+    ...copied.keys(),
+    ...components.map(([component]) => `makeshift-${component}`),
+  ])
     run("codesign", ["--force", "--sign", "-", join(destination, name)]);
 }

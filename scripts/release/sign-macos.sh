@@ -2,8 +2,8 @@
 set -euo pipefail
 # CI only. Never reuse a login keychain or cache signing material.
 : "${RUNNER_TEMP:?Run signing in GitHub Actions}"
-keychain="$RUNNER_TEMP/freac-release.keychain-db"
-certificate="$RUNNER_TEMP/freac-release.p12"
+keychain="$RUNNER_TEMP/makeshift-release.keychain-db"
+certificate="$RUNNER_TEMP/makeshift-release.p12"
 keychain_password=$(openssl rand -hex 32)
 cleanup() {
   security delete-keychain "$keychain" >/dev/null 2>&1 || true

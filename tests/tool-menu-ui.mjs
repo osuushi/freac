@@ -57,13 +57,13 @@ async function run(page, name) {
   console.log(`${name}: tool menu smoke passed`);
 }
 await mkdir(".cache/sketch-review", { recursive: true });
-const names = runtimeNames(process.env.FREAC_MENU_SMOKE ? ["chromium"] : undefined);
+const names = runtimeNames(process.env.MAKESHIFT_MENU_SMOKE ? ["chromium"] : undefined);
 const server = await createServer({ server: { port: 0 } });
 await server.listen();
 try {
-  const engines = process.env.FREAC_MENU_SMOKE ? { chromium } : { chromium, webkit };
+  const engines = process.env.MAKESHIFT_MENU_SMOKE ? { chromium } : { chromium, webkit };
   for (const [name, engine] of Object.entries(engines).filter(([name]) => names.includes(name))) {
-    if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
+    if (process.env.MAKESHIFT_TEST_BROWSER && process.env.MAKESHIFT_TEST_BROWSER !== name) continue;
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({
@@ -77,12 +77,16 @@ try {
     }
   }
   if (
-    !process.env.FREAC_MENU_SMOKE &&
-    (!process.env.FREAC_TEST_BROWSER || process.env.FREAC_TEST_BROWSER === "electron")
+    !process.env.MAKESHIFT_MENU_SMOKE &&
+    (!process.env.MAKESHIFT_TEST_BROWSER || process.env.MAKESHIFT_TEST_BROWSER === "electron")
   ) {
     const app = await launchElectron({
       args: ["."],
-      env: { ...process.env, FREAC_DEV_URL: server.resolvedUrls.local[0], FREAC_TEST_HIDDEN: "1" },
+      env: {
+        ...process.env,
+        MAKESHIFT_DEV_URL: server.resolvedUrls.local[0],
+        MAKESHIFT_TEST_HIDDEN: "1",
+      },
     });
     try {
       await run(await app.firstWindow(), "electron");

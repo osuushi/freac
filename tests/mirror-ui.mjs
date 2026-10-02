@@ -30,7 +30,7 @@ async function run(page, name) {
     await page.screenshot({ path: `.cache/sketch-review/${name}-mirror-failure.png` });
     console.log(
       await page.evaluate(() => ({
-        state: window.freacInspect(),
+        state: window.makeshiftInspect(),
         status: document.querySelector("[role=status]")?.textContent,
       })),
     );
@@ -41,7 +41,7 @@ try {
   for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
     names.includes(name),
   )) {
-    if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
+    if (process.env.MAKESHIFT_TEST_BROWSER && process.env.MAKESHIFT_TEST_BROWSER !== name) continue;
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
@@ -51,10 +51,14 @@ try {
       await browser.close();
     }
   }
-  if (!process.env.FREAC_TEST_BROWSER || process.env.FREAC_TEST_BROWSER === "electron") {
+  if (!process.env.MAKESHIFT_TEST_BROWSER || process.env.MAKESHIFT_TEST_BROWSER === "electron") {
     const app = await launchElectron({
       args: ["."],
-      env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: server.resolvedUrls.local[0] },
+      env: {
+        ...process.env,
+        MAKESHIFT_TEST_HIDDEN: "1",
+        MAKESHIFT_DEV_URL: server.resolvedUrls.local[0],
+      },
     });
     try {
       assert.equal(

@@ -1,5 +1,6 @@
 {
-  "name": "freac",
+  "name": "makeshift",
+  "productName": "Makeshift",
   "private": true,
   "version": "0.2.0",
   "type": "module",
@@ -59,7 +60,7 @@
     "vite": "8.3.0"
   },
   "license": "LGPL-2.1-or-later",
-  "description": "Free Agentic CAD",
+  "description": "CAD with a coding agent",
   "config": {
     "forge": "./forge.config.js"
   },

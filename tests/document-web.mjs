@@ -8,7 +8,7 @@ import { backendPersistence } from "./ui-backend.mjs";
 import { drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-const root = await mkdtemp(join(tmpdir(), "freac-document-web-"));
+const root = await mkdtemp(join(tmpdir(), "makeshift-document-web-"));
 const server = await createServer({ cacheDir: join(root, "vite"), server: { port: 0 } });
 try {
   await server.listen();
@@ -32,11 +32,11 @@ try {
       const downloaded = page.waitForEvent("download");
       await chooseTool(page, "save document", "save");
       const download = await downloaded;
-      const path = join(root, `${name}.freac`);
+      const path = join(root, `${name}.makeshift`);
       await download.saveAs(path);
       await reset(page);
-      await page.getByLabel("Open Freac file").setInputFiles(path);
-      await page.waitForFunction(() => window.freacInspect().document.sketches.length === 1);
+      await page.getByLabel("Open Makeshift file").setInputFiles(path);
+      await page.waitForFunction(() => window.makeshiftInspect().document.sketches.length === 1);
       assert.deepEqual((await inspect(page)).document.sketches, before.sketches);
       console.log(`${name}: browser download/upload, drawing and Undo remain working`);
     } finally {

@@ -12,7 +12,7 @@ const fixture = JSON.parse(await readFile("tests/fixtures/offset-bent-shell.json
 async function limitAndDrag(page, input, original) {
   await input.fill("-2");
   // Invalid requests search for a verified limit through multiple native offsets.
-  await page.waitForFunction(() => !window.freacInspect().busy, null, { timeout: 120_000 });
+  await page.waitForFunction(() => !window.makeshiftInspect().busy, null, { timeout: 120_000 });
   let state = await inspect(page);
   assert.ok(Number(await input.inputValue()) > -1.5);
   assert.ok(state.preview?.bodies[0].volume > 0);
@@ -52,13 +52,13 @@ export async function offsetSplineRoute(page, name) {
   await reset(page);
   if ((await inspect(page)).gridSnap) await chooseTool(page, "grid snap", "grid");
   await openDocument(page, {
-    name: "offset-bent-shell.freac",
+    name: "offset-bent-shell.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
-  await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
+  await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 1);
   await orient(page, [0, -1, 1]);
   const original = (await inspect(page)).document;
   const input = await enterOffset(page);

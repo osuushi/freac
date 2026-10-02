@@ -18,11 +18,11 @@ export async function offsetAdjacentRoute(page, name) {
       groups: [],
     };
     await openDocument(page, {
-      name: "analytic.freac",
+      name: "analytic.makeshift",
       mimeType: "application/json",
       buffer: Buffer.from(
         JSON.stringify({
-          format: "freac",
+          format: "makeshift",
           version: 1,
           document: { units: "mm", sketches: [sketch] },
         }),

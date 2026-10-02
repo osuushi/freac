@@ -5,7 +5,7 @@ import { MeshCalculator } from "./mesh-calculator.js";
 export function meshBackend(): Plugin {
   const calculator = new MeshCalculator();
   return {
-    name: "freac-mesh-backend",
+    name: "makeshift-mesh-backend",
     configureServer(server) {
       server.middlewares.use("/mesh-export", async (request, response) => {
         if (request.headers.origin && request.headers.origin !== `http://${request.headers.host}`) {

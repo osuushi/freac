@@ -4,7 +4,7 @@ import { ConnectionScreen } from "./connection-screen.js";
 import type { IPadStatus } from "./protocol.js";
 
 export function installIPadButton(editor: SketchEditor, app: HTMLElement): void {
-  const host = window.freacIPad;
+  const host = window.makeshiftIPad;
   installControlMenu(
     app,
     host
@@ -26,9 +26,9 @@ export function installIPadButton(editor: SketchEditor, app: HTMLElement): void 
   );
 }
 export function showDesktopConnection(initial: IPadStatus): void {
-  const host = window.freacIPad;
+  const host = window.makeshiftIPad;
   if (!host) throw new Error("The computer host is unavailable");
-  const screen = new ConnectionScreen("Freac on iPad", "Return to computer");
+  const screen = new ConnectionScreen("Makeshift on iPad", "Return to computer");
   const qr = document.createElement("img");
   qr.alt = "Scan to open this document on iPad";
   const hint = document.createElement("p");

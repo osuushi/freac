@@ -19,8 +19,8 @@ try {
           cwd: name === "electron-built" ? "/" : process.cwd(),
           env: {
             ...process.env,
-            FREAC_TEST_HIDDEN: "1",
-            FREAC_DEV_URL: name === "electron-built" ? "" : server.resolvedUrls.local[0],
+            MAKESHIFT_TEST_HIDDEN: "1",
+            MAKESHIFT_DEV_URL: name === "electron-built" ? "" : server.resolvedUrls.local[0],
           },
         });
         page = await app.firstWindow();
@@ -32,7 +32,7 @@ try {
       page.setDefaultTimeout(10000);
       await fixtureRoute(page, name, app);
       const denied = await page.request.post(
-        new URL("/__freac_fixture", server.resolvedUrls.local[0]).href,
+        new URL("/__makeshift_fixture", server.resolvedUrls.local[0]).href,
         {
           headers: { origin: "https://example.com", "content-type": "application/json" },
           data: { document: {} },

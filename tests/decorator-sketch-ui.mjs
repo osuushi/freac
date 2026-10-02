@@ -55,7 +55,7 @@ try {
       await orient(page, [0, -1, 0.3]);
       await worldClick(page, [0, -8, 5]);
       await chooseTool(page, "threads", "threads");
-      await page.waitForFunction(() => window.freacInspect().decoratorPreviewBounds.length > 0);
+      await page.waitForFunction(() => window.makeshiftInspect().decoratorPreviewBounds.length > 0);
       await chooseTool(page, "Sketch on XY", "sketch-xy");
       assert.ok((await inspect(page)).activePlane);
       await page.waitForTimeout(350);

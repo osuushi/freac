@@ -151,7 +151,7 @@ async function liveUpdates(page) {
   const live = await page.evaluate(async () => {
     const start = performance.now();
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    return { elapsed: performance.now() - start, solving: window.freacInspect().solving };
+    return { elapsed: performance.now() - start, solving: window.makeshiftInspect().solving };
   });
   assert.ok(live.elapsed < 1000, "Repainting must continue during the native sweep");
   assert.ok(live.solving, "Exercise a genuinely running native sweep");
@@ -163,7 +163,7 @@ async function liveUpdates(page) {
   const state = await inspect(page);
   near(state.preview.bodies[0].volume, (15 * (400 + 440 + 484)) / 3);
   assert.ok(
-    (await page.evaluate(() => window.freacHistory())).some(
+    (await page.evaluate(() => window.makeshiftHistory())).some(
       (entry) => entry.outcome === "cancelled",
     ),
     "Input changes cancel actual obsolete native calculations",

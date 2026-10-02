@@ -46,7 +46,7 @@ uses center coordinates and radius, with the center addressable as a point.
 holds coordinate-parameter pointers. These inspected interfaces do not establish
 support for arbitrary rectangle-corner expressions over five custom parameters.
 
-Freac inference: persistent subfeature addresses need not own independent stored
+Makeshift inference: persistent subfeature addresses need not own independent stored
 coordinates. A compact rectangle can expose derived corner/edge/center references.
 Using it with PlaneGCS would require either appropriate derived-expression support
 or temporary expansion into supported geometry and intrinsic constraints, followed
@@ -55,7 +55,7 @@ Do not infer a need to write a new solver from the representation preference.
 
 ## Current application integration, 2026-09-14
 
-The same pinned PlaneGCS sources now compile into Freac's current sketch calculator
+The same pinned PlaneGCS sources now compile into Makeshift's current sketch calculator
 under `native/solver`, independently of the old P0/P1 binaries. The setup script
 verifies original file hashes and preserves source notices. No solver mathematics
 is modified. Current TS document ownership/Undo supersedes historical service and
@@ -82,7 +82,7 @@ Coverage gaps: curved/externally linked sketches, user constraint controls, phys
 iPad/LAN interaction and Linux/Windows builds. This integration does not establish
 support for compact rectangle expressions or settle casting/linking policy.
 
-Circle editing follow-up: the Freac document now stores analytic center/radius
+Circle editing follow-up: the Makeshift document now stores analytic center/radius
 circles beside segments. The current native adapter solves only the segment
 subset and preserves circles when mapping results back; an interleaved
 circle/rectangle regression verifies this against actual PlaneGCS. Unconstrained
@@ -103,7 +103,7 @@ uses FreeCAD dependencies ([CMakeLists.txt](https://github.com/FreeCAD/FreeCAD/b
 `boost_graph_adjacency_list.hpp`
 ([GCS.cpp includes](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Sketcher/App/planegcs/GCS.cpp#L51-L106)).
 These are observed source dependencies, a counterexample to assuming the solver
-directory alone is a ready independent library. Freac inference: inspect the
+directory alone is a ready independent library. Makeshift inference: inspect the
 needed host symbols and evaluate an explicit adaptation/build boundary and
 license obligations before extracting code. A shim is a possible approach,
 not a verified sufficient solution. Luna inspected source and host availability;
@@ -112,14 +112,14 @@ next failure probe is an isolated pinned build/load with no FreeCAD application
 or reference checkout runtime paths; numerical and diagnostic compatibility
 remain unverified.
 
-The subsequent [P0a dependency review](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p0a-dependency-selection.md)
+The subsequent [P0a dependency review](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p0a-dependency-selection.md)
 enumerates five translation units, six solver headers and the Boost wrapper,
 with exact Eigen/Boost package pins. Manager inspection confirmed that
 `System::applySolution()` copies subsystem/reduction results into caller-owned
 parameter storage and evaluates driven constraints
 ([GCS.cpp, applySolution](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Sketcher/App/planegcs/GCS.cpp#L4696-L4723)).
-Freac implication: solving and extracting caller values require an explicit
-lifecycle; applying a solver candidate is still separate from committing a Freac
+Makeshift implication: solving and extracting caller values require an explicit
+lifecycle; applying a solver candidate is still separate from committing a Makeshift
 model revision. Probe perturbed inputs to catch reading pre-solve coordinates,
 and reject a contradictory candidate without replacing accepted model values.
 At the end of P0a, no such runtime probe had run. The P0b findings below
@@ -134,14 +134,14 @@ the adapted solver at the same pinned FreeCAD revision. The solver returned
 tags. Base rectangle residuals were zero. This is a concrete counterexample to
 accepting geometry from a solver status or only the non-conflicting constraints'
 residuals. The final proof evidence belongs in
-[the P0b report](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p0b-native-components.md).
+[the P0b report](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p0b-native-components.md).
 
 Observed source context: `System::solve()` returns the subsystem solve status and
 checks redundant constraints; diagnosis data is exposed separately via
 `dofsNumber()` and `getConflicting()`
 ([GCS.cpp, solve](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Sketcher/App/planegcs/GCS.cpp#L1907-L1945),
 [GCS.h, diagnostic accessors](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Sketcher/App/planegcs/GCS.h#L632-L649)).
-Freac implication: candidate acceptance checks diagnosis, finite solved values,
+Makeshift implication: candidate acceptance checks diagnosis, finite solved values,
 active-constraint residuals and geometry validity before publishing. Keep native
 status distinct from the adapter's accepted/rejected result. Required failure
 probe: introduce a contradictory width after a valid extrusion, reject the
@@ -160,7 +160,7 @@ The growing planar workspace requirement is compatible with the source’s abili
 
 ### Rectangle-only native entry point, 2026-09-13
 
-The [P1 rectangle proof](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p1-rectangle-solver.md) shares the bounded
+The [P1 rectangle proof](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/p1-rectangle-solver.md) shares the bounded
 solver wrapper while excluding auxiliary circle unknowns and constraints for
 P1's line-only workspace. Actual origin constraints solve a 30×12 rectangle at
 (100,50); an extra width 35 produces native conflicting tags 16/22, and removing
@@ -171,15 +171,15 @@ This is a rectangle adapter, not a general constraint-editing or trim service.
 
 ### Independent rectangle ownership follow-up
 
-Freac's multiple-rectangle native slice scopes the adapter's repeated native tags
+Makeshift's multiple-rectangle native slice scopes the adapter's repeated native tags
 to the selected rectangle's constraint IDs. A global lookup of tag 16 would blame
 another rectangle's width. The targeted diagnostic test also exposed a stale
 candidate-tag string that failed to return the allocated extra-constraint ID.
-These are Freac implementation findings; the inspected FreeCAD revision above is
+These are Makeshift implementation findings; the inspected FreeCAD revision above is
 unchanged. The new tests distinguish unchanged boundary membership from changed
 source versions and capture geometry after resizing. Exact bounded coverage and
 remaining UI/solver limits are recorded in
-[multiple-rectangle evidence](https://github.com/osuushi/freac/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/multiple-rectangles.md).
+[multiple-rectangle evidence](https://github.com/osuushi/makeshift/blob/3a4615641204f3a90683c590f52bfe3f81b29f87/docs/evidence/multiple-rectangles.md).
 
 ## Numeric radius lock integration (2026-09-14)
 
@@ -188,7 +188,7 @@ remaining UI/solver limits are recorded in
 add equality between the curve's radius parameter and the requested radius.
 They do not by themselves enforce arc endpoint incidence or tangency.
 
-**Freac choice:** C1 uses that scalar equation for circle/arc radius locks, then
+**Makeshift choice:** C1 uses that scalar equation for circle/arc radius locks, then
 reconstructs an arc at fixed endpoints on its chosen branch. This needs no copied
 solver mathematics or second authoritative geometry. General coupled arc solving
 remains separate work; a radius-changing endpoint drag currently rejects.
@@ -208,7 +208,7 @@ four negative-tag coordinate targets for endpoints (0,0) and (10,4). It returned
 endpoints moved. The experimental wrapper changes were then reverted.
 
 This verifies the priority mechanism, not an anchored editing interaction.
-Freac must supply the intended anchors/targets explicitly; equal coordinate
+Makeshift must supply the intended anchors/targets explicitly; equal coordinate
 targets alone do not preserve the opposite endpoint or first selected edge.
 Application/removal, coupled drags and conflicting numeric locks still need
 complete ordinary-input acceptance in C2.
@@ -227,10 +227,10 @@ line fixtures, not evidence for arbitrary linked arcs or trim.
 **Source observation:** at the same pinned revision,
 [`System::addConstraintPointOnCircle`](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Sketcher/App/planegcs/GCS.cpp#L966-L969)
 uses point-to-center distance with the circle's radius parameter. This allows
-Freac's two arc endpoints to share a center and radius without carrying extra
+Makeshift's two arc endpoints to share a center and radius without carrying extra
 angle parameters. No upstream implementation was copied.
 
-**Freac choice:** only linked arcs expand into these temporary calculator points.
+**Makeshift choice:** only linked arcs expand into these temporary calculator points.
 The authoritative arc remains endpoints plus signed bulge. Endpoint gestures do
 not independently target the derived center. Fixed endpoints plus an explicit
 radius and chosen branch determine the center; treating those as constants avoids
@@ -251,7 +251,7 @@ and radius-edit evidence, not tangent, fillet or trim acceptance.
 installs a directed line-to-line angle equation.
 [`ConstraintL2LAngle::error`](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Sketcher/App/planegcs/Constraints.cpp#L1343-L1355)
 evaluates the second line's direction relative to the first plus the requested
-angle. Freac reverses temporary line endpoints as needed to represent rays away
+angle. Makeshift reverses temporary line endpoints as needed to represent rays away
 from the selected meeting point; no upstream implementation was copied.
 
 **Runtime evidence:** `tests/corner-angle.test.ts` covers all four endpoint-order
@@ -272,7 +272,7 @@ distance and radii, then call `addConstraintTangentCircumf`
 That lower-level entry point accepts an explicit internal-contact flag
 ([GCS.cpp#L844-L858](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Sketcher/App/planegcs/GCS.cpp#L844-L858)).
 
-Freac inference for C4: keep the selected contact branch in the ordinary constraint
+Makeshift inference for C4: keep the selected contact branch in the ordinary constraint
 record, and validate contact against finite segment/arc domains. A successful
 supporting-circle solve alone does not establish visible tangency. Endpoint joins
 also need explicit point incidence; tangency must not silently fuse endpoints.
@@ -284,7 +284,7 @@ The first line/circular C4 runtime now calls the line/circle overload using the
 stored side. `ConstraintP2LDistance::signed_value/error` confirms `ccw=true`
 corresponds to positive signed center-to-line distance
 ([Constraints.cpp#L880-L901](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Sketcher/App/planegcs/Constraints.cpp#L880-L901)).
-Freac independently checks this residual and the finite segment/arc contact.
+Makeshift independently checks this residual and the finite segment/arc contact.
 Native tests exercise both selection orders, radius following, finite-domain
 rejection and a conflicting center/endpoint coincidence. Pointer/numeric routes
 run through Chromium, WebKit and built hidden Electron. This verifies line/circular
@@ -292,7 +292,7 @@ tangency only; joined-endpoint cases are still pending. Circular-pair runtime is
 
 
 Circular-pair C4 now uses the explicit `addConstraintTangentCircumf` entry point
-cited above. Freac records external/a-contains-b/b-contains-a rather than asking
+cited above. Makeshift records external/a-contains-b/b-contains-a rather than asking
 the overload to choose a branch again on every edit. The native equation enforces
 center separation; independent model checks enforce containing identity and finite
 arc contact. Native tests cover external/internal radius edits, containment
@@ -311,7 +311,7 @@ explicit points or a point pair and a line
 ([GCS.cpp#L716-L737](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Sketcher/App/planegcs/GCS.cpp#L716-L737)).
 The radius-normal integration now resolves this fixture: line/arc uses a
 perpendicular direction equation and arc/arc uses parallel radii at the junction.
-Freac still independently checks contact, finite domains and the stored branch;
+Makeshift still independently checks contact, finite domains and the stored branch;
 solver conflict/redundancy diagnosis remains enabled. Junction roles do not add
 coincidence: explicitly fused endpoints use their ordinary relation, while
 touching unfused endpoints receive temporary anchors for this calculation.
@@ -319,9 +319,9 @@ Native tests pass both selection orders, fused/unfused line/arc junctions, two
 radius-locked arcs and Undo. Targeted Chromium/WebKit and hidden Electron pointer
 routes also pass later radius edits, constrained junction drags and detachment.
 
-## Freac trim integration (2026-09-15)
+## Makeshift trim integration (2026-09-15)
 
-The trim rewrite lesson above now has Freac runtime coverage. Analytic finite
+The trim rewrite lesson above now has Makeshift runtime coverage. Analytic finite
 contacts select spans independently of display tessellation and region-walker
 circle seams. Surviving endpoint/center references and radius locks are remapped;
 whole-edge length losses require local confirmation. A direction-constrained line
@@ -329,7 +329,7 @@ split keeps its existing direction relations on one piece and relates the other
 piece by parallelism. Copying every original direction relation onto both pieces
 would introduce redundant equations. Rectangle conversion also transfers a deleted
 side's perpendicular relation to its surviving opposite side where applicable.
-These are Freac implementation choices; no upstream trim code was copied.
+These are Makeshift implementation choices; no upstream trim code was copied.
 
 Native tests verify linked endpoints, two radius/center-linked arc remnants,
 rectangle middle/whole-side removal, right-angle preservation and Undo. Targeted
@@ -341,7 +341,7 @@ Save/Open remains unimplemented, so this is not persistence acceptance.
 
 The pinned [GCS.h point-on-line overload](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Sketcher/App/planegcs/GCS.h#L313-L314)
 and [point-on-circle overload](https://github.com/FreeCAD/FreeCAD/blob/78e4038a564e4c8bfebb40119b41d67531232223/src/Mod/Sketcher/App/planegcs/GCS.h#L415)
-are the source API evidence. Freac calls them without copying upstream code.
+are the source API evidence. Makeshift calls them without copying upstream code.
 Its own finite-domain validation is a product decision: supporting-line/circle
 incidence must not accept a point outside the visible segment or arc. Native
 fixtures now verify both initial selection orders, later solved edits and Undo

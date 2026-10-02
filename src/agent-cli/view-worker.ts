@@ -23,7 +23,7 @@ async function call(command: string, entity?: string): Promise<unknown> {
     pending = false;
   }
 }
-Object.defineProperty(globalThis, "freac", {
+Object.defineProperty(globalThis, "makeshift", {
   value: Object.freeze({
     faces: async () => ((await call("faces")) as { faces: unknown[] }).faces,
     context: async () => ((await call("context")) as { context: unknown }).context,
@@ -43,6 +43,7 @@ Object.defineProperty(globalThis, "freac", {
     },
   }),
 });
+Object.defineProperty(globalThis, "freac", { value: Reflect.get(globalThis, "makeshift") });
 try {
   await import(pathToFileURL(process.argv[2]).href);
   if (pending || failed) throw new Error("View script ended with an unawaited or failed call.");

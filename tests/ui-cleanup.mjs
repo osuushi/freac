@@ -21,7 +21,7 @@ async function undo(page) {
   return inspect(page);
 }
 async function undoTo(page, target) {
-  const depth = (await page.evaluate(() => window.freacHistory())).length;
+  const depth = (await page.evaluate(() => window.makeshiftHistory())).length;
   for (let i = 0; i < depth; i++) {
     if (isDeepStrictEqual((await inspect(page)).document, target)) return;
     await undo(page);
@@ -134,7 +134,7 @@ export async function cleanupRoute(page, name, electron, fixturePath) {
   assert.deepEqual((await inspect(page)).document, saved);
   await selectBodies(page, 1);
   const geometryHistory = async () =>
-    (await page.evaluate(() => window.freacHistory()))
+    (await page.evaluate(() => window.makeshiftHistory()))
       .filter((entry) => entry.outcome === "changed" && entry.operation.kind !== "selection")
       .map((entry) => entry.id);
   const beforeNoOp = await geometryHistory();

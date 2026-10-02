@@ -51,7 +51,9 @@ async function route(page, name) {
     const before = await sample(page, [-6, -6, 5]);
     await chooseTool(page, "cross section", "cross-section");
     await page.waitForFunction(
-      () => !window.freacInspect().sectionCalculating && window.freacInspect().sectionSurfaces > 0,
+      () =>
+        !window.makeshiftInspect().sectionCalculating &&
+        window.makeshiftInspect().sectionSurfaces > 0,
     );
     await page.getByRole("button", { name: "Done", exact: true }).click();
     await page.mouse.move(1100, 80);
@@ -74,7 +76,9 @@ async function coplanarSketch(page, name) {
   await chooseTool(page, "cross section", "cross-section");
   await pickPlane(page, "XY");
   await page.waitForFunction(
-    () => !window.freacInspect().sectionCalculating && window.freacInspect().sectionSurfaces > 0,
+    () =>
+      !window.makeshiftInspect().sectionCalculating &&
+      window.makeshiftInspect().sectionSurfaces > 0,
   );
   await page.getByRole("button", { name: "Done", exact: true }).click();
   for (let flip = 0; flip < 2; flip++) {
@@ -84,7 +88,7 @@ async function coplanarSketch(page, name) {
     console.log(name, "coplanar sketch", flip, "RGB delta", delta);
     assert.ok(delta <= 1, `Section must preserve coplanar sketch/face pixels: ${delta}`);
     await page.getByRole("button", { name: "Flip side", exact: true }).click();
-    await page.waitForFunction(() => !window.freacInspect().sectionCalculating);
+    await page.waitForFunction(() => !window.makeshiftInspect().sectionCalculating);
   }
   await page.screenshot({ path: `.cache/section-depth/${name}-sketch.png` });
 }
@@ -96,7 +100,7 @@ try {
   for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
     names.includes(name),
   )) {
-    if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
+    if (process.env.MAKESHIFT_TEST_BROWSER && process.env.MAKESHIFT_TEST_BROWSER !== name) continue;
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
@@ -106,10 +110,14 @@ try {
       await browser.close();
     }
   }
-  if (!process.env.FREAC_TEST_BROWSER || process.env.FREAC_TEST_BROWSER === "electron") {
+  if (!process.env.MAKESHIFT_TEST_BROWSER || process.env.MAKESHIFT_TEST_BROWSER === "electron") {
     const app = await launchElectron({
       args: ["."],
-      env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: server.resolvedUrls.local[0] },
+      env: {
+        ...process.env,
+        MAKESHIFT_TEST_HIDDEN: "1",
+        MAKESHIFT_DEV_URL: server.resolvedUrls.local[0],
+      },
     });
     try {
       const page = await app.firstWindow();

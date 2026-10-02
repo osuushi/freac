@@ -117,7 +117,7 @@ async function anchorChecks(page, anchor) {
   assert.deepEqual((await inspect(page)).document, before);
 }
 async function reopen(page, name, sketch) {
-  const file = resolve(`.cache/sketch-review/${name}-whole-sketch.freac`);
+  const file = resolve(`.cache/sketch-review/${name}-whole-sketch.makeshift`);
   await saveDocument(page, file);
   await reset(page);
   await openDocument(page, file);

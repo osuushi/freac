@@ -9,7 +9,7 @@ await withUiRuntimes(
     await page.addInitScript(() => {
       window.placementShapeSamples = [];
       window.samplePlacement = () => {
-        const state = window.freacInspect();
+        const state = window.makeshiftInspect();
         if (!["body-move", "transform-box-move"].includes(state.interaction?.kind)) return;
         if (!state.preview?.bodies?.length) return;
         window.placementShapeSamples.push(

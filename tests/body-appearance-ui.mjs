@@ -63,9 +63,9 @@ await withUiRuntimes(async (page, name) => {
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document.bodyAppearances, appearance);
   await clearSelection(page);
-  const directory = await mkdtemp(join(tmpdir(), "freac-colors-"));
+  const directory = await mkdtemp(join(tmpdir(), "makeshift-colors-"));
   try {
-    const path = join(directory, "color.freac");
+    const path = join(directory, "color.makeshift");
     await saveDocument(page, path);
     await openDocument(page, path);
     assert.deepEqual((await inspect(page)).document.bodyAppearances, appearance);

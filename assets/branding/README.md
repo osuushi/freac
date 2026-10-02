@@ -1,8 +1,9 @@
 # Application icon
 
-`freac-icon-antique-f-v3.png` is the approved master: an engraved F on yellowed
-paper with a rounded bezel and transparent surroundings. Earlier versions and
-the built-in image generation prompts are retained as design sources.
+`makeshift-icon.png` is the approved master: an orange and purple printed M on a
+white printed base, with transparent surroundings. The product name is **Makeshift**.
+The built-in image generation and correction prompts are retained alongside it.
+Earlier branding assets remain as historical design sources.
 
 To regenerate the committed macOS ICNS, Windows ICO and browser/host PNG assets
 on macOS, from the repository root:

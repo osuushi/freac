@@ -6,12 +6,12 @@ import { launchElectron, saveDocument } from "./native-documents.mjs";
 import { drag, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-const root = await mkdtemp(join(tmpdir(), "freac-archive-size-"));
-const original = join(root, "Original.freac"),
-  copy = join(root, "Copy.freac");
+const root = await mkdtemp(join(tmpdir(), "makeshift-archive-size-"));
+const original = join(root, "Original.makeshift"),
+  copy = join(root, "Copy.makeshift");
 let app;
 try {
-  app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+  app = await launchElectron({ args: ["."], env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" } });
   const page = await app.firstWindow();
   page.setDefaultTimeout(12000);
   await settled(page);
@@ -24,8 +24,8 @@ try {
   console.log("electron: saved ordinary pointer-created sketch");
   // Padding exercises the actual byte boundary without manufacturing millions of curves.
   await page.evaluate(async () => {
-    const sketch = window.freacInspect().document.sketches[0];
-    const reply = await window.freacModel({
+    const sketch = window.makeshiftInspect().document.sketches[0];
+    const reply = await window.makeshiftModel({
       kind: "edit",
       sketch: { ...sketch, padding: "x".repeat(64 * 1024 * 1024) },
     });
@@ -37,8 +37,8 @@ try {
   const result = await page.evaluate(async () => {
     const errors = [];
     for (const command of ["save", "save-as"])
-      errors.push((await window.freacDocument.command(command)).error);
-    return { errors, status: await window.freacDocument.status() };
+      errors.push((await window.makeshiftDocument.command(command)).error);
+    return { errors, status: await window.makeshiftDocument.status() };
   });
   assert.ok(
     result.errors.every((error) => /64 MiB/.test(error)),

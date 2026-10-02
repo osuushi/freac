@@ -32,7 +32,10 @@ export async function curvedRegionRoute(page, name) {
     await page.keyboard.down("Control");
     await page.mouse.wheel(0, delta);
     await page.keyboard.up("Control");
-    await page.waitForFunction((before) => window.freacInspect().camera.height !== before, height);
+    await page.waitForFunction(
+      (before) => window.makeshiftInspect().camera.height !== before,
+      height,
+    );
     filled = await pixels(page, samples);
     assert.ok(
       filled[1][2] - filled[1][0] > 15,

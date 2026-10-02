@@ -12,7 +12,7 @@ import { runtimeNames } from "./ui-runtime.mjs";
 export async function scriptBrowser(name) {
   runtimeNames(["chromium", "webkit"], [name]);
   const owner = new DocumentOwner();
-  const workspace = await mkdtemp(join(tmpdir(), "freac-script-web-"));
+  const workspace = await mkdtemp(join(tmpdir(), "makeshift-script-web-"));
   let page, browser, server, connection;
   const session = new ScriptSession(
     owner,
@@ -51,13 +51,13 @@ export async function scriptBrowser(name) {
     page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
     await page.exposeFunction("cancelScript", () => session.cancel());
     await page.addInitScript(() => {
-      window.freacInspection = {
+      window.makeshiftInspection = {
         onRequest(callback) {
           window.scriptInspection = callback;
           return () => {};
         },
       };
-      window.freacScript = {
+      window.makeshiftScript = {
         cancel: () => window.cancelScript(),
         onState(callback) {
           window.scriptState = callback;

@@ -207,7 +207,7 @@ export class DocumentSession {
     const window = this.window;
     if (!window || window.isDestroyed()) return;
     const status = this.files.status;
-    window.setTitle(`${status.name}${status.edited ? " — Edited" : ""} — Freac`);
+    window.setTitle(`${status.name}${status.edited ? " — Edited" : ""} — Makeshift`);
     if (process.platform === "darwin") {
       window.setRepresentedFilename(status.path ?? "");
       window.setDocumentEdited(status.edited);
@@ -238,7 +238,7 @@ export class DocumentSession {
           const result = await dialog.showOpenDialog(window, {
             properties: ["openFile"],
             defaultPath: this.files.directory,
-            filters: [{ name: "Freac Document", extensions: ["freac"] }],
+            filters: [{ name: "Makeshift Document", extensions: ["makeshift", "freac"] }],
           });
           if (result.canceled || !result.filePaths[0]) return { replaced: false };
           path = result.filePaths[0];

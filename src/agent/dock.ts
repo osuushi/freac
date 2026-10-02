@@ -6,7 +6,7 @@ import { AgentTerminal } from "./terminal.js";
 import "./style.css";
 
 export function installAgentDock(app: HTMLElement): () => void {
-  const host = window.freacAgent;
+  const host = window.makeshiftAgent;
   if (!host) return () => {};
   const toggle = document.createElement("button");
   toggle.className = "agent-toggle";

@@ -32,7 +32,7 @@ async function dragHandle(page, name) {
 }
 async function caps(page) {
   await page.waitForFunction(() => {
-    const s = window.freacInspect();
+    const s = window.makeshiftInspect();
     return !s.sectionCalculating && s.sectionSurfaces > 0;
   });
 }
@@ -46,7 +46,7 @@ async function route(page, name) {
   let s = await inspect(page);
   assert.equal(s.modelingSelection[0]?.kind, "face");
   const source = original.bodies[0].faces.find((f) => f.id === s.modelingSelection[0].face).plane;
-  const history = await page.evaluate(() => window.freacHistory());
+  const history = await page.evaluate(() => window.makeshiftHistory());
   await chooseTool(page, "cross section", "cross-section");
   s = await inspect(page);
   assert.deepEqual(
@@ -80,7 +80,7 @@ async function route(page, name) {
   const retained = (await inspect(page)).crossSection;
   assert.equal((await inspect(page)).interaction, null);
   assert.deepEqual(
-    await page.evaluate(() => window.freacHistory()),
+    await page.evaluate(() => window.makeshiftHistory()),
     history,
     "Section placement and flip create no Undo entries",
   );
@@ -111,7 +111,7 @@ async function adjustmentRoute(page, retained, original) {
     "face",
     "Retained top face remains selectable",
   );
-  const history = await page.evaluate(() => window.freacHistory());
+  const history = await page.evaluate(() => window.makeshiftHistory());
   await button(page, "Adjust section").click();
   assert.deepEqual(
     (await inspect(page)).crossSection,
@@ -149,7 +149,7 @@ async function adjustmentRoute(page, retained, original) {
   assert.notDeepEqual((await inspect(page)).crossSection.origin, retained.origin);
   await button(page, "Cancel").click();
   assert.deepEqual(
-    await page.evaluate(() => window.freacHistory()),
+    await page.evaluate(() => window.makeshiftHistory()),
     history,
     "Re-adjustment and cancellation create no Undo entries",
   );
@@ -211,7 +211,7 @@ async function savedPlaneRoute(page, name) {
     saved.constructionPlanes[0].frame.origin,
   );
   await page.keyboard.press("Enter");
-  const file = resolve(`.cache/cross-section/${name}.freac`);
+  const file = resolve(`.cache/cross-section/${name}.makeshift`);
   await saveDocument(page, file);
   await openDocument(page, file);
   assert.equal((await inspect(page)).crossSection, null, "Open resets the view-only section");
@@ -251,7 +251,7 @@ try {
   for (const [name, engine] of Object.entries({ chromium, webkit }).filter(([name]) =>
     names.includes(name),
   )) {
-    if (process.env.FREAC_TEST_BROWSER && process.env.FREAC_TEST_BROWSER !== name) continue;
+    if (process.env.MAKESHIFT_TEST_BROWSER && process.env.MAKESHIFT_TEST_BROWSER !== name) continue;
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1280, height: 850 } });
@@ -261,10 +261,14 @@ try {
       await browser.close();
     }
   }
-  if (!process.env.FREAC_TEST_BROWSER || process.env.FREAC_TEST_BROWSER === "electron") {
+  if (!process.env.MAKESHIFT_TEST_BROWSER || process.env.MAKESHIFT_TEST_BROWSER === "electron") {
     const app = await launchElectron({
       args: ["."],
-      env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: server.resolvedUrls.local[0] },
+      env: {
+        ...process.env,
+        MAKESHIFT_TEST_HIDDEN: "1",
+        MAKESHIFT_DEV_URL: server.resolvedUrls.local[0],
+      },
     });
     try {
       const page = await app.firstWindow();

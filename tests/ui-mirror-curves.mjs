@@ -146,7 +146,7 @@ export async function mirrorAxisPickingRoute(page, name) {
     await page.mouse.move(950, 650);
     await page.mouse.wheel(70, 50);
     await page.waitForFunction(
-      (x) => window.freacInspect().projection.origin.x !== x,
+      (x) => window.makeshiftInspect().projection.origin.x !== x,
       state.projection.origin.x,
     );
     await click(page, 0, 20);
@@ -160,7 +160,7 @@ export async function mirrorAxisPickingRoute(page, name) {
     await page.mouse.wheel(0, -20);
     await page.keyboard.up("Control");
     await page.waitForFunction(
-      (height) => window.freacInspect().camera.height !== height,
+      (height) => window.makeshiftInspect().camera.height !== height,
       state.camera.height,
     );
     await click(page, -20, 0);

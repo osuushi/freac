@@ -9,7 +9,7 @@ function confirmLargeFiles(panel: HTMLElement, bytes: number): Promise<boolean> 
   const dialog = document.createElement("dialog");
   dialog.className = "agent-attachment-warning";
   const size = (bytes / (1024 * 1024)).toFixed(1);
-  dialog.innerHTML = `<form method="dialog"><p>These files total ${size} MiB. They will be bundled in the saved Freac drawing and make it larger.</p><div><button value="cancel">Cancel</button><button value="import">Attach files</button></div></form>`;
+  dialog.innerHTML = `<form method="dialog"><p>These files total ${size} MiB. They will be bundled in the saved Makeshift drawing and make it larger.</p><div><button value="cancel">Cancel</button><button value="import">Attach files</button></div></form>`;
   panel.append(dialog);
   return new Promise((resolve) => {
     dialog.addEventListener(
@@ -45,7 +45,7 @@ export function agentAttachments(
       const size = files.reduce((sum, file) => sum + file.size, 0);
       if (size > archiveLimits.bytes)
         throw new Error("These files exceed the drawing's 64 MiB workspace limit.");
-      if (window.freacRemote && files.some((file) => file.size > 23 * 1024 * 1024))
+      if (window.makeshiftRemote && files.some((file) => file.size > 23 * 1024 * 1024))
         throw new Error(
           "The iPad connection supports files up to 23 MiB each. Attach larger files on the computer.",
         );

@@ -16,7 +16,7 @@ export function installControls(
   const disposeTools = sketchTools(editor);
   const disposeFiles = fileControls(editor, app);
   const disposeFixtures =
-    import.meta.env.DEV || window.freacFixture ? fixtureControls(editor, app) : () => {};
+    import.meta.env.DEV || window.makeshiftFixture ? fixtureControls(editor, app) : () => {};
   const abort = installShortcuts(editor, numeric, app);
   const standardMenu = new StandardCommandMenu(editor);
   window.addEventListener(

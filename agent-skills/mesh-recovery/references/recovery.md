@@ -39,7 +39,7 @@ Preserve contact surfaces and required clearances when choosing edge treatment.
 ## Verification details
 
 Use the kernel's adaptive volume integration for fitted B-spline solids. In the
-CadQuery/OpenCascade recovery, `Volume(1e-7)` agreed with Freac; default quadrature
+CadQuery/OpenCascade recovery, `Volume(1e-7)` agreed with Makeshift; default quadrature
 was wrong by thousands of cubic millimeters. Volume alone cannot detect a filled
 notch or misplaced hole.
 

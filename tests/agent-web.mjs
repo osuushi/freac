@@ -11,7 +11,7 @@ import { corners, drag, pointEquals } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 // Browser rendering acceptance against a real PTY; Electron tests own the production bridge.
-const root = await mkdtemp(join(tmpdir(), "freac-agent-web-"));
+const root = await mkdtemp(join(tmpdir(), "makeshift-agent-web-"));
 const pty = new AgentProcess();
 let preferences = { preset: "custom", executable: "/bin/sh", args: ["-i"], env: {} };
 const server = await createServer({
@@ -69,7 +69,7 @@ try {
       const errors = [];
       page.on("pageerror", (error) => errors.push(error.message));
       await page.addInitScript(() => {
-        window.freacAgent = {
+        window.makeshiftAgent = {
           request: async (request) =>
             (
               await fetch("/__agent-test", { method: "POST", body: JSON.stringify(request) })
@@ -98,13 +98,13 @@ try {
       await drag(page, [-10, -6], [10, 6]);
       pointEquals((await corners(page))[2], [10, 6]);
       await page.keyboard.press("Escape");
-      const before = await page.evaluate(() => JSON.stringify(window.freacInspect().document));
+      const before = await page.evaluate(() => JSON.stringify(window.makeshiftInspect().document));
       await input.focus();
       await page.keyboard.type("mrs");
       await page.keyboard.press("Control+c");
       await page.keyboard.press("Meta+z");
       assert.equal(
-        await page.evaluate(() => JSON.stringify(window.freacInspect().document)),
+        await page.evaluate(() => JSON.stringify(window.makeshiftInspect().document)),
         before,
       );
       await page.getByRole("button", { name: "Change agent dock position" }).click();

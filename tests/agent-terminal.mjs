@@ -7,17 +7,20 @@ import { corners, drag, pointEquals, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
-const app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+const app = await launchElectron({
+  args: ["."],
+  env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+});
 try {
   const page = await app.firstWindow();
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.evaluate(() =>
-    window.freacAgent.request({
+    window.makeshiftAgent.request({
       kind: "configure",
       preferences: {
         preset: "custom",
-        executable: "/not-a-freac-executable",
+        executable: "/not-a-makeshift-executable",
         args: [],
         env: {},
       },
@@ -30,15 +33,15 @@ try {
   await page.getByLabel("Arguments · one per line").fill("-i");
   await page
     .getByLabel("Environment · NAME=value, one per line")
-    .fill("FREAC_TERMINAL_CHECK=retained");
+    .fill("MAKESHIFT_TERMINAL_CHECK=retained");
   await page.getByRole("button", { name: "Save settings", exact: true }).click();
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await waitAgent(page, (status) => status.running);
-  const first = await page.evaluate(() => window.freacAgent.request({ kind: "settings" }));
+  const first = await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }));
   assert(first.workspace);
   const input = page.locator(".agent-screen textarea");
   await input.focus();
-  await page.keyboard.type('printf "%s" "$FREAC_TERMINAL_CHECK" > terminal-check.txt');
+  await page.keyboard.type('printf "%s" "$MAKESHIFT_TERMINAL_CHECK" > terminal-check.txt');
   await page.keyboard.press("Enter");
   await waitFile(join(first.workspace, "terminal-check.txt"));
   assert.equal(await readFile(join(first.workspace, "terminal-check.txt"), "utf8"), "retained");
@@ -62,11 +65,14 @@ try {
   await chooseTool(page, "redo", "redo");
   await settled(page);
   await input.focus();
-  const before = await page.evaluate(() => JSON.stringify(window.freacInspect().document));
+  const before = await page.evaluate(() => JSON.stringify(window.makeshiftInspect().document));
   await page.keyboard.type("mrs");
   await page.keyboard.press("Control+c");
   await page.keyboard.press("Meta+z");
-  assert.equal(await page.evaluate(() => JSON.stringify(window.freacInspect().document)), before);
+  assert.equal(
+    await page.evaluate(() => JSON.stringify(window.makeshiftInspect().document)),
+    before,
+  );
   await page.getByRole("button", { name: "Change agent dock position" }).click();
   assert.equal(await page.locator(".agent-dock").getAttribute("data-side"), "bottom");
   const splitter = page.getByRole("separator", { name: "Resize agent pane" });
@@ -74,7 +80,7 @@ try {
   await page.keyboard.press("ArrowUp");
   await page.getByRole("button", { name: "Collapse agent terminal" }).click();
   assert.equal(
-    (await page.evaluate(() => window.freacAgent.request({ kind: "settings" }))).running,
+    (await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }))).running,
     true,
   );
   await page.getByRole("button", { name: "Expand agent terminal" }).click();
@@ -90,7 +96,7 @@ try {
   await page.getByRole("button", { name: "Start", exact: true }).click();
   await waitAgent(page, (status) => status.running);
   assert.equal(
-    (await page.evaluate(() => window.freacAgent.request({ kind: "settings" }))).workspace,
+    (await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }))).workspace,
     first.workspace,
   );
   await app.evaluate(({ dialog }) => {
@@ -100,7 +106,7 @@ try {
   });
   await chooseTool(page, "new document", "new");
   assert.equal(
-    (await page.evaluate(() => window.freacAgent.request({ kind: "settings" }))).running,
+    (await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }))).running,
     true,
   );
   await app.evaluate(({ dialog }) => {
@@ -111,7 +117,7 @@ try {
   await chooseTool(page, "new document", "new");
   await waitAgent(page, (status) => status.workspace === null && !status.running);
   assert.equal(
-    (await page.evaluate(() => window.freacAgent.request({ kind: "settings" }))).running,
+    (await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }))).running,
     false,
   );
   await access(join(first.workspace, "terminal-check.txt"));
@@ -122,8 +128,8 @@ try {
 } finally {
   const page = app.windows()[0];
   if (page && !page.isClosed()) {
-    await page.evaluate(() => window.freacAgent.request({ kind: "stop" })).catch(() => {});
-    await page.waitForFunction(() => !window.freacInspect().busy).catch(() => {});
+    await page.evaluate(() => window.makeshiftAgent.request({ kind: "stop" })).catch(() => {});
+    await page.waitForFunction(() => !window.makeshiftInspect().busy).catch(() => {});
   }
   await app.evaluate(({ dialog }) => {
     dialog.showMessageBox = async (_window, options) => ({
@@ -147,7 +153,7 @@ async function waitFile(path) {
 
 async function waitAgent(page, predicate) {
   for (let attempt = 0; attempt < 100; attempt++) {
-    const status = await page.evaluate(() => window.freacAgent.request({ kind: "settings" }));
+    const status = await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }));
     if (!status.error && predicate(status)) return status;
     await new Promise((resolve) => setTimeout(resolve, 50));
   }

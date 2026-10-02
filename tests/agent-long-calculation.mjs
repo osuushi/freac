@@ -8,7 +8,7 @@ import { chooseTool } from "./ui-tools.mjs";
 
 // Founder fixture is intentionally local; pass a Capture fixture path explicitly.
 const fixture = JSON.parse(await readFile(process.argv[2], "utf8")).snapshot;
-const web = await scriptBrowser(process.env.FREAC_TEST_BROWSER ?? "chromium");
+const web = await scriptBrowser(process.env.MAKESHIFT_TEST_BROWSER ?? "chromium");
 const { page, workspace } = web;
 page.setDefaultTimeout(60000);
 let child;
@@ -27,14 +27,14 @@ try {
     join(workspace, "long.ts"),
     `
 const p = [{x:5.9,y:-0.5},{x:7,y:0},{x:5.9,y:0.5}];
-const s = await freac.createSketch({plane:"XZ",curves:p.map((a,i)=>({kind:"segment",a,b:p[(i+1)%3]}))});
-await freac.revolve({sources:s.profiles,axis:{origin:[0,0,0],direction:[0,0,1]},angle:6480,height:18,mode:"union",targets:[${JSON.stringify(body)}]});
+const s = await makeshift.createSketch({plane:"XZ",curves:p.map((a,i)=>({kind:"segment",a,b:p[(i+1)%3]}))});
+await makeshift.revolve({sources:s.profiles,axis:{origin:[0,0,0],direction:[0,0,1]},angle:6480,height:18,mode:"union",targets:[${JSON.stringify(body)}]});
 `,
   );
   function run() {
     return new Promise((resolve, reject) => {
       child = execFile(
-        web.env.FREAC_CLI,
+        web.env.MAKESHIFT_CLI,
         ["run", "long.ts"],
         { cwd: workspace, env: web.env, timeout: 120000 },
         (error, stdout, stderr) => {

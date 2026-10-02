@@ -45,7 +45,7 @@ async function frame(page, document) {
   await page.mouse.wheel(0, Math.log(desired / state.camera.height) / 0.01);
   await page.keyboard.up("Control");
   await page.waitForFunction(
-    (h) => Math.abs(window.freacInspect().camera.height - h) < 0.001,
+    (h) => Math.abs(window.makeshiftInspect().camera.height - h) < 0.001,
     desired,
   );
   const center = await project(
@@ -59,12 +59,12 @@ async function frame(page, document) {
 for (const directory of process.argv.slice(2)) {
   const app = await launchElectron({
     args: ["."],
-    env: { ...process.env, FREAC_TEST_HIDDEN: "1" },
+    env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
   });
   try {
     const page = await app.firstWindow();
     await inspect(page);
-    await openDocument(page, resolve(directory, "model.freac"));
+    await openDocument(page, resolve(directory, "model.makeshift"));
     const original = (await inspect(page)).document;
     await checkReopened(original, directory);
     await frame(page, original);

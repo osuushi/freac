@@ -20,8 +20,9 @@ interference, assembly and load capacity are not inferred from individual gears.
 ## Authoring bundled JavaScript decorators
 
 A definition has id, version (positive integer), name, fields, source and optional
-preview:true. IDs use letters, digits, dots, underscores and hyphens; freac. is
-reserved. Source is one self-contained ES module with a default-exported object.
+preview:true. IDs use letters, digits, dots, underscores and hyphens; the legacy
+freac. namespace remains reserved for stable built-in IDs. Source is one
+self-contained ES module with a default-exported object.
 Its synchronous hooks are:
 
 - partition(context): return {groups:[{faces:[{body,face}],state?}]} or {reason:string}.
@@ -72,7 +73,7 @@ and default; numbers can specify min/max/unit, enums require options with value
 and label. visibleWhen:{key,values} controls conditional display. Mixed selection
 edits update the chosen field for all selected instances. Unknown fields and
 out-of-range settings reject. Up to 32 fields, 64 definitions and 256 KiB source
-per definition are allowed. Source and state are saved in the Freac document.
+per definition are allowed. Source and state are saved in the Makeshift document.
 
 Hooks run in a fresh isolated JavaScript VM with JSON input/output. No imports,
 DOM, file, network, timers or host APIs are exposed. Bundle helpers into source.

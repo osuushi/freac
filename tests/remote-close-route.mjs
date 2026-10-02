@@ -88,7 +88,7 @@ async function failedAndHeldClose(app, page, command) {
 export async function remoteCloseRoute(engine, name, command, file) {
   const app = await launchElectron({
     args: ["."],
-    env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: "" },
+    env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1", MAKESHIFT_DEV_URL: "" },
   });
   let browser;
   try {
@@ -109,7 +109,7 @@ export async function remoteCloseRoute(engine, name, command, file) {
     );
     assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
     await page.evaluate(() =>
-      window.freacDocument.onCommand((command) => {
+      window.makeshiftDocument.onCommand((command) => {
         window.testCommand = command;
       }),
     );

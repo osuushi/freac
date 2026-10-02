@@ -39,7 +39,8 @@ try {
       await (await choosing).setFiles(path);
       await settled(page);
       await page.waitForFunction(
-        (target) => JSON.stringify(window.freacInspect().camera.target) === JSON.stringify(target),
+        (target) =>
+          JSON.stringify(window.makeshiftInspect().camera.target) === JSON.stringify(target),
         moved.target,
       );
       assert.deepEqual((await inspect(page)).camera.target, moved.target);

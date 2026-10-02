@@ -3,9 +3,9 @@ import { captureFixture } from "./fixture-capture.js";
 
 export function fixtureCapture(): Plugin {
   return {
-    name: "freac-development-fixtures",
+    name: "makeshift-development-fixtures",
     configureServer(server) {
-      server.middlewares.use("/__freac_fixture", async (request, response) => {
+      server.middlewares.use("/__makeshift_fixture", async (request, response) => {
         if (
           request.method !== "POST" ||
           request.headers["content-type"] !== "application/json" ||

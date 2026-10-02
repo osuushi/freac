@@ -22,13 +22,13 @@ Copies are independent, perpendicular and not clipped by face boundaries. Previe
 and accept in one Undo. Favor pen-style editing over general NURBS controls;
 precision/analytic recognition can be recovered explicitly from current geometry.
 
-Freac aims for direct, spatial CAD editing with an agent beside the user.
+Makeshift aims for direct, spatial CAD editing with an agent beside the user.
 The user makes design decisions; the agent performs bounded modeling, parameter
 changes, diagnosis and recovery through the same editing functions. Desktop input
 comes first. A shared browser frontend should enable remote and tablet use
 without rebuilding the interaction model around video streaming.
 
-Founder decision, 2026-09-14: Freac will be open source; LGPL is acceptable for
+Founder decision, 2026-09-14: Makeshift will be open source; LGPL is acceptable for
 this end-user application, and PlaneGCS is selected for constraint solving.
 The intended tablet configuration is an iPad controlling modeling hosted on the
 user's desktop over the local network. An Internet-separated service or an
@@ -46,7 +46,7 @@ and perform modeling tasks. This access is part of the intended experience,
 not merely a developer workflow or a later optional chatbot integration.
 
 Founder direction, 2026-09-20: bring your own terminal harness, Codex first,
-with configurable executable/environment and a Freac-isolated preset. Portable
+with configurable executable/environment and a Makeshift-isolated preset. Portable
 document workspaces carry notes/scripts/optional skills; local CLI tools provide
 document-scoped inspection, rendering and typed scripting without MCP. The terminal
 docks right or below and collapses without stopping. Detached windows are deferred.
@@ -66,4 +66,4 @@ build/reload lifecycle and must preserve or recover the active document.
 
 This document carries forward explicit founder requirements from the Freak
 prototype discussion, including the 2026-09-13 boundary-preservation decision.
-It describes desired behavior, not implemented Freac features.
+It describes desired behavior, not implemented Makeshift features.

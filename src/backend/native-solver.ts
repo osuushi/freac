@@ -6,7 +6,7 @@ export class NativeSolver extends NativeCalculator<SolverInput, SolverResult> {
   constructor(
     executable = resolve(
       ".build/solver/bin",
-      process.platform === "win32" ? "freac-solver.exe" : "freac-solver",
+      process.platform === "win32" ? "makeshift-solver.exe" : "makeshift-solver",
     ),
   ) {
     super(executable, "Sketch solver");

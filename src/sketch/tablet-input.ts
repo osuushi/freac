@@ -5,7 +5,7 @@ import type { World } from "./world.js";
 
 /** Touch navigates before geometry listeners. Pen/mouse retain ordinary tool routes. */
 export function installTabletInput(world: World, signal: AbortSignal): void {
-  if (window.freacRemote) new TabletInput(world, signal);
+  if (window.makeshiftRemote) new TabletInput(world, signal);
 }
 class TabletInput {
   private touches = new Map<number, Point>();

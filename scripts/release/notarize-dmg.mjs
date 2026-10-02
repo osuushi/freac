@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 const { tag } = JSON.parse(await readFile(".build/release/build.json", "utf8"));
-const file = resolve(`.build/packages/make/Freac-${tag}-arm64.dmg`);
+const file = resolve(`.build/packages/make/Makeshift-${tag}-arm64.dmg`);
 const run = (command, args, capture = false) => {
   const result = spawnSync(command, args, {
     encoding: "utf8",
@@ -12,13 +12,14 @@ const run = (command, args, capture = false) => {
   if (result.error || result.status !== 0) throw new Error(`${command} failed (${result.status})`);
   return result.stdout;
 };
-if (process.env.FREAC_SIGN !== "1") throw new Error("DMG notarization requires FREAC_SIGN=1");
+if (process.env.MAKESHIFT_SIGN !== "1")
+  throw new Error("DMG notarization requires MAKESHIFT_SIGN=1");
 run("codesign", ["--force", "--sign", process.env.APPLE_SIGNING_IDENTITY, "--timestamp", file]);
 // A temporary keychain profile keeps the password out of the notarytool submit invocation.
 run("xcrun", [
   "notarytool",
   "store-credentials",
-  "freac-notary",
+  "makeshift-notary",
   "--keychain",
   process.env.APPLE_SIGNING_KEYCHAIN,
   "--apple-id",
@@ -36,7 +37,7 @@ const submission = JSON.parse(
       "submit",
       file,
       "--keychain-profile",
-      "freac-notary",
+      "makeshift-notary",
       "--keychain",
       process.env.APPLE_SIGNING_KEYCHAIN,
       "--wait",

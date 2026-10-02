@@ -8,12 +8,12 @@ import { settled } from "./ui-helpers.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
 const executablePath = resolve(
-  process.env.FREAC_PACKAGED_EXECUTABLE ??
-    ".build/packages/Freac-darwin-arm64/Freac.app/Contents/MacOS/Freac",
+  process.env.MAKESHIFT_PACKAGED_EXECUTABLE ??
+    ".build/packages/Makeshift-darwin-arm64/Makeshift.app/Contents/MacOS/Makeshift",
 );
-const env = { ...process.env, PATH: "/usr/bin:/bin:/usr/sbin:/sbin", FREAC_TEST_HIDDEN: "1" };
+const env = { ...process.env, PATH: "/usr/bin:/bin:/usr/sbin:/sbin", MAKESHIFT_TEST_HIDDEN: "1" };
 for (const key of [
-  "FREAC_DEV_URL",
+  "MAKESHIFT_DEV_URL",
   "ELECTRON_RUN_AS_NODE",
   "NODE_PATH",
   "DYLD_LIBRARY_PATH",
@@ -64,7 +64,7 @@ try {
 } finally {
   await app
     .windows()[0]
-    ?.evaluate(() => window.freacAgent.request({ kind: "stop" }))
+    ?.evaluate(() => window.makeshiftAgent.request({ kind: "stop" }))
     .catch(() => {});
   await app
     .evaluate(({ app }) => {
@@ -78,11 +78,11 @@ async function terminalRoute(page) {
   // A user's shell may contain Codex even with the app's restricted startup PATH.
   // Exercise Settings from a deterministic launch failure, never a personal CLI.
   await page.evaluate(() =>
-    window.freacAgent.request({
+    window.makeshiftAgent.request({
       kind: "configure",
       preferences: {
         preset: "custom",
-        executable: "/not-a-freac-executable",
+        executable: "/not-a-makeshift-executable",
         args: [],
         env: {},
       },
@@ -98,19 +98,19 @@ async function terminalRoute(page) {
   await page.getByRole("button", { name: "Start", exact: true }).click();
   const { workspace } = await waitAgent(page, true);
   await page.locator(".agent-screen textarea").focus();
-  await page.keyboard.type("freac status > packaged-status.json");
+  await page.keyboard.type("makeshift status > packaged-status.json");
   await page.keyboard.press("Enter");
   const output = join(workspace, "packaged-status.json");
   for (let attempt = 0; attempt < 100; attempt++) {
     try {
-      if ((await readFile(output, "utf8")).includes("Freac")) break;
+      if ((await readFile(output, "utf8")).includes("Makeshift")) break;
     } catch {}
     await page.waitForTimeout(100);
   }
   await access(output);
-  assert.match(await readFile(output, "utf8"), /Freac/);
+  assert.match(await readFile(output, "utf8"), /Makeshift/);
   await page.keyboard.type(
-    `printf '%s\\n' 'console.log("PACKAGED_SCRIPT_OK");' > packaged-check.ts; freac run packaged-check.ts > packaged-script.txt 2>&1; echo $? > packaged-script.exit`,
+    `printf '%s\\n' 'console.log("PACKAGED_SCRIPT_OK");' > packaged-check.ts; makeshift run packaged-check.ts > packaged-script.txt 2>&1; echo $? > packaged-script.exit`,
   );
   await page.keyboard.press("Enter");
   const exit = join(workspace, "packaged-script.exit");
@@ -134,7 +134,7 @@ async function terminalRoute(page) {
 
 async function waitAgent(page, running) {
   for (let attempt = 0; attempt < 200; attempt++) {
-    const status = await page.evaluate(() => window.freacAgent.request({ kind: "settings" }));
+    const status = await page.evaluate(() => window.makeshiftAgent.request({ kind: "settings" }));
     if (!status.error && status.running === running) return status;
     await new Promise((resolve) => setTimeout(resolve, 50));
   }

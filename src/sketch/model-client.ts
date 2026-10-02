@@ -5,11 +5,11 @@ import type { SelectionHistory } from "./selection-history.js";
 
 declare global {
   interface Window {
-    freacModel?: ModelCall;
+    makeshiftModel?: ModelCall;
   }
 }
 const call: ModelCall = async (request) => {
-  if (window.freacModel) return window.freacModel(request);
+  if (window.makeshiftModel) return window.makeshiftModel(request);
   const response = await fetch("/sketch-api", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

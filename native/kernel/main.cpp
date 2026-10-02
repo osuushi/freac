@@ -120,7 +120,8 @@ std::vector<Operand> operands(const Tree& input) {
     return result;
 }
 int main() {
-    const char* configuredThreads = std::getenv("FREAC_KERNEL_THREADS");
+    const char* configuredThreads = std::getenv("MAKESHIFT_KERNEL_THREADS");
+    if (!configuredThreads) configuredThreads = std::getenv("FREAC_KERNEL_THREADS");
     const int processors = std::max(1, OSD_Parallel::NbLogicalProcessors());
     const int threads = configuredThreads ? std::clamp(std::atoi(configuredThreads), 1, processors)
         : processors;

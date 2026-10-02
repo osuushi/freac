@@ -63,10 +63,10 @@ async function pickUpperBody(page) {
 async function route(page, name) {
   await inspect(page);
   await openDocument(page, {
-    name: "depth-fixture.freac",
+    name: "depth-fixture.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: snapshot.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: snapshot.document }),
     ),
   });
   const original = (await inspect(page)).document;
@@ -105,7 +105,10 @@ let server, browser, app;
 try {
   let page;
   if (name === "electron") {
-    app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+    app = await launchElectron({
+      args: ["."],
+      env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+    });
     page = await app.firstWindow();
     assert.equal(
       await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),

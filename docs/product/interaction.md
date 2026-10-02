@@ -69,7 +69,7 @@ must remain authoritative while the user continues adjusting the extrusion.
 
 The founder prefers union for obvious bridges between bodies; refining that
 automatic default is deferred. XOR is also deferred and may be composed from
-other operations. These are Freac requirements based on the founder's intended
+other operations. These are Makeshift requirements based on the founder's intended
 workflow, not a verified description of another application's implementation.
 
 Extrude includes Draft with an Angle (°)/Offset (mm) dropdown. Switching the

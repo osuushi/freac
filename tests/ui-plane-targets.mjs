@@ -100,7 +100,7 @@ export async function findRaycastPoint(page, id) {
 }
 
 function targetGeometry(plane) {
-  const target = window.freacInspect().planeTargets.find((p) => p.id === plane),
+  const target = window.makeshiftInspect().planeTargets.find((p) => p.id === plane),
     origin = document.querySelector(".origin");
   if (!target || !(origin instanceof HTMLElement)) throw new Error(`Missing ${plane} plane target`);
   const marker = origin.getBoundingClientRect();
@@ -135,7 +135,7 @@ export async function pickPlane(page, id) {
       const hit = await page.evaluate(
         ({ p, id }) => {
           if (document.elementFromPoint(p.x, p.y)?.tagName !== "CANVAS") return false;
-          const targets = window.freacInspect().planeTargets.filter((t) => t.visible);
+          const targets = window.makeshiftInspect().planeTargets.filter((t) => t.visible);
           // Reject points inside another reference patch: depth cannot make these ambiguous.
           const inside = (polygon) => {
             let result = false;

@@ -6,12 +6,12 @@ import { inspect, reset } from "./ui-helpers.mjs";
 export async function bodyArchiveRoute(page, name) {
   await page.keyboard.press("Escape");
   const bodies = (await inspect(page)).document.bodies;
-  const path = resolve(`.cache/sketch-review/${name}-moved-bodies.freac`);
+  const path = resolve(`.cache/sketch-review/${name}-moved-bodies.makeshift`);
   await saveDocument(page, path);
   await reset(page);
   await openDocument(page, path);
   await page.waitForFunction(
-    (count) => window.freacInspect().document.bodies?.length === count,
+    (count) => window.makeshiftInspect().document.bodies?.length === count,
     bodies.length,
   );
   const loaded = (await inspect(page)).document.bodies;

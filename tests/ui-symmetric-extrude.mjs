@@ -107,7 +107,7 @@ async function acceptAndArchive(page, name) {
   assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, accepted);
-  const path = resolve(`.cache/sketch-review/${name}-symmetric-extrude.freac`);
+  const path = resolve(`.cache/sketch-review/${name}-symmetric-extrude.makeshift`);
   await saveDocument(page, path);
   await reset(page);
   await openDocument(page, path);

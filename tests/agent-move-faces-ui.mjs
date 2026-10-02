@@ -8,7 +8,7 @@ import { inspect, settled } from "./ui-helpers.mjs";
 import { orient, pick } from "./ui-measurement.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-const web = await scriptBrowser(process.env.FREAC_TEST_BROWSER ?? "chromium");
+const web = await scriptBrowser(process.env.MAKESHIFT_TEST_BROWSER ?? "chromium");
 let count = 0;
 try {
   const { page, workspace, env } = web;
@@ -16,7 +16,7 @@ try {
   const run = async (source) => {
     const name = `move-face-${++count}.ts`;
     await writeFile(join(workspace, name), source);
-    const { stdout } = await promisify(execFile)(env.FREAC_CLI, ["run", name], {
+    const { stdout } = await promisify(execFile)(env.MAKESHIFT_CLI, ["run", name], {
       cwd: workspace,
       env,
       timeout: 30000,
@@ -25,16 +25,16 @@ try {
     return JSON.parse(stdout);
   };
   await run(`const p=[{x:-10,y:-10},{x:10,y:-10},{x:10,y:10},{x:-10,y:10}];
-const s=await freac.createSketch({plane:"XY",curves:p.map((a,i)=>({kind:"segment",a,b:p[(i+1)%4]}))});
-await freac.extrude({sources:s.profiles,distance:10,mode:"new"});`);
+const s=await makeshift.createSketch({plane:"XY",curves:p.map((a,i)=>({kind:"segment",a,b:p[(i+1)%4]}))});
+await makeshift.extrude({sources:s.profiles,distance:10,mode:"new"});`);
   const original = (await inspect(page)).document;
   assert(Math.abs(original.bodies[0].volume - 4000) < 1e-6);
   await orient(page, [0.4, -1, 0.7]);
   const selected = await pick(page, [-5, -10, 4]);
   assert.equal(selected.modelingSelection[0]?.kind, "face");
-  await run(`const faces=freac.selection.filter(t=>t.kind==="face");
+  await run(`const faces=makeshift.selection.filter(t=>t.kind==="face");
 if(faces.length!==1) throw new Error("Expected one face");
-await freac.moveFaces({faces,translation:[0,-1,0],pivot:[0,0,0],axis:[0,0,1],angle:0});`);
+await makeshift.moveFaces({faces,translation:[0,-1,0],pivot:[0,0,0],axis:[0,0,1],angle:0});`);
   const moved = (await inspect(page)).document;
   assert(Math.abs(moved.bodies[0].volume - 4200) < 1e-6);
   assert.deepEqual(

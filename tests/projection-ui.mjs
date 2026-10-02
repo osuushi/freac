@@ -24,10 +24,10 @@ await withUiRuntimes(async (page, name) => {
 async function tiltedPlaneRoute(page, name) {
   await reset(page);
   await openDocument(page, {
-    name: "projection-tilted-plane.freac",
+    name: "projection-tilted-plane.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
   await orient(page, [1, -2, 1]);
@@ -141,7 +141,7 @@ async function editAndReopen(page, name, accepted) {
   assert.deepEqual(edited.sketches[0], accepted.sketches[0]);
   await chooseTool(page, "Undo", "undo");
   assert.deepEqual((await inspect(page)).document, accepted);
-  const path = resolve(`.cache/sketch-review/${name}-tilted-projection.freac`);
+  const path = resolve(`.cache/sketch-review/${name}-tilted-projection.makeshift`);
   await saveDocument(page, path);
   await reset(page);
   await openDocument(page, path);

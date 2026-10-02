@@ -34,7 +34,7 @@ export class NativeCalculator<Input, Output> {
       }
     });
     child.stderr.on("data", (data: Buffer) => {
-      if (process.env.FREAC_SOLVER_DEBUG || process.env.FREAC_KERNEL_TIMING)
+      if (process.env.MAKESHIFT_SOLVER_DEBUG || process.env.MAKESHIFT_KERNEL_TIMING)
         process.stderr.write(data);
     });
     const failed = () => {

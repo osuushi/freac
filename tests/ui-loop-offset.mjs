@@ -14,7 +14,7 @@ export async function loopOffsetRoute(page, name) {
     const input = page.getByRole("textbox", { name: "Offset distance", exact: true });
     await input.fill("2");
     await page.waitForFunction(
-      () => window.freacInspect().preview?.sketches[0].curves.length === 8,
+      () => window.makeshiftInspect().preview?.sketches[0].curves.length === 8,
     );
     assert.deepEqual(
       (await inspect(page)).document.sketches[0],

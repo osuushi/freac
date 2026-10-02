@@ -5,7 +5,7 @@ import { AgentProcessScope } from "./agent-process-scope.js";
 
 /** One PTY; backpressure bounds output while a renderer is absent or collapsed. */
 export class AgentProcess {
-  constructor(private scopeExecutable = resolve(".build/host-native/bin/freac-agent-scope")) {}
+  constructor(private scopeExecutable = resolve(".build/host-native/bin/makeshift-agent-scope")) {}
   private pty: IPty | null = null;
   private output = "";
   private paused = false;

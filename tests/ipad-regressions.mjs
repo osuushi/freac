@@ -8,7 +8,7 @@ export async function tabletRegressions(page, pen) {
   const tap = await findRaycastPoint(page, "XY");
   await pen.down(tap);
   await pen.up(tap);
-  assert.ok(await page.evaluate(() => window.freacInspect().camera.moving));
+  assert.ok(await page.evaluate(() => window.makeshiftInspect().camera.moving));
   await pen.down(tap);
   await pen.up(tap);
   let state = await inspect(page);
@@ -35,8 +35,8 @@ async function livePreview(page, pen, original) {
     end = await at(page, 20, 25);
   // Delay delivery of real host solves so pointer updates overtake each response.
   await page.evaluate(() => {
-    window.testModel = window.freacModel;
-    window.freacModel = async (command) => {
+    window.testModel = window.makeshiftModel;
+    window.makeshiftModel = async (command) => {
       const result = await window.testModel(command);
       if (command.kind === "preview") await new Promise((resolve) => setTimeout(resolve, 100));
       return result;
@@ -51,7 +51,7 @@ async function livePreview(page, pen, original) {
         y: start.y + ((end.y - start.y) * i) / 60,
       });
       await page.waitForTimeout(16);
-      const state = await page.evaluate(() => window.freacInspect());
+      const state = await page.evaluate(() => window.makeshiftInspect());
       assert.deepEqual(state.document, original, "Held preview is not accepted geometry");
       if (state.preview) previews.add(JSON.stringify(state.preview));
     }
@@ -65,7 +65,7 @@ async function livePreview(page, pen, original) {
     assert.deepEqual((await inspect(page)).document, original);
   } finally {
     await page.evaluate(() => {
-      window.freacModel = window.testModel;
+      window.makeshiftModel = window.testModel;
     });
   }
 }

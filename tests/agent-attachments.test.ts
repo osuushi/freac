@@ -10,7 +10,7 @@ import { AgentWorkspace } from "../src/host/agent-workspace.js";
 const reference = Buffer.from("arbitrary file bytes");
 
 test("attachments preserve bytes, avoid overwrites and survive workspace reopening", async () => {
-  const root = await realpath(await mkdtemp(join(tmpdir(), "freac-attachments-")));
+  const root = await realpath(await mkdtemp(join(tmpdir(), "makeshift-attachments-")));
   const workspace = new AgentWorkspace(root);
   const reopened = new AgentWorkspace(root);
   try {
@@ -38,20 +38,23 @@ test("attachments preserve bytes, avoid overwrites and survive workspace reopeni
 });
 
 test("managed skill is available in the document Codex home without replacing user skills", async () => {
-  const root = await realpath(await mkdtemp(join(tmpdir(), "freac-skills-")));
+  const root = await realpath(await mkdtemp(join(tmpdir(), "makeshift-skills-")));
   try {
     await mkdir(join(root, "skills", "personal"), { recursive: true });
     await writeFile(join(root, "skills", "personal", "SKILL.md"), "keep");
     await prepareAgentSkills(root, resolve("."));
-    const skill = join(root, "skills", "freac-mesh-recovery", "SKILL.md");
+    const skill = join(root, "skills", "makeshift-mesh-recovery", "SKILL.md");
     assert.match(await readFile(skill, "utf8"), /name: mesh-recovery/);
     await writeFile(skill, "old generated version");
     await prepareAgentSkills(root, resolve("."));
     assert.match(await readFile(skill, "utf8"), /name: mesh-recovery/);
     assert.equal(await readFile(join(root, "skills", "personal", "SKILL.md"), "utf8"), "keep");
     if (process.platform !== "win32") {
-      await rm(join(root, "skills", "freac-mesh-recovery"), { recursive: true });
-      await symlink(join(root, "skills", "personal"), join(root, "skills", "freac-mesh-recovery"));
+      await rm(join(root, "skills", "makeshift-mesh-recovery"), { recursive: true });
+      await symlink(
+        join(root, "skills", "personal"),
+        join(root, "skills", "makeshift-mesh-recovery"),
+      );
       await assert.rejects(prepareAgentSkills(root, resolve(".")), /linked path/);
     }
   } finally {

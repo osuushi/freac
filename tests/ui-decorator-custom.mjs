@@ -51,7 +51,7 @@ export async function customDecoratorRoute(page) {
   const beforeDraft = (await inspect(page)).document;
   await height.fill("4");
   await page.waitForFunction(
-    () => window.freacInspect().preview?.decorators?.[0]?.settings.height === 4,
+    () => window.makeshiftInspect().preview?.decorators?.[0]?.settings.height === 4,
   );
   assert.deepEqual((await inspect(page)).document, beforeDraft);
   await height.press("Escape");

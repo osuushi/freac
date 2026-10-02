@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { _electron } from "playwright";
 import { createServer } from "vite";
 
-const directory = await mkdtemp(join(tmpdir(), "freac-window-size-"));
+const directory = await mkdtemp(join(tmpdir(), "makeshift-window-size-"));
 const preference = join(directory, "window-size.json");
 let app;
 const server = await createServer({ server: { host: "127.0.0.1", port: 0 } });
@@ -15,12 +15,12 @@ async function launch() {
     args: [".", `--user-data-dir=${directory}`],
     env: {
       ...process.env,
-      FREAC_TEST_HIDDEN: "1",
-      FREAC_DEV_URL: server.resolvedUrls.local[0],
+      MAKESHIFT_TEST_HIDDEN: "1",
+      MAKESHIFT_DEV_URL: server.resolvedUrls.local[0],
     },
   });
   const page = await app.firstWindow();
-  await page.waitForFunction(() => !!window.freacInspect);
+  await page.waitForFunction(() => !!window.makeshiftInspect);
   return app.evaluate(({ BrowserWindow, screen }) => {
     const window = BrowserWindow.getAllWindows()[0];
     if (window.isVisible()) throw new Error("Expected an isolated hidden window");

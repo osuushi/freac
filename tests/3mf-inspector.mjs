@@ -4,8 +4,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const root = await mkdtemp(join(tmpdir(), "freac-3mf-inspector-"));
-const python = process.env.FREAC_PYTHON ?? "python3";
+const root = await mkdtemp(join(tmpdir(), "makeshift-3mf-inspector-"));
+const python = process.env.MAKESHIFT_PYTHON ?? "python3";
 const path = join(root, "fixture.3mf");
 const make = (component) =>
   execFileSync(python, [

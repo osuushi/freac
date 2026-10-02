@@ -10,7 +10,7 @@ export async function fixtureRoute(page, name, app) {
   await chooseTool(page, "chamfer", "chamfer");
   await page.getByRole("textbox", { name: "Chamfer distance" }).fill("2");
   const before = await inspect(page);
-  const history = JSON.parse(JSON.stringify(await page.evaluate(() => window.freacHistory())));
+  const history = JSON.parse(JSON.stringify(await page.evaluate(() => window.makeshiftHistory())));
   await chooseTool(page, "capture fixture", "capture");
   const pathField = page.getByRole("textbox", { name: "Captured fixture path" });
   await pathField.waitFor({ state: "visible" });
@@ -51,8 +51,8 @@ export async function fixtureRoute(page, name, app) {
   assert.deepEqual(after.document, before.document);
   assert.deepEqual(after.preview, before.preview);
   assert.deepEqual(after.interaction, before.interaction);
-  const accepted = JSON.parse(await readFile(join(dirname(path), "accepted.freac"), "utf8"));
-  const preview = JSON.parse(await readFile(join(dirname(path), "preview.freac"), "utf8"));
+  const accepted = JSON.parse(await readFile(join(dirname(path), "accepted.makeshift"), "utf8"));
+  const preview = JSON.parse(await readFile(join(dirname(path), "preview.makeshift"), "utf8"));
   assert.deepEqual(accepted.document, storedBefore.document);
   assert.deepEqual(preview.document, storedBefore.preview);
   await chooseTool(page, "capture fixture", "capture");
@@ -102,7 +102,7 @@ async function checkDownload(page, app, path, fixture) {
     const downloadReady = page.waitForEvent("download");
     await page.getByRole("link", { name: "Download captured fixture" }).click();
     const download = await downloadReady;
-    assert.match(download.suggestedFilename(), /^freac-fixture-.*\.json$/);
+    assert.match(download.suggestedFilename(), /^makeshift-fixture-.*\.json$/);
     assert.deepEqual(JSON.parse(await readFile(await download.path(), "utf8")), fixture);
   }
 }

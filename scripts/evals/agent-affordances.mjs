@@ -9,9 +9,9 @@ import { launchGuidance, orientationOverrides } from "../../.build/host/host/age
 import { launchElectron } from "../../tests/native-documents.mjs";
 
 const run = promisify(execFile);
-const model = process.env.FREAC_EVAL_MODEL ?? "gpt-6-luna";
-const effort = process.env.FREAC_EVAL_EFFORT ?? "low";
-const output = resolve(process.env.FREAC_EVAL_OUTPUT ?? ".cache/agent-eval");
+const model = process.env.MAKESHIFT_EVAL_MODEL ?? "gpt-6-luna";
+const effort = process.env.MAKESHIFT_EVAL_EFFORT ?? "low";
+const output = resolve(process.env.MAKESHIFT_EVAL_OUTPUT ?? ".cache/agent-eval");
 await mkdir(output, { recursive: true });
 const baseline = (
   await run("git", [
@@ -21,12 +21,15 @@ const baseline = (
 ).stdout;
 const expression = baseline.match(/export const launchGuidance =([\s\S]*?);\n/)[1];
 const oldLaunch = Function(`return (${expression})`)();
-const app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+const app = await launchElectron({
+  args: ["."],
+  env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+});
 const results = [];
 try {
   const page = await app.firstWindow();
   await page.evaluate(() =>
-    window.freacAgent.request({
+    window.makeshiftAgent.request({
       kind: "configure",
       preferences: {
         preset: "custom",
@@ -38,11 +41,11 @@ try {
   );
   await page.getByRole("button", { name: "Open agent terminal" }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
-  const workspace = (await page.evaluate(() => window.freacAgent.request({ kind: "read" })))
+  const workspace = (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" })))
     .workspace;
   await page.locator(".agent-screen textarea").focus();
   await page.keyboard.type(
-    'printf "%s\\n" "$FREAC_CLI" "$FREAC_ENDPOINT" "$FREAC_CAPABILITY" "$FREAC_DOCS" "$FREAC_API_TYPES" "$FREAC_WORKSPACE" "$PATH" > eval-env.txt',
+    'printf "%s\\n" "$MAKESHIFT_CLI" "$MAKESHIFT_ENDPOINT" "$MAKESHIFT_CAPABILITY" "$MAKESHIFT_DOCS" "$MAKESHIFT_API_TYPES" "$MAKESHIFT_WORKSPACE" "$PATH" > eval-env.txt',
   );
   await page.keyboard.press("Enter");
   let values;
@@ -55,23 +58,23 @@ try {
   }
   assert.equal(values?.length, 7);
   const keys = [
-    "FREAC_CLI",
-    "FREAC_ENDPOINT",
-    "FREAC_CAPABILITY",
-    "FREAC_DOCS",
-    "FREAC_API_TYPES",
-    "FREAC_WORKSPACE",
+    "MAKESHIFT_CLI",
+    "MAKESHIFT_ENDPOINT",
+    "MAKESHIFT_CAPABILITY",
+    "MAKESHIFT_DOCS",
+    "MAKESHIFT_API_TYPES",
+    "MAKESHIFT_WORKSPACE",
     "PATH",
   ];
   const env = { ...process.env, ...Object.fromEntries(keys.map((k, i) => [k, values[i]])) };
   const cli = async (...args) =>
-    JSON.parse((await run(env.FREAC_CLI, args, { env, cwd: workspace })).stdout);
+    JSON.parse((await run(env.MAKESHIFT_CLI, args, { env, cwd: workspace })).stdout);
   await writeFile(
     join(workspace, "fixture.ts"),
     `
 for (const [x, radius] of [[0, 2], [30, 8]]) {
- const s = await freac.createSketch({plane:"XY",curves:[{kind:"circle",center:{x,y:0},radius}]});
- await freac.extrude({sources:s.profiles,distance:10,mode:"new"});
+ const s = await makeshift.createSketch({plane:"XY",curves:[{kind:"circle",center:{x,y:0},radius}]});
+ await makeshift.extrude({sources:s.profiles,distance:10,mode:"new"});
 }`,
   );
   await cli("run", "fixture.ts");
@@ -116,7 +119,7 @@ for (const [x, radius] of [[0, 2], [30, 8]]) {
       let stdout = "",
         error = null;
       try {
-        const execution = run(process.env.FREAC_CODEX_EXECUTABLE ?? "codex", args, {
+        const execution = run(process.env.MAKESHIFT_CODEX_EXECUTABLE ?? "codex", args, {
           env,
           cwd: workspace,
           timeout: 180000,
@@ -165,6 +168,6 @@ for (const [x, radius] of [[0, 2], [30, 8]]) {
   }
 } finally {
   const page = await app.firstWindow();
-  await page.evaluate(() => window.freacAgent.request({ kind: "stop" })).catch(() => {});
+  await page.evaluate(() => window.makeshiftAgent.request({ kind: "stop" })).catch(() => {});
   await app.close();
 }

@@ -18,9 +18,9 @@ export async function chooseTool(page, query, id) {
     // Leave text editing so Undo/Delete apply to geometry, including committed modal parameters.
     const trigger = page.getByRole("button", { name: "Tools", exact: true });
     await trigger.focus();
-    await page.waitForFunction(() => !window.freacInspect().busy);
+    await page.waitForFunction(() => !window.makeshiftInspect().busy);
     await trigger.press(standardShortcuts[id]);
-    await page.waitForFunction(() => !window.freacInspect().busy);
+    await page.waitForFunction(() => !window.makeshiftInspect().busy);
     return;
   }
   await openTools(page);
@@ -28,7 +28,7 @@ export async function chooseTool(page, query, id) {
   const row = page.locator(`[data-command="${id}"]`);
   // Locator actionability waits through transient tool closure/calculation updates.
   await row.click();
-  await page.waitForFunction(() => !window.freacInspect().busy);
+  await page.waitForFunction(() => !window.makeshiftInspect().busy);
 }
 
 export async function browseTools(page, category) {
@@ -45,7 +45,8 @@ export async function toolEnabled(page, query, id) {
   const enabled = standardShortcuts[id]
     ? await page.evaluate(
         (id) =>
-          window.freacInspect().commands.find((command) => command.id === id)?.unavailable === null,
+          window.makeshiftInspect().commands.find((command) => command.id === id)?.unavailable ===
+          null,
         id,
       )
     : (await page.locator(`[data-command="${id}"]`).getAttribute("aria-disabled")) === "false";

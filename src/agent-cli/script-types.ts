@@ -23,7 +23,7 @@ export interface SolidResult {
   bodies: { id: string; volume: number; faces: string[]; edges: string[] }[];
 }
 /** Distances mm, angles degrees. Await each call; parallel edits reject. */
-export interface FreacScript extends DecoratorScriptApi, TagScriptApi {
+export interface MakeshiftScript extends DecoratorScriptApi, TagScriptApi {
   /** Candidate topology, including analytic supports, trimmed loops and adjacency; no geometry edit. */
   topology(input: { body: string }): Promise<BodyTopology>;
   /** Coaxial complete cylinder/cone wall with two circular rims and perpendicular planar neighbors. */

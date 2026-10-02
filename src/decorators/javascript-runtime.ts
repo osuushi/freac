@@ -52,14 +52,14 @@ export function runDecoratorHook(
       if (result && typeof result.then === "function") throw new Error("Decorator hooks must return synchronously");
       const output = JSON.stringify(result);
       if (typeof output !== "string" || output.length > ${maxJson}) throw new Error("Decorator output exceeds its JSON budget");
-      globalThis.__freacOutput = output;
+      globalThis.__makeshiftOutput = output;
     `,
       "invoke.mjs",
       { type: "module" },
     );
     const value = context.unwrapResult(result);
     value.dispose();
-    const output = context.getProp(context.global, "__freacOutput");
+    const output = context.getProp(context.global, "__makeshiftOutput");
     try {
       return JSON.parse(context.getString(output));
     } finally {

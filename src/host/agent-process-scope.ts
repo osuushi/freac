@@ -12,14 +12,14 @@ import {
 
 // The quiet member keeps the PTY group occupied after the harness exits. Without it,
 // a remembered root PID cannot safely identify a process group at a later Stop.
-const launch = `_freac_scope_umask=$(umask)
+const launch = `_makeshift_scope_umask=$(umask)
 umask 077
-(trap '' HUP TERM; while IFS= read -r _freac_scope_keepalive; do :; done < "$1/hold") </dev/null >/dev/null 2>&1 &
+(trap '' HUP TERM; while IFS= read -r _makeshift_scope_keepalive; do :; done < "$1/hold") </dev/null >/dev/null 2>&1 &
 printf '%s\\n' "$!" > "$1/anchor"
 while [ ! -f "$1/ready" ]; do sleep 0.01; done
 shift
-umask "$_freac_scope_umask"
-unset _freac_scope_umask
+umask "$_makeshift_scope_umask"
+unset _makeshift_scope_umask
 exec "$@"`;
 const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 const execute = promisify(execFile);
@@ -34,7 +34,7 @@ export class AgentProcessScope {
     private keepalive: FileHandle,
   ) {}
   static async prepare(executable: string): Promise<AgentProcessScope> {
-    const directory = await mkdtemp(join(tmpdir(), "freac-agent-scope-"));
+    const directory = await mkdtemp(join(tmpdir(), "makeshift-agent-scope-"));
     try {
       const hold = join(directory, "hold");
       await execute("/usr/bin/mkfifo", [hold], { timeout: 2000 });
@@ -51,7 +51,7 @@ export class AgentProcessScope {
     }
   }
   arguments(executable: string, args: string[]): string[] {
-    return ["-c", launch, "freac-agent", this.directory, executable, ...args];
+    return ["-c", launch, "makeshift-agent", this.directory, executable, ...args];
   }
   async release(root: number): Promise<void> {
     let anchor = 0;

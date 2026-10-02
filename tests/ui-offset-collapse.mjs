@@ -13,11 +13,11 @@ const area = Math.PI * 13.038404810405298 ** 2;
 async function captured(page, bottom) {
   await reset(page);
   await openDocument(page, {
-    name: "collapsed-wall.freac",
+    name: "collapsed-wall.makeshift",
     mimeType: "application/json",
-    buffer: Buffer.from(JSON.stringify({ format: "freac", version: 1, document: fixture })),
+    buffer: Buffer.from(JSON.stringify({ format: "makeshift", version: 1, document: fixture })),
   });
-  await page.waitForFunction(() => window.freacInspect().document.bodies?.length === 1);
+  await page.waitForFunction(() => window.makeshiftInspect().document.bodies?.length === 1);
   await orient(page, [1, -1, bottom ? -1 : 1]);
   const z = bottom ? 0 : 11.00048828125;
   await worldClick(page, [2, 2, z]);

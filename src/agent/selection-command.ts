@@ -32,7 +32,7 @@ export function changeAgentSelection(editor: SketchEditor, input: string): void 
   } else {
     if (!words.length || words.some((word) => word.startsWith("--")))
       throw new Error(
-        "Usage: freac select [--add|--remove] ID... | --surface cylinder|plane|other | --clear",
+        "Usage: makeshift select [--add|--remove] ID... | --surface cylinder|plane|other | --clear",
       );
     ids = words;
   }

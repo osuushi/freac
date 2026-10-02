@@ -6,17 +6,19 @@ import { MeshCalculator } from "./backend/mesh-calculator.js";
 import { NativeSolver } from "./backend/native-solver.js";
 import { AgentSession } from "./host/agent-session.js";
 import { AppUpdates } from "./host/app-updates.js";
+import { configureApplicationIdentity } from "./host/application-identity.js";
 import { DocumentSession } from "./host/document-session.js";
 import { installFixtureCapture } from "./host/fixture-capture.js";
 import { IPadSession } from "./host/ipad-session.js";
 import { nativeExecutable } from "./host/native-paths.js";
 import { rememberWindowSize, restoreWindowSize } from "./host/window-size.js";
 
+configureApplicationIdentity();
 const directory = dirname(fileURLToPath(import.meta.url));
 const icon = join(
   app.getAppPath(),
   app.isPackaged ? ".build/renderer" : "assets/public",
-  "freac.png",
+  "makeshift.png",
 );
 const owner = new DocumentOwner(
   new NativeSolver(nativeExecutable("solver")),
@@ -47,7 +49,7 @@ ipcMain.handle("sketch", (event, request: unknown) => {
   return documents.model(request);
 });
 app.on("will-quit", () => owner.close());
-const hidden = process.env.FREAC_TEST_HIDDEN === "1";
+const hidden = process.env.MAKESHIFT_TEST_HIDDEN === "1";
 let opening: Promise<void> | null = null;
 let documentWindow: BrowserWindow | null = null;
 function openWindow(): Promise<void> {
@@ -65,7 +67,7 @@ function openWindow(): Promise<void> {
 async function createWindow(): Promise<void> {
   await documents.reopen();
   const window = new BrowserWindow({
-    title: "Freac",
+    title: "Makeshift",
     icon,
     ...restoreWindowSize(),
     show: !hidden,
@@ -90,7 +92,7 @@ async function createWindow(): Promise<void> {
   documents.attach(window);
   agent.attach(window);
   ipad.attach(window);
-  const url = process.env.FREAC_DEV_URL;
+  const url = process.env.MAKESHIFT_DEV_URL;
   if (url) await window.loadURL(url);
   else await window.loadFile(join(directory, "../renderer/index.html"));
 }

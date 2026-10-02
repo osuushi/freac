@@ -119,12 +119,12 @@ async function projectActiveEdge(page, sketchId) {
 
 async function archive(page, name) {
   const before = (await inspect(page)).document;
-  const file = resolve(`.cache/sketch-review/${name}-projection.freac`);
+  const file = resolve(`.cache/sketch-review/${name}-projection.makeshift`);
   await saveDocument(page, file);
   await reset(page);
   await openDocument(page, file);
   await page.waitForFunction(
-    (count) => window.freacInspect().document.sketches.length === count,
+    (count) => window.makeshiftInspect().document.sketches.length === count,
     before.sketches.length,
   );
   assert.deepEqual((await inspect(page)).document.sketches, before.sketches);

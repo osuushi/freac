@@ -97,7 +97,7 @@ async function route(page, name) {
 }
 const app = await launchElectron({
   args: ["."],
-  env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: "" },
+  env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1", MAKESHIFT_DEV_URL: "" },
 });
 try {
   const desktop = await app.firstWindow();

@@ -31,13 +31,13 @@ export async function trimCancellationRoute(page, name) {
         throw new Error("Trim preview did not arrive");
       }),
     ]);
-    assert.deepEqual(await page.evaluate(() => window.freacInspect().interaction), {
+    assert.deepEqual(await page.evaluate(() => window.makeshiftInspect().interaction), {
       kind: "trim",
       phase: "waiting",
     });
     await page.keyboard.press("Escape");
     release();
-    await page.waitForFunction(() => window.freacInspect().interaction === null);
+    await page.waitForFunction(() => window.makeshiftInspect().interaction === null);
     assert.deepEqual((await inspect(page)).document, original);
     assert.equal(await toolEnabled(page, "redo", "redo"), false);
   } finally {

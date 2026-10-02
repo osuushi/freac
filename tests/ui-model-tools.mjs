@@ -158,7 +158,7 @@ async function faceToolSwitchRoute(page, center) {
     return (
       brooms.length === 1 &&
       brooms[0].getAttribute("aria-busy") === "false" &&
-      !window.freacInspect().busy
+      !window.makeshiftInspect().busy
     );
   });
   await page.keyboard.press("Enter");

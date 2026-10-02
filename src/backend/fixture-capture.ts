@@ -11,19 +11,20 @@ export async function captureFixture(snapshot: unknown, root = tmpdir()) {
   const capturedAt = new Date().toISOString();
   const directory = resolve(
     root,
-    "freac-fixtures",
+    "makeshift-fixtures",
     `${capturedAt.replace(/[:.]/g, "-")}-${randomUUID().slice(0, 8)}`,
   );
   await mkdir(directory, { recursive: true });
-  const archive = (document: unknown) => JSON.stringify({ format: "freac", version: 1, document });
-  const name = `freac-fixture-${capturedAt.replace(/[:.]/g, "-")}.json`;
+  const archive = (document: unknown) =>
+    JSON.stringify({ format: "makeshift", version: 1, document });
+  const name = `makeshift-fixture-${capturedAt.replace(/[:.]/g, "-")}.json`;
   const contents = JSON.stringify(
     { format: "freac-fixture", version: 1, capturedAt, snapshot },
     null,
     2,
   );
   await writeFile(join(directory, name), contents);
-  await writeFile(join(directory, "accepted.freac"), archive(data.document));
-  if (data.preview) await writeFile(join(directory, "preview.freac"), archive(data.preview));
+  await writeFile(join(directory, "accepted.makeshift"), archive(data.document));
+  if (data.preview) await writeFile(join(directory, "preview.makeshift"), archive(data.preview));
   return { path: join(directory, name), name, contents };
 }

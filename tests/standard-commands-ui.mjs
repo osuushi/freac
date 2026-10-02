@@ -72,9 +72,9 @@ async function route(page, name) {
   }
   await geometryRoute(page, name);
   const original = (await inspect(page)).document.sketches;
-  const directory = await mkdtemp(join(tmpdir(), "freac-standard-commands-"));
+  const directory = await mkdtemp(join(tmpdir(), "makeshift-standard-commands-"));
   try {
-    const path = join(directory, "drawing.freac");
+    const path = join(directory, "drawing.makeshift");
     if (name === "electron") await saveDocument(page, path);
     else {
       await page.setViewportSize({ width: 390, height: 720 });
@@ -92,7 +92,7 @@ async function route(page, name) {
     await page.getByRole("button", { name: "Tools", exact: true }).press("Control+n");
     assert.equal((await inspect(page)).document.sketches.length, 0);
     await openDocument(page, path);
-    await page.waitForFunction(() => window.freacInspect().document.sketches.length === 1);
+    await page.waitForFunction(() => window.makeshiftInspect().document.sketches.length === 1);
     assert.deepEqual((await inspect(page)).document.sketches, original);
   } finally {
     await rm(directory, { recursive: true, force: true });

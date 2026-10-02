@@ -5,9 +5,11 @@ import { createServer } from "vite";
 import { launchElectron } from "./native-documents.mjs";
 
 export function runtimeNames(allowed = ["chromium", "webkit", "electron"], defaults = allowed) {
-  const requested = process.env.FREAC_TEST_BROWSER;
+  const requested = process.env.MAKESHIFT_TEST_BROWSER;
   if (requested && !allowed.includes(requested))
-    throw new Error(`Unsupported FREAC_TEST_BROWSER: ${requested}. Choose ${allowed.join(", ")}.`);
+    throw new Error(
+      `Unsupported MAKESHIFT_TEST_BROWSER: ${requested}. Choose ${allowed.join(", ")}.`,
+    );
   assert.ok(allowed.length, "A UI route must declare at least one supported runtime");
   assert.ok(
     defaults.length && defaults.every((name) => allowed.includes(name)),
@@ -41,8 +43,8 @@ export async function withUiRuntimes(
             args: ["."],
             env: {
               ...process.env,
-              FREAC_TEST_HIDDEN: "1",
-              FREAC_DEV_URL: server.resolvedUrls.local[0],
+              MAKESHIFT_TEST_HIDDEN: "1",
+              MAKESHIFT_DEV_URL: server.resolvedUrls.local[0],
             },
           });
           page = await app.firstWindow();
@@ -61,7 +63,7 @@ export async function withUiRuntimes(
         page.setDefaultTimeout(timeout);
         const errors = [];
         page.on("pageerror", (error) => errors.push(error.message));
-        await page.waitForFunction(() => Boolean(window.freacInspect));
+        await page.waitForFunction(() => Boolean(window.makeshiftInspect));
         await route(page, name);
         assert.deepEqual(errors, []);
       } finally {

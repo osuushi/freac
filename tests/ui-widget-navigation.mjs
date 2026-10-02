@@ -14,12 +14,12 @@ export async function widgetNavigationRoute(page, name) {
   const field = page.locator(".body-transform-value");
   await navigationOver(page, field);
   assert.equal(await field.inputValue(), "0", "Camera input must not change the numeric edit");
-  const beforeOrbit = await page.evaluate(() => window.freacInspect().camera.position);
+  const beforeOrbit = await page.evaluate(() => window.makeshiftInspect().camera.position);
   await orient(page, [1, 0.5, 1]);
-  const afterOrbit = await page.evaluate(() => window.freacInspect().camera.position);
+  const afterOrbit = await page.evaluate(() => window.makeshiftInspect().camera.position);
   assert.ok(afterOrbit.some((value, index) => Math.abs(value - beforeOrbit[index]) > 1e-4));
   await page.keyboard.press("Escape");
-  assert.deepEqual(await page.evaluate(() => window.freacInspect().document), original);
+  assert.deepEqual(await page.evaluate(() => window.makeshiftInspect().document), original);
   await page.keyboard.press("Escape");
   console.log(
     `${name}: widget scroll-pan, Command-drag orbit, pinch, right/middle drag pass through without edits`,
@@ -44,10 +44,12 @@ async function navigationOver(page, widget) {
     const property = kind === "pinch" ? "height" : "target";
     await page.waitForFunction(
       ({ property, previous }) =>
-        JSON.stringify(window.freacInspect().camera[property]) !== JSON.stringify(previous),
+        JSON.stringify(window.makeshiftInspect().camera[property]) !== JSON.stringify(previous),
       { property, previous: before[property] },
       { timeout: 5000 },
     );
-    await page.waitForFunction(() => !window.freacInspect().camera.moving, null, { timeout: 5000 });
+    await page.waitForFunction(() => !window.makeshiftInspect().camera.moving, null, {
+      timeout: 5000,
+    });
   }
 }

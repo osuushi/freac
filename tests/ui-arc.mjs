@@ -102,7 +102,7 @@ export async function arcRoute(page, name) {
     pointEquals(arc.a, [-6, 0]);
     pointEquals(arc.b, [4, 0]);
     await orient(page, [0.5, 0.5, 1]);
-    await page.waitForFunction(() => window.freacInspect().activePlane === null);
+    await page.waitForFunction(() => window.makeshiftInspect().activePlane === null);
   }
   await mixedArc(page, name);
   console.log(

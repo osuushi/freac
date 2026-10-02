@@ -12,10 +12,10 @@ const fixture = JSON.parse(await readFile("tests/fixtures/plane-cut-bent-shell.j
 export async function planeCutCaptureRoute(page, name) {
   await reset(page);
   await openDocument(page, {
-    name: "plane-cut-bent-shell.freac",
+    name: "plane-cut-bent-shell.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
   const original = (await inspect(page)).document;
@@ -32,7 +32,7 @@ export async function planeCutCaptureRoute(page, name) {
     assert.deepEqual(state.document, original);
     await page.keyboard.press("Escape");
     assert.deepEqual((await inspect(page)).document, original);
-    const history = await page.evaluate(() => window.freacHistory());
+    const history = await page.evaluate(() => window.makeshiftHistory());
     const frames = {
       YZ: { origin: [0, 0, 0], u: [0, 1, 0], v: [0, 0, 1] },
       XY: { origin: [0, 0, 0], u: [1, 0, 0], v: [0, 1, 0] },

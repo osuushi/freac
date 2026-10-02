@@ -15,7 +15,7 @@ export async function interactionLifecycleRoute(page, name) {
     if (kind === "bow") await click(page, edge.a.x + (edge.b.x - edge.a.x) * 0.25, edge.a.y);
     if (kind === "fillet") await click(page, edge.a.x, edge.a.y);
     const geometryHistory = async () =>
-      (await page.evaluate(() => window.freacHistory()))
+      (await page.evaluate(() => window.makeshiftHistory()))
         .filter((entry) => entry.outcome === "changed" && entry.operation.kind !== "selection")
         .map((entry) => entry.id);
     const beforeHistory = await geometryHistory();
@@ -35,7 +35,10 @@ export async function interactionLifecycleRoute(page, name) {
       await page.mouse.move(start.x, start.y);
       await page.mouse.down();
       await page.mouse.move(end.x, end.y, { steps: 3 });
-      await page.waitForFunction((kind) => window.freacInspect().interaction?.kind === kind, kind);
+      await page.waitForFunction(
+        (kind) => window.makeshiftInspect().interaction?.kind === kind,
+        kind,
+      );
       if (interruption === "capture") {
         await page.evaluate(() => {
           const c = window.testCapture;
@@ -47,7 +50,7 @@ export async function interactionLifecycleRoute(page, name) {
         await page.evaluate(() => window.dispatchEvent(new Event("blur")));
       } else await page.keyboard.press("Escape");
       await page.mouse.up();
-      await page.waitForFunction(() => window.freacInspect().interaction === null);
+      await page.waitForFunction(() => window.makeshiftInspect().interaction === null);
       const after = await inspect(page);
       assert.deepEqual(after.document, original, `${kind}: ${interruption} preserves geometry`);
       assert.equal(after.preview, null);

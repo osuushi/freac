@@ -16,9 +16,9 @@ export function installDocumentMenu(
       ...(process.platform === "darwin"
         ? [
             {
-              label: "Freac",
+              label: "Makeshift",
               submenu: [
-                { label: "About Freac", click: () => void showAbout() },
+                { label: "About Makeshift", click: () => void showAbout() },
                 { label: "Check for Updates…", click: checkUpdates },
                 { type: "separator" as const },
                 { role: "services" as const },
@@ -62,7 +62,7 @@ export function installDocumentMenu(
       {
         label: "Help",
         submenu: [
-          { label: "About Freac", click: () => void showAbout() },
+          { label: "About Makeshift", click: () => void showAbout() },
           { label: "Third-party licenses", click: () => void showLicenses() },
         ],
       },

@@ -43,6 +43,16 @@ header {
   gap: 22px;
   pointer-events: none;
 }
+header .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+header .brand img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
 header strong {
   font-size: 24px;
   font-weight: 700;

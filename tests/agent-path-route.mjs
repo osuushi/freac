@@ -7,8 +7,8 @@ import { inspect } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export const pathScript = `
-const s = await freac.createSketch({plane:"XY",curves:[{kind:"circle",center:{x:0,y:0},radius:1}]});
-const swept = await freac.sweep({sources:s.profiles,path:[{kind:"bezier",a:[0,0,0],c1:[0,0,10],c2:[10,0,20],b:[10,10,30]}],mode:"new"});
+const s = await makeshift.createSketch({plane:"XY",curves:[{kind:"circle",center:{x:0,y:0},radius:1}]});
+const swept = await makeshift.sweep({sources:s.profiles,path:[{kind:"bezier",a:[0,0,0],c1:[0,0,10],c2:[10,0,20],b:[10,10,30]}],mode:"new"});
 if(swept.bodies.length!==1 || swept.bodies[0].volume<90) throw new Error("Expected curved tube");
 `;
 export async function agentPathRoute(page, run, name) {
@@ -38,7 +38,7 @@ export async function agentPathRoute(page, run, name) {
   assert.deepEqual((await inspect(page)).document, accepted);
   await mkdir(".cache/path-sweep", { recursive: true });
   await page.screenshot({ path: `.cache/path-sweep/${name}.png` });
-  const file = resolve(`.cache/path-sweep/${name}.freac`);
+  const file = resolve(`.cache/path-sweep/${name}.makeshift`);
   await saveDocument(page, file);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);

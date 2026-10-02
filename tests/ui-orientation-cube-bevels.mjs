@@ -23,7 +23,7 @@ export async function bevelViewsRoute(page, name) {
     await reveal(page, surface);
     const start = (await inspect(page)).camera;
     await clickSurface(page, surface);
-    const moving = await page.evaluate(() => window.freacInspect().camera);
+    const moving = await page.evaluate(() => window.makeshiftInspect().camera);
     assert.equal(moving.moving, true, "Bevel click starts a camera transition");
     const state = await inspect(page);
     const offset = state.camera.position.map((v, i) => v - state.camera.target[i]);
@@ -87,7 +87,7 @@ async function animationInterruption(page) {
   const start = (await inspect(page)).camera;
   await clickSurface(page, top);
   await page.waitForFunction((start) => {
-    const camera = window.freacInspect().camera;
+    const camera = window.makeshiftInspect().camera;
     return camera.moving && camera.position.some((v, i) => Math.abs(v - start.position[i]) > 0.001);
   }, start);
   await page.mouse.move(700, 500);
@@ -101,7 +101,7 @@ async function animationInterruption(page) {
   );
   await page.emulateMedia({ reducedMotion: "reduce" });
   await clickSurface(page, top);
-  const reduced = await page.evaluate(() => window.freacInspect().camera);
+  const reduced = await page.evaluate(() => window.makeshiftInspect().camera);
   assert.equal(reduced.moving, false, "Reduced motion applies the pose immediately");
   await page.emulateMedia({ reducedMotion: "no-preference" });
 }

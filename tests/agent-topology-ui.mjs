@@ -18,17 +18,21 @@ let app,
   counter = 0;
 try {
   if (name === "electron") {
-    app = await launchElectron({ args: ["."], env: { ...process.env, FREAC_TEST_HIDDEN: "1" } });
+    app = await launchElectron({
+      args: ["."],
+      env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1" },
+    });
     page = await app.firstWindow();
     await page.evaluate(() =>
-      window.freacAgent.request({
+      window.makeshiftAgent.request({
         kind: "configure",
         preferences: { preset: "custom", executable: "/bin/sh", args: ["-i"], env: {} },
       }),
     );
     await page.getByRole("button", { name: "Open agent terminal" }).click();
     await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
-    workspace = (await page.evaluate(() => window.freacAgent.request({ kind: "read" }))).workspace;
+    workspace = (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" })))
+      .workspace;
   } else {
     web = await scriptBrowser(name);
     ({ page, workspace } = web);
@@ -36,10 +40,10 @@ try {
   page.setDefaultTimeout(20000);
   await settled(page);
   await run(`
-const s=await freac.createSketch({plane:"XY",curves:[{kind:"circle",center:{x:0,y:0},radius:20}]});
-const solid=await freac.extrude({sources:s.profiles,distance:24,mode:"new"});
-const hole=await freac.createSketch({plane:"XY",curves:[{kind:"circle",center:{x:0,y:0},radius:5}]});
-await freac.extrude({sources:hole.profiles,distance:24,mode:"subtract",targets:[solid.bodies[0].id]});
+const s=await makeshift.createSketch({plane:"XY",curves:[{kind:"circle",center:{x:0,y:0},radius:20}]});
+const solid=await makeshift.extrude({sources:s.profiles,distance:24,mode:"new"});
+const hole=await makeshift.createSketch({plane:"XY",curves:[{kind:"circle",center:{x:0,y:0},radius:5}]});
+await makeshift.extrude({sources:hole.profiles,distance:24,mode:"subtract",targets:[solid.bodies[0].id]});
 `);
   const first = (await inspect(page)).document;
   if (Math.abs(first.bodies[0].volume - Math.PI * (400 - 25) * 24) > 1e-5)
@@ -51,10 +55,10 @@ await freac.extrude({sources:hole.profiles,distance:24,mode:"subtract",targets:[
   const faceId = selection.modelingSelection[0].face;
   const before = (await inspect(page)).document;
   const source = `
-const selected=freac.selection;
+const selected=makeshift.selection;
 if(selected.length!==1||selected[0].kind!=="face") throw new Error("Expected one selected face");
 const target=selected[0];
-const t=await freac.topology({body:target.body});
+const t=await makeshift.topology({body:target.body});
 const f=t.faces.find(f=>f.id===target.face);
 if(!f||f.surface.kind!=="cylinder") throw new Error("Expected cylindrical wall");
 const rimIds=new Set(f.loops.flatMap(l=>l.edges.filter(e=>!e.seam).map(e=>e.edge)));
@@ -62,8 +66,8 @@ const rims=t.edges.filter(e=>rimIds.has(e.id)).map(e=>e.curve);
 if(rims.length!==2||rims.some(r=>r.kind!=="circle")) throw new Error("Expected circular rims");
 const circles=rims.filter(r=>r.kind==="circle").sort((a,b)=>a.center[2]-b.center[2]);
 const height=circles[1].center[2]-circles[0].center[2];
-await freac.replaceFace({body:target.body,face:target.face,surface:{kind:"cone",origin:circles[0].center,axis:[0,0,1],radius:18,semiAngle:Math.atan(4/height)*180/Math.PI}});
-const result=await freac.topology({body:target.body});
+await makeshift.replaceFace({body:target.body,face:target.face,surface:{kind:"cone",origin:circles[0].center,axis:[0,0,1],radius:18,semiAngle:Math.atan(4/height)*180/Math.PI}});
+const result=await makeshift.topology({body:target.body});
 if(result.faces.find(f=>f.id===target.face)?.surface.kind!=="cone") throw new Error("Missing cone");
 `;
   await run(source);
@@ -93,7 +97,7 @@ if(result.faces.find(f=>f.id===target.face)?.surface.kind!=="cone") throw new Er
   assert.deepEqual((await inspect(page)).document, accepted);
   await mkdir(".cache/agent-topology", { recursive: true });
   await page.screenshot({ path: `.cache/agent-topology/${name}.png` });
-  const path = resolve(`.cache/agent-topology/${name}.freac`);
+  const path = resolve(`.cache/agent-topology/${name}.makeshift`);
   await saveDocument(page, path);
   await openDocument(page, path);
   const reopened = (await inspect(page)).document.bodies[0];
@@ -108,7 +112,7 @@ if(result.faces.find(f=>f.id===target.face)?.surface.kind!=="cone") throw new Er
   );
 } finally {
   if (app) {
-    await page.evaluate(() => window.freacAgent.request({ kind: "stop" })).catch(() => {});
+    await page.evaluate(() => window.makeshiftAgent.request({ kind: "stop" })).catch(() => {});
     await app.close();
   }
   await web?.close();
@@ -118,7 +122,7 @@ async function run(source) {
   await writeFile(join(workspace, `${prefix}.ts`), source);
   if (web) {
     try {
-      await promisify(execFile)(web.env.FREAC_CLI, ["run", `${prefix}.ts`], {
+      await promisify(execFile)(web.env.MAKESHIFT_CLI, ["run", `${prefix}.ts`], {
         cwd: workspace,
         env: web.env,
         timeout: 30000,
@@ -129,7 +133,7 @@ async function run(source) {
   } else {
     await page.locator(".agent-screen textarea").focus();
     await page.keyboard.type(
-      `freac run ${prefix}.ts > ${prefix}.json 2> ${prefix}.err; printf '%s' "$?" > ${prefix}.done`,
+      `makeshift run ${prefix}.ts > ${prefix}.json 2> ${prefix}.err; printf '%s' "$?" > ${prefix}.done`,
     );
     await page.keyboard.press("Enter");
     let exit;

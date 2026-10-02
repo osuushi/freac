@@ -31,7 +31,7 @@ async function verifyAxis(page) {
 async function route(page, name, partial) {
   const tag = `${name}-${partial ? "partial" : "full"}`;
   await inspect(page);
-  await openDocument(page, resolve(`.cache/cylindrical-axis/${partial}.freac`));
+  await openDocument(page, resolve(`.cache/cylindrical-axis/${partial}.makeshift`));
   await orient(page, [1, -1, 1]);
   await worldClick(page, [19, 0, 3]);
   await chooseTool(page, "revolve", "revolve");
@@ -71,7 +71,7 @@ async function route(page, name, partial) {
   assert.deepEqual((await inspect(page)).document, before);
   await chooseTool(page, "redo", "redo");
   assert.deepEqual((await inspect(page)).document, after);
-  const saved = resolve(`.cache/cylindrical-axis/${tag}-result.freac`);
+  const saved = resolve(`.cache/cylindrical-axis/${tag}-result.makeshift`);
   await saveDocument(page, saved);
   await openDocument(page, saved);
   assert.equal((await inspect(page)).document.bodies.length, 2);
@@ -84,7 +84,7 @@ async function route(page, name, partial) {
 }
 async function invalidAxis(page, before, partial) {
   await inspect(page);
-  await openDocument(page, resolve(`.cache/cylindrical-axis/${partial}.freac`));
+  await openDocument(page, resolve(`.cache/cylindrical-axis/${partial}.makeshift`));
   await orient(page, [1, -1, 1]);
   await worldClick(page, [19, 3, 20]);
   await chooseTool(page, "revolve", "revolve");
@@ -123,7 +123,7 @@ async function visibilityChecks(page, partial) {
 await mkdir(".cache/cylindrical-axis", { recursive: true });
 for (const partial of [false, true])
   await writeFile(
-    `.cache/cylindrical-axis/${partial}.freac`,
+    `.cache/cylindrical-axis/${partial}.makeshift`,
     await cylindricalAxisFixture(partial),
   );
 async function check(page, name, electron = false) {

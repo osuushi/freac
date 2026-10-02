@@ -11,10 +11,10 @@ export async function projectionSourcesRoute(page, name) {
   const fixture = JSON.parse(await readFile("tests/fixtures/projection-tilted-plane.json", "utf8"));
   await reset(page);
   await openDocument(page, {
-    name: "projection-tilted-plane.freac",
+    name: "projection-tilted-plane.makeshift",
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
   await orient(page, [1, -2, 1]);
@@ -167,7 +167,7 @@ async function editCylinderCopy(page, name, accepted) {
   assert.deepEqual(edited.bodies, accepted.bodies);
   await chooseTool(page, "Undo", "undo");
   assert.deepEqual((await inspect(page)).document, accepted);
-  const path = resolve(`.cache/sketch-review/${name}-cylinder-projection.freac`);
+  const path = resolve(`.cache/sketch-review/${name}-cylinder-projection.makeshift`);
   await saveDocument(page, path);
   await reset(page);
   await openDocument(page, path);

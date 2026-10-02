@@ -121,7 +121,8 @@ int main() {
   _setmode(_fileno(stdout), _O_BINARY);
 #endif
   std::ios::sync_with_stdio(false);
-  const char* configured = std::getenv("FREAC_MESH_THREADS");
+  const char* configured = std::getenv("MAKESHIFT_MESH_THREADS");
+  if (!configured) configured = std::getenv("FREAC_MESH_THREADS");
   const auto threads = configured ? unsigned(std::clamp(std::atoi(configured), 1, 8)) :
     std::min(4u, std::max(1u, std::thread::hardware_concurrency()));
   // Bound a single export's worker count, leaving room for the host and viewport.

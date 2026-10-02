@@ -1,4 +1,4 @@
-/** Public decorator declarations used by the CLI compiler and freac types. */
+/** Public decorator declarations used by the CLI compiler and makeshift types. */
 export const decoratorTypes = `
 export type DecoratorSettings = Record<string, string | number | boolean>;
 export interface DecoratorFace { body: string; face: string }

@@ -43,6 +43,6 @@ export const defaultAgentPreferences: AgentPreferences = {
 };
 declare global {
   interface Window {
-    freacAgent?: AgentHost;
+    makeshiftAgent?: AgentHost;
   }
 }

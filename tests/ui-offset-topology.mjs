@@ -15,16 +15,16 @@ async function load(page, name, plane) {
   await inspect(page);
   await chooseTool(page, "return to modeling", "modeling");
   await openDocument(page, {
-    name: `${name}.freac`,
+    name: `${name}.makeshift`,
     mimeType: "application/json",
     buffer: Buffer.from(
-      JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+      JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
     ),
   });
   await page.waitForFunction(
     (id) =>
-      window.freacInspect().document.bodies?.[0]?.id === id ||
-      window.freacInspect().document.sketches?.[0]?.id === id,
+      window.makeshiftInspect().document.bodies?.[0]?.id === id ||
+      window.makeshiftInspect().document.sketches?.[0]?.id === id,
     fixture.document.bodies?.[0]?.id ?? fixture.document.sketches[0].id,
   );
   await inspect(page);

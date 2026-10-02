@@ -7,11 +7,11 @@ import { launchElectron, saveDocument } from "./native-documents.mjs";
 import { drag, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
-const root = await mkdtemp(join(tmpdir(), "freac-natural-exit-"));
-const incoming = join(root, "Incoming.freac");
+const root = await mkdtemp(join(tmpdir(), "makeshift-natural-exit-"));
+const incoming = join(root, "Incoming.makeshift");
 await writeFile(
   incoming,
-  JSON.stringify({ format: "freac", version: 1, document: { units: "mm", sketches: [] } }),
+  JSON.stringify({ format: "makeshift", version: 1, document: { units: "mm", sketches: [] } }),
 );
 async function startWriter(page, file) {
   await settled(page);
@@ -21,14 +21,14 @@ async function startWriter(page, file) {
   await page.keyboard.press("Escape");
   await saveDocument(page, file);
   await page.evaluate(() =>
-    window.freacAgent.request({
+    window.makeshiftAgent.request({
       kind: "configure",
       preferences: { preset: "custom", executable: "/bin/sh", args: ["-i"], env: {} },
     }),
   );
   await page.getByRole("button", { name: "Open agent terminal", exact: true }).click();
   await page.locator(".agent-status").filter({ hasText: "Running" }).waitFor();
-  const workspace = (await page.evaluate(() => window.freacAgent.request({ kind: "read" })))
+  const workspace = (await page.evaluate(() => window.makeshiftAgent.request({ kind: "read" })))
     .workspace;
   await page.locator(".agent-screen textarea").focus();
   await page.keyboard.type(
@@ -41,10 +41,10 @@ async function startWriter(page, file) {
   return { workspace, child, stopped };
 }
 async function run(command) {
-  const file = join(root, `${command}.freac`);
+  const file = join(root, `${command}.makeshift`);
   const app = await launchElectron({
     args: ["."],
-    env: { ...process.env, FREAC_TEST_HIDDEN: "1", FREAC_DEV_URL: "" },
+    env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1", MAKESHIFT_DEV_URL: "" },
   });
   try {
     const page = await app.firstWindow();
@@ -66,8 +66,8 @@ async function run(command) {
     if (closed) await closed;
     else {
       await page.waitForFunction(async () => {
-        const status = await window.freacDocument.status();
-        return status.path === null || status.name === "Incoming.freac";
+        const status = await window.makeshiftDocument.status();
+        return status.path === null || status.name === "Incoming.makeshift";
       });
       await settled(page);
     }

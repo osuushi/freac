@@ -66,7 +66,7 @@ Save/Open stores that geometry. Acceptance applies the existing fully-used sketc
 visibility rule; preview, cancellation and failures do not hide sources. Undo/Redo
 restores automatic visibility in the same step. Partially-used sketches stay visible.
 
-The typed agent API uses the same operation: `freac.loft({sources, ruled:false,
+The typed agent API uses the same operation: `makeshift.loft({sources, ruled:false,
 mode:"new"})`. `alignment`, when supplied, has one signed integer seam step per
 section. Inputs require 2–256 distinct sections; unsupported source or hole
 arrangements fail atomically.

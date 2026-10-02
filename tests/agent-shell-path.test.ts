@@ -9,7 +9,7 @@ import { agentShellPath } from "../src/host/agent-shell-path.js";
 test("Finder PATH discovers shell-installed executables despite startup banners", {
   skip: process.platform !== "darwin",
 }, async () => {
-  const root = await mkdtemp(join(tmpdir(), "freac-shell-path-"));
+  const root = await mkdtemp(join(tmpdir(), "makeshift-shell-path-"));
   try {
     await writeFile(join(root, ".zshrc"), 'echo startup-banner\nexport PATH="$ZDOTDIR:$PATH"\n');
     const command = join(root, "fixture-agent");

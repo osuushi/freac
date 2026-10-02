@@ -10,10 +10,10 @@ export async function erosionCapturesRoute(page, runtime) {
     const fixture = JSON.parse(await readFile(`tests/fixtures/erosion-${name}.json`, "utf8"));
     await page.keyboard.press("Escape");
     await openDocument(page, {
-      name: `${name}.freac`,
+      name: `${name}.makeshift`,
       mimeType: "application/json",
       buffer: Buffer.from(
-        JSON.stringify({ format: "freac", version: 1, document: fixture.document }),
+        JSON.stringify({ format: "makeshift", version: 1, document: fixture.document }),
       ),
     });
     await inspect(page);

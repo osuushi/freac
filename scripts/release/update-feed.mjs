@@ -17,10 +17,10 @@ export function updateFeed(metadata, repository) {
         version: metadata.version,
         updateTo: {
           version: metadata.version,
-          name: `Freac ${metadata.timestamp}`,
+          name: `Makeshift ${metadata.timestamp}`,
           pub_date: metadata.timestamp,
-          notes: "Freac preview release.",
-          url: `https://github.com/${repository}/releases/download/${metadata.tag}/Freac-${metadata.tag}-arm64.zip`,
+          notes: "Makeshift preview release.",
+          url: `https://github.com/${repository}/releases/download/${metadata.tag}/Makeshift-${metadata.tag}-arm64.zip`,
         },
       },
     ],
@@ -30,8 +30,8 @@ export function updateFeed(metadata, repository) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const assets = process.argv[2] ?? "release-assets";
   const metadata = JSON.parse(await readFile(join(assets, "build.json"), "utf8"));
-  const feed = updateFeed(metadata, process.env.GITHUB_REPOSITORY ?? "osuushi/freac");
-  const archive = join(assets, `Freac-${metadata.tag}-arm64.zip`);
+  const feed = updateFeed(metadata, process.env.GITHUB_REPOSITORY ?? "osuushi/makeshift");
+  const archive = join(assets, `Makeshift-${metadata.tag}-arm64.zip`);
   if (!(await stat(archive)).size) throw new Error("Empty update archive");
   const target = ".build/update-site/updates/preview/darwin-arm64/RELEASES.json";
   await mkdir(dirname(target), { recursive: true });
