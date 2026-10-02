@@ -40,6 +40,9 @@ export async function withUiRuntimes(
             },
           });
           page = await app.firstWindow();
+          // Hidden windows can be clamped to the runner's display. Match the
+          // browser viewport so adaptive grid spacing and pointer routes agree.
+          await page.setViewportSize(viewport);
           assert.equal(
             await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),
             false,
