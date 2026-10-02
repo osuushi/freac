@@ -49,6 +49,20 @@ await withUiRuntimes(async (page, name) => {
       ),
     );
   }
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  assert.equal((await inspect(page)).modelingSelection[0]?.body, before.bodies[0].id);
+  await page.keyboard.press("m");
+  await page.getByRole("button", { name: "Move body X", exact: true }).click();
+  await page.locator(".body-transform-value").fill("10");
+  await page.keyboard.press("Enter");
+  assert.deepEqual((await inspect(page)).document.bodyAppearances, appearance);
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await page.keyboard.press("Delete");
+  assert.deepEqual((await inspect(page)).document.bodyAppearances, []);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document.bodyAppearances, appearance);
+  await clearSelection(page);
   const directory = await mkdtemp(join(tmpdir(), "freac-colors-"));
   try {
     const path = join(directory, "color.freac");
