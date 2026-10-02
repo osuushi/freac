@@ -48,6 +48,16 @@ await withUiRuntimes(
       await chooseTool(page, "redo", "redo");
       assert.deepEqual((await inspect(page)).document, state.document);
     }
+    await chooseTool(page, "return to modeling", "modeling");
+    await page.getByRole("button", { name: "Select Sketch 3", exact: true }).click();
+    await page.keyboard.press("Enter");
+    const accepted = (await inspect(page)).document;
+    assert.equal((await inspect(page)).activeSketch, accepted.sketches[2].id);
+    await page.keyboard.press(process.platform === "darwin" ? "Meta+a" : "Control+a");
+    await page.keyboard.press("Backspace");
+    assert.equal((await inspect(page)).document.sketches[2].curves.length, 0);
+    await chooseTool(page, "undo", "undo");
+    assert.deepEqual((await inspect(page)).document, accepted);
     console.log(
       `${name}: hidden destination ignored in projection preview, cancel, accept and Undo/Redo`,
     );
