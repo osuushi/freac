@@ -17,6 +17,7 @@ const kinds: Record<HostModelRequest["kind"], true> = {
   "offset-sketch": true,
   sections: true,
   selection: true,
+  "body-appearance": true,
   "rename-entity": true,
   "reorder-entity": true,
   "check-plane-cut": true,

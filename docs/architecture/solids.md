@@ -153,3 +153,19 @@ edge curves. Endpoint corrections consume the existing conversion budget; sketch
 region tolerances remain unchanged. Bodies are unchanged and no dependency is
 created. Hidden bodies contribute no caps or click targets. The cap itself is
 transient view geometry and creates neither a saved object nor an Undo entry.
+
+## Body appearance
+
+Each body has an optional document-owned RGB color and alpha (0–1). Its Entities
+swatch opens Color and Opacity (%) fields; Apply accepts both in one Undo step,
+while Cancel/Escape leaves the document unchanged. Save/Open preserves appearance.
+Geometry edits retain appearance by body identity or immediate operation origins;
+copies and split pieces inherit it, and merged results use their first source.
+Deleting bodies removes their appearance metadata in the same Undo step.
+
+Surface alpha uses transparent drawing without depth/stencil writes. Outlines stay
+visible and pickable even at zero alpha, so transparent bodies can be reselected.
+Selection/hover still use the standard highlight colors with the body's alpha.
+Section caps and decorator preview overlays retain their existing presentation.
+Overlapping translucent surfaces use Three.js object sorting, not order-independent
+transparency. Appearance is presentation metadata, not an exported mesh material.

@@ -84,3 +84,45 @@
 .entity-drop-after {
   box-shadow: 0 2px #2863a4;
 }
+
+.entity-row .body-color-swatch {
+  padding: 0;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  overflow: hidden;
+  border: 1px solid #aab7c5;
+  background: repeating-conic-gradient(#fff 0% 25%, #bbc3cc 0% 50%) 0 / 10px 10px;
+}
+.body-color-swatch span {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.body-color-dialog {
+  border: 1px solid #cbd5df;
+  border-radius: 12px;
+  padding: 20px;
+  color: #263c50;
+  background: #fff;
+}
+.body-color-dialog::backdrop {
+  background: #20304044;
+}
+.body-color-dialog h2 {
+  margin-top: 0;
+  font-size: 16px;
+}
+.body-color-dialog label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 16px;
+}
+.body-color-dialog input {
+  width: 85px;
+}
+.body-color-dialog button {
+  margin-right: 8px;
+}

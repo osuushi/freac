@@ -37,6 +37,7 @@ export type ModelRequest =
   | { kind: "offset-sketch"; sketchId: string; curves: string[]; amount: number }
   | { kind: "sections"; frame: PlaneFrame; bodies: string[] }
   | { kind: "selection"; changes: import("./history-selection.js").SelectionChanges }
+  | { kind: "body-appearance"; appearance: import("../model/body-appearance.js").BodyAppearance }
   | { kind: "rename-entity"; id: string; name: string }
   | { kind: "reorder-entity"; id: string; beforeId: string | null }
   | { kind: "check-plane-cut"; operation: import("../model/plane-cut.js").PlaneCut }

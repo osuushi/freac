@@ -1,4 +1,5 @@
 import { continueDecorators } from "../decorators/continuation.js";
+import { continueBodyAppearances } from "../model/body-appearance.js";
 import type { DisplayDocument } from "../model/display-document.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { ModelRequest } from "../sketch/model-api.js";
@@ -9,5 +10,8 @@ export function continueBodyMetadata<T extends DisplayDocument>(
   candidate: T,
   request?: ModelRequest,
 ): T {
-  return continueTags(source, continueDecorators(source, candidate, request));
+  return continueBodyAppearances(
+    source,
+    continueTags(source, continueDecorators(source, candidate, request)),
+  );
 }

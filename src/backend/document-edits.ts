@@ -1,5 +1,6 @@
 import { editDefinitions } from "../decorators/definition-edits.js";
 import { editDecorators } from "../decorators/edits.js";
+import { editBodyAppearance } from "../model/body-appearance.js";
 import { withConstructionPlane } from "../model/construction-plane.js";
 import { editEntityPresentation } from "../model/entity-presentation.js";
 import { copySketch } from "../sketch/copy-selection.js";
@@ -16,6 +17,7 @@ export function isDirectDocumentEdit(
     "tagged-group",
     "decorator",
     "decorator-definition",
+    "body-appearance",
     "rename-entity",
     "reorder-entity",
     "construction-plane",
@@ -37,6 +39,7 @@ export function editDocument(
         | "tagged-group"
         | "decorator"
         | "decorator-definition"
+        | "body-appearance"
         | "rename-entity"
         | "reorder-entity"
         | "construction-plane"
@@ -57,6 +60,8 @@ export function editDocument(
       return editDecorators(document, request.edit);
     case "decorator-definition":
       return editDefinitions(document, request.edit);
+    case "body-appearance":
+      return editBodyAppearance(document, request.appearance);
     case "rename-entity":
     case "reorder-entity":
       return editEntityPresentation(document, request);
@@ -93,6 +98,11 @@ export function editDocument(
       const sketchIds = new Set(request.sketchIds);
       return {
         ...document,
+        ...(document.bodyAppearances
+          ? {
+              bodyAppearances: document.bodyAppearances.filter((entry) => !bodyIds.has(entry.body)),
+            }
+          : {}),
         ...(document.taggedGroups
           ? { taggedGroups: document.taggedGroups.filter((g) => !bodyIds.has(g.body)) }
           : {}),

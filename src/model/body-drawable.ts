@@ -8,6 +8,7 @@ import { coplanar, type PlaneFrame } from "../sketch/planes.js";
 import { stableClipping } from "../sketch/stable-clipping.js";
 import { foregroundBodyLayer } from "../sketch/world-foreground.js";
 import type { BodyGeometry, Edge } from "./body.js";
+import { defaultBodyAppearance } from "./body-appearance.js";
 import { featureEdges } from "./feature-edges.js";
 
 interface Counts {
@@ -125,6 +126,7 @@ export class BodyDrawable {
     selectedFaces: ReadonlySet<string>,
     hover: string | boolean | undefined,
     section: PlaneFrame | null,
+    appearance = defaultBodyAppearance,
   ): void {
     this.faces.forEach((mesh, i) => {
       const face = this.source.faces[i];
@@ -133,8 +135,16 @@ export class BodyDrawable {
           ? "#82b5e0"
           : hover === true || hover === face.id
             ? "#ead3aa"
-            : "#cad4df",
+            : appearance.color,
       );
+      const transparent = appearance.alpha < 1;
+      if (mesh.material.transparent !== transparent) {
+        mesh.material.transparent = transparent;
+        mesh.material.needsUpdate = true;
+      }
+      mesh.material.opacity = appearance.alpha;
+      mesh.material.depthWrite = !transparent;
+      mesh.material.stencilWrite = !transparent;
       mesh.material.stencilRef = section && face.plane && coplanar(section, face.plane) ? 6 : 2;
     });
   }

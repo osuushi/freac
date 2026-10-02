@@ -1,5 +1,6 @@
 import { validateDefinitions } from "../decorators/definition-edits.js";
 import { validateDecorators } from "../decorators/edits.js";
+import { validateBodyAppearances } from "../model/body-appearance.js";
 import type { SketchDocument } from "../sketch/document.js";
 import { validateFrame } from "../sketch/planes.js";
 import { validateSketch } from "../sketch/sketch-validation.js";
@@ -13,6 +14,7 @@ export function validateDocument(document: SketchDocument): void {
     (document.constructionPlanes !== undefined && !Array.isArray(document.constructionPlanes))
   )
     throw new Error("Invalid Freac document");
+  validateBodyAppearances(document);
   validateTags(document);
   validateDecorators(document);
   validateDefinitions(document);
