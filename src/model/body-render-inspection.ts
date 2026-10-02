@@ -8,6 +8,9 @@ export function inspectBodyRendering(scene: THREE.Scene) {
     mesh: string;
     geometry: string;
     color: string;
+    opacity: number;
+    transparent: boolean;
+    depthWrite: boolean;
     visible: boolean;
     stencil: number;
   }[] = [];
@@ -31,6 +34,9 @@ export function inspectBodyRendering(scene: THREE.Scene) {
       mesh: mesh.uuid,
       geometry: mesh.geometry.uuid,
       color: mesh.material.color.getHexString(),
+      opacity: mesh.material.opacity,
+      transparent: mesh.material.transparent,
+      depthWrite: mesh.material.depthWrite,
       visible,
       stencil: mesh.material.stencilRef,
     });

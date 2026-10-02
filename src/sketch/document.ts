@@ -102,6 +102,7 @@ export interface SketchDocument {
   readonly taggedGroups?: readonly import("../tags/model.js").TaggedGroup[];
   readonly decoratorDefinitions?: readonly import("../decorators/definition.js").DecoratorDefinition[];
   readonly decorators?: readonly import("../decorators/types.js").DecoratorInstance[];
+  readonly bodyAppearances?: readonly import("../model/body-appearance.js").BodyAppearance[];
   readonly entityPresentation?: readonly import("../model/entity-presentation.js").EntityPresentation[];
   readonly units: "mm";
   readonly constructionPlanes?: readonly import("../model/construction-plane.js").ConstructionPlane[];

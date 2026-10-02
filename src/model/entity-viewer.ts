@@ -3,6 +3,7 @@ import { modelingSketch } from "../sketch/model-selection.js";
 import { type ModelingTarget, modelingKey } from "../sketch/model-selection-state.js";
 import type { TagControls } from "../tags/controls.js";
 import { TagRows } from "../tags/rows.js";
+import { bodyAppearanceControl } from "./body-appearance-control.js";
 import { entityRows } from "./entity-presentation.js";
 import { renameEntity } from "./entity-rename.js";
 import { EntityReorder } from "./entity-reorder.js";
@@ -157,7 +158,10 @@ export class EntityViewer {
           !this.sourcePicker);
       row.classList.toggle("entity-hidden", !visible);
     });
-    row.append(select, ...(merge ? [merge] : []), eye);
+    row.append(select, ...(merge ? [merge] : []));
+    if (target.kind === "body")
+      row.append(bodyAppearanceControl(this.editor, id, name, this.refreshRows));
+    row.append(eye);
     return target.kind === "body" ? this.tags.wrap(row, id, this.refreshRows) : row;
   }
   private update = (): void => {
