@@ -18,15 +18,20 @@ function editDistance(a: string, b: string): number {
   }
   return row[b.length];
 }
-function fuzzy(query: string, word: string): number | null {
-  if (query.length < 3) return null;
-  const edits = editDistance(query, word);
-  if (edits <= (query.length >= 6 ? 2 : 1)) return edits;
-  let index = 0;
-  for (const char of word) if (char === query[index]) index++;
-  return index === query.length && query.length / word.length >= 0.5
-    ? 3 + word.length - query.length
-    : null;
+function fuzzy(query: string, value: string): number | null {
+  if (query.length < 2) return null;
+  const edits = editDistance(query, value);
+  if (query.length >= 3 && edits <= (query.length >= 6 ? 2 : 1)) return edits;
+  let position = 0,
+    first = -1;
+  for (const char of query) {
+    const index = value.indexOf(char, position);
+    if (index < 0) return null;
+    if (first < 0) first = index;
+    position = index + 1;
+  }
+  // Every query character must match in order; gaps affect rank, not eligibility.
+  return 3 + position - first - query.length;
 }
 function quality(query: string, value: string): number | null {
   const words = value.split(" ");
@@ -37,6 +42,8 @@ function quality(query: string, value: string): number | null {
       const distance = fuzzy(token, word);
       return distance === null ? [] : [10 + distance];
     });
+    const acrossWords = fuzzy(token, value);
+    if (acrossWords !== null) matches.push(10 + acrossWords);
     if (!matches.length) return null;
     score += Math.min(...matches);
   }

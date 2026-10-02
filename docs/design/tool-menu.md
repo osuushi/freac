@@ -79,8 +79,10 @@ terms; no network/AI dependency. Examples: **thickness**, **hollow** → Shell;
 twist,” without inventing tools. Disambiguate sketch/body variants by context.
 
 Normalize case, accents, whitespace and punctuation. Support word prefixes,
-subsequences and small typing errors. Require meaningful query coverage so a weak
-shared letter does not return the entire catalog. Rank lexicographically:
+ordered subsequences across words and small typing errors. Every query token must
+match; subsequences require at least two characters, with no word-density cutoff.
+For example, **cstr** and **cp** find Construction plane. Prefer smaller gaps;
+single-character queries only match word prefixes. Rank lexicographically:
 
 1. Available before disabled, even when the disabled match is exact.
 2. Within each group: exact canonical name, exact alias, prefix/token match,

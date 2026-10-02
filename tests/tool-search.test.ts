@@ -20,6 +20,26 @@ test("canonical, aliases, prefixes, typos and abbreviations find tools", () => {
     assert.equal(searchTools([shell], query)[0]?.tool.id, "shell", query);
   assert.equal(searchTools([tool("rectangle", "Rectangle")], "recatngle")[0]?.tool.id, "rectangle");
 });
+test("sparse ordered subsequences match names, aliases and related terms across words", () => {
+  const plane = tool("plane", "Construction plane", { aliases: ["reference plane"] });
+  for (const query of ["cstr", "cnpl", "cp", "cstr pl", "rfpl", "CŚTR"])
+    assert.equal(searchTools([plane], query)[0]?.tool.id, "plane", query);
+  assert.equal(
+    searchTools([tool("extrude", "Extrude", { related: ["twist extrusion"] })], "twex")[0]
+      ?.explanation,
+    "Related: twist extrusion",
+  );
+  for (const query of ["rcst", "cstr banana", "z", "n"])
+    assert.deepEqual(searchTools([plane], query), [], query);
+});
+test("compact subsequences rank ahead of matches with larger gaps", () => {
+  assert.deepEqual(
+    searchTools([tool("sparse", "A construction ruler"), tool("compact", "Cstir")], "cstr").map(
+      (result) => result.tool.id,
+    ),
+    ["compact", "sparse"],
+  );
+});
 test("availability dominates even an exact disabled name", () => {
   const results = searchTools(
     [
