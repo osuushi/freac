@@ -1,6 +1,7 @@
 import type {
   BodyBoolean,
   BodyEdgeFinish,
+  BodyErosion,
   BodyFaceOffset,
   BodyShell,
   BodyTransform,
@@ -60,6 +61,7 @@ type Request =
       bodies: readonly ExactBody[];
     })
   | (BodyShell & { kind: "shell"; bodies: readonly ExactBody[] })
+  | (BodyErosion & { kind: "erode"; bodies: readonly ExactBody[] })
   | (BodyFaceOffset & { kind: "offset-faces"; bodies: readonly ExactBody[] })
   | (EdgeMovement & { kind: "move-edges"; bodies: readonly ExactBody[] })
   | (FaceMovement & { kind: "move-faces"; bodies: readonly ExactBody[] })

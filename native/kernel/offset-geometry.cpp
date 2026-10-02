@@ -76,6 +76,13 @@ Operand prepare(const Operand& original, const char* context, std::vector<TopoDS
         require(index != 0, std::string(context) + " preparation lost a selected face");
         face = TopoDS::Face(copied(index));
     }
+    // Preserve an already precise parameterization. Forcing SameParameter on
+    // trimmed periodic Boolean edges can replace valid pcurves with invalid ones.
+    try {
+        tightenGeneratedBoundaries(result.shape, original.shape, false);
+        validSolid(result.shape, context);
+        return result;
+    } catch (const std::runtime_error&) { /* Repair only when verification requires it. */ }
     BRepLib::SameParameter(result.shape, geometry_policy::parameterCorrespondenceMm, true);
     // Boolean/fillet inputs can retain conservative bounds despite tight geometry.
     // Verify before reducing them on this private copy; no vertex motion is allowed.

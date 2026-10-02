@@ -14,6 +14,7 @@ import { ConstructionPlaneControls } from "../model/construction-plane-controls.
 import { CrossSectionControls } from "../model/cross-section-controls.js";
 import { DeleteTopologyAction } from "../model/delete-topology-action.js";
 import { EntityViewer } from "../model/entity-viewer.js";
+import { ErosionControls } from "../model/erosion-controls.js";
 import { FaceOffsetControls } from "../model/face-offset-controls.js";
 import { MeasurementControls } from "../model/measurement-controls.js";
 import { MirrorControls } from "../model/mirror-controls.js";
@@ -114,6 +115,7 @@ const disposeLabels = worldLabels(
   disposeFills = drawRegionFills(editor);
 const modelControls = new ModelControls(editor, overlay);
 const shells = new ShellControls(editor, overlay);
+const erosion = new ErosionControls(editor, overlay);
 const faceOffsets = new FaceOffsetControls(editor, overlay);
 const faceMoves = new TopologyMoveControls(editor, overlay);
 const edgeMoves = new TopologyMoveControls(editor, overlay, "edges");
@@ -235,6 +237,7 @@ window.addEventListener(
     booleans.dispose();
     faceOffsets.dispose();
     shells.dispose();
+    erosion.dispose();
     faceMoves.dispose();
     edgeMoves.dispose();
     bodyFinishes.dispose();

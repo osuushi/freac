@@ -2,7 +2,10 @@ import type { ScriptOperation } from "../agent-script/api.js";
 import type { SketchDocument } from "../sketch/document.js";
 import type { SolidEdits } from "./solid-edits.js";
 
-type Operation = Extract<ScriptOperation, { kind: "booleanBodies" | "finishEdges" | "shell" }>;
+type Operation = Extract<
+  ScriptOperation,
+  { kind: "booleanBodies" | "finishEdges" | "shell" | "erode" }
+>;
 /** Script entry points share manual solid calculations, while requiring exact typed sizes. */
 export async function scriptSolidTool(
   document: SketchDocument,
@@ -14,6 +17,8 @@ export async function scriptSolidTool(
     return solids.calculate(document, { kind: "boolean-bodies", operation: operation.input });
   if (operation.kind === "shell")
     return solids.calculate(document, { kind: "shell", operation: operation.input });
+  if (operation.kind === "erode")
+    return solids.calculate(document, { kind: "erode", operation: operation.input });
   const next = await solids.calculate(document, {
     kind: "finish-edges",
     operation: operation.input,
@@ -35,6 +40,21 @@ function validate(document: SketchDocument, operation: Operation): void {
     )
       throw new Error(
         "Boolean requires ordered distinct existing bodies and an explicit mode/keepOriginals",
+      );
+  } else if (operation.kind === "erode") {
+    const { ids, thickness, allowance, keepOriginals } = operation.input;
+    if (
+      !uniqueStrings(ids) ||
+      !ids.length ||
+      ids.some((id) => !bodies.some((body) => body.id === id)) ||
+      !Number.isFinite(thickness) ||
+      thickness <= 1e-5 ||
+      !Number.isFinite(allowance) ||
+      allowance < 0 ||
+      (keepOriginals !== undefined && typeof keepOriginals !== "boolean")
+    )
+      throw new Error(
+        "Erode requires distinct existing bodies, positive thickness and nonnegative extra allowance",
       );
   } else if (operation.kind === "finishEdges") {
     const { edges, mode, size } = operation.input;

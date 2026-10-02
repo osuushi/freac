@@ -1,0 +1,26 @@
+.erosion-widget .axial-panel {
+  width: 190px;
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
+  white-space: normal;
+}
+.erosion-field-label {
+  display: block;
+  padding-top: 5px;
+}
+.erosion-status {
+  display: block;
+  padding: 5px 0;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.erosion-widget .axial-panel .erosion-suggestion {
+  width: 100%;
+  height: auto;
+  min-height: 28px;
+  margin-bottom: 6px;
+  padding: 5px 7px;
+  border: 1px solid #bdccdc;
+  background: #eaf1f8;
+  white-space: normal;
+}

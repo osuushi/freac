@@ -12,6 +12,7 @@ export type ModelingTool =
   | "chamfer"
   | "loft"
   | "revolve"
+  | "erode"
   | "shell";
 
 /** Preference only: applicability belongs to operation resolution. Mixed kinds have no default. */

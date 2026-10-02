@@ -41,6 +41,7 @@ const kinds: Record<HostModelRequest["kind"], true> = {
   "boolean-bodies": true,
   "edge-finish-selection": true,
   shell: true,
+  erode: true,
   "offset-faces": true,
   "finish-edges": true,
   revolve: true,

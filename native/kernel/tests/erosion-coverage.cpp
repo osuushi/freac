@@ -1,0 +1,107 @@
+#include "erosion.h"
+#include "erosion-distance-bounds.h"
+#include <BRepAlgoAPI_Fuse.hxx>
+#include <BRepBuilderAPI_MakeVertex.hxx>
+#include <BRepExtrema_DistShapeShape.hxx>
+#include <BRepAlgoAPI_Cut.hxx>
+#include <BRepPrimAPI_MakeBox.hxx>
+#include <BRepPrimAPI_MakeCylinder.hxx>
+#include <BRepPrimAPI_MakeSphere.hxx>
+#include <BRep_Builder.hxx>
+#include <TopoDS_Compound.hxx>
+#include <iostream>
+#include <stdexcept>
+
+namespace {
+TopoDS_Shape empty() {
+    TopoDS_Compound result; BRep_Builder().MakeCompound(result); return result;
+}
+void rejected(const TopoDS_Shape& source, const TopoDS_Shape& candidate, double depth) {
+    try { erosion::checkCoverage(source, candidate, depth); }
+    catch (const std::runtime_error&) { return; }
+    throw std::runtime_error("Accepted missing interior beyond allowance");
+}
+void distanceBounds() {
+    const auto vertical = BRepPrimAPI_MakeCylinder(5, 12).Shape();
+    const auto tilted = BRepPrimAPI_MakeCylinder(
+        gp_Ax2(gp_Pnt(0, 0, 6), gp_Dir(1, 0.2, 0.1)), 2, 12).Shape();
+    const auto shape = BRepAlgoAPI_Fuse(vertical, tilted).Shape();
+    erosion::BoundaryDistance bounds(shape);
+    for (int x = -2; x <= 5; ++x) for (int y = -2; y <= 2; ++y) {
+        const gp_Pnt point(x*2.31, y*1.27, 5.43+x*0.13);
+        BRepExtrema_DistShapeShape distance(BRepBuilderAPI_MakeVertex(point).Shape(), erosion::boundary(shape));
+        if (!distance.IsDone() || bounds.lower(point) > distance.Value()+1e-6 ||
+            bounds.upper(point) < distance.Value()-1e-6)
+            throw std::runtime_error("Trimmed curved distance bounds are not conservative");
+        std::array<gp_Pnt, 8> corners;
+        for (int i = 0; i < 8; ++i) corners[i] = gp_Pnt(
+            point.X()+(i&1 ? 0.1 : -0.1), point.Y()+(i&2 ? 0.1 : -0.1), point.Z()+(i&4 ? 0.1 : -0.1));
+        const double upper = bounds.upper(corners);
+        for (const auto& corner : corners) {
+            BRepExtrema_DistShapeShape actual(BRepBuilderAPI_MakeVertex(corner).Shape(), erosion::boundary(shape));
+            if (!actual.IsDone() || upper < actual.Value()-1e-6)
+                throw std::runtime_error("Curved cell upper bound is not conservative");
+        }
+    }
+}
+void sphericalCoverage() {
+    const auto outer = BRepPrimAPI_MakeSphere(8).Shape();
+    const auto source = BRepAlgoAPI_Cut(outer, BRepPrimAPI_MakeSphere(6).Shape()).Shape();
+    const auto exact = BRepAlgoAPI_Cut(BRepPrimAPI_MakeSphere(7.5).Shape(), BRepPrimAPI_MakeSphere(6.5).Shape()).Shape();
+    if (erosion::sphericalCoverage(source, exact, 0.7) != true)
+        throw std::runtime_error("Concentric spherical coverage was not certified");
+    erosion::checkCoverage(source, exact, 0.7);
+    const auto small = BRepAlgoAPI_Cut(BRepPrimAPI_MakeSphere(7).Shape(), BRepPrimAPI_MakeSphere(6.5).Shape()).Shape();
+    rejected(source, small, 0.7);
+    const auto largeVoid = BRepAlgoAPI_Cut(BRepPrimAPI_MakeSphere(7.5).Shape(), BRepPrimAPI_MakeSphere(6.9).Shape()).Shape();
+    rejected(source, largeVoid, 0.7);
+    rejected(source, empty(), 0.8);
+    erosion::checkCoverage(source, empty(), 1.1);
+    erosion::checkCoverage(outer, BRepPrimAPI_MakeSphere(7).Shape(), 1);
+    rejected(outer, BRepPrimAPI_MakeSphere(6.5).Shape(), 1);
+    const auto eccentric = BRepAlgoAPI_Cut(BRepPrimAPI_MakeSphere(7.5).Shape(),
+        BRepPrimAPI_MakeSphere(gp_Pnt(0.4, 0, 0), 6.5).Shape()).Shape();
+    if (erosion::sphericalCoverage(source, eccentric, 0.7).has_value())
+        throw std::runtime_error("Eccentric surfaces must not use concentric coverage");
+    rejected(source, eccentric, 0.7);
+    erosion::BoundaryDistance bounds(source);
+    const std::array<gp_Pnt, 8> cell{gp_Pnt(6.4,-.1,-.1), gp_Pnt(6.6,-.1,-.1),
+        gp_Pnt(6.4,.1,-.1), gp_Pnt(6.6,.1,-.1), gp_Pnt(6.4,-.1,.1), gp_Pnt(6.6,-.1,.1),
+        gp_Pnt(6.4,.1,.1), gp_Pnt(6.6,.1,.1)};
+    if (bounds.upper(cell) < std::sqrt(6.6*6.6+0.02)-6 || bounds.upper(cell) > .61)
+        throw std::runtime_error("Full spherical cell bound is inaccurate");
+}
+}
+int main() {
+    distanceBounds();
+    sphericalCoverage();
+    const auto source = BRepPrimAPI_MakeBox(20, 20, 10).Shape();
+    const auto exact = BRepPrimAPI_MakeBox(gp_Pnt(1, 1, 1), 18, 18, 8).Shape();
+    erosion::checkCoverage(source, exact, 1);
+    rejected(source, empty(), 1);
+    const auto small = BRepPrimAPI_MakeBox(gp_Pnt(2, 2, 2), 16, 16, 6).Shape();
+    rejected(source, small, 1.5);
+    bool suggested = false;
+    try { erosion::checkCoverage(source, small, 1.5); }
+    catch (const erosion::CoverageFailure& failure) {
+        // This exact box needs depth 2. A suggested upper bound must never
+        // claim that any smaller depth covers its missing material.
+        if (!std::isfinite(failure.requiredDepth) || failure.requiredDepth < 2-1e-6)
+            throw std::runtime_error("Coverage feedback underestimated the required depth");
+        erosion::checkCoverage(source, small, failure.requiredDepth+1e-6);
+        suggested = true;
+    }
+    if (!suggested) throw std::runtime_error("Missing coverage did not report its conservative bound");
+    erosion::checkCoverage(source, small, 2);
+    erosion::checkCoverage(BRepPrimAPI_MakeBox(2, 20, 10).Shape(), empty(), 1.1);
+    // A small, off-center omission must not pass merely because coarse samples miss it.
+    const auto hole = BRepPrimAPI_MakeBox(gp_Pnt(3.13, 4.27, 2.31), 0.1, 0.1, 0.1).Shape();
+    const auto punctured = BRepAlgoAPI_Cut(exact, hole).Shape();
+    rejected(source, punctured, 1.2);
+    // Curved supports use conservative distance bounds, never their display mesh.
+    const auto cylinder = BRepPrimAPI_MakeCylinder(5, 10).Shape();
+    const auto inset = BRepPrimAPI_MakeCylinder(gp_Ax2(gp_Pnt(0, 0, 1), gp_Dir(0, 0, 1)), 4, 8).Shape();
+    erosion::checkCoverage(cylinder, inset, 1.2);
+    rejected(cylinder, empty(), 1.2);
+    std::cout << "Exact, allowance, empty, small omitted interior and curved coverage passed\n";
+}

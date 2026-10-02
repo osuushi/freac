@@ -34,6 +34,7 @@ export class ModelClient {
   private selectionInFlight = false;
   private initialized = false;
   lastEdit: ModelRequest | null = null;
+  erosionAllowance: number | undefined;
   scriptRunning = false;
   scriptState(running: boolean, view?: ModelView): void {
     this.scriptRunning = running;
@@ -186,6 +187,7 @@ export class ModelClient {
     )
       this.lastEdit = request;
     this.working = true;
+    this.erosionAllowance = undefined;
     this.calculation = request.kind;
     this.started = performance.now();
     this.busy = true;
@@ -212,6 +214,7 @@ export class ModelClient {
       const reply = await call(request);
       if (this.interrupted) return false;
       this.view = reply.view;
+      this.erosionAllowance = reply.erosionAllowance;
       if (reply.error) throw new Error(reply.error);
       if (direction && entry) this.navigated?.(entry.operation, direction);
       const selection = reply.view.historySelection;

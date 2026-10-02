@@ -8,6 +8,7 @@ const entries = [
   ["extrude", "Extrude", "E", ["extrusion"], ["twist", "draft", "push pull"]],
   ["offset", "Offset faces", "O", ["face offset"], ["thickness", "resize"]],
   ["shell", "Shell", "S", ["thickness", "hollow"], ["wall"]],
+  ["erode", "Erode", "", ["erosion", "cavity", "shrink body"], ["interior", "minimum thickness"]],
   ["move", "Move", "M", ["translate", "rotate"], []],
   ["fillet", "Fillet", "F", ["round", "rounding"], []],
   ["chamfer", "Chamfer", "⇧F", ["bevel"], []],
@@ -79,6 +80,7 @@ export class ModelingTools {
     if (!this.editor.modeling.targets.length && tool !== "loft")
       return {
         shell: "Select a body or faces to shell",
+        erode: "Select complete bodies to erode",
         offset: "Select faces or bodies to offset",
         move: "Select bodies, faces or edges to move",
         fillet: "Select solid edges to round",

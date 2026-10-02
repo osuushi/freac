@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "erosion.h"
 #include "boundary-move.h"
 #include "sketch-curve.h"
 #include "geometry-policy.h"
@@ -154,6 +155,9 @@ std::vector<Result> calculate(const Tree& input, const std::vector<Operand>& bod
     }
     if (input.get<std::string>("kind", "") == "delete-topology") {
         mode = "new"; return deleteTopology(input, bodies, participants);
+    }
+    if (input.get<std::string>("kind", "") == "erode") {
+        mode = "new"; return erodeBodies(input, bodies, participants);
     }
     if (input.get<std::string>("kind", "") == "shell") {
         mode = "new"; return shellBodies(input, bodies, participants);

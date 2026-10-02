@@ -52,3 +52,10 @@ Overlap detection and Union/Subtract/Intersect use the same allowance, including
 standalone Booleans on saved/reopened bodies. Auto therefore chooses Subtract
 when the corrected overlap calculation finds shared material. Basic validity and
 complete face meshing remain required; the tolerance does not waive either check.
+
+New body fillets request 1e-7 fitting tolerances for the spatial and parameter
+curves and blend approximation. This makes subsequent precision-checked offsets
+possible at sphere/plane and sphere/cylinder junctions without relaxing their
+1e-6 mm boundary budget. These are construction targets, not a claim that every
+fillet meets the offset budget; offset operations still measure their input and
+reject coarse older or imported geometry.

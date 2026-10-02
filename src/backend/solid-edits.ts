@@ -25,6 +25,7 @@ export type SolidRequest = Extract<
       | "finish-edges"
       | "offset-faces"
       | "shell"
+      | "erode"
       | "move-faces"
       | "move-edges";
   }
@@ -40,6 +41,7 @@ export function isSolidRequest(request: ModelRequest): request is SolidRequest {
     "finish-edges",
     "offset-faces",
     "shell",
+    "erode",
     "move-faces",
     "move-edges",
   ].includes(request.kind);
@@ -139,6 +141,20 @@ export class SolidEdits {
     const bodies = document.bodies ?? [];
     if (request.kind === "move-faces" || request.kind === "move-edges") {
       candidate = await this.move(document, request);
+    } else if (request.kind === "erode") {
+      const { thickness, allowance, keepOriginals } = request.operation;
+      if (
+        !Number.isFinite(thickness) ||
+        thickness <= 1e-5 ||
+        !Number.isFinite(allowance) ||
+        allowance < 0 ||
+        (keepOriginals !== undefined && typeof keepOriginals !== "boolean")
+      )
+        throw new Error(
+          "Erode needs positive finite thickness and nonnegative extra thickness allowance",
+        );
+      const result = await this.kernel.calculate({ ...request.operation, kind: "erode", bodies });
+      candidate = { ...document, bodies: materialize(bodies, result) };
     } else if (request.kind === "shell") {
       if (!Number.isFinite(request.operation.thickness))
         throw new Error("Enter a finite shell thickness");

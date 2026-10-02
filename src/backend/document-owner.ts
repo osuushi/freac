@@ -5,6 +5,7 @@ import type { ModelReply, ModelRequest, ModelView } from "../sketch/model-api.js
 import { describeOperation, type HistoryOperation } from "../sketch/operation-history.js";
 import { DecoratorSession } from "./decorator-session.js";
 import { editDocument, isDirectDocumentEdit } from "./document-edits.js";
+import { documentFailure } from "./document-failure.js";
 import { isPreviewRequest, type PreviewRequest, previewDocument } from "./document-preview.js";
 import { DocumentStore } from "./document-store.js";
 import { GeometryQueries, isGeometryQuery } from "./geometry-queries.js";
@@ -103,7 +104,7 @@ export class DocumentOwner {
       if (
         request.interrupt &&
         this.active &&
-        ["extrude", "check-cleanup"].includes(this.active.kind)
+        ["extrude", "erode", "check-cleanup"].includes(this.active.kind)
       ) {
         this.kernel.supersede();
         await this.kernel.cancel();
@@ -182,18 +183,18 @@ export class DocumentOwner {
       this.checkCancellation();
       return { view: this.view, documentChanged: before !== this.store.data };
     } catch (error) {
-      const message = this.kernel.wasSuperseded
-        ? "Preview superseded"
-        : error instanceof Error
-          ? error.message
-          : String(error);
-      const outcome = this.cancelling || message === "Preview superseded" ? "cancelled" : "failed";
-      this.store.record(operation, outcome, message);
+      const { outcome, ...failure } = documentFailure(
+        error,
+        request,
+        this.cancelling,
+        this.kernel.wasSuperseded,
+      );
+      this.store.record(operation, outcome, failure.error);
       if (request.kind !== "accept" && request.kind !== "check-cleanup") {
         this.candidate = null;
         this.pendingOperation = null;
       }
-      return { view: this.view, error: message };
+      return { view: this.view, ...failure };
     }
   }
   private async dispatch(request: ModelRequest, operation: HistoryOperation): Promise<void> {

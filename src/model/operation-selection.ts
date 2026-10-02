@@ -22,6 +22,7 @@ export interface OperationInputs {
   mirror: Body[];
   boolean: Body[];
   shell: BodyShell["selection"];
+  erode: Body[];
   offset: { targets: BodyFaceOffset["faces"]; faces: Face[] };
   fillet: BodyEdgeFinish["edges"];
   chamfer: BodyEdgeFinish["edges"];
@@ -66,6 +67,7 @@ const resolvers: { [K in Operation]: Resolver<K> } = {
       : result;
   },
   shell: shellSelection,
+  erode: wholeBodySelection,
   offset: offsetSelection,
   fillet: edgeSelection,
   chamfer: edgeSelection,

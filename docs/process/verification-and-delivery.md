@@ -26,6 +26,10 @@ Tests must not create, select or commit through hidden controller methods when
 claiming an ordinary user route. Read-only inspection can verify the resulting
 model. Maintain a compact inventory of visible controls and their checked routes.
 
+`npm test` runs test files serially. Native geometry checks include wall-clock
+calculation limits; competing test workers can exhaust those limits on otherwise
+valid fixtures. Keep the actual geometry and latency assertions intact.
+
 Every routine run owns and closes its app, native child, browser, profile and port,
 including after failure. Visible windows are for deliberate founder review only.
 Founder instruction, 2026-09-20: do not inspect or control the founder's browser

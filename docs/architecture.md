@@ -49,6 +49,7 @@ is a later operation on current geometry, through ordinary Undo.
 | Topology inspection and surface replacement | [Composable topology editing](architecture/topology-editing.md) |
 | Loft | [Ordered sections, correspondence and acceptance](architecture/loft.md) |
 | Shell | [Shell interaction and validation](architecture/shell.md) |
+| Erode | [Eroded bodies, allowance and coverage](architecture/erosion.md) |
 | Selection measurements | [Distances, gaps and relationships](architecture/measurements.md) |
 | Draft and cleanup | [Extrusion draft](architecture/extrusion-draft.md), [solid cleanup](architecture/solid-cleanup.md) |
 | Decorators | [Export-time mesh modifiers, threads and JavaScript extensions](architecture/decorators.md), [knurling](architecture/knurling.md) |

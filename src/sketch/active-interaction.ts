@@ -13,6 +13,7 @@ type Kind =
   | "mirror"
   | "cleanup"
   | "shell"
+  | "erode"
   | "face-offset"
   | "face-move"
   | "edge-move"

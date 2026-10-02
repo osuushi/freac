@@ -53,6 +53,7 @@ export async function scriptOperation(
   if (
     operation.kind === "booleanBodies" ||
     operation.kind === "finishEdges" ||
+    operation.kind === "erode" ||
     operation.kind === "shell"
   ) {
     next = await scriptSolidTool(document, operation, solids);

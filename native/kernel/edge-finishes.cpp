@@ -11,6 +11,7 @@
 #include <map>
 #include <set>
 #include <stdexcept>
+#include <type_traits>
 
 namespace {
 TopoDS_Shape repairEdgeFinish(const TopoDS_Shape& shape) {
@@ -29,6 +30,10 @@ template<class Operation>
 void finishBody(const Operand& body, const std::vector<TopoDS_Edge>& edges,
                 double size, std::vector<Result>& results) {
     Operation operation(body.shape);
+    // Keep generated blend boundaries precise enough for subsequent offsets.
+    // This changes fitting accuracy, not the edge radius or topology tolerance.
+    if constexpr (std::is_same_v<Operation, BRepFilletAPI_MakeFillet>)
+        operation.SetParams(1e-2, 1e-7, 1e-7, 1e-7, 1e-7, 1e-3);
     for (const auto& edge : edges) operation.Add(size, edge);
     for (const auto& edge : edges)
         if (!operation.Contour(edge)) throw std::runtime_error("A selected edge cannot be rounded or chamfered");

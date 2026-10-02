@@ -4,7 +4,7 @@
 #include <TopTools_ListOfShape.hxx>
 
 namespace shell_tool {
-Operand canonical(const Operand& source);
+Operand canonical(const Operand& source, const char* context = "Shell");
 using geometry_policy::boundaryDistanceMm;
 TopoDS_Shape oneSolid(const TopoDS_Shape& shape);
 TopoDS_Shape subtract(const TopoDS_Shape& a, const TopoDS_Shape& b);

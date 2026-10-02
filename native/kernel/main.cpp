@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "erosion.h"
 #include "measurement.h"
 #include "timing.h"
 #include <boost/property_tree/json_parser.hpp>
@@ -176,6 +177,11 @@ int main() {
             timing.phase("presentation");
             std::cout << output.str() << "]}" << std::endl;
             timing.phase("write");
+        } catch (const erosion::AllowanceFailure& e) {
+            std::cout << "{\"error\":" << quoted(e.what());
+            if (std::isfinite(e.allowance))
+                std::cout << ",\"erosionAllowance\":" << std::setprecision(17) << e.allowance;
+            std::cout << "}" << std::endl;
         } catch (const Standard_Failure& e) {
             const std::string detail = e.GetMessageString() ? e.GetMessageString() : "Geometry calculation failed";
             const auto message = detail.find("Courbes non jointives") != std::string::npos

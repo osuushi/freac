@@ -13,6 +13,7 @@ export function cancellableCalculation(kind: ModelRequest["kind"]): boolean {
     "revolve",
     "offset-faces",
     "shell",
+    "erode",
     "move-faces",
     "move-edges",
     "finish-edges",
@@ -37,6 +38,8 @@ export function calculationLabel(kind: ModelRequest["kind"] | undefined): string
       return "Deleting geometry";
     case "shell":
       return "Calculating shell";
+    case "erode":
+      return "Calculating erosion";
     case "open":
       return "Opening document";
     case "preview":
