@@ -1,10 +1,9 @@
 import assert from "node:assert/strict";
-import { at, click, drag, inspect, pointEquals, reset } from "./ui-helpers.mjs";
+import { at, click, drag, inspect, overlayPoint, pointEquals, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function axisTip(page, axis) {
-  const box = await page.locator(`[data-move-marker="${axis}"] > svg`).boundingBox();
-  return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  return overlayPoint(page, `[data-move-marker="${axis}"] > svg`);
 }
 function translated(before, after, dx, dy) {
   for (const curve of before.curves) {
@@ -88,10 +87,9 @@ async function smallArcLayout(page, name) {
   await chooseTool(page, "Sketch on XY", "sketch-xy");
   await page.keyboard.press("l");
   await drag(page, [-4, 0], [4, 0]);
-  await page.locator(".bow-handle").nth(1).waitFor({ state: "visible" });
-  const guide = await page.locator(".bow-handle").nth(1).boundingBox();
+  const guide = await overlayPoint(page, ".bow-handle", 1);
   const target = await at(page, 0, 2);
-  await page.mouse.move(guide.x + guide.width / 2, guide.y + guide.height / 2);
+  await page.mouse.move(guide.x, guide.y);
   await page.mouse.down();
   await page.mouse.move(target.x, target.y, { steps: 8 });
   await page.mouse.up();

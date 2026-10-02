@@ -40,6 +40,23 @@ export async function click(page, x, y) {
   const point = await at(page, x, y);
   await page.mouse.click(point.x, point.y);
 }
+// Overlay refresh replaces SVG nodes. Resolve and measure in one browser turn.
+export async function overlayPoint(page, selector, index = 0) {
+  const point = await page.waitForFunction(
+    ({ selector, index }) => {
+      const box = document.querySelectorAll(selector)[index]?.getBoundingClientRect();
+      return box && box.width > 0 && box.height > 0
+        ? { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+        : false;
+    },
+    { selector, index },
+  );
+  try {
+    return await point.jsonValue();
+  } finally {
+    await point.dispose();
+  }
+}
 export async function corners(page) {
   const { document } = await inspect(page);
   const sketch = document.sketches[0];

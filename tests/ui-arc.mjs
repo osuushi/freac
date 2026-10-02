@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
 import { orient } from "./ui-blend-edit.mjs";
 import { pixels, tinted } from "./ui-fill.mjs";
-import { at, click, close, drag, inspect, pointEquals, reset } from "./ui-helpers.mjs";
+import {
+  at,
+  click,
+  close,
+  drag,
+  inspect,
+  overlayPoint,
+  pointEquals,
+  reset,
+} from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const curves = async (page) => (await inspect(page)).document.sketches.flatMap((s) => s.curves);
@@ -14,23 +23,7 @@ async function radius(page, value) {
   await inspect(page);
 }
 async function guide(page, side) {
-  // Overlay refresh replaces SVG nodes. Resolve and measure in one browser
-  // turn so a visible handle cannot detach between the wait and measurement.
-  const point = await page.waitForFunction(
-    (index) => {
-      const dot = document.querySelectorAll(".bow-handle")[index];
-      const box = dot?.getBoundingClientRect();
-      return box && box.width > 0 && box.height > 0
-        ? { x: box.x + box.width / 2, y: box.y + box.height / 2 }
-        : false;
-    },
-    side > 0 ? 1 : 0,
-  );
-  try {
-    return await point.jsonValue();
-  } finally {
-    await point.dispose();
-  }
+  return overlayPoint(page, ".bow-handle", side > 0 ? 1 : 0);
 }
 async function bow(page, side, target) {
   const a = await guide(page, side),

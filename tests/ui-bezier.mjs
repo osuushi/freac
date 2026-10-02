@@ -1,15 +1,14 @@
 import assert from "node:assert/strict";
-import { at, click, close, drag, inspect, reset } from "./ui-helpers.mjs";
+import { at, click, close, drag, inspect, overlayPoint, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function handle(page, key, to, curve) {
   const selector = curve
     ? `[data-handle="${key}"][data-curve="${curve}"]`
     : `[data-handle="${key}"][data-curve]`;
-  const h = await page.locator(selector).boundingBox();
-  assert.ok(h);
+  const h = await overlayPoint(page, selector);
   const p = await at(page, ...to);
-  await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
+  await page.mouse.move(h.x, h.y);
   await page.mouse.down();
   await page.mouse.move(p.x, p.y, { steps: 8 });
   await page.mouse.up();
