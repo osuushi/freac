@@ -214,7 +214,9 @@ export class SelectionOverlay {
       }
     this.drawHints();
     this.showChoices();
-    this.feedback.hidden = !this.editor.message;
+    // Erode displays failure feedback beside its allowance retry action.
+    this.feedback.hidden =
+      !this.editor.message || this.editor.interactions.current?.kind === "erode";
     this.feedback.textContent = this.editor.message;
     const projection = this.editor.interactions.current?.kind === "projection";
     this.feedback.classList.toggle("projection-feedback", projection);

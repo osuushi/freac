@@ -50,6 +50,7 @@ async function validationRoute(page) {
   close((await inspect(page)).preview.bodies[1].volume, 2592);
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, original);
+  await chooseTool(page, "erode", "erode");
   const handle = page.getByRole("button", { name: "Erosion thickness handle" });
   const box = await handle.boundingBox();
   const direction = await handle.evaluate((b) => ({
@@ -66,11 +67,13 @@ async function validationRoute(page) {
   assert.ok(state.preview?.bodies[1].volume > 0);
   assert.deepEqual(state.document, original);
   await page.keyboard.press("Escape");
+  await chooseTool(page, "erode", "erode");
   state = await thickness(page, 6);
   assert.equal(state.preview.bodies.length, 1);
   assert.match(await page.locator(".erosion-widget").textContent(), /Empty result/);
   await page.keyboard.press("Enter");
   assert.deepEqual((await inspect(page)).document, original);
+  await chooseTool(page, "erode", "erode");
   await thickness(page, 1);
   await page.getByRole("textbox", { name: "Minimum thickness", exact: true }).press("Tab");
   await chooseTool(page, "transform", "transform");

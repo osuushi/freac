@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cmath>
 #include <set>
+#include <limits>
 #include <stdexcept>
 
 namespace {
@@ -33,6 +34,7 @@ TopoDS_Shape cavity(const Operand& original, double thickness, double allowance)
     const auto withoutCollapsed = erosion::removeCollapsedFeatures(source.shape, thickness);
     if (!withoutCollapsed.IsSame(source.shape)) inputs.push_back(withoutCollapsed);
     std::string failure = "Erosion could not construct an editable eroded body";
+    double suggestion = std::numeric_limits<double>::infinity();
     std::vector<double> distances{thickness};
     // A round can collapse at exactly the requested depth. Spend part of the
     // explicit allowance to cross that singularity, then verify against the
@@ -46,6 +48,16 @@ TopoDS_Shape cavity(const Operand& original, double thickness, double allowance)
                 erosion::validateCavity(original.shape, result, thickness, allowance);
                 timing.phase("verify");
                 return result;
+            } catch (const erosion::CoverageFailure& e) {
+                failure = e.what();
+                if (std::isfinite(e.requiredDepth) && e.requiredDepth > thickness + allowance) {
+                    const double needed = std::max(e.requiredDepth-thickness, allowance*1.25);
+                    const double step = std::pow(10, std::floor(std::log10(needed))-1);
+                    suggestion = std::min(suggestion, std::ceil(needed*1.1/step)*step);
+                }
+                // A verified minimum-thickness candidate already exists. Repeating
+                // the same expensive coverage failure does not improve feedback.
+                if (e.exhausted) throw erosion::AllowanceFailure(failure, suggestion);
             } catch (const Standard_Failure& e) {
                 failure = e.GetMessageString() ? e.GetMessageString() : "Erosion construction failed";
             } catch (const std::runtime_error& e) { failure = e.what(); }
@@ -57,7 +69,7 @@ TopoDS_Shape cavity(const Operand& original, double thickness, double allowance)
         erosion::checkCoverage(original.shape, empty(), thickness + allowance);
         return empty();
     } catch (const std::runtime_error&) {
-        throw std::runtime_error(failure);
+        throw erosion::AllowanceFailure(failure, suggestion);
     }
 }
 }

@@ -65,7 +65,9 @@ Extrude, Face Offset and body Fillet/Chamfer share a bounded PreviewRunner: one
 running calculation, one latest waiting parameter set and a serial slot for
 selection/cleanup queries. It does
 not own accepted data, candidates, validity or completion. Extrude interrupts
-superseded calculations; Offset retains its established noninterrupting policy,
+superseded calculations. Erode also interrupts superseded parameter calculations
+and uses the shared cancellation path, with no late candidate publication after
+its lease closes. Offset retains its established noninterrupting policy,
 last verified distance and selection feedback. Fillet/Chamfer similarly retain verified
 size-limit feedback; their pending sizes use the expanded edge selection when
 calculation starts. Each controller checks its lease

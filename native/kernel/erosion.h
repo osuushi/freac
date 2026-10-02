@@ -2,8 +2,20 @@
 #include "kernel.h"
 #include <optional>
 #include <utility>
+#include <stdexcept>
 
 namespace erosion {
+struct CoverageFailure : std::runtime_error {
+    double requiredDepth;
+    bool exhausted;
+    CoverageFailure(const char* message, double depth, bool limit)
+        : std::runtime_error(message), requiredDepth(depth), exhausted(limit) {}
+};
+struct AllowanceFailure : std::runtime_error {
+    double allowance;
+    AllowanceFailure(const std::string& message, double value)
+        : std::runtime_error(message), allowance(value) {}
+};
 std::pair<TopoDS_Shape, TopoDS_Shape> coverageFrame(const TopoDS_Shape& source, const TopoDS_Shape& candidate);
 TopoDS_Shape offset(const TopoDS_Shape& source, double inward, bool intersections);
 TopoDS_Shape boundary(const TopoDS_Shape& shape);

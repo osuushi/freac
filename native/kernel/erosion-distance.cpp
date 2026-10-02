@@ -21,6 +21,7 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <queue>
 #include <stdexcept>
 
 namespace {
@@ -204,15 +205,14 @@ Cell innerBounds(const TopoDS_Shape& shape, double depth) {
     }
     return cell;
 }
-void subdivide(const Cell& cell, std::vector<Cell>& pending) {
+std::pair<Cell, Cell> subdivide(const Cell& cell) {
     int axis = 0;
     for (int i = 1; i < 3; ++i)
         if (cell.high[i]-cell.low[i] > cell.high[axis]-cell.low[axis]) axis = i;
     const double middle = (cell.low[axis]+cell.high[axis])/2;
     auto left = cell, right = cell;
     left.high[axis] = right.low[axis] = middle;
-    pending.push_back(left);
-    pending.push_back(right);
+    return {left, right};
 }
 }
 
@@ -232,21 +232,34 @@ void erosion::checkCoverage(const TopoDS_Shape& source, const TopoDS_Shape& cand
     const auto root = innerBounds(sourceFrame, depth);
     for (int i = 0; i < 3; ++i) if (root.high[i]-root.low[i] <= tolerance/4) return;
     Distance original(sourceFrame), result(candidateFrame);
-    std::vector<Cell> pending{root};
+    struct Region {
+        Cell cell;
+        double upper;
+        bool operator<(const Region& other) const { return upper < other.upper; }
+    };
+    std::priority_queue<Region> pending;
+    pending.push({root, original.upper(root)});
     const auto start = std::chrono::steady_clock::now();
     size_t visits = 0;
     while (!pending.empty()) {
         if (++visits > 100000 || std::chrono::steady_clock::now()-start > std::chrono::seconds(8)) {
-            throw std::runtime_error("Erosion could not verify all interior regions at this allowance; increase the extra thickness allowance");
+            throw CoverageFailure("Erosion could not verify this allowance within the calculation limit",
+                                  pending.top().upper, true);
         }
-        const auto cell = pending.back(); pending.pop_back();
-        if (original.upper(cell, depth + tolerance/4) <= depth + tolerance/4) continue;
+        const auto region = pending.top(); pending.pop();
+        const auto& cell = region.cell;
+        if (region.upper <= depth + tolerance/4) continue;
         if (result.contains(cell)) continue;
         if (original.deeper(cell.center(), depth + tolerance) && !result.contains(cell.center()))
-            throw std::runtime_error("Erosion discarded interior beyond the extra thickness allowance");
+            throw CoverageFailure("Erosion needs more allowance to preserve the required interior",
+                                  region.upper, false);
         if (cell.radius() <= tolerance/16) {
             throw std::runtime_error("Erosion could not resolve an interior boundary within tolerance");
         }
-        subdivide(cell, pending);
+        const auto [left, right] = subdivide(cell);
+        // Largest unresolved clearance first: the queue's maximum is also a
+        // conservative depth that covers every region not yet certified.
+        pending.push({left, original.upper(left)});
+        pending.push({right, original.upper(right)});
     }
 }

@@ -15,7 +15,14 @@ export class ErosionWidget {
   private accept: HTMLButtonElement;
   private cancel: HTMLButtonElement;
   private keep: HTMLButtonElement;
-  constructor(overlay: HTMLElement, finish: () => void, cancel: () => void, keep: () => void) {
+  private suggestion = document.createElement("button");
+  constructor(
+    overlay: HTMLElement,
+    finish: () => void,
+    cancel: () => void,
+    keep: () => void,
+    suggest: () => void,
+  ) {
     this.root.className = "erosion-widget axial-widget";
     this.handle.className = "axial-arrow";
     this.handle.setAttribute("aria-label", "Erosion thickness handle");
@@ -34,7 +41,12 @@ export class ErosionWidget {
       "Extra thickness allowed to simplify the resulting body",
     );
     this.description.className = "erosion-status";
-    this.panel.append(this.description, actions);
+    this.description.setAttribute("role", "status");
+    this.suggestion.className = "erosion-suggestion";
+    this.suggestion.type = "button";
+    this.suggestion.setAttribute("aria-label", "Try suggested allowance");
+    this.suggestion.onclick = suggest;
+    this.panel.append(this.description, this.suggestion, actions);
     this.root.append(this.handle, this.panel);
     this.root.hidden = true;
     overlay.append(this.root);
@@ -57,6 +69,7 @@ export class ErosionWidget {
     valid: boolean,
     invalid: boolean,
     count: number | null,
+    suggestion: number | null,
   ): void {
     this.root.hidden = false;
     positionAxialPanel(this.root, this.panel, editor.world.project(axis.center));
@@ -76,12 +89,19 @@ export class ErosionWidget {
         input.value = Number.isFinite(value) ? String(Number(value.toPrecision(4))) : "";
       input.setAttribute("aria-invalid", String(invalid));
     }
-    this.description.textContent =
-      count === null
+    this.description.textContent = invalid
+      ? editor.message || "Could not create a result at these values"
+      : count === null
         ? "Erode selected bodies"
         : count === 0
           ? "Empty result"
           : `${count} result ${count === 1 ? "body" : "bodies"}`;
+    this.suggestion.hidden = suggestion === null;
+    this.suggestion.disabled = editor.blocked;
+    this.suggestion.textContent =
+      suggestion === null ? "" : `Try ${Number(suggestion.toPrecision(4))} mm allowance`;
+    this.suggestion.title =
+      "Suggested from the remaining interior regions; minimum thickness stays unchanged";
     this.keep.setAttribute("aria-pressed", String(values.keepOriginals));
     this.keep.disabled = editor.blocked;
     this.accept.disabled = !active || !valid || values.thickness <= 0 || editor.blocked;

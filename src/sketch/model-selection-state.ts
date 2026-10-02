@@ -44,7 +44,7 @@ export class ModelSelection {
     this.selected = targets.filter((target) => this.allows(target));
     if (this.key !== previous) this.chosenTool = null;
   }
-  private chosenTool: { key: string; tool: ModelingTool } | null = null;
+  private chosenTool: { key: string; tool: ModelingTool | null } | null = null;
   private get key(): string {
     return this.targets.map((target) => `${target.kind}:${modelingKey(target)}`).join("|");
   }
@@ -60,7 +60,7 @@ export class ModelSelection {
     );
   }
 
-  setTool(tool: ModelingTool): void {
+  setTool(tool: ModelingTool | null): void {
     this.chosenTool = { key: this.key, tool };
   }
   lastEdgeClick: { body: string; edge: string; point: Vector } | null = null;

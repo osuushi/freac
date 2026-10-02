@@ -107,6 +107,7 @@ export interface ModelView {
   solveMs: number;
 }
 export type ModelReply = {
+  erosionAllowance?: number;
   step?: string;
   decoratorDraft?: readonly import("../decorators/types.js").DecoratorInstance[];
   decoratorInspection?: import("../decorators/inspection.js").DecoratorInspection;

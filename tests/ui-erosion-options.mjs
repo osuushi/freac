@@ -11,7 +11,6 @@ export async function erosionOptionsRoute(page, name) {
   assert.equal(await input.inputValue(), "1");
   const original = (await inspect(page)).document;
   const handle = page.getByRole("button", { name: "Erosion thickness handle" });
-  await handle.click();
   assert.equal((await inspect(page)).preview.bodies.length, 2);
   const keep = page.getByRole("button", { name: "Keep originals", exact: true });
   assert.equal(await keep.getAttribute("aria-pressed"), "true");
@@ -40,6 +39,9 @@ export async function erosionOptionsRoute(page, name) {
   assert.deepEqual((await inspect(page)).document, original);
   await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
   await chooseTool(page, "erode", "erode");
+  assert.equal(await keep.getAttribute("aria-pressed"), "true", "Fresh edits reset Keep originals");
+  await keep.click();
+  await inspect(page);
   // Outward dragging reaches a useful positive bound, never a negative request.
   const box = await handle.boundingBox();
   const direction = await handle.evaluate((button) => ({

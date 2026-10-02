@@ -81,6 +81,17 @@ int main() {
     rejected(source, empty(), 1);
     const auto small = BRepPrimAPI_MakeBox(gp_Pnt(2, 2, 2), 16, 16, 6).Shape();
     rejected(source, small, 1.5);
+    bool suggested = false;
+    try { erosion::checkCoverage(source, small, 1.5); }
+    catch (const erosion::CoverageFailure& failure) {
+        // This exact box needs depth 2. A suggested upper bound must never
+        // claim that any smaller depth covers its missing material.
+        if (!std::isfinite(failure.requiredDepth) || failure.requiredDepth < 2-1e-6)
+            throw std::runtime_error("Coverage feedback underestimated the required depth");
+        erosion::checkCoverage(source, small, failure.requiredDepth+1e-6);
+        suggested = true;
+    }
+    if (!suggested) throw std::runtime_error("Missing coverage did not report its conservative bound");
     erosion::checkCoverage(source, small, 2);
     erosion::checkCoverage(BRepPrimAPI_MakeBox(2, 20, 10).Shape(), empty(), 1.1);
     // A small, off-center omission must not pass merely because coarse samples miss it.

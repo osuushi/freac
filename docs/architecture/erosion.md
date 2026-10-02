@@ -11,9 +11,15 @@ There is no saved distance field or erosion feature recipe.
 
 Select complete bodies and choose Erode from Tools. The local widget provides
 Minimum thickness, Extra thickness allowance, and Keep originals, plus an inward drag handle.
-The initial thickness is 1 mm; inward dragging clamps at a positive 0.001 mm.
+Entering Erode starts a preview immediately. Each new operation starts with 1 mm
+minimum thickness, 0.1 mm allowance and Keep originals enabled; values belong to
+that operation and are not remembered for another selection or invocation.
+Inward dragging clamps at a positive 0.001 mm.
 Drag release retains the temporary preview. Enter, the check button, or completing
-by switching tools accepts; Escape cancels. Invalid parameters clear the candidate
+by switching tools accepts; Escape or either cancel button interrupts native work,
+discards the candidate and returns to Select. The panel closes on acceptance or
+cancellation. Changed numeric targets interrupt obsolete calculations and retain
+only the latest requested values. Invalid parameters clear the candidate
 and disable acceptance. Zero thickness is a no-op. Calculations use the shared
 single-edit lease, busy state and native cancellation path.
 
@@ -76,6 +82,20 @@ needlessly multiply Cartesian cells. Full concentric spherical shells additional
 have an exact radial-interval coverage certificate. These change verification cost,
 not accepted geometry or distance budgets.
 
+Cells with the largest unresolved clearance are checked first. A coverage-limit
+failure stops repeated construction attempts rather than spending the same limit
+again on similar proposals. When a minimum-thickness-valid candidate supplies a
+finite bound on its remaining uncovered regions, the failure includes a rounded,
+slightly conservative allowance suggestion. The local **Try … mm allowance** button
+changes only the allowance and recalculates through the normal validation path.
+It is guidance, not automatic acceptance or a guarantee for every selected body;
+unsupported construction/precision failures may have no useful suggestion.
+
+Generated offsets must also survive exact BRep storage and readback. If a private
+stored result needs parameter correspondence repair, it is remeasured and must
+survive another round trip before the usual solid, separation and coverage checks.
+Source geometry and numerical budgets are unchanged.
+
 ## Complex cases
 
 The reproducible matrix below uses millimeters. Each nonempty result is checked
@@ -129,8 +149,10 @@ the requested bounds. Increasing allowance can therefore change topology.
 Older filleted bodies may carry curve/surface disagreement beyond the 1e-6 mm
 source budget and still reject. New fillets use tighter fitting; Erode does not
 silently relax precision for old files. General freeform repair remains separate.
-Coverage has a 100,000-cell / 8-second limit per check; multiple construction
-attempts can take longer overall, especially at the initial widget allowance.
+Coverage has a 100,000-cell / 8-second limit per check. A coverage-limit failure
+ends the proposal search with guidance where available. Preparation and other
+kernel work can add time; cancellation interrupts the native worker rather than
+waiting for those calculations to finish.
 These are bounded construction and verification limits, not proof that the desired
 interior does not exist.
 
@@ -161,3 +183,7 @@ and `tests/body-erosion-special-boundaries.test.ts`, with shared fixture/probe f
 `node tests/erosion-special-ui.mjs` checks seven representative cases through actual
 Open, selection, Erode fields, acceptance, Undo/Redo, movement and Save/Open in the
 same three runtimes. Compile `tsconfig.test.json` before running this route.
+The captured towers/plate responsiveness case is in `tests/erosion-responsiveness.test.ts`;
+`node tests/erosion-responsiveness-ui.mjs` covers automatic entry, reset values,
+all three cancellation routes and the allowance suggestion through acceptance,
+history and Save/Open. `tests/document-failure.test.ts` checks feedback validation.
