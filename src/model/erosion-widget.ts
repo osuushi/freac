@@ -3,6 +3,7 @@ import type { Vector } from "../sketch/planes.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { distanceField, positionAxialPanel, toolAction, updateAxialArrow } from "./axial-widget.js";
 import { projectedAxis } from "./extrude-axis.js";
+import "./erosion-widget.css";
 
 export class ErosionWidget {
   readonly root = document.createElement("div");
@@ -13,24 +14,26 @@ export class ErosionWidget {
   private description = document.createElement("small");
   private accept: HTMLButtonElement;
   private cancel: HTMLButtonElement;
-  constructor(overlay: HTMLElement, finish: () => void, cancel: () => void) {
+  private keep: HTMLButtonElement;
+  constructor(overlay: HTMLElement, finish: () => void, cancel: () => void, keep: () => void) {
     this.root.className = "erosion-widget axial-widget";
     this.handle.className = "axial-arrow";
     this.handle.setAttribute("aria-label", "Erosion thickness handle");
     this.handle.title = "Erode · drag inward or click to type minimum thickness";
     this.accept = toolAction("Accept erosion", "m5 12 4 4L19 6", finish);
     this.cancel = toolAction("Cancel erosion", "m6 6 12 12M18 6 6 18", cancel);
+    this.keep = toolAction("Keep originals", "M8 8h13v13H8ZM3 16V3h13", keep);
     const actions = document.createElement("div");
     actions.className = "axial-actions";
-    actions.append(this.accept, this.cancel);
+    actions.append(this.keep, this.accept, this.cancel);
     this.panel.className = "axial-panel";
     this.field(this.thickness, "Minimum thickness", "Minimum wall thickness in mm");
     this.field(
       this.allowance,
       "Extra thickness allowance",
-      "Extra wall material allowed to simplify the cavity",
+      "Extra thickness allowed to simplify the resulting body",
     );
-    this.description.style.cssText = "display:block;max-width:190px;padding:5px 0;line-height:1.4";
+    this.description.className = "erosion-status";
     this.panel.append(this.description, actions);
     this.root.append(this.handle, this.panel);
     this.root.hidden = true;
@@ -43,13 +46,13 @@ export class ErosionWidget {
     input.title = title;
     const label = document.createElement("small");
     label.textContent = name;
-    label.style.cssText = "display:block;padding-top:5px";
+    label.className = "erosion-field-label";
     this.panel.append(label, distanceField(input));
   }
   update(
     editor: SketchEditor,
     axis: { center: Vector; normal: Vector },
-    values: { thickness: number; allowance: number },
+    values: { thickness: number; allowance: number; keepOriginals: boolean },
     active: boolean,
     valid: boolean,
     invalid: boolean,
@@ -75,10 +78,12 @@ export class ErosionWidget {
     }
     this.description.textContent =
       count === null
-        ? "Creates cavity copies · originals retained"
+        ? "Erode selected bodies"
         : count === 0
-          ? "No interior remains · originals retained"
-          : `${count} cavity ${count === 1 ? "body" : "bodies"} · originals retained`;
+          ? "Empty result"
+          : `${count} result ${count === 1 ? "body" : "bodies"}`;
+    this.keep.setAttribute("aria-pressed", String(values.keepOriginals));
+    this.keep.disabled = editor.blocked;
     this.accept.disabled = !active || !valid || values.thickness <= 0 || editor.blocked;
     this.cancel.disabled = !active;
   }

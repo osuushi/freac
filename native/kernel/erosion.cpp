@@ -4,6 +4,7 @@
 #include "offset-repair.h"
 #include "timing.h"
 #include <BRepBuilderAPI_Copy.hxx>
+#include <BRepCheck_Analyzer.hxx>
 #include <BRepLib.hxx>
 #include <BRepOffsetAPI_MakeOffsetShape.hxx>
 #include <BRep_Builder.hxx>
@@ -26,9 +27,10 @@ TopoDS_Shape offset(const TopoDS_Shape& source, double distance, bool intersecti
     operation.PerformByJoin(copy, -distance, 1e-7,
                             BRepOffset_Skin, intersections, false, GeomAbs_Arc, false);
     if (!operation.IsDone() || operation.Shape().IsNull())
-        throw std::runtime_error("Erosion could not construct a cavity at this thickness");
+        throw std::runtime_error("Erosion could not construct an eroded body at this thickness");
     const auto result = operation.Shape();
-    BRepLib::SameParameter(result, 1e-7, true);
+    if (!BRepCheck_Analyzer(result, true, false, true).IsValid())
+        BRepLib::SameParameter(result, 1e-7, true);
     offset_geometry::tightenGeneratedBoundaries(result, source);
     ShapeUpgrade_UnifySameDomain clean(result, true, true, false);
     clean.Build();
@@ -37,7 +39,7 @@ TopoDS_Shape offset(const TopoDS_Shape& source, double distance, bool intersecti
 
 TopoDS_Shape cavity(const Operand& original, double thickness, double allowance) {
     KernelTiming timing("erode-body"); timing.phase("begin");
-    const auto source = shell_tool::canonical(original);
+    const auto source = shell_tool::canonical(original, "Erode");
     timing.phase("prepare");
     // Empty is a geometric result only after an independent interior bound.
     try {
@@ -48,11 +50,16 @@ TopoDS_Shape cavity(const Operand& original, double thickness, double allowance)
     timing.phase("simplify");
     std::vector<TopoDS_Shape> inputs{simplified};
     if (!simplified.IsSame(source.shape)) inputs.push_back(source.shape);
-    std::string failure = "Erosion could not construct an editable cavity";
-    for (const auto& input : inputs) {
+    std::string failure = "Erosion could not construct an editable eroded body";
+    std::vector<double> distances{thickness};
+    // A round can collapse at exactly the requested depth. Spend part of the
+    // explicit allowance to cross that singularity, then verify against the
+    // original requested bounds, not the construction distance.
+    if (allowance > 1e-5) distances.push_back(thickness + allowance/2);
+    for (const double distance : distances) for (const auto& input : inputs) {
         for (const bool intersections : {false, true}) {
             try {
-                const auto result = offset(input, thickness, intersections);
+                const auto result = offset(input, distance, intersections);
                 timing.phase("offset");
                 erosion::validateCavity(original.shape, result, thickness, allowance);
                 timing.phase("verify");
@@ -62,8 +69,8 @@ TopoDS_Shape cavity(const Operand& original, double thickness, double allowance)
             } catch (const std::runtime_error& e) { failure = e.what(); }
         }
     }
-    // The allowance may legitimately eliminate a marginal cavity, but an
-    // unverified offset failure must never erase a spacious chamber.
+    // The allowance may legitimately eliminate a marginal body, but an
+    // unverified offset failure must never erase a spacious interior.
     try {
         erosion::checkCoverage(original.shape, empty(), thickness + allowance);
         return empty();
@@ -74,7 +81,7 @@ TopoDS_Shape cavity(const Operand& original, double thickness, double allowance)
 }
 
 std::vector<Result> erodeBodies(const Tree& input, const std::vector<Operand>& bodies,
-                               std::vector<std::string>&) {
+                               std::vector<std::string>& participants) {
     const double thickness = input.get<double>("thickness");
     const double allowance = input.get<double>("allowance");
     if (!std::isfinite(thickness) || thickness <= 1e-5 ||
@@ -95,6 +102,7 @@ std::vector<Result> erodeBodies(const Tree& input, const std::vector<Operand>& b
             throw std::runtime_error("Erosion altered its source body");
         for (TopExp_Explorer s(shape, TopAbs_SOLID); s.More(); s.Next())
             results.push_back({s.Current(), {}, {id}, {}, true});
+        if (!input.get<bool>("keepOriginals", true)) participants.push_back(id);
     }
     return results;
 }

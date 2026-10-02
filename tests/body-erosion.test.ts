@@ -246,3 +246,35 @@ test("erosion eliminates thin appendages and preserves simple cylindrical suppor
     owner.close();
   }
 });
+
+test("erosion can replace originals, including a verified empty result, in one Undo", async () => {
+  const owner = new DocumentOwner();
+  try {
+    const source = await prism(owner, square);
+    const before = owner.view.data;
+    for (const thickness of [1, 6]) {
+      const reply = await owner.call({
+        kind: "erode",
+        operation: {
+          ids: [source.id],
+          thickness,
+          allowance: 0.1,
+          keepOriginals: false,
+        },
+      });
+      assert.equal(reply.error, undefined);
+      assert.equal(reply.view.data, before);
+      assert.equal(reply.view.candidate?.bodies?.length, thickness === 1 ? 1 : 0);
+      assert.ok(!reply.view.candidate?.bodies?.some((body) => body.id === source.id));
+      await owner.call({ kind: "accept" });
+      const accepted = owner.view.data;
+      await owner.call({ kind: "undo" });
+      assert.equal(owner.view.data, before);
+      await owner.call({ kind: "redo" });
+      assert.equal(owner.view.data, accepted);
+      await owner.call({ kind: "undo" });
+    }
+  } finally {
+    owner.close();
+  }
+});

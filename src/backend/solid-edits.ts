@@ -142,12 +142,13 @@ export class SolidEdits {
     if (request.kind === "move-faces" || request.kind === "move-edges") {
       candidate = await this.move(document, request);
     } else if (request.kind === "erode") {
-      const { thickness, allowance } = request.operation;
+      const { thickness, allowance, keepOriginals } = request.operation;
       if (
         !Number.isFinite(thickness) ||
         thickness <= 1e-5 ||
         !Number.isFinite(allowance) ||
-        allowance < 0
+        allowance < 0 ||
+        (keepOriginals !== undefined && typeof keepOriginals !== "boolean")
       )
         throw new Error(
           "Erode needs positive finite thickness and nonnegative extra thickness allowance",

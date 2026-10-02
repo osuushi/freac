@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { plate } from "./ui-body-fillet.mjs";
+import { erosionCapturesRoute } from "./ui-erosion-captures.mjs";
+import { erosionOptionsRoute } from "./ui-erosion-options.mjs";
 import { at, close, drag, inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
@@ -66,7 +68,7 @@ async function validationRoute(page) {
   await page.keyboard.press("Escape");
   state = await thickness(page, 6);
   assert.equal(state.preview.bodies.length, 1);
-  assert.match(await page.locator(".erosion-widget").textContent(), /No interior remains/);
+  assert.match(await page.locator(".erosion-widget").textContent(), /Empty result/);
   await page.keyboard.press("Enter");
   assert.deepEqual((await inspect(page)).document, original);
   await thickness(page, 1);
@@ -138,7 +140,12 @@ async function workflow(page, name) {
     `${name}: Erode preview, invalid input, drag/cancel, empty result, accept, Undo/Redo, move, Save/Open, cavity rib cut and final subtraction passed`,
   );
 }
-await withUiRuntimes(async (page, name) => {
-  await validationRoute(page);
-  await workflow(page, name);
-});
+await withUiRuntimes(
+  async (page, name) => {
+    await erosionOptionsRoute(page, name);
+    await validationRoute(page);
+    await workflow(page, name);
+    await erosionCapturesRoute(page, name);
+  },
+  { timeout: 60000 },
+);

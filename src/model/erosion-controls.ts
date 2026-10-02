@@ -9,7 +9,7 @@ import { defaultBodyAppearance } from "./body-appearance.js";
 import { ErosionWidget } from "./erosion-widget.js";
 import { offsetHandle } from "./face-offset-targets.js";
 
-/** Cavity creation owns a temporary preview; accepted originals stay untouched. */
+/** Erode owns a temporary preview; the document changes only on acceptance. */
 export class ErosionControls {
   private widget: ErosionWidget;
   private abort = new AbortController();
@@ -17,8 +17,9 @@ export class ErosionControls {
   private ids: string[] = [];
   private original: ModelingTarget[] = [];
   private axis: { center: Vector; normal: Vector } | null = null;
-  private thickness = 0;
+  private thickness = 1;
   private allowance = 0.1;
+  private keepOriginals = true;
   private valid = false;
   private invalid = false;
   private count: number | null = null;
@@ -34,6 +35,11 @@ export class ErosionControls {
       overlay,
       () => void this.finish(),
       () => void this.cancel(),
+      () => {
+        if (!this.begin()) return;
+        this.keepOriginals = !this.keepOriginals;
+        this.queue(this.thickness, this.allowance);
+      },
     );
     const options = { signal: this.abort.signal };
     this.drag = new AxialDrag(editor, this.widget.handle, this.abort.signal, {
@@ -41,7 +47,7 @@ export class ErosionControls {
       lease: () => this.lease,
       axis: () => this.axis,
       value: () => (Number.isFinite(this.thickness) ? this.thickness : 0),
-      queue: (value) => this.queue(value, this.allowance),
+      queue: (value) => this.queue(Math.max(0.001, value), this.allowance),
       focus: () => this.focus(),
     });
     this.widget.handle.addEventListener(
@@ -95,20 +101,22 @@ export class ErosionControls {
       { navigation: "when-released" },
     );
     if (!this.lease) return false;
-    this.thickness = 0;
     this.valid = this.invalid = false;
     this.count = null;
     this.latest = this.pending = null;
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
-    this.editor.notice = "Erode · Minimum thickness · Extra allowance simplifies cavity copies";
+    this.editor.notice = "Erode · Minimum thickness · Extra allowance simplifies the result";
+    this.queue(this.thickness, this.allowance);
     this.editor.refresh();
     return true;
   }
   private queue(thickness: number, allowance: number): void {
     if (
       this.lease?.phase !== "editing" ||
-      (thickness === this.latest?.thickness && allowance === this.latest?.allowance)
+      (thickness === this.latest?.thickness &&
+        allowance === this.latest?.allowance &&
+        this.keepOriginals === this.latest?.keepOriginals)
     )
       return;
     this.thickness = thickness;
@@ -117,7 +125,12 @@ export class ErosionControls {
     this.count = null;
     this.invalid =
       !Number.isFinite(thickness) || !Number.isFinite(allowance) || thickness < 0 || allowance < 0;
-    this.latest = this.pending = { ids: this.ids, thickness, allowance };
+    this.latest = this.pending = {
+      ids: this.ids,
+      thickness,
+      allowance,
+      keepOriginals: this.keepOriginals,
+    };
     if (!this.running) this.running = this.drain();
     this.editor.refresh();
   }
@@ -134,8 +147,7 @@ export class ErosionControls {
         this.valid = success;
         this.invalid = !success;
         this.showPreview(success && !zero);
-        if (success)
-          this.editor.notice = "Erode · Enter to accept cavity copies · Escape to cancel";
+        if (success) this.editor.notice = "Erode · Enter to accept · Escape to cancel";
       }
       this.editor.refresh();
     }
@@ -150,6 +162,10 @@ export class ErosionControls {
     }
     const accepted = new Set(this.editor.store.data.bodies?.map((body) => body.id));
     this.count = candidate.bodies?.filter((body) => !accepted.has(body.id)).length ?? 0;
+    if (!this.keepOriginals) {
+      this.lease?.show(candidate);
+      return;
+    }
     // Ghosting is presentation only; opacity is never stored as part of erosion.
     this.lease?.show({
       ...candidate,
@@ -180,13 +196,17 @@ export class ErosionControls {
       return false;
     }
     const copies = this.editor.store.data.bodies?.filter((body) => !accepted.has(body.id)) ?? [];
-    if (copies.length) {
+    if (copies.length && this.keepOriginals) {
       for (const id of this.ids) this.editor.visibility.hide(id);
       for (const body of copies) this.editor.visibility.show(body.id);
     }
     this.editor.modeling.targets = copies.length
       ? copies.map((body) => ({ kind: "body", body: body.id }))
-      : this.original;
+      : this.original.filter(
+          (target) =>
+            "body" in target &&
+            this.editor.store.data.bodies?.some((body) => body.id === target.body),
+        );
     this.end(lease);
     return true;
   }
@@ -206,6 +226,8 @@ export class ErosionControls {
     this.widget.thickness.blur();
     this.widget.allowance.blur();
     this.lease = null;
+    if (!Number.isFinite(this.thickness) || this.thickness <= 1e-5) this.thickness = 1;
+    if (!Number.isFinite(this.allowance) || this.allowance < 0) this.allowance = 0.1;
     this.editor.notice = "";
     lease.release();
     this.editor.refresh();
@@ -242,7 +264,7 @@ export class ErosionControls {
     this.widget.update(
       this.editor,
       this.axis,
-      { thickness: this.lease ? this.thickness : 0, allowance: this.allowance },
+      { thickness: this.thickness, allowance: this.allowance, keepOriginals: this.keepOriginals },
       !!this.lease,
       this.valid,
       !!this.lease && this.invalid,

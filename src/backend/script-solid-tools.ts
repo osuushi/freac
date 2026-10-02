@@ -42,7 +42,7 @@ function validate(document: SketchDocument, operation: Operation): void {
         "Boolean requires ordered distinct existing bodies and an explicit mode/keepOriginals",
       );
   } else if (operation.kind === "erode") {
-    const { ids, thickness, allowance } = operation.input;
+    const { ids, thickness, allowance, keepOriginals } = operation.input;
     if (
       !uniqueStrings(ids) ||
       !ids.length ||
@@ -50,7 +50,8 @@ function validate(document: SketchDocument, operation: Operation): void {
       !Number.isFinite(thickness) ||
       thickness <= 1e-5 ||
       !Number.isFinite(allowance) ||
-      allowance < 0
+      allowance < 0 ||
+      (keepOriginals !== undefined && typeof keepOriginals !== "boolean")
     )
       throw new Error(
         "Erode requires distinct existing bodies, positive thickness and nonnegative extra allowance",

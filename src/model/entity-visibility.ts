@@ -53,10 +53,11 @@ export class EntityVisibility {
     direction: "undo" | "redo",
   ): void {
     if (operation.kind === "erode") {
-      const { ids } = operation.parameters.operation as import("./body.js").BodyErosion;
+      const { ids, keepOriginals } = operation.parameters
+        .operation as import("./body.js").BodyErosion;
       for (const id of ids) {
         if (direction === "undo") this.show(id);
-        else this.hide(id);
+        else if (keepOriginals !== false) this.hide(id);
       }
     }
     const sweep =

@@ -62,7 +62,7 @@ std::vector<Cylinder> cylinders(const Operand& body) {
                 original.FirstVParameter() + (original.LastVParameter() - original.FirstVParameter()) * j / 16);
             GeomAPI_ProjectPointOnSurf projection(q, cylinder);
             if (!projection.IsDone() || !projection.NbPoints() || projection.LowerDistance() > conversionTolerance)
-                throw std::runtime_error("Shell could not verify a cylindrical spline support");
+                throw std::runtime_error("Solid preparation could not verify a cylindrical spline support");
         }
         result.push_back({face, cylinder, du.Crossed(dv).Dot(radial) < 0});
     }
@@ -89,7 +89,7 @@ std::vector<Curve> curves(const Operand& body) {
         if (!std::isfinite(newFirst) || !std::isfinite(newLast) || newLast <= newFirst ||
             spatial->Value(first).Distance(analytic->Value(newFirst)) > conversionTolerance ||
             spatial->Value(last).Distance(analytic->Value(newLast)) > conversionTolerance)
-            throw std::runtime_error("Shell could not verify analytic boundary endpoints");
+            throw std::runtime_error("Solid preparation could not verify analytic boundary endpoints");
         result.push_back({edge, analytic, newFirst, newLast});
     }
     return result;
@@ -136,11 +136,11 @@ public:
             first = converted->first;
             last = converted->last;
         }
-        if (spatial.IsNull()) throw std::runtime_error("Shell cannot reparameterize a degenerate spline boundary");
+        if (spatial.IsNull()) throw std::runtime_error("Solid preparation cannot reparameterize a degenerate spline boundary");
         tolerance = conversionTolerance;
         curve = GeomProjLib::Curve2d(spatial, first, last, surface, tolerance);
         if (curve.IsNull() || !std::isfinite(tolerance) || tolerance > conversionTolerance)
-            throw std::runtime_error("Shell could not project a cylindrical boundary precisely");
+            throw std::runtime_error("Solid preparation could not project a cylindrical boundary precisely");
         return true;
     }
     Standard_Boolean NewCurve(const TopoDS_Edge& edge, Handle(Geom_Curve)& curve,
@@ -169,31 +169,31 @@ public:
 };
 }
 namespace shell_tool {
-Operand canonical(const Operand& original) {
-    const auto source = offset_geometry::prepare(original, "Shell", nullptr, true);
+Operand canonical(const Operand& original, const char* context) {
+    const auto source = offset_geometry::prepare(original, context, nullptr, true);
     Handle(CylinderSupports) modification = new CylinderSupports(source);
     if (modification->empty()) return source;
-    offset_geometry::validSolid(source.shape, "Shell");
+    offset_geometry::validSolid(source.shape, context);
     BRepTools_Modifier modifier(false);
     modifier.Init(source.shape);
     modifier.Perform(modification);
-    if (!modifier.IsDone()) throw std::runtime_error("Shell could not prepare cylindrical spline surfaces");
+    if (!modifier.IsDone()) throw std::runtime_error("Solid preparation could not prepare cylindrical spline surfaces");
     Operand result{source.id, modifier.ModifiedShape(source.shape), {}};
     // Geometric projection alone does not preserve the old spline parameterization.
     BRepLib::SameParameter(result.shape, conversionTolerance, true);
-    offset_geometry::validSolid(result.shape, "Shell");
+    offset_geometry::validSolid(result.shape, context);
     TopTools_IndexedMapOfShape mapped;
     TopExp::MapShapes(result.shape, mapped);
     for (const auto& entity : source.entities) {
         const auto shape = modifier.ModifiedShape(entity.shape);
         const auto index = mapped.FindIndex(shape);
-        if (!index) throw std::runtime_error("Shell preparation lost a source entity");
+        if (!index) throw std::runtime_error("Solid preparation lost a source entity");
         // Modifier history has local orientations; take oriented entities from the solid.
         result.entities.push_back({entity.id, mapped(index)});
     }
     const double allowed = std::max(1e-9, volume(source.shape) * 1e-10);
     if (volume(subtract(source.shape, result.shape)) > allowed || volume(subtract(result.shape, source.shape)) > allowed)
-        throw std::runtime_error("Shell preparation changed the source solid");
+        throw std::runtime_error("Solid preparation changed the source solid");
     return result;
 }
 }

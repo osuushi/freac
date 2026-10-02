@@ -117,8 +117,10 @@ export interface BodyShell {
   thickness: number;
 }
 
-/** Independent cavity copies; the source bodies remain accepted and unchanged. */
+/** Whole-body erosion; resulting bodies have independent geometry identities. */
 export interface BodyErosion {
+  /** Retain inputs alongside new eroded bodies. Defaults to true. */
+  keepOriginals?: boolean;
   ids: string[];
   thickness: number;
   /** Maximum extra erosion, shared by simplification and reconstruction, in mm. */

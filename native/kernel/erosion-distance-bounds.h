@@ -15,6 +15,8 @@ public:
     ~BoundaryDistance();
     bool exact() const;
     double lower(const gp_Pnt&) const;
+    double upper(const gp_Pnt&, double limit = -1) const;
     double upper(const std::array<gp_Pnt, 8>&) const;
+    bool crosses(const std::array<gp_Pnt, 8>&) const;
 };
 }
