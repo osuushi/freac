@@ -11,8 +11,8 @@ import type { Point } from "./planes.js";
 import { distance, dot, subtract } from "./point-math.js";
 import { multiply, roots, sum } from "./polynomial.js";
 
-export function bezierIntersections(a: Bezier, b: Curve): Point[] {
-  if (b.kind === "bezier") return pairIntersections(a, b);
+export function bezierIntersections(a: Bezier, b: Curve, includeOverlapEnds = true): Point[] {
+  if (b.kind === "bezier") return pairIntersections(a, b, includeOverlapEnds);
   const x = bezierPowers(a, "x"),
     y = bezierPowers(a, "y");
   if (b.kind === "segment") {
@@ -68,14 +68,14 @@ function overlap(a: Bezier, b: Bezier): Point[] | null {
     ? [first.p, last.p]
     : null;
 }
-function pairIntersections(a: Bezier, b: Bezier): Point[] {
+function pairIntersections(a: Bezier, b: Bezier, includeOverlapEnds: boolean): Point[] {
   if (
     [a.a, a.c1, a.c2, a.b].every((p, i) => distance(p, [b.a, b.c1, b.c2, b.b][i]) < 1e-9) ||
     [a.a, a.c1, a.c2, a.b].every((p, i) => distance(p, [b.b, b.c2, b.c1, b.a][i]) < 1e-9)
   )
-    return [a.a, a.b];
+    return includeOverlapEnds ? [a.a, a.b] : [];
   const shared = overlap(a, b);
-  if (shared) return shared;
+  if (shared) return includeOverlapEnds ? shared : [];
   const points: Point[] = [];
   let visits = 0;
   const visit = (a: Bezier, b: Bezier, depth: number) => {

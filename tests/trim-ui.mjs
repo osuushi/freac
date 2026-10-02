@@ -10,6 +10,7 @@ import { trimCancellationRoute } from "./ui-trim-cancel.mjs";
 import { trimConstraintRoute } from "./ui-trim-constraints.mjs";
 import { trimCornerLinkRoute } from "./ui-trim-links.mjs";
 import { trimOverlapRoute } from "./ui-trim-overlap.mjs";
+import { trimShiftRoute } from "./ui-trim-shift.mjs";
 
 await mkdir(".cache/sketch-review", { recursive: true });
 const [name] = runtimeNames(["chromium", "webkit", "electron"], ["chromium"]);
@@ -33,6 +34,7 @@ try {
   page.on("pageerror", (error) => {
     throw error;
   });
+  await trimShiftRoute(page, name);
   await trimOverlapRoute(page, name);
   await trimCornerLinkRoute(page, name);
   await trimLineRoute(page, name);

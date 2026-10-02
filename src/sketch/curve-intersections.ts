@@ -39,9 +39,9 @@ function circleCircle(a: Circle, b: Circle): Point[] {
     ? [foot]
     : [add(foot, scale(normal, height)), add(foot, scale(normal, -height))];
 }
-export function curveIntersections(a: Curve, b: Curve): Point[] {
-  if (a.kind === "bezier") return bezierIntersections(a, b);
-  if (b.kind === "bezier") return bezierIntersections(b, a);
+export function curveIntersections(a: Curve, b: Curve, includeOverlapEnds = true): Point[] {
+  if (a.kind === "bezier") return bezierIntersections(a, b, includeOverlapEnds);
+  if (b.kind === "bezier") return bezierIntersections(b, a, includeOverlapEnds);
   const first = a.kind === "arc" ? arcCircle(a) : a,
     second = b.kind === "arc" ? arcCircle(b) : b;
   return intersections(first, second).filter(
