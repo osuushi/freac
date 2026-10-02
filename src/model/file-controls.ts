@@ -4,6 +4,7 @@ import { BrowserArchive, downloadArchive } from "./browser-archive.js";
 import { captureCamera, restoreCamera } from "./camera-state.js";
 import { documentArchive } from "./document-archive.js";
 import { exportControls } from "./export-controls.js";
+import { fileShortcuts } from "./file-shortcuts.js";
 import { nativeFileControls } from "./native-file-controls.js";
 import type { PortableFiles } from "./portable-files.js";
 
@@ -44,10 +45,13 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
     });
   const reason = () => idleReason(editor);
   const catalog = toolCatalog(editor);
+  const disposeShortcuts = fileShortcuts(editor, ["new", "open", "save"]);
   const disposers = [
     catalog.register({
       id: "save",
       label: "Save document",
+      showInTools: false,
+      shortcut: "⌘S",
       category: "Document & Edit",
       reason,
       run: save,
@@ -55,6 +59,8 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
     catalog.register({
       id: "open",
       label: "Open document",
+      showInTools: false,
+      shortcut: "⌘O",
       category: "Document & Edit",
       reason,
       run: () => input.click(),
@@ -62,6 +68,8 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
     catalog.register({
       id: "new",
       label: "New document",
+      showInTools: false,
+      shortcut: "⌘N",
       category: "Document & Edit",
       reason,
       run: () => {
@@ -75,6 +83,7 @@ export function fileControls(editor: SketchEditor, container: HTMLElement): () =
   ];
   return () => {
     codec.dispose();
+    disposeShortcuts();
     disposeExport();
     for (const dispose of disposers) dispose();
     input.remove();

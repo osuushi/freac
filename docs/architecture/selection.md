@@ -16,7 +16,8 @@ founder feedback update these contracts before further tools depend on them.
   Command/Ctrl-Shift-A selects all visible bodies; Command/Ctrl-Alt-A selects all
   visible whole sketches. These typed variants leave the planar workspace for
   Modeling. All three replace selection, respect individual hiding, isolation and
-  global body visibility, and appear in Tools under Select. Reference planes keep
+  global body visibility. Ordinary Select All stays with File/Edit and keyboard
+  commands; the body/sketch variants appear in Tools under Select. Reference planes keep
   their separate single-reference selection. Text fields, tool search and the agent
   retain their own selection keys; active edits must finish or cancel first.
 

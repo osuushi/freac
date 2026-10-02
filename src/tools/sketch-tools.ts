@@ -34,6 +34,7 @@ export function sketchTools(editor: SketchEditor): () => void {
       catalog.register({
         id,
         label: id === "undo" ? "Undo" : "Redo",
+        showInTools: false,
         category: "Document & Edit",
         shortcut: id === "undo" ? "⌘Z" : "⇧⌘Z",
         allowBusy: false,

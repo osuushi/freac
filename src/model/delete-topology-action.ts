@@ -10,6 +10,7 @@ export class DeleteTopologyAction {
     this.disposeTool = toolCatalog(editor).register({
       id: "delete",
       label: "Delete",
+      showInTools: false,
       category: "Document & Edit",
       shortcut: "⌫",
       aliases: ["remove geometry"],

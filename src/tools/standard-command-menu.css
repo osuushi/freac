@@ -1,0 +1,13 @@
+.standard-command-selector > button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+@media (max-width: 700px) {
+  header:has(.standard-command-selector) {
+    left: 12px;
+    gap: 12px;
+  }
+}

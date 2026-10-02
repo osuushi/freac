@@ -20,6 +20,70 @@ test("canonical, aliases, prefixes, typos and abbreviations find tools", () => {
     assert.equal(searchTools([shell], query)[0]?.tool.id, "shell", query);
   assert.equal(searchTools([tool("rectangle", "Rectangle")], "recatngle")[0]?.tool.id, "rectangle");
 });
+test("sparse ordered subsequences match names, aliases and related terms across words", () => {
+  const plane = tool("plane", "Construction plane", { aliases: ["reference plane"] });
+  for (const query of ["cstr", "cnpl", "cp", "cstr pl", "rfpl", "CŚTR"])
+    assert.equal(searchTools([plane], query)[0]?.tool.id, "plane", query);
+  assert.equal(
+    searchTools([tool("extrude", "Extrude", { related: ["twist extrusion"] })], "twex")[0]
+      ?.explanation,
+    "Related: twist extrusion",
+  );
+  for (const query of ["rcst", "cstr banana", "z", "n"])
+    assert.deepEqual(searchTools([plane], query), [], query);
+});
+test("compact subsequences rank ahead of matches with larger gaps", () => {
+  assert.deepEqual(
+    searchTools([tool("sparse", "A construction ruler"), tool("compact", "Cstir")], "cstr").map(
+      (result) => result.tool.id,
+    ),
+    ["compact", "sparse"],
+  );
+});
+test("literal prefixes precede word prefixes, anchored fuzzy, internal fuzzy and typos", () => {
+  const tools = [
+    tool("internal", "Abcstrx"),
+    tool("typo", "Csxr"),
+    tool("anchored", "Construction plane"),
+    tool("word", "X cstr"),
+    tool("prefix", "Cstr value"),
+  ];
+  for (const entries of [tools, [...tools].reverse()])
+    assert.deepEqual(
+      searchTools(entries, "cstr").map((result) => result.tool.id),
+      ["prefix", "word", "anchored", "internal", "typo"],
+    );
+});
+test("word segmentation improves cope over cole for Construction plane", () => {
+  const plane = tool("plane", "Construction plane");
+  const cope = searchTools([plane], "cope")[0],
+    cole = searchTools([plane], "cole")[0];
+  assert.equal(cope.tier, cole.tier);
+  assert.ok(cope.score < cole.score);
+  assert.deepEqual(
+    searchTools([tool("flat", "Coralpe"), tool("words", "Coral pe")], "cope").map(
+      (result) => result.tool.id,
+    ),
+    ["words", "flat"],
+  );
+});
+test("scoring considers later alignments instead of greedily taking the first letter", () => {
+  assert.deepEqual(
+    searchTools([tool("early", "A pbl"), tool("later", "A pb plane")], "apl").map(
+      (result) => result.tool.id,
+    ),
+    ["later", "early"],
+  );
+});
+test("long gaps cannot move anchored fuzzy matches ahead of prefixes or behind internal matches", () => {
+  assert.deepEqual(
+    searchTools(
+      [tool("internal", "Xap"), tool("anchored", `A${"x".repeat(200)}p`), tool("prefix", "Apathy")],
+      "ap",
+    ).map((result) => result.tool.id),
+    ["prefix", "anchored", "internal"],
+  );
+});
 test("availability dominates even an exact disabled name", () => {
   const results = searchTools(
     [

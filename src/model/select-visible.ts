@@ -35,6 +35,7 @@ export function selectVisibleTools(editor: SketchEditor): () => void {
       shortcut,
       aliases,
       category: "Select",
+      showInTools: scope !== "entities",
       description:
         scope === "entities"
           ? "Select visible bodies and sketches, or all curves in the active sketch"

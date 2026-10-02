@@ -61,7 +61,7 @@ The former panel actions are registered under these homes:
 | Reference | Construction plane, Project |
 | Select | Select, existing selection refinements, Clear selection |
 | View | Cross section, existing visibility controls, Grid snap, return to Modeling |
-| Document & Edit | New, Open, Save, Export STL/3MF, Undo, Redo, Delete, Clear sketch |
+| Document & Edit | Export STL/3MF, Clear sketch |
 
 Capture fixture remains available in production under Development. Its result offers
 a draggable file, download, reveal and copy-path actions. Essential compact file/history
@@ -69,6 +69,14 @@ access may remain in the header; do not replace the panel with another expanded
 strip. Local constraint controls remain usable; searchable entries invoke the same
 actions. Catalog names must reflect implemented capabilities. Deferred features
 are not advertised as disabled tools.
+
+Standard file/edit actions stay out of Tools search and category browsing: Undo,
+Redo, New, Open, Save, Save As, Close, Delete and Select All. Their ordinary keyboard shortcuts
+and desktop File/Edit menus remain available. The browser's **freac** header button
+opens File/Edit for pointer/touch access; the usual New/Open/Save shortcuts also work. CAD-specific
+tools keep their shortcuts and searchable entries. Command registration and
+availability guards are shared across these entry points; hiding a command from
+Tools does not remove its action.
 
 ## Search contract
 
@@ -79,13 +87,30 @@ terms; no network/AI dependency. Examples: **thickness**, **hollow** → Shell;
 twist,” without inventing tools. Disambiguate sketch/body variants by context.
 
 Normalize case, accents, whitespace and punctuation. Support word prefixes,
-subsequences and small typing errors. Require meaningful query coverage so a weak
-shared letter does not return the entire catalog. Rank lexicographically:
+ordered subsequences across words and small typing errors. Every query token must
+match; subsequences require at least two characters, with no word-density cutoff.
+For example, **cstr** and **cp** find Construction plane;
+single-character queries only match word prefixes. Rank lexicographically:
 
 1. Available before disabled, even when the disabled match is exact.
-2. Within each group: exact canonical name, exact alias, prefix/token match,
-   fuzzy name/alias match, then related-term match; match quality breaks tier ties.
-3. Stable canonical-name/ID tie break, without usage-history reshuffling.
+2. Within each group: exact canonical name, exact alias, literal name/alias prefix,
+   word-prefix match, fuzzy match anchored at the name/alias start, other fuzzy match,
+   small typing error, then related-term match.
+3. Within a fuzzy tier, reward word starts (especially the first query character)
+   and consecutive characters; penalize gap openings and length. Score the best
+   alignment rather than the first possible alignment. **cope** matches Construction
+   plane better than **cole** because **p** begins its second word. Quality cannot
+   override the preceding tiers. Related terms use the same matching quality.
+4. Stable canonical-name/ID tie break, without usage-history reshuffling.
+
+Source observation: fzf's [scoring criteria and constants](https://github.com/junegunn/fzf/blob/ccedd064ca56921a4235219516b3d834f60e7b91/src/algo/algo.go#L40-L155)
+reward word boundaries and consecutive chunks, penalize gaps, and give the first
+character extra boundary weight. [FuzzyMatchV2](https://github.com/junegunn/fzf/blob/ccedd064ca56921a4235219516b3d834f60e7b91/src/algo/algo.go#L428)
+searches for the best score. Freac adopts these principles with its own normalized
+word vocabulary, scoring implementation and explicit prefix tiers; it does not
+promise identical fzf ordering. The reference is MIT licensed; no upstream source
+was copied. Ranking examples and menu activation are verified by Freac's search
+and UI tests.
 
 An “Unavailable in this context” divider separates the groups. Alias matches may
 explain “Also called thickness.” Search never changes operation eligibility or

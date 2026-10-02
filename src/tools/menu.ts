@@ -105,6 +105,8 @@ export class ToolMenu {
   }
   private open(): void {
     if (this.editor.isDragging || toolMenuOpen()) return;
+    for (const menu of document.querySelectorAll<HTMLElement>(".control-menu:popover-open"))
+      menu.hidePopover();
     borrowToolFocus();
     this.category = null;
     this.input.value = "";
@@ -163,7 +165,9 @@ export class ToolMenu {
     if (toolMenuOpen()) this.render(false);
   };
   private render(reset: boolean): void {
-    const tools = toolCatalog(this.editor).results();
+    const tools = toolCatalog(this.editor)
+      .results()
+      .filter((tool) => tool.showInTools !== false);
     const query = this.input.value;
     const signature = JSON.stringify([
       query,

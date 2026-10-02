@@ -19,7 +19,13 @@ export function runtimeNames(allowed = ["chromium", "webkit", "electron"], defau
 /** Own the server, browser/app, isolated Electron profile and page for each route. */
 export async function withUiRuntimes(
   route,
-  { allowed, defaults, viewport = { width: 1280, height: 850 }, timeout = 12000 } = {},
+  {
+    allowed,
+    defaults,
+    viewport = { width: 1280, height: 850 },
+    timeout = 12000,
+    hasTouch = false,
+  } = {},
 ) {
   const names = runtimeNames(allowed, defaults);
   await mkdir(".cache/sketch-review", { recursive: true });
@@ -49,7 +55,7 @@ export async function withUiRuntimes(
           );
         } else {
           browser = await { chromium, webkit }[name].launch({ headless: true });
-          page = await browser.newPage({ viewport });
+          page = await browser.newPage({ viewport, hasTouch });
           await page.goto(server.resolvedUrls.local[0]);
         }
         page.setDefaultTimeout(timeout);
