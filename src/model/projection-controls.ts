@@ -1,7 +1,7 @@
 import type { InteractionLease } from "../sketch/active-interaction.js";
-import type { Sketch } from "../sketch/document.js";
+import { newId, type Sketch } from "../sketch/document.js";
 import type { SketchEditor } from "../sketch/editor.js";
-import type { PlaneFrame } from "../sketch/planes.js";
+import { coplanar, type PlaneFrame } from "../sketch/planes.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import type { EntityViewer } from "./entity-viewer.js";
 import type { PlaneReferencePicker } from "./plane-reference-picker.js";
@@ -78,9 +78,7 @@ export class ProjectionControls {
       navigation: "when-released",
     });
     if (!this.lease) return;
-    this.target = e.world.activeFrame
-      ? { frame: e.world.activeFrame, sketchId: e.sketch?.id ?? e.world.workspace?.sketchId }
-      : null;
+    this.target = e.world.activeFrame ? this.destination(e.world.activeFrame, e.sketch?.id) : null;
     e.message = "";
     this.direction = "target-normal";
     this.entities.sourcePicker = {
@@ -103,7 +101,7 @@ export class ProjectionControls {
     this.picker.start(
       (frame) => {
         if (this.editor.blocked || this.lease?.phase !== "editing") return;
-        this.target = { frame };
+        this.target = this.destination(frame);
         this.hover = null;
         this.view.show(this.sources, null);
         this.editor.message = "";
@@ -116,6 +114,17 @@ export class ProjectionControls {
       },
       (event) => !event.shiftKey,
     );
+  }
+  private destination(
+    frame: PlaneFrame,
+    sketchId?: string,
+  ): { frame: PlaneFrame; sketchId: string } {
+    const e = this.editor;
+    const visible = e.store.data.sketches.find(
+      (sketch) => e.visibility.visible(sketch.id) && coplanar(sketch.plane, frame),
+    );
+    // An explicit new ID prevents the backend from reusing a hidden coplanar sketch.
+    return { frame, sketchId: sketchId ?? visible?.id ?? newId() };
   }
   private toggle(source: ProjectionSource): void {
     const e = this.editor;
