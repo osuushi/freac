@@ -23,8 +23,11 @@ follows the pointer and camera scale. Every finite trim span touched by the disk
 is highlighted in full, including coincident portions removed by the rewrite.
 Option-click accepts those spans; Option-drag accumulates the swept disk's targets
 from the original sketch and accepts them together on release, in one Undo step.
-A stroke keeps its brush mode until release if Option is released early. Shift
-retains the intersection-only and degree-two chain policy alongside Option.
+A stroke keeps its brush mode until release if Option is released early. Holding
+Option and Shift together applies the brush to every touched intersection-bounded
+span and follows each unambiguous degree-two chain, stopping at crossings,
+branches and open ends. Shift changes refresh a stationary brush preview while
+Option continues to show its circle and diameter controls.
 Escape (including with Option held), focus loss and lost pointer capture discard
 a held stroke. Accepted geometry stays unchanged until release and validation;
 brush diameter is tool UI state, independent of document Undo. Batch targets are

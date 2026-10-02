@@ -13,6 +13,7 @@ import {
   trimBrushStrokeRoute,
 } from "./ui-trim-brush.mjs";
 import { trimBrushCurveRoute } from "./ui-trim-brush-curves.mjs";
+import { trimBrushShiftBoundaryRoute, trimBrushShiftOverlapRoute } from "./ui-trim-brush-shift.mjs";
 import { trimCancellationRoute } from "./ui-trim-cancel.mjs";
 import { trimConstraintRoute } from "./ui-trim-constraints.mjs";
 import { trimCornerLinkRoute } from "./ui-trim-links.mjs";
@@ -45,6 +46,8 @@ try {
   await trimBrushStrokeRoute(page, name);
   await trimBrushCancellationRoute(page, name);
   await trimBrushShiftRoute(page, name);
+  await trimBrushShiftBoundaryRoute(page, name);
+  await trimBrushShiftOverlapRoute(page, name);
   await trimBrushCurveRoute(page, name);
   await trimShiftRoute(page, name);
   await trimOverlapRoute(page, name);
