@@ -1,10 +1,10 @@
 import type { SketchEditor } from "../sketch/editor.js";
-import { onModelKeydown } from "../sketch/model-keys.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
 import { toolMenuOpen } from "../tools/menu-focus.js";
 import { captureCamera, restoreCamera } from "./camera-state.js";
 import type { DocumentCommand, DocumentHost, DocumentStatus } from "./document-host.js";
 import { exportControls } from "./export-controls.js";
+import { fileShortcuts } from "./file-shortcuts.js";
 
 export function nativeFileControls(editor: SketchEditor, host: DocumentHost): () => void {
   const title = document.createElement("span");
@@ -21,29 +21,7 @@ export function nativeFileControls(editor: SketchEditor, host: DocumentHost): ()
     }
   };
   const run = (command: DocumentCommand) => runDocumentCommand(editor, host, command);
-  const abort = new AbortController();
-  onModelKeydown(
-    (event) => {
-      if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
-      const key = event.key.toLowerCase();
-      const command =
-        key === "n"
-          ? "new"
-          : key === "o"
-            ? "open"
-            : key === "s"
-              ? event.shiftKey
-                ? "save-as"
-                : "save"
-              : key === "w"
-                ? "close"
-                : null;
-      if (!command) return;
-      event.preventDefault();
-      void toolCatalog(editor).invoke(command);
-    },
-    { signal: abort.signal },
-  );
+  const disposeShortcuts = fileShortcuts(editor, ["new", "open", "save", "save-as", "close"]);
   const disposers = (["new", "open", "save", "save-as", "close"] as const).map((command) =>
     toolCatalog(editor).register({
       id: command,
@@ -55,6 +33,7 @@ export function nativeFileControls(editor: SketchEditor, host: DocumentHost): ()
         close: "Close document",
       }[command],
       category: "Document & Edit",
+      showInTools: false,
       reason: () => (command === "close" ? null : idleReason(editor)),
       run: () => run(command),
     }),
@@ -76,7 +55,7 @@ export function nativeFileControls(editor: SketchEditor, host: DocumentHost): ()
   editor.world.changed.add(update);
   update();
   return () => {
-    abort.abort();
+    disposeShortcuts();
     disposeExport();
     disposeCommands();
     disposeStatus();

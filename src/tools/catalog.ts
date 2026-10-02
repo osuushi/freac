@@ -8,7 +8,7 @@ export const categories = [
   ["Reference", "Construction planes and projection"],
   ["Select", "Select and refine geometry"],
   ["View", "Visibility, grid and workspace"],
-  ["Document & Edit", "Files, export, history and deletion"],
+  ["Document & Edit", "Export and sketch cleanup"],
   ["Development", "Capture diagnostic fixtures"],
 ] as const;
 export type Category = (typeof categories)[number][0];
@@ -23,6 +23,7 @@ export interface ToolDefinition {
   reason: () => string | null;
   run: () => unknown;
   allowBusy?: boolean;
+  showInTools?: boolean;
 }
 export interface ToolResult extends ToolDefinition {
   unavailable: string | null;

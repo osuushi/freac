@@ -61,7 +61,7 @@ The former panel actions are registered under these homes:
 | Reference | Construction plane, Project |
 | Select | Select, existing selection refinements, Clear selection |
 | View | Cross section, existing visibility controls, Grid snap, return to Modeling |
-| Document & Edit | New, Open, Save, Export STL/3MF, Undo, Redo, Delete, Clear sketch |
+| Document & Edit | Export STL/3MF, Clear sketch |
 
 Capture fixture remains available in production under Development. Its result offers
 a draggable file, download, reveal and copy-path actions. Essential compact file/history
@@ -69,6 +69,14 @@ access may remain in the header; do not replace the panel with another expanded
 strip. Local constraint controls remain usable; searchable entries invoke the same
 actions. Catalog names must reflect implemented capabilities. Deferred features
 are not advertised as disabled tools.
+
+Standard file/edit actions stay out of Tools search and category browsing: Undo,
+Redo, New, Open, Save, Save As, Close and Delete. Their ordinary keyboard shortcuts
+and desktop File/Edit menus remain available. The browser's **freac** header button
+opens File/Edit for pointer/touch access; the usual New/Open/Save shortcuts also work. CAD-specific
+tools keep their shortcuts and searchable entries. Command registration and
+availability guards are shared across these entry points; hiding a command from
+Tools does not remove its action.
 
 ## Search contract
 

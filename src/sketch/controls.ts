@@ -2,6 +2,7 @@ import { fileControls } from "../model/file-controls.js";
 import { fixtureControls } from "../model/fixture-controls.js";
 import { toolCatalog } from "../tools/catalog.js";
 import { sketchTools } from "../tools/sketch-tools.js";
+import { StandardCommandMenu } from "../tools/standard-command-menu.js";
 import type { SketchEditor } from "./editor.js";
 import { onModelKeydown } from "./model-keys.js";
 import type { NumericEdit } from "./numeric-edit.js";
@@ -17,6 +18,7 @@ export function installControls(
   const disposeFixtures =
     import.meta.env.DEV || window.freacFixture ? fixtureControls(editor, app) : () => {};
   const abort = installShortcuts(editor, numeric, app);
+  const standardMenu = new StandardCommandMenu(editor);
   window.addEventListener(
     "blur",
     () => {
@@ -26,6 +28,7 @@ export function installControls(
   );
   return () => {
     abort.abort();
+    standardMenu.dispose();
     disposeTools();
     disposeFiles();
     disposeFixtures();

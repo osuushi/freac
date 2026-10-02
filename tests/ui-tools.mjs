@@ -1,5 +1,27 @@
-/** Invoke through the real searchable tool UI, never a controller or hidden button. */
+const standardShortcuts = {
+  undo: "Meta+z",
+  redo: "Meta+Shift+z",
+  new: "Meta+n",
+  open: "Meta+o",
+  save: "Meta+s",
+  "save-as": "Meta+Shift+s",
+  close: "Meta+w",
+  delete: "Delete",
+};
+
+/** Invoke real Tools entries or ordinary standard shortcuts, never a hidden edit path. */
 export async function chooseTool(page, query, id) {
+  if (standardShortcuts[id]) {
+    if (await page.getByRole("dialog", { name: "Find a tool" }).isVisible())
+      await page.keyboard.press("Escape");
+    // Leave text editing so Undo/Delete apply to geometry, including committed modal parameters.
+    const trigger = page.getByRole("button", { name: "Tools", exact: true });
+    await trigger.focus();
+    await page.waitForFunction(() => !window.freacInspect().busy);
+    await trigger.press(standardShortcuts[id]);
+    await page.waitForFunction(() => !window.freacInspect().busy);
+    return;
+  }
   await openTools(page);
   await page.getByRole("combobox", { name: "Find a tool" }).fill(query);
   const row = page.locator(`[data-command="${id}"]`);
@@ -19,8 +41,13 @@ export async function browseTools(page, category) {
 export async function toolEnabled(page, query, id) {
   await openTools(page);
   await page.getByRole("combobox", { name: "Find a tool" }).fill(query);
-  const enabled =
-    (await page.locator(`[data-command="${id}"]`).getAttribute("aria-disabled")) === "false";
+  const enabled = standardShortcuts[id]
+    ? await page.evaluate(
+        (id) =>
+          window.freacInspect().commands.find((command) => command.id === id)?.unavailable === null,
+        id,
+      )
+    : (await page.locator(`[data-command="${id}"]`).getAttribute("aria-disabled")) === "false";
   await page.keyboard.press("Escape");
   return enabled;
 }

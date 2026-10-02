@@ -112,6 +112,13 @@ export async function menuTouchRoute(page, name) {
     assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= 390 && bounds.y + bounds.height <= 720);
     await page.screenshot({ path: `.cache/sketch-review/${name}-menu-touch.png` });
     await page.keyboard.press("Escape");
+    await page.getByRole("button", { name: "File / Edit", exact: true }).tap();
+    const fileMenu = page.getByRole("menu", { name: "File and edit" });
+    const fileBounds = await fileMenu.boundingBox();
+    assert.ok(fileBounds.x >= 0 && fileBounds.x + fileBounds.width <= 390);
+    await page.screenshot({ path: `.cache/sketch-review/${name}-file-menu-touch.png` });
+    await fileMenu.locator('[data-command="new"]').tap();
+    assert.equal((await inspect(page)).document.sketches.length, 0);
   } finally {
     await page.setViewportSize({ width: 1280, height: 850 });
   }

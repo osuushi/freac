@@ -1,6 +1,7 @@
 import { decoratorPreviewLayer } from "../decorators/preview-compositor.js";
 import { inspectBodyRendering } from "../model/body-render-inspection.js";
 import type { SectionControls } from "../model/section-controls.js";
+import { toolCatalog } from "../tools/catalog.js";
 import type { SketchEditor } from "./editor.js";
 import { inspectPlaneTargets } from "./plane-target-inspection.js";
 import { selectionFrame } from "./selection-frame.js";
@@ -42,6 +43,9 @@ export function installViewInspection(editor: SketchEditor, sections: SectionCon
         sketch = editor.sketch;
       return structuredClone({
         document: editor.store.data,
+        commands: toolCatalog(editor)
+          .results()
+          .map(({ id, unavailable }) => ({ id, unavailable })),
         busy: editor.blocked,
         solving: editor.store.working,
         solver: editor.store.statistics,
