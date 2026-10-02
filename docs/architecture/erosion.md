@@ -12,8 +12,11 @@ There is no saved distance field or erosion feature recipe.
 Select complete bodies and choose Erode from Tools. The local widget provides
 Minimum thickness, Extra thickness allowance, and Keep originals, plus an inward drag handle.
 Entering Erode starts a preview immediately. Each new operation starts with 1 mm
-minimum thickness, 0.1 mm allowance and Keep originals enabled; values belong to
+minimum thickness, 50% extra allowance and Keep originals enabled; values belong to
 that operation and are not remembered for another selection or invocation.
+The allowance is a percentage of minimum thickness and stays fixed while typing
+or dragging thickness: 4 mm at 50% allows 2 mm extra thickness. The renderer
+converts it to millimeters for the existing geometry API.
 Inward dragging clamps at a positive 0.001 mm.
 Drag release retains the temporary preview. Enter, the check button, or completing
 by switching tools accepts; Escape or either cancel button interrupts native work,
@@ -86,7 +89,8 @@ Cells with the largest unresolved clearance are checked first. A coverage-limit
 failure stops repeated construction attempts rather than spending the same limit
 again on similar proposals. When a minimum-thickness-valid candidate supplies a
 finite bound on its remaining uncovered regions, the failure includes a rounded,
-slightly conservative allowance suggestion. The local **Try … mm allowance** button
+conservative allowance suggestion with 32% headroom before rounding upward.
+The local **Try …% allowance** button
 changes only the allowance and recalculates through the normal validation path.
 It is guidance, not automatic acceptance or a guarantee for every selected body;
 unsupported construction/precision failures may have no useful suggestion.

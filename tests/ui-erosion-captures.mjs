@@ -24,7 +24,7 @@ export async function erosionCapturesRoute(page, runtime) {
     await chooseTool(page, "erode", "erode");
     await page
       .getByRole("textbox", { name: "Extra thickness allowance", exact: true })
-      .fill(String(fixture.operation.allowance));
+      .fill(String((fixture.operation.allowance / fixture.operation.thickness) * 100));
     await page
       .getByRole("textbox", { name: "Minimum thickness", exact: true })
       .fill(String(fixture.operation.thickness));

@@ -53,7 +53,7 @@ await withUiRuntimes(
         .fill(String(entry.thickness));
       await page
         .getByRole("textbox", { name: "Extra thickness allowance", exact: true })
-        .fill(String(entry.allowance));
+        .fill(String((entry.allowance / entry.thickness) * 100));
       let state = await inspect(page);
       assert.ok(state.preview, `${entry.name}: Erode must produce a preview`);
       assert.equal(state.preview.bodies.length, 2);

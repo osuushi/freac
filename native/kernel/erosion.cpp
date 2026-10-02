@@ -53,7 +53,8 @@ TopoDS_Shape cavity(const Operand& original, double thickness, double allowance)
                 if (std::isfinite(e.requiredDepth) && e.requiredDepth > thickness + allowance) {
                     const double needed = std::max(e.requiredDepth-thickness, allowance*1.25);
                     const double step = std::pow(10, std::floor(std::log10(needed))-1);
-                    suggestion = std::min(suggestion, std::ceil(needed*1.1/step)*step);
+                    // Add 20% to the previous 10% headroom to reduce retry cycles.
+                    suggestion = std::min(suggestion, std::ceil(needed*1.32/step)*step);
                 }
                 // A verified minimum-thickness candidate already exists. Repeating
                 // the same expensive coverage failure does not improve feedback.

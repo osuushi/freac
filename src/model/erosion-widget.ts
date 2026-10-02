@@ -38,7 +38,8 @@ export class ErosionWidget {
     this.field(
       this.allowance,
       "Extra thickness allowance",
-      "Extra thickness allowed to simplify the resulting body",
+      "Extra thickness as a percentage of minimum thickness",
+      "%",
     );
     this.description.className = "erosion-status";
     this.description.setAttribute("role", "status");
@@ -51,7 +52,7 @@ export class ErosionWidget {
     this.root.hidden = true;
     overlay.append(this.root);
   }
-  private field(input: HTMLInputElement, name: string, title: string): void {
+  private field(input: HTMLInputElement, name: string, title: string, unit = "mm"): void {
     input.type = "text";
     input.inputMode = "decimal";
     input.setAttribute("aria-label", name);
@@ -59,12 +60,14 @@ export class ErosionWidget {
     const label = document.createElement("small");
     label.textContent = name;
     label.className = "erosion-field-label";
-    this.panel.append(label, distanceField(input));
+    const field = distanceField(input);
+    field.querySelector("span")?.replaceChildren(unit);
+    this.panel.append(label, field);
   }
   update(
     editor: SketchEditor,
     axis: { center: Vector; normal: Vector },
-    values: { thickness: number; allowance: number; keepOriginals: boolean },
+    values: { thickness: number; allowancePercent: number; keepOriginals: boolean },
     active: boolean,
     valid: boolean,
     invalid: boolean,
@@ -83,7 +86,7 @@ export class ErosionWidget {
     );
     for (const [input, value] of [
       [this.thickness, values.thickness],
-      [this.allowance, values.allowance],
+      [this.allowance, values.allowancePercent],
     ] as const) {
       if (!numericFocus(input))
         input.value = Number.isFinite(value) ? String(Number(value.toPrecision(4))) : "";
@@ -98,8 +101,7 @@ export class ErosionWidget {
           : `${count} result ${count === 1 ? "body" : "bodies"}`;
     this.suggestion.hidden = suggestion === null;
     this.suggestion.disabled = editor.blocked;
-    this.suggestion.textContent =
-      suggestion === null ? "" : `Try ${Number(suggestion.toPrecision(4))} mm allowance`;
+    this.suggestion.textContent = suggestion === null ? "" : `Try ${suggestion}% allowance`;
     this.suggestion.title =
       "Suggested from the remaining interior regions; minimum thickness stays unchanged";
     this.keep.setAttribute("aria-pressed", String(values.keepOriginals));

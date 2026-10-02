@@ -21,7 +21,7 @@ async function enter(page) {
     return state.interaction?.kind === "erode" && state.busy;
   });
   assert.equal(await thickness(page).inputValue(), "1");
-  assert.equal(await allowance(page).inputValue(), "0.1");
+  assert.equal(await allowance(page).inputValue(), "50");
   assert.equal(
     await page
       .getByRole("button", { name: "Keep originals", exact: true })
@@ -61,6 +61,8 @@ async function cancellation(page, original) {
 async function suggestedAllowance(page, name, original) {
   await enter(page);
   await thickness(page).fill("4");
+  assert.equal(await allowance(page).inputValue(), "50", "Thickness edits retain the percentage");
+  await allowance(page).fill("2.5"); // 0.1 mm extra at 4 mm minimum.
   const started = performance.now();
   let state = await inspect(page);
   assert.ok(performance.now() - started < 15000, "Failure does not repeat slow coverage attempts");
@@ -70,8 +72,8 @@ async function suggestedAllowance(page, name, original) {
   assert.ok(await suggest.isVisible());
   assert.match(await page.locator(".erosion-status").textContent(), /allowance/i);
   assert.equal(await page.locator(".local-feedback").isVisible(), false);
-  const value = Number((await suggest.textContent()).match(/Try ([\d.]+) mm/)[1]);
-  assert.ok(value > 0.1 && value <= 1, "Suggestion is useful at this model scale");
+  const value = Number((await suggest.textContent()).match(/Try ([\d.]+)%/)[1]);
+  assert.ok(value > 2.5 && value <= 30, "Suggestion is useful at this model scale");
   await page.mouse.move(1100, 750);
   const fits = await suggest.evaluate((button) => button.scrollWidth <= button.clientWidth);
   assert.ok(fits, "Allowance suggestion fits its button");
@@ -86,6 +88,8 @@ async function suggestedAllowance(page, name, original) {
   await page.getByRole("button", { name: "Accept erosion", exact: true }).click();
   const accepted = (await inspect(page)).document;
   assert.equal(accepted.bodies.length, 2);
+  const operation = (await page.evaluate(() => window.freacHistory())).at(-1).operation;
+  assert.ok(Math.abs(operation.parameters.operation.allowance - (4 * value) / 100) < 1e-10);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
   await chooseTool(page, "redo", "redo");

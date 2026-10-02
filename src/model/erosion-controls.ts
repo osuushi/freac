@@ -18,7 +18,7 @@ export class ErosionControls {
   private original: ModelingTarget[] = [];
   private axis: { center: Vector; normal: Vector } | null = null;
   private thickness = 1;
-  private allowance = 0.1;
+  private allowancePercent = 50;
   private keepOriginals = true;
   private valid = false;
   private invalid = false;
@@ -39,7 +39,7 @@ export class ErosionControls {
       () => {
         if (!this.begin()) return;
         this.keepOriginals = !this.keepOriginals;
-        this.queue(this.thickness, this.allowance);
+        this.queue(this.thickness, this.allowancePercent);
       },
       () => {
         if (this.suggestedAllowance !== null) this.queue(this.thickness, this.suggestedAllowance);
@@ -51,7 +51,7 @@ export class ErosionControls {
       lease: () => this.lease,
       axis: () => this.axis,
       value: () => (Number.isFinite(this.thickness) ? this.thickness : 0),
-      queue: (value) => this.queue(Math.max(0.001, value), this.allowance),
+      queue: (value) => this.queue(Math.max(0.001, value), this.allowancePercent),
       focus: () => this.focus(),
     });
     this.widget.handle.addEventListener(
@@ -69,7 +69,7 @@ export class ErosionControls {
           const value = input.value.trim() ? Number(input.value) : NaN;
           this.queue(
             input === this.widget.thickness ? value : this.thickness,
-            input === this.widget.allowance ? value : this.allowance,
+            input === this.widget.allowance ? value : this.allowancePercent,
           );
         },
         options,
@@ -107,7 +107,7 @@ export class ErosionControls {
     if (!this.lease) return false;
     this.valid = this.invalid = false;
     this.thickness = 1;
-    this.allowance = 0.1;
+    this.allowancePercent = 50;
     this.keepOriginals = true;
     this.count = null;
     this.suggestedAllowance = null;
@@ -115,20 +115,21 @@ export class ErosionControls {
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
     this.editor.notice = "Erode · Minimum thickness · Extra allowance simplifies the result";
-    this.queue(this.thickness, this.allowance);
+    this.queue(this.thickness, this.allowancePercent);
     this.editor.refresh();
     return true;
   }
-  private queue(thickness: number, allowance: number): void {
+  private queue(thickness: number, allowancePercent: number): void {
+    const allowance = allowancePercent < 0 ? NaN : (thickness * allowancePercent) / 100;
     if (
       this.lease?.phase !== "editing" ||
       (thickness === this.latest?.thickness &&
-        allowance === this.latest?.allowance &&
+        allowancePercent === this.allowancePercent &&
         this.keepOriginals === this.latest?.keepOriginals)
     )
       return;
     this.thickness = thickness;
-    this.allowance = allowance;
+    this.allowancePercent = allowancePercent;
     this.valid = false;
     this.count = null;
     this.suggestedAllowance = null;
@@ -156,7 +157,11 @@ export class ErosionControls {
       if (this.lease?.phase === "editing" && request === this.latest) {
         this.valid = success;
         this.invalid = !success;
-        this.suggestedAllowance = success ? null : (this.editor.store.erosionAllowance ?? null);
+        const suggested = this.editor.store.erosionAllowance;
+        this.suggestedAllowance =
+          !success && suggested !== undefined && request.thickness > 0
+            ? Math.ceil((suggested / request.thickness) * 1000) / 10
+            : null;
         this.showPreview(success && !zero);
         if (success) this.editor.notice = "Erode · Enter to accept · Escape to cancel";
       }
@@ -259,7 +264,11 @@ export class ErosionControls {
     this.widget.update(
       this.editor,
       this.axis,
-      { thickness: this.thickness, allowance: this.allowance, keepOriginals: this.keepOriginals },
+      {
+        thickness: this.thickness,
+        allowancePercent: this.allowancePercent,
+        keepOriginals: this.keepOriginals,
+      },
       !!this.lease,
       this.valid,
       !!this.lease && this.invalid,

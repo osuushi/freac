@@ -8,10 +8,16 @@ export async function erosionOptionsRoute(page, name) {
   await chooseTool(page, "select owning bodies", "selection-bodies");
   await chooseTool(page, "erode", "erode");
   const input = page.getByRole("textbox", { name: "Minimum thickness", exact: true });
+  const allowance = page.getByRole("textbox", { name: "Extra thickness allowance", exact: true });
   assert.equal(await input.inputValue(), "1");
+  assert.equal(await allowance.inputValue(), "50");
+  assert.equal(await allowance.locator("..").locator("span").textContent(), "%");
   const original = (await inspect(page)).document;
   const handle = page.getByRole("button", { name: "Erosion thickness handle" });
   assert.equal((await inspect(page)).preview.bodies.length, 2);
+  await input.fill("2");
+  await inspect(page);
+  assert.equal(await allowance.inputValue(), "50");
   const keep = page.getByRole("button", { name: "Keep originals", exact: true });
   assert.equal(await keep.getAttribute("aria-pressed"), "true");
   await keep.click();
@@ -34,6 +40,9 @@ export async function erosionOptionsRoute(page, name) {
   await page.getByRole("button", { name: "Accept erosion" }).click();
   state = await inspect(page);
   assert.equal(state.document.bodies.length, 1);
+  const operation = (await page.evaluate(() => window.freacHistory())).at(-1).operation;
+  assert.equal(operation.parameters.operation.thickness, 2);
+  assert.equal(operation.parameters.operation.allowance, 1, "50% of 2 mm reaches geometry as 1 mm");
   assert.notEqual(state.document.bodies[0].id, original.bodies[0].id);
   await chooseTool(page, "undo", "undo");
   assert.deepEqual((await inspect(page)).document, original);
@@ -56,6 +65,7 @@ export async function erosionOptionsRoute(page, name) {
   await page.mouse.up();
   state = await inspect(page);
   assert.ok(Number(await input.inputValue()) > 0);
+  assert.equal(await allowance.inputValue(), "50", "Dragging retains the allowance percentage");
   assert.ok(state.preview?.bodies.length === 1);
   assert.equal(await input.getAttribute("aria-invalid"), "false");
   await input.fill("6");
