@@ -8,8 +8,9 @@ Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.
 
 Trim highlights the exact span to remove between intersections and commits its
 geometry/constraint changes together. Holding Shift ignores endpoint-only cuts
-from overlapping curves and uses actual curve intersections; finite curve ends
-remain boundaries. Pressing or releasing Shift refreshes the hover immediately,
+from overlapping curves and follows unambiguous degree-two endpoint joins across
+ordinary curve pieces, including projected cubic chains. Crossings, branch
+junctions and open ends bound the removal; one highlighted chain is one Undo. Pressing or releasing Shift refreshes the hover immediately,
 and the click uses the same cut policy. Repeated T retains the tool. Outside a
 plane, T asks for an unambiguous spatial target; it never chooses XY arbitrarily.
 Split, extend, offset, sketch fillet and chamfer follow the same local lifecycle.
