@@ -22,6 +22,15 @@ export function readKernelReply<Input extends KernelRequest>(
         "fitted solid count",
       );
       const fit = object(reply.fit);
+      if (!("layout" in input)) {
+        const errors = array(fit.vertexErrors);
+        requireKernel(errors.length === input.mesh.vertices.length, "mesh deviation count");
+        for (const error of errors)
+          requireKernel(
+            number(error) >= 0 && number(error) <= input.tolerance,
+            "mesh vertex deviation",
+          );
+      }
       for (const key of ["patches", "controlPoints", "samples"]) {
         const n = number(fit[key]);
         requireKernel(Number.isInteger(n) && n > 0, "mesh fit counts");

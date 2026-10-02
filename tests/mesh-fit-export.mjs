@@ -6,19 +6,26 @@ import { exportMesh } from "../.cache/sketch-tests/src/model/export-mesh.js";
 import { stepItems } from "../.cache/sketch-tests/src/model/step-export.js";
 import { sphereFit, torusFit } from "../.cache/sketch-tests/tests/mesh-fit-fixtures.js";
 import { smoothShape } from "../.cache/sketch-tests/tests/mesh-fit-shapes.js";
+import { independentMesh } from "../.cache/sketch-tests/tests/mesh-import-fixtures.js";
 import { readStep } from "./step-readback.mjs";
 
 await mkdir(".cache/mesh-fit-ui", { recursive: true });
 for (const [name, input] of [
   ["sphere", sphereFit()],
+  ["automatic", { mesh: independentMesh("uv"), tolerance: 0.2, maxPatches: 24 }],
   ["torus", torusFit()],
   ["bend", smoothShape(([x, y, z]) => [6 * x + 12 * z * z, 6 * y, 20 * z], 4)],
 ]) {
   const owner = new DocumentOwner();
   try {
-    owner.beginScript(`${name}.ts`);
-    await owner.scripts.step({ kind: "fitMesh", input });
-    owner.scripts.finish();
+    if (name === "automatic") {
+      assert.equal((await owner.call({ kind: "reconstruct-mesh", input })).error, undefined);
+      assert.equal((await owner.call({ kind: "accept" })).error, undefined);
+    } else {
+      owner.beginScript(`${name}.ts`);
+      await owner.scripts.step({ kind: "fitMesh", input });
+      owner.scripts.finish();
+    }
     const before = owner.view.data;
     const body = before.bodies[0];
     const mesh = exportMesh(body);

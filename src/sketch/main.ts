@@ -17,6 +17,7 @@ import { EntityViewer } from "../model/entity-viewer.js";
 import { ErosionControls } from "../model/erosion-controls.js";
 import { FaceOffsetControls } from "../model/face-offset-controls.js";
 import { MeasurementControls } from "../model/measurement-controls.js";
+import { MeshImportControls } from "../model/mesh-import-controls.js";
 import { MirrorControls } from "../model/mirror-controls.js";
 import { ModelingTools } from "../model/modeling-tools.js";
 import { OverlapInput } from "../model/overlap-input.js";
@@ -116,6 +117,7 @@ const disposeLabels = worldLabels(
 const modelControls = new ModelControls(editor, overlay);
 const shells = new ShellControls(editor, overlay);
 const erosion = new ErosionControls(editor, overlay);
+const meshImport = new MeshImportControls(editor, overlay);
 const faceOffsets = new FaceOffsetControls(editor, overlay);
 const faceMoves = new TopologyMoveControls(editor, overlay);
 const edgeMoves = new TopologyMoveControls(editor, overlay, "edges");
@@ -238,6 +240,7 @@ window.addEventListener(
     faceOffsets.dispose();
     shells.dispose();
     erosion.dispose();
+    meshImport.dispose();
     faceMoves.dispose();
     edgeMoves.dispose();
     bodyFinishes.dispose();

@@ -90,14 +90,17 @@ Input read(const Tree& input) {
     Input r;
     r.target.vertices = vertices(input.get_child("mesh.vertices"));
     r.target.triangles = faces<3>(input.get_child("mesh.triangles"), r.target.vertices.size(), 200000);
-    r.layout.vertices = vertices(input.get_child("layout.vertices"));
-    r.layout.quads = faces<4>(input.get_child("layout.quads"), r.layout.vertices.size(), 256);
+    const bool automatic = !input.get_child_optional("layout");
+    if (!automatic) {
+        r.layout.vertices = vertices(input.get_child("layout.vertices"));
+        r.layout.quads = faces<4>(input.get_child("layout.quads"), r.layout.vertices.size(), 256);
+    }
     r.tolerance = input.get<double>("tolerance");
     r.smoothAngle = input.get<double>("smoothAngle", 5);
     const double budget = input.get<double>("maxPatches", 256);
     if (!std::isfinite(r.tolerance) || r.tolerance < 1e-6 ||
         !std::isfinite(r.smoothAngle) || r.smoothAngle < 0.1 || r.smoothAngle > 30 ||
-        !std::isfinite(budget) || budget != std::floor(budget) || budget < r.layout.quads.size() || budget > 256)
+        !std::isfinite(budget) || budget != std::floor(budget) || budget < (automatic ? size_t(6) : r.layout.quads.size()) || budget > 256)
         throw std::runtime_error("Invalid fit tolerance, smooth angle (0.1–30 degrees), or patch budget (up to 256)");
     r.maxPatches = int(budget);
     V lo = r.target.vertices[0], hi = lo;
@@ -111,8 +114,12 @@ Input read(const Tree& input) {
     r.tolerance /= r.scale;
     for (auto* list : {&r.target.vertices, &r.layout.vertices})
         for (auto& p : *list) p = (p-r.origin)/r.scale;
-    if (check(r.target.vertices, r.target.triangles, "Target mesh") !=
-        check(r.layout.vertices, r.layout.quads, "Quad layout"))
+    const int targetTopology = check(r.target.vertices, r.target.triangles, "Target mesh");
+    if (automatic) {
+        if (targetTopology != 2) throw std::runtime_error("Automatic layout currently needs one closed mesh without holes");
+        r.layout = automaticLayout(r.target,r.maxPatches);
+    }
+    if (targetTopology != check(r.layout.vertices, r.layout.quads, "Quad layout"))
         throw std::runtime_error("Target mesh and quad layout must have the same topology (genus)");
     if (const auto cs = input.get_child_optional("layout.creases")) {
         if (!cs->empty()) for (const auto& c : faces<2>(*cs, r.layout.vertices.size(), 1024)) {

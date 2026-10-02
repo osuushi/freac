@@ -82,6 +82,9 @@ export class ModelClient {
   get offsetSelection() {
     return this.view.offsetSelection;
   }
+  get meshFit() {
+    return this.view.meshFit;
+  }
   get edgeSize() {
     return this.view.edgeSize;
   }

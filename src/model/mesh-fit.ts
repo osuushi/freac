@@ -17,7 +17,11 @@ export interface MeshFitInput {
   /** Initial layout and uniform refinement must fit this budget; default/maximum 256. */
   maxPatches?: number;
 }
+export type MeshReconstructionInput = Omit<MeshFitInput, "layout">;
+
 export interface MeshFitStatistics {
+  /** Source-vertex distances to the fitted surface, for the import deviation overlay. */
+  vertexErrors?: number[];
   patches: number;
   controlPoints: number;
   sampledSurfaceToMesh: number;

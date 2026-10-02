@@ -1115,3 +1115,18 @@ not certify target approximation, normal continuity, or solid validity. The
 mesh-fitting operation measures these separately and passes the assembled solid
 through the existing strict B-rep checks. See the current
 [mesh-fitting contract](../architecture/mesh-fitting.md) for sampling limitations.
+
+
+Automatic layout research: Kazhdan, Solomon and Ben-Chen, *Can Mean-Curvature
+Flow Be Modified to Be Non-singular?* (2012),
+[doi:10.1111/j.1467-8659.2012.03179.x](https://doi.org/10.1111/j.1467-8659.2012.03179.x),
+describes a conformalized flow using fixed stiffness and changing mass matrices.
+Makeshift implements that numerical idea independently with a consistent triangle
+mass matrix and a matrix-free conjugate-gradient solve. No upstream code was copied.
+
+Makeshift inference: a sphere map can transfer a coarse cube quad grid to a
+closed genus-zero target, but angle-preserving maps can compress bent extremities
+and undersample them. Makeshift adds its own spherical triangle area-distortion
+objective with orientation-preserving backtracking. Runtime tests on independently
+tessellated bent and waisted meshes support this bounded sampling strategy; neither
+the paper nor those tests guarantee mapping or reconstruction of arbitrary meshes.

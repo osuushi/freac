@@ -34,16 +34,39 @@ void nearestChecks(const Search& s) {
         require(length(hit.point-expected) < 1e-12,"Nearest face, edge and corner witnesses");
     }
 }
-void normalChecks() {
+Mesh octahedralMesh() {
     Mesh octahedron;
     octahedron.vertices = {{1,0,0},{0,1,0},{-1,0,0},{0,-1,0},{0,0,1},{0,0,-1}};
     octahedron.triangles = {{0,1,4},{1,2,4},{2,3,4},{3,0,4},
         {1,0,5},{2,1,5},{3,2,5},{0,3,5}};
+    return octahedron;
+}
+void normalChecks() {
+    const auto octahedron = octahedralMesh();
     Search smooth(octahedron,true), sharp(octahedron);
     require(length(smooth.closest({2,0,0}).normal-V(1,0,0)) < 1e-12,
         "Smooth vertex normals must cross steep triangle angles on coarse curved targets");
     require(sharp.closest({2,0,0}).normal.Dot(V(1,0,0)) < 0.6,
         "Feature-preserving normals must retain separate sides at a sharp corner");
+}
+double areaDistortion(const Mesh& mesh) {
+    double error = 0;
+    for (const auto& f : mesh.triangles) {
+        const auto a = mesh.vertices[f[0]], b = mesh.vertices[f[1]], c = mesh.vertices[f[2]];
+        const double determinant = a.Dot(b.Crossed(c));
+        require(determinant > 0,"Area balancing must preserve positive spherical triangle orientation");
+        const double area = 2*std::atan2(determinant,1+a.Dot(b)+b.Dot(c)+c.Dot(a));
+        error += std::pow(area-std::acos(-1.0)/2,2);
+    }
+    return error;
+}
+void areaChecks() {
+    const auto original = octahedralMesh(); auto sphere = original;
+    sphere.vertices[4] = unit(V(0.7,0.2,1));
+    const double before = areaDistortion(sphere);
+    balanceSphere(sphere,original);
+    require(areaDistortion(sphere) < before*0.01,"Area balancing must reduce unequal sample allocation");
+    for (const auto& p : sphere.vertices) require(std::abs(length(p)-1) < 1e-12,"Map vertices remain on unit sphere");
 }
 void refinementChecks(Network n) {
     // Perturb interior controls so preservation is tested on nonplanar bicubic surfaces.
@@ -68,7 +91,7 @@ void solverChecks() {
 }
 int main() {
     try {
-        basisChecks(); solverChecks(); normalChecks();
+        basisChecks(); solverChecks(); normalChecks(); areaChecks();
         auto c = cube(); const auto m = triangles(c); Search s(m); nearestChecks(s);
         for (const auto& q : c.quads) for (int i = 0; i < 4; ++i) c.creases.insert(edge(q[i],q[(i+1)%4]));
         const auto n = initialize(c,s); refinementChecks(n);

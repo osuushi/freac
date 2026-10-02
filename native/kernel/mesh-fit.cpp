@@ -30,7 +30,9 @@ void reconstruct(std::ostream& out, const Tree& tree) {
             message << "Mesh fit exceeds requested tolerance within patch budget: sampled deviation "
                 << std::max(stats.forward,stats.reverse)*input.scale << " mm; smooth seam angle "
                 << stats.normalAngle << " degrees" << (stats.oriented ? "" : "; surface faces away from the target")
-                << ". Increase the budget/tolerance or revise the quad layout.";
+                << (tree.get_child_optional("layout")
+                    ? ". Increase the budget/tolerance or revise the quad layout."
+                    : ". Try a different accuracy or patch budget; some meshes cannot be reconstructed.");
             throw std::runtime_error(message.str());
         }
         network = refine(network);
@@ -44,6 +46,17 @@ void reconstruct(std::ostream& out, const Tree& tree) {
         << ",\"sampledMeshToSurface\":" << stats.reverse*input.scale
         << ",\"sampledRms\":" << stats.rms*input.scale
         << ",\"sampledSeamAngle\":" << stats.normalAngle
-        << ",\"samples\":" << stats.samples << "}}";
+        << ",\"samples\":" << stats.samples;
+    if (!tree.get_child_optional("layout")) {
+        SurfaceSearch surface(network,12);
+        out << ",\"vertexErrors\":[";
+        for (size_t i = 0; i < input.target.vertices.size(); ++i) {
+            const auto& p = input.target.vertices[i];
+            if (i) out << ',';
+            out << length(p-surface.closest(p).value.point)*input.scale;
+        }
+        out << ']';
+    }
+    out << "}}";
 }
 }

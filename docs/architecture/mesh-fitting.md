@@ -7,6 +7,40 @@ script once; cancellation or a failed CLI run leaves accepted geometry unchanged
 The mesh, layout, fit controls and correspondence samples are temporary calculation
 data, not another application document or a persistent feature history.
 
+## File import and automatic layout
+
+Tools → **Import mesh** opens an STL/OBJ file picker in Modeling. The temporary
+source preview offers source units (mm, cm, inches or meters), accuracy in mm,
+patch budget, and **Fit preview**. Source mesh, fitted solid and deviation views
+share the normal navigable viewport. Accept adds one ordinary solid in one Undo;
+Cancel/Escape discards the import. Enter fits or accepts the current valid preview.
+Parameter changes invalidate the preview; local Undo restores parameters and refits.
+Other geometry edits remain disabled while the import owns the interaction.
+
+The manual `reconstruct-mesh` request uses the same native fitter with an automatic
+layout. A conformalized mean-curvature flow produces an oriented spherical map,
+then an area-balancing optimization gives narrow extremities more sampling space.
+An inverse-mapped cube grid supplies 24, 54, 96, 150 or 216 initial quad patches.
+The map must have positive oriented triangles covering the sphere once. Failure to
+map or meet the unchanged fit checks produces an error, never a partial accepted body.
+The area balancing is a Makeshift heuristic, not a claim of equal-area certification.
+
+This route supports one closed, consistently oriented, smooth mesh **without holes**
+(genus zero). Concavity and bends are allowed; difficult shapes, sharp features,
+noise and poor tessellations can still fail. More patches do not guarantee success.
+There is no automatic feature recognition or mesh repair. STL repeated coordinates
+are welded exactly; globally inward winding is reversed. OBJ polygon faces are
+triangulated; nonplanar polygons do not retain a unique surface interpretation.
+Open, disconnected, mixed-winding and degenerate meshes reject during validation.
+File parsing runs in a worker and fitting in the cancellable native process.
+Files are limited to 25 MiB, 100000 welded vertices and 200000 triangles.
+
+Deviation colors use actual closest-surface distances at **source vertices**,
+interpolated across the displayed triangles. Their scale runs from blue (zero) to
+amber (the requested accuracy). This is distinct from the denser bidirectional
+acceptance sampling and is not a continuous error certificate. The source mesh,
+layout and per-vertex errors remain temporary; only the accepted B-rep is saved.
+
 ## Input and result
 
 - `mesh`: world-space `vertices` in mm and indexed `triangles`.
@@ -22,8 +56,9 @@ Both inputs must be one connected, consistently outward-oriented, closed manifol
 of the same genus. The layout must already follow the target's shape and features.
 Index and manifold checks reject open surfaces, unused vertices, disconnected
 components, repeated vertices, degenerate faces and inconsistent winding.
-There is no automatic retopology, mesh repair, nesting of separate shells, or mesh
-file importer in this operation. Input limits are 100000 vertices per mesh/layout,
+The supplied-layout scripting route does not infer a layout or repair a mesh;
+it supports holes when the supplied layout has matching topology. Separate
+shells cannot be nested in either route. Input limits are 100000 vertices per mesh/layout,
 200000 target triangles and 256 initial quads. Target diagonal must be between
 0.0001 and 1000000 mm; tolerance is at least 0.000001 mm and at most 10% of that
 diagonal. Coordinates have magnitude at most 1000000000 mm.
@@ -75,6 +110,13 @@ guarantee that every later fillet, shell or offset is feasible.
 
 ## Review route
 
+For manual review, choose Import mesh with a closed smooth STL or OBJ, set source
+units and accuracy, fit, compare the three preview views, then accept. Reselect and
+move the body, Undo/Redo, and save/reopen. After build and compiled unit tests,
+`node tests/mesh-import-ui.mjs` checks this route in Chromium, WebKit and hidden
+Electron, including binary STL unit conversion and parameter history.
+
+
 The [self-contained example](../examples/mesh-fitting.ts) reconstructs a sphere from
 a dense triangle mesh and six coarse quads. Copy it into the open document's agent
 workspace and run `makeshift run mesh-fitting.ts`. Inspect the printed measurements,
@@ -90,7 +132,7 @@ build `mesh-fit-math-test` and `step-readback`, then run
 The export check uses the compiled test modules produced by `npm test`.
 
 The first implementation uses uniform patch refinement to preserve a conforming
-edge network. Local refinement, automatic layout generation, arbitrary open sheet
+edge network. Local refinement, arbitrary open sheet
 insertion, exact tangent continuity at all parameters, and general analytic
 primitive recognition are outside this operation's current contract.
 

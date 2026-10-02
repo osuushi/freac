@@ -17,6 +17,7 @@ export type SolidRequest = Extract<
   ModelRequest,
   {
     kind:
+      | "reconstruct-mesh"
       | "loft"
       | "revolve"
       | "extrude"
@@ -33,6 +34,7 @@ export type SolidRequest = Extract<
 
 export function isSolidRequest(request: ModelRequest): request is SolidRequest {
   return [
+    "reconstruct-mesh",
     "loft",
     "revolve",
     "extrude",
@@ -51,6 +53,7 @@ export function isSolidRequest(request: ModelRequest): request is SolidRequest {
 export class SolidEdits {
   readonly offsetEdit = new FaceOffsetEdit();
   private edgeLimit = new EdgeSizeLimit();
+  meshFit: import("../model/mesh-fit.js").MeshFitStatistics | undefined;
   edgeSize: number | undefined;
   edgeSelection: BodyEdgeFinish["edges"] = [];
   booleanTargets: string[] = [];
@@ -136,10 +139,28 @@ export class SolidEdits {
     }
     return { ...document, bodies: next };
   }
+  private async reconstruct(
+    document: SketchDocument,
+    input: import("../model/mesh-fit.js").MeshReconstructionInput,
+  ): Promise<SketchDocument> {
+    const result = await this.kernel.calculate({
+      mesh: input.mesh,
+      tolerance: input.tolerance,
+      maxPatches: input.maxPatches,
+      smoothAngle: input.smoothAngle,
+      kind: "fit-mesh",
+      bodies: [],
+    });
+    this.meshFit = result.fit;
+    return { ...document, bodies: materialize(document.bodies ?? [], result) };
+  }
   async calculate(document: SketchDocument, request: SolidRequest): Promise<SketchDocument> {
     let candidate: SketchDocument;
+    this.meshFit = undefined;
     const bodies = document.bodies ?? [];
-    if (request.kind === "move-faces" || request.kind === "move-edges") {
+    if (request.kind === "reconstruct-mesh") {
+      candidate = await this.reconstruct(document, request.input);
+    } else if (request.kind === "move-faces" || request.kind === "move-edges") {
       candidate = await this.move(document, request);
     } else if (request.kind === "erode") {
       const { thickness, allowance, keepOriginals } = request.operation;
