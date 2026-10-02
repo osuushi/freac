@@ -4,6 +4,7 @@ import { orient } from "./ui-blend-edit.mjs";
 import { cameraFacingMove } from "./ui-camera-facing-move.mjs";
 import { at, drag, inspect, reset } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
+import { assertWidgetClearance } from "./ui-widget-clearance.mjs";
 
 const center = async (locator) => {
   const b = await locator.boundingBox();
@@ -186,8 +187,9 @@ async function spatialAnchor(page, name, anchor, root, vertex, original, body) {
   await page.keyboard.up("Control");
   await inspect(page);
   const zoomed = await root.locator('.body-translate-handle[data-axis="X"]').boundingBox();
-  assert.equal(size.width, zoomed.width);
-  assert.equal(size.height, zoomed.height);
+  // Composited fractional translations can round DOM bounds by a fraction of a pixel.
+  assert.ok(Math.abs(size.width - zoomed.width) < 0.001);
+  assert.ok(Math.abs(size.height - zoomed.height) < 0.001);
   await page.screenshot({ path: `.cache/sketch-review/${name}-widget-3d.png` });
   for (const view of [
     [1, -1, 0],
@@ -205,6 +207,7 @@ async function spatialAnchor(page, name, anchor, root, vertex, original, body) {
         "translation arrow keeps its full head width while orbiting around its shaft",
       );
     }
+    await assertWidgetClearance(page, root);
     const projectionState = await projection(page);
     const anchorScreen = await center(anchor);
     const unit = (projectionState.camera.top * 2) / projectionState.b.height;
@@ -213,13 +216,14 @@ async function spatialAnchor(page, name, anchor, root, vertex, original, body) {
       const normal = axis === "X" ? [0, 72 * unit, 72 * unit] : [72 * unit, 0, 72 * unit];
       const target = projectionState.point(normal);
       const marker = await center(root.locator(`.body-rotate-handle[data-axis="${axis}"]`));
+      const nominal = { x: target.x - origin.x, y: target.y - origin.y };
+      const actual = { x: marker.x - anchorScreen.x, y: marker.y - anchorScreen.y };
       assert.ok(
-        Math.hypot(
-          marker.x - anchorScreen.x - target.x + origin.x,
-          marker.y - anchorScreen.y - target.y + origin.y,
-        ) < 0.1,
-        "rotation marker stays at its rigid 45 degree world offset",
+        Math.abs(actual.x * nominal.y - actual.y * nominal.x) / Math.hypot(nominal.x, nominal.y) <
+          0.1,
+        "separation preserves the marker's projected radial direction",
       );
+      assert.ok(Math.hypot(actual.x, actual.y) >= Math.hypot(nominal.x, nominal.y) - 0.1);
     }
   }
   await page.screenshot({ path: `.cache/sketch-review/${name}-widget-diagonal.png` });

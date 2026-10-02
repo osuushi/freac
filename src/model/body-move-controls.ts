@@ -104,6 +104,28 @@ export class BodyMoveControls {
         duplicate,
       },
     };
+    const session = this.session;
+    lease.trackHistory(
+      this.gizmo.root,
+      () => ({
+        value: session.value,
+        axis: session.axis,
+        rotate: session.rotate,
+        duplicate: session.edit.duplicate,
+      }),
+      (state) => {
+        session.axis = state.axis;
+        session.rotate = state.rotate;
+        session.edit.axis = axes[state.axis];
+        session.edit.duplicate = state.duplicate;
+        this.gizmo.input.setAttribute(
+          "aria-label",
+          `${session.pivotOnly ? "Pivot" : state.rotate ? "Body rotation" : "Body translation"} ${state.axis}`,
+        );
+        this.gizmo.input.value = String(state.value);
+        this.preview(state.value);
+      },
+    );
     this.preview(0);
     return this.session;
   }

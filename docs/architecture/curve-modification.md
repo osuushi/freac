@@ -7,7 +7,11 @@ Cubic editing/projection (2026-09-16) supersedes any earlier spline exclusion.
 ### Curve modification and regions
 
 Trim highlights the exact span to remove between intersections and commits its
-geometry/constraint changes together. Repeated T retains the tool. Outside a
+geometry/constraint changes together. Holding Shift ignores endpoint-only cuts
+from overlapping curves and follows unambiguous degree-two endpoint joins across
+ordinary curve pieces, including projected cubic chains. Crossings, branch
+junctions and open ends bound the removal; one highlighted chain is one Undo. Pressing or releasing Shift refreshes the hover immediately,
+and the click uses the same cut policy. Repeated T retains the tool. Outside a
 plane, T asks for an unambiguous spatial target; it never chooses XY arbitrarily.
 Split, extend, offset, sketch fillet and chamfer follow the same local lifecycle.
 
@@ -82,8 +86,11 @@ geometry occluded in the viewport. Its hover highlights the corresponding source
 Plane hover and click share the same nearest-reference picker, including tilted
 saved planes. Enter/check accepts, Escape/cross cancels and restores selection.
 Direction and accept/cancel controls stay above the bottom status. Projection
-errors sit above them with a fixed gap. Reuse a coplanar sketch or create one on
-acceptance. `backend/projection.ts` and the native kernel produce the usual
+errors sit above them with a fixed gap. Reuse a visible coplanar sketch or preview
+a new sketch, then create it on acceptance. Hidden sketches are ignored when
+resolving the destination, including canonical planes. The renderer passes an
+explicit destination ID so preview and acceptance agree without exposing viewport
+visibility to the backend. `backend/projection.ts` and the native kernel produce the usual
 temporary candidate; acceptance is one Undo, without a persistent source link.
 Before fitting spatial rims, split them at exact contour-endpoint contacts. Those
 contacts become cubic endpoints and ordinary coincidence links, keeping side/rim

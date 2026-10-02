@@ -58,6 +58,13 @@ export class ExtrudeDraft {
     };
     this.reset();
   }
+  restore(value: ExtrusionDraft): void {
+    this.mode = value.mode;
+    this.amount = value.value;
+    this.unit.value = this.mode;
+    this.input.value = String(this.amount);
+    this.update(this.distance);
+  }
   reset(): void {
     this.mode = "angle";
     this.unit.value = this.mode;

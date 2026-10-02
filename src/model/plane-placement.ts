@@ -9,6 +9,9 @@ import { BodyGizmo } from "./body-gizmo.js";
 
 export class PlanePlacement {
   private gizmo: BodyGizmo;
+  get root(): HTMLElement {
+    return this.gizmo.root;
+  }
   private abort = new AbortController();
   private drag: {
     frame: PlaneFrame;

@@ -97,6 +97,36 @@ export class RevolveControls {
     this.valid = false;
     this.targets.reset();
     this.latest = null;
+    this.lease.trackHistory(
+      this.widget.root,
+      () => ({
+        axis: this.axis,
+        angle: this.angle,
+        height: this.height,
+        mode: this.mode,
+        targets: this.targets.selected,
+        picking: this.picking,
+      }),
+      async (state) => {
+        this.axis = state.axis;
+        this.angle = state.angle;
+        this.height = state.height;
+        this.mode = state.mode;
+        this.targets.selected = state.targets;
+        this.picking = state.picking;
+        this.widget.angle.value = String(state.angle);
+        this.widget.height.value = String(state.height);
+        if (this.picking) {
+          this.latest = this.pending = null;
+          this.valid = false;
+          this.lease?.show(null);
+          await editor.store.request({ kind: "discard" });
+        } else {
+          this.queue();
+          await this.running;
+        }
+      },
+    );
     editor.notice = "Choose a straight edge, cylindrical face or world axis in the profile plane";
     editor.refresh();
   }
@@ -142,6 +172,7 @@ export class RevolveControls {
         this.picking = false;
         this.editor.notice = "Revolve · angle and total height · Enter accepts · Escape cancels";
         this.queue();
+        this.lease.history?.checkpoint();
       },
       options,
     );
@@ -169,6 +200,7 @@ export class RevolveControls {
             event.preventDefault();
             this.mode = mode;
             this.queue();
+            this.lease.history?.checkpoint();
           }
           if (mode) event.stopImmediatePropagation();
         }

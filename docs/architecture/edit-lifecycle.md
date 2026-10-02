@@ -158,3 +158,26 @@ not create independent selection steps. Undo restores the operation's input
 selection and workspace; Redo restores its result selection. Tool state, camera,
 hover, chooser visibility and other transient controls are not replayed. These
 selection snapshots are in-memory history, not saved document content.
+
+## Temporary interaction history (founder decision, 2026-10-02)
+
+Modal modeling tools keep parameter checkpoints inside their InteractionLease.
+Releasing a captured pointer, leaving a field and changing a discrete option
+complete a tweak. Intermediate pointer positions and keystrokes do not create
+separate checkpoints. Undo/Redo while the tool is active restore those parameters
+through the controller's ordinary preview path, without accepting geometry or
+leaving the tool. At the initial checkpoint Undo stops; it never reaches an older
+document edit. A changed tweak after Undo branches the local history. Unchanged
+focus changes preserve Redo. History navigation is disabled during held gestures
+and calculations. Focused text fields retain native text Undo until defocus.
+
+Controllers own these temporary parameter snapshots, not another geometry
+document. Accepting/exiting the tool still creates one backend document Undo step;
+Escape discards the candidate and the local checkpoints. Ordinary edits that
+already accept on release, including whole-body/sketch movement, retain that
+acceptance boundary. Their numeric previews can use local history before acceptance.
+
+This applies to Extrude (including draft, twist, axis, mode and targets), Shell, Erode,
+face/edge Move, Face Offset, Fillet/Chamfer, Scale, Revolve, Loft, Mirror, Boolean,
+construction-plane placement, plane cuts and cross-section placement. An active
+modal tool without tweak history does not accept itself just to service Undo.

@@ -74,6 +74,28 @@ export class LoftControls {
     this.valid = false;
     this.latest = this.pending = null;
     this.targets.reset();
+    this.lease.trackHistory(
+      this.widget.root,
+      () => ({
+        sources: this.sources,
+        alignment: this.alignment,
+        collecting: this.collecting,
+        shape: this.widget.shape.value,
+        mode: this.mode,
+        targets: this.targets.selected,
+      }),
+      async (state) => {
+        this.sources = state.sources;
+        this.alignment = state.alignment;
+        this.collecting = state.collecting;
+        this.widget.shape.value = state.shape;
+        this.mode = state.mode;
+        this.targets.selected = state.targets;
+        this.notice();
+        this.queue();
+        await this.running;
+      },
+    );
     this.notice();
     this.queue();
   }
@@ -104,6 +126,7 @@ export class LoftControls {
           this.sources.push(source);
           this.alignment?.push(0);
           this.queue();
+          this.lease.history?.checkpoint();
           return;
         }
         this.editor.message = "Choose another filled region or planar face";
@@ -126,6 +149,7 @@ export class LoftControls {
           if (this.collecting) {
             this.collecting = false;
             this.notice();
+            this.lease.history?.checkpoint();
             this.editor.refresh();
           } else void this.finish();
         } else if (!(event.target instanceof HTMLSelectElement)) {
@@ -137,6 +161,7 @@ export class LoftControls {
           event.stopImmediatePropagation();
           this.mode = mode;
           this.queue();
+          this.lease.history?.checkpoint();
         }
       },
       { signal: this.abort.signal, capture: true },

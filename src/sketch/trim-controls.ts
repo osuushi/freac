@@ -3,6 +3,7 @@ import type { SketchEditor } from "./editor.js";
 import { GestureSolve } from "./gesture-solve.js";
 import type { Point } from "./planes.js";
 import { distance } from "./point-math.js";
+import { trimChain } from "./trim-chain.js";
 import { trimOverlappingSketch } from "./trim-edit.js";
 import { spanCurve, type TrimSpan, trimAt, trimSpanLength } from "./trim-geometry.js";
 
@@ -12,14 +13,16 @@ export class TrimControls {
   private abort = new AbortController();
   private pointer: Point | null = null;
   private start: Point | null = null;
-  private span: TrimSpan | null = null;
+  private spans: TrimSpan[] = [];
+  private chain = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  private intersectionsOnly = false;
   constructor(
     private editor: SketchEditor,
     overlay: HTMLElement,
   ) {
     this.svg.classList.add("trim-overlay");
     this.mark.classList.add("trim-span");
-    this.svg.append(this.mark);
+    this.svg.append(this.mark, this.chain);
     overlay.append(this.svg);
     const options = { signal: this.abort.signal },
       canvas = editor.world.canvas;
@@ -27,6 +30,7 @@ export class TrimControls {
       "pointermove",
       (event) => {
         if (editor.tool !== "trim" || editor.blocked || event.buttons) return;
+        this.intersectionsOnly = event.shiftKey;
         this.pointer = { x: event.clientX, y: event.clientY };
         this.update();
       },
@@ -48,6 +52,7 @@ export class TrimControls {
         const start = this.start;
         this.start = null;
         if (!start || event.button !== 0 || editor.blocked || editor.tool !== "trim") return;
+        this.intersectionsOnly = event.shiftKey;
         this.pointer = { x: event.clientX, y: event.clientY };
         if (distance(start, this.pointer) > 4) return;
         const choices = this.targets();
@@ -62,11 +67,18 @@ export class TrimControls {
       },
       options,
     );
+    window.addEventListener("keydown", this.modifiers, options);
+    window.addEventListener("keyup", this.modifiers, options);
     window.addEventListener("blur", () => void this.cancel(), options);
     editor.world.changed.add(this.update);
     this.update();
   }
-  private targets(): TrimSpan[] {
+  private modifiers = (event: KeyboardEvent): void => {
+    if (this.intersectionsOnly === event.shiftKey) return;
+    this.intersectionsOnly = event.shiftKey;
+    this.update();
+  };
+  private targets(): TrimSpan[][] {
     const sketch = this.editor.sketch,
       p = this.pointer;
     if (!sketch || !p || !this.editor.world.active) return [];
@@ -79,10 +91,15 @@ export class TrimControls {
       .sort((a, b) => a.d - b.d);
     return near
       .filter((c) => c.d <= near[0].d + 1)
-      .map((c) => trimAt(c.curve, sketch.curves, point))
-      .sort((a, b) => trimSpanLength(a) - trimSpanLength(b));
+      .map((c) => trimAt(c.curve, sketch.curves, point, this.intersectionsOnly))
+      .map((span) => (this.intersectionsOnly ? trimChain(span, sketch.curves) : [span]))
+      .sort(
+        (a, b) =>
+          a.reduce((sum, s) => sum + trimSpanLength(s), 0) -
+          b.reduce((sum, s) => sum + trimSpanLength(s), 0),
+      );
   }
-  private async apply(span: TrimSpan): Promise<void> {
+  private async apply(spans: TrimSpan[]): Promise<void> {
     const sketch = this.editor.sketch;
     if (!sketch || this.editor.blocked) return;
     const interaction = this.editor.interactions.acquire(
@@ -98,7 +115,7 @@ export class TrimControls {
     const solve = new GestureSolve(this.editor, interaction);
     interaction.wait();
     try {
-      const result = trimOverlappingSketch(sketch, span);
+      const result = trimOverlappingSketch(sketch, spans);
       solve.update(result.sketch);
       const valid = await solve.flush();
       if (!valid || cancelled) {
@@ -108,7 +125,7 @@ export class TrimControls {
       if (!interaction.close()) return;
       await this.editor.accept();
       this.editor.select([]);
-      this.span = null;
+      this.spans = [];
       this.pointer = null;
       this.render();
     } catch (error) {
@@ -118,8 +135,9 @@ export class TrimControls {
     }
   }
   private cancel(): void {
+    this.intersectionsOnly = false;
     this.start = null;
-    this.span = null;
+    this.spans = [];
     this.pointer = null;
     this.render();
   }
@@ -127,28 +145,39 @@ export class TrimControls {
     const r = this.editor.world.canvas.getBoundingClientRect(),
       sketch = this.editor.sketch;
     this.svg.setAttribute("viewBox", `0 0 ${r.width} ${r.height}`);
-    this.mark.setAttribute(
-      "points",
-      !this.span || !sketch
-        ? ""
-        : displayPoints(spanCurve(this.span), this.editor.world.height / r.height)
-            .map((p) => {
-              const s = this.editor.world.projectLocal(sketch.plane, p);
-              return `${s.x - r.left},${s.y - r.top}`;
-            })
-            .join(" "),
-    );
-    this.mark.dataset.curve = this.span?.curve.id ?? "";
+    const marks = this.spans.map((span, i) => {
+      const mark =
+        i === 0 ? this.mark : document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+      mark.classList.add("trim-span");
+      mark.dataset.curve = span.curve.id;
+      mark.setAttribute(
+        "points",
+        !sketch
+          ? ""
+          : displayPoints(spanCurve(span), this.editor.world.height / r.height)
+              .map((p) => {
+                const s = this.editor.world.projectLocal(sketch.plane, p);
+                return `${s.x - r.left},${s.y - r.top}`;
+              })
+              .join(" "),
+      );
+      return mark;
+    });
+    this.chain.replaceChildren(...marks.slice(1));
+    if (!marks.length) {
+      this.mark.setAttribute("points", "");
+      this.mark.dataset.curve = "";
+    }
   }
   private update = (): void => {
     const active = this.editor.tool === "trim" && !!this.editor.world.active;
     this.svg.style.display = active ? "" : "none";
     if (!active) {
       this.pointer = null;
-      this.span = null;
+      this.spans = [];
       return;
     }
-    this.span = this.editor.blocked ? null : (this.targets()[0] ?? null);
+    this.spans = this.editor.blocked ? [] : (this.targets()[0] ?? []);
     this.editor.world.canvas.style.cursor = "crosshair";
     this.render();
   };

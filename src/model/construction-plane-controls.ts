@@ -191,6 +191,20 @@ export class ConstructionPlaneControls {
         : null;
     this.valid = true;
     this.placement.reset();
+    this.lease.trackHistory(
+      this.placement.root,
+      () => this.plane,
+      (plane) => {
+        this.plane = plane;
+        this.valid = true;
+        this.placement.reset();
+        if (plane) this.preview(plane.frame);
+        else {
+          this.lease?.show(null);
+          e.refresh();
+        }
+      },
+    );
     this.picker.start(
       (frame) => {
         this.placement.reset();

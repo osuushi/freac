@@ -95,6 +95,7 @@ export class TopologyMoveControls {
         this.kind === "faces" ? "face-move" : "edge-move",
         () => this.cancel(),
         () => this.finish(),
+        { navigation: "when-released" },
       );
       if (!this.lease) return;
       this.edit = {
@@ -104,6 +105,19 @@ export class TopologyMoveControls {
         angle: 0,
         translation: [0, 0, 0],
       };
+      this.lease.trackHistory(
+        this.gizmo.root,
+        () => this.latest ?? this.edit,
+        async (state) => {
+          if (!state) return;
+          this.edit = state;
+          this.latest = this.pending = state;
+          this.valid = false;
+          this.gizmo.input.value = "0";
+          if (!this.running) this.running = this.drain();
+          await this.running;
+        },
+      );
     }
     if (this.lease.phase !== "editing") return;
     this.edit = this.verified ?? this.edit;

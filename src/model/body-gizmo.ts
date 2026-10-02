@@ -10,7 +10,9 @@ import {
 import type { Vector } from "../sketch/planes.js";
 import { axes } from "./body-placement.js";
 import { projectedAxis } from "./extrude-axis.js";
-import { clearTransformArrow } from "./transform-clearance.js";
+import { scaleSelection } from "./scale-selection.js";
+import { boxHandles, boxWorld, selectionBox } from "./transform-box.js";
+import { WidgetClearance, type WidgetTarget } from "./widget-clearance.js";
 import { cameraFacingWidth } from "./widget-frame.js";
 import "./body-gizmo.css";
 
@@ -18,6 +20,7 @@ export class BodyGizmo {
   readonly root = document.createElement("div");
   readonly input = document.createElement("input");
   readonly pivot = document.createElement("button");
+  private clearance: WidgetClearance;
   private handles: { axis: string; rotate: boolean; button: HTMLButtonElement }[] = [];
   constructor(
     overlay: HTMLElement,
@@ -25,6 +28,7 @@ export class BodyGizmo {
     target = "body",
   ) {
     this.root.className = "body-gizmo";
+    this.clearance = new WidgetClearance(this.root);
     for (const rotate of [false, true])
       for (const axis of target === "edges" && !rotate ? ["X", "Y", "Z", "N"] : ["X", "Y", "Z"]) {
         const button = document.createElement("button");
@@ -67,6 +71,7 @@ export class BodyGizmo {
       names = ["X", "Y", "Z"];
     this.root.dataset.mode = aligned === null ? "3d" : "2d";
     const unit = world.height / world.canvas.clientHeight;
+    const entries: { element: HTMLElement; nominal: WidgetTarget }[] = [];
     for (const handle of this.handles) {
       const index = names.indexOf(handle.axis);
       handle.button.hidden =
@@ -96,18 +101,30 @@ export class BodyGizmo {
         );
       }
       const tip = new THREE.Vector3(...pivot).addScaledVector(offset, unit).toArray() as Vector;
-      const end = world.project(handle.rotate ? tip : clearTransformArrow(editor, pivot, tip));
+      const end = world.project(tip);
       if (boundary) {
         end.x = origin.x + boundary.x * 144;
         end.y = origin.y + boundary.y * 144;
       }
       const local = { x: end.x - origin.x, y: end.y - origin.y };
-      handle.button.style.left = `${local.x}px`;
-      handle.button.style.top = `${local.y}px`;
+      entries.push({
+        element: handle.button,
+        nominal: { ...local, size: handle.rotate ? 30 : 48 },
+      });
       handle.button.innerHTML = markerMarkup(world.camera, u, v, handle.rotate);
     }
+    const source = scaleSelection(editor);
+    const box = source && selectionBox(editor, source);
+    const obstacles: WidgetTarget[] = [{ x: 0, y: 0, size: 20 }];
+    if (box)
+      for (const handle of boxHandles(box)) {
+        const point = world.project(boxWorld(box, handle.point));
+        obstacles.push({ x: point.x - origin.x, y: point.y - origin.y, size: 16 });
+      }
+    this.clearance.update(entries, obstacles);
   }
   dispose(): void {
+    this.clearance.dispose();
     this.root.remove();
   }
 }

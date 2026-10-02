@@ -1,5 +1,7 @@
 import type { DisplayDocument } from "../model/display-document.js";
 
+import { InteractionHistory } from "./interaction-history.js";
+
 type Kind =
   | "tag-membership"
   | "entity-reorder"
@@ -78,6 +80,10 @@ export class ActiveInteraction {
   }
 }
 export class InteractionLease {
+  history: Pick<
+    InteractionHistory<unknown>,
+    "canUndo" | "canRedo" | "checkpoint" | "navigate"
+  > | null = null;
   readonly navigationAllowed: boolean;
   phase: "editing" | "waiting" | "closing" = "editing";
   candidate: DisplayDocument | null = null;
@@ -91,6 +97,34 @@ export class InteractionLease {
     capabilities: InteractionCapabilities = { navigation: "blocked" },
   ) {
     this.navigationAllowed = capabilities.navigation === "when-released";
+  }
+  trackHistory<T>(
+    root: HTMLElement,
+    read: () => T,
+    restore: (value: T) => void | Promise<void>,
+  ): void {
+    this.history = new InteractionHistory(read, restore);
+    for (const type of ["focusout", "change", "click"] as const)
+      root.addEventListener(
+        type,
+        (event) => {
+          if (
+            type === "click" &&
+            !(
+              event.target instanceof Element &&
+              event.target.closest("button, select, input[type=checkbox]")
+            )
+          )
+            return;
+          const checkpoint = () => {
+            if (this.owner.current === this && this.phase === "editing" && !this.captured)
+              this.history?.checkpoint();
+          };
+          if (type === "focusout") checkpoint();
+          else queueMicrotask(checkpoint);
+        },
+        { signal: this.abort.signal },
+      );
   }
   get captured(): boolean {
     return this.captureTarget !== null;
@@ -113,6 +147,7 @@ export class InteractionLease {
       this.candidate = candidate;
   }
   capture(element: Element, id: number): void {
+    this.history?.checkpoint();
     this.captureTarget = { element, id };
     element.addEventListener(
       "lostpointercapture",
@@ -132,6 +167,7 @@ export class InteractionLease {
   releaseCapture(): void {
     const capture = this.captureTarget;
     this.captureTarget = null;
+    if (capture && this.phase === "editing") this.history?.checkpoint();
     if (capture?.element.hasPointerCapture(capture.id))
       capture.element.releasePointerCapture(capture.id);
   }

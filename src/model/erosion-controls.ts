@@ -112,6 +112,21 @@ export class ErosionControls {
     this.count = null;
     this.suggestedAllowance = null;
     this.latest = this.pending = null;
+    this.lease.trackHistory(
+      this.widget.root,
+      () => ({
+        thickness: this.thickness,
+        allowance: this.allowancePercent,
+        keep: this.keepOriginals,
+      }),
+      async ({ thickness, allowance, keep }) => {
+        this.keepOriginals = keep;
+        this.widget.thickness.value = String(thickness);
+        this.widget.allowance.value = String(allowance);
+        this.queue(thickness, allowance);
+        await this.running;
+      },
+    );
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
     this.editor.notice = "Erode · Minimum thickness · Extra allowance simplifies the result";

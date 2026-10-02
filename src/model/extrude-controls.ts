@@ -129,6 +129,7 @@ export class ExtrudeControls {
         mode: (mode) => {
           this.mode = mode;
           this.queue(this.distance);
+          this.lease?.history?.checkpoint();
         },
       },
       this.abort.signal,
@@ -155,6 +156,30 @@ export class ExtrudeControls {
     this.distance = 0;
     this.symmetric = false;
     this.valid = false;
+    this.twist.origin ??= this.widget.axis ? [...this.widget.axis.center] : null;
+    this.lease?.trackHistory(
+      this.root,
+      () => ({
+        distance: this.distance,
+        symmetric: this.symmetric,
+        mode: this.mode,
+        draft: this.widget.draft.value,
+        angle: this.twist.angle,
+        origin: this.twist.origin,
+        targets: this.targets.selected,
+      }),
+      async (state) => {
+        this.mode = state.mode;
+        this.widget.draft.restore(state.draft);
+        this.twist.angle = state.angle;
+        this.twist.origin = state.origin;
+        this.twist.input.value = String(state.angle);
+        this.targets.selected = state.targets;
+        this.input.value = String(state.distance);
+        this.queue(state.distance, state.symmetric);
+        await this.previews.settle();
+      },
+    );
     return !!this.lease;
   }
   private queue(value: number, symmetric = this.symmetric): void {

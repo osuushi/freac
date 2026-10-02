@@ -71,6 +71,19 @@ export class BooleanControls {
     this.operation = { ids: [], mode, keepOriginals: false };
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
+    this.operation.ids = this.bodies.map((body) => body.id);
+    this.lease.trackHistory(
+      this.widget.root,
+      () => this.operation,
+      async (operation) => {
+        this.operation = operation;
+        this.bodies = operation.ids.flatMap(
+          (id) => this.editor.store.data.bodies?.filter((body) => body.id === id) ?? [],
+        );
+        this.change(() => {});
+        await this.running;
+      },
+    );
     this.change(() => {});
   };
   private change(change: () => void): void {

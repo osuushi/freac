@@ -93,6 +93,7 @@ export class BodyEdgeFinishControls {
       this.lease.show(null);
       this.previews.check(() => this.expandSelection());
       this.queue(this.size);
+      this.lease.history?.checkpoint();
     }
     this.editor.refresh();
   }
@@ -116,6 +117,19 @@ export class BodyEdgeFinishControls {
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
     this.previews.check(() => this.expandSelection());
+    this.lease.trackHistory(
+      this.widget.root,
+      () => ({
+        size: this.previews.latest?.size ?? 0,
+        mode: this.mode,
+      }),
+      async (state) => {
+        this.setMode(state.mode);
+        this.widget.input.value = String(state.size);
+        this.queue(state.size);
+        await this.previews.settle();
+      },
+    );
     this.editor.refresh();
     return true;
   }

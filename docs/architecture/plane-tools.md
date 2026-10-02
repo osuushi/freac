@@ -70,8 +70,9 @@ numeric entry. **Flip side** reverses the normal 180° at the same origin, keepi
 the exact same infinite support plane; it does not orbit the camera.
 
 The section frame belongs to renderer view state, copied from its reference.
-Moving it never edits a construction plane, sketch or body and creates no Undo
-entry. Enter/Done keeps the section visible and releases placement; **Adjust
+Moving it never edits a construction plane, sketch or body and creates no document
+Undo entry. While adjusting, local Undo/Redo restores completed placement tweaks
+(see [interaction history](edit-lifecycle.md#temporary-interaction-history-founder-decision-2026-10-02)). Enter/Done keeps the section visible and releases placement; **Adjust
 section** reopens its handles, **Choose section plane** replaces the reference,
 and **Turn off section** restores the full view. Escape/Cancel restores the view
 from before adjustment, including restoring no section after first activation.

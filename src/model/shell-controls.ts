@@ -89,6 +89,15 @@ export class ShellControls {
     this.thickness = 0;
     this.valid = this.invalid = false;
     this.latest = this.pending = null;
+    this.lease.trackHistory(
+      this.widget.root,
+      () => this.thickness,
+      async (value) => {
+        this.widget.input.value = String(value);
+        this.queue(value);
+        await this.running;
+      },
+    );
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
     this.editor.notice = "Shell · Negative inward, positive outward · Selected faces stay open";

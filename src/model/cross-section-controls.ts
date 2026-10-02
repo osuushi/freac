@@ -130,12 +130,21 @@ export class CrossSectionControls {
     this.placement.reset();
     if (frame) this.place(structuredClone(frame), !e.world.crossSection);
     else this.choose();
+    this.lease.trackHistory(
+      this.placement.root,
+      () => e.world.crossSection,
+      (saved) => {
+        if (saved) this.place(saved, false);
+        else this.choose();
+      },
+    );
   }
   private choose(): void {
     if (!this.lease) return;
     this.editor.world.crossSection = null;
     this.placement.reset();
     this.picker.start((frame) => this.place(frame));
+    this.lease.history?.checkpoint();
     this.editor.notice = "Cross section · Pick a world plane, saved plane or planar face";
     this.editor.refresh();
   }
@@ -157,6 +166,7 @@ export class CrossSectionControls {
     if (!frame || !this.valid) return;
     this.placement.reset();
     this.editor.world.crossSection = flipSectionFrame(frame);
+    this.lease?.history?.checkpoint();
     this.editor.refresh();
   }
   private async finish(): Promise<boolean> {

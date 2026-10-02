@@ -25,6 +25,9 @@ cancellation. Changed numeric targets interrupt obsolete calculations and retain
 only the latest requested values. Invalid parameters clear the candidate
 and disable acceptance. Zero thickness is a no-op. Calculations use the shared
 single-edit lease, busy state and native cancellation path.
+While Erode is active, Undo/Redo restores completed thickness, allowance and Keep
+originals tweaks through the same preview path. Acceptance remains one document
+Undo step; cancellation discards the temporary parameter history.
 
 With Keep originals enabled (the default), preview ghosts source bodies as display
 state only. Acceptance selects the new bodies and hides their originals in the
@@ -191,3 +194,5 @@ The captured towers/plate responsiveness case is in `tests/erosion-responsivenes
 `node tests/erosion-responsiveness-ui.mjs` covers automatic entry, reset values,
 all three cancellation routes and the allowance suggestion through acceptance,
 history and Save/Open. `tests/document-failure.test.ts` checks feedback validation.
+`node tests/erosion-history-ui.mjs` checks temporary parameter Undo/Redo, branching
+after Undo and grouped document acceptance in all three runtimes.
