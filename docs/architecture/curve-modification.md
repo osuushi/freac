@@ -82,8 +82,11 @@ geometry occluded in the viewport. Its hover highlights the corresponding source
 Plane hover and click share the same nearest-reference picker, including tilted
 saved planes. Enter/check accepts, Escape/cross cancels and restores selection.
 Direction and accept/cancel controls stay above the bottom status. Projection
-errors sit above them with a fixed gap. Reuse a coplanar sketch or create one on
-acceptance. `backend/projection.ts` and the native kernel produce the usual
+errors sit above them with a fixed gap. Reuse a visible coplanar sketch or preview
+a new sketch, then create it on acceptance. Hidden sketches are ignored when
+resolving the destination, including canonical planes. The renderer passes an
+explicit destination ID so preview and acceptance agree without exposing viewport
+visibility to the backend. `backend/projection.ts` and the native kernel produce the usual
 temporary candidate; acceptance is one Undo, without a persistent source link.
 Before fitting spatial rims, split them at exact contour-endpoint contacts. Those
 contacts become cubic endpoints and ordinary coincidence links, keeping side/rim
