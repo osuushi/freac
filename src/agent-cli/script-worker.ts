@@ -60,6 +60,7 @@ process.on(
         finishEdges: (input) =>
           call({ kind: "finishEdges", input }) as ReturnType<ScriptApi["finishEdges"]>,
         shell: (input) => call({ kind: "shell", input }) as ReturnType<ScriptApi["shell"]>,
+        erode: (input) => call({ kind: "erode", input }) as ReturnType<ScriptApi["erode"]>,
         constructionPlane: (input) =>
           call({ kind: "constructionPlane", input }) as ReturnType<ScriptApi["constructionPlane"]>,
         deleteConstructionPlane: (input) =>

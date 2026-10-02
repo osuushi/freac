@@ -337,7 +337,7 @@ Additional source files/relative imports are outside this first API.
 
 The global `freac` API exposes awaited `createSketch`, `extrude`, `revolve`,
 `moveFaces`, `offsetFaces`, `transformBodies`, `constructionPlane`, `deleteConstructionPlane`,
-`splitBody`, `imprint`, `scale`, `sweep`, `booleanBodies`, `finishEdges` and `shell`. It returns explicit generated sketch/profile/body/topology IDs
+`splitBody`, `imprint`, `scale`, `sweep`, `booleanBodies`, `finishEdges`, `shell` and `erode`. It returns explicit generated sketch/profile/body/topology IDs
 for later calls. Sketch creation accepts ordinary segments, circles, arcs and cubic
 Béziers on an explicit plane; it infers no constraints. Runtime validation and the
 existing solver/kernel validate every operation. Unachievable face offsets reject
@@ -394,6 +394,12 @@ thickness: negative inward, positive outward. It preserves current native surfac
 support and collapse checks, with no thickness clamp. Unknown/duplicate targets
 reject before calculation. All calls share script atomicity, cancellation and Undo.
 These additions do not complete the broader command-catalog/control parity design.
+
+`erode({ids, thickness, allowance})` creates independent cavity copies while
+retaining the originals. Thickness is positive; allowance is nonnegative and bounds
+extra wall material. Cavities may split or disappear, but unverified kernel failures
+reject. Returned bodies include retained originals, unaffected bodies and new
+cavities. See [erosion](erosion.md) for construction and verification limits.
 
 ### Mathematical path sweep
 

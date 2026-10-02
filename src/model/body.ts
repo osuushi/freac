@@ -116,3 +116,11 @@ export interface BodyShell {
   /** Signed distance: negative inward, positive outward. Empty faces means closed hollow. */
   thickness: number;
 }
+
+/** Independent cavity copies; the source bodies remain accepted and unchanged. */
+export interface BodyErosion {
+  ids: string[];
+  thickness: number;
+  /** Maximum extra erosion, shared by simplification and reconstruction, in mm. */
+  allowance: number;
+}

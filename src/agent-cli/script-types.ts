@@ -43,6 +43,7 @@ export interface FreacScript extends DecoratorScriptApi, TagScriptApi {
   finishEdges(input: { edges: { body: string; edge: string }[]; mode: "fillet" | "chamfer"; size: number }): Promise<SolidResult>;
   /** Negative thickness inward, positive outward. Empty faces means no opening. */
   shell(input: { selection: { body: string; faces: string[] }[]; thickness: number }): Promise<SolidResult>;
+  erode(input: { ids: string[]; thickness: number; allowance: number }): Promise<SolidResult>;
   /** Captured when the script starts. Point owners are not whole-curve targets. */
   readonly selection: readonly Target[];
   createSketch(input: { plane: "XY" | "XZ" | "YZ" | Plane; curves: ScriptCurve[] }): Promise<SketchResult>;

@@ -52,6 +52,13 @@ export class EntityVisibility {
     operation: HistoryOperation,
     direction: "undo" | "redo",
   ): void {
+    if (operation.kind === "erode") {
+      const { ids } = operation.parameters.operation as import("./body.js").BodyErosion;
+      for (const id of ids) {
+        if (direction === "undo") this.show(id);
+        else this.hide(id);
+      }
+    }
     const sweep =
       operation.kind === "extrude"
         ? (operation.parameters.extrusion as Extrusion)

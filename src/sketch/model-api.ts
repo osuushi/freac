@@ -1,6 +1,7 @@
 import type {
   BodyBoolean,
   BodyEdgeFinish,
+  BodyErosion,
   BodyFaceOffset,
   BodyShell,
   BodyTransform,
@@ -63,6 +64,7 @@ export type ModelRequest =
   | { kind: "boolean-bodies"; operation: BodyBoolean }
   | { kind: "edge-finish-selection"; operation: Omit<BodyEdgeFinish, "size"> }
   | { kind: "shell"; operation: BodyShell }
+  | { kind: "erode"; operation: BodyErosion }
   | { kind: "offset-faces"; operation: BodyFaceOffset }
   | { kind: "finish-edges"; operation: BodyEdgeFinish }
   | { kind: "loft"; operation: import("../model/loft.js").Loft }

@@ -2,6 +2,7 @@ import type { InspectionTarget } from "../agent/inspection-protocol.js";
 import type {
   BodyBoolean,
   BodyEdgeFinish,
+  BodyErosion,
   BodyFaceOffset,
   BodyShell,
   BodyTransform,
@@ -72,6 +73,7 @@ export interface ScriptApi extends DecoratorScriptApi, TagScriptApi {
   finishEdges(input: BodyEdgeFinish): Promise<SolidResult>;
   /** Negative thickness hollows inward; empty opening faces means a closed hollow body. */
   shell(input: BodyShell): Promise<SolidResult>;
+  erode(input: BodyErosion): Promise<SolidResult>;
   /** Fixed at script start. Point selections never imply whole-curve selection. */
   readonly selection: readonly InspectionTarget[];
   /** Ordinary editable curves on an explicit plane; IDs assigned by Freac. */
@@ -97,6 +99,7 @@ export type ScriptOperation =
   | { kind: "booleanBodies"; input: BodyBoolean }
   | { kind: "finishEdges"; input: BodyEdgeFinish }
   | { kind: "shell"; input: BodyShell }
+  | { kind: "erode"; input: BodyErosion }
   | { kind: "sweep"; input: PathSweep }
   | { kind: "constructionPlane"; input: PlaneInput }
   | { kind: "deleteConstructionPlane"; input: { id: string } }
