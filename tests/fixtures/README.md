@@ -111,7 +111,13 @@ This is user-created Freac geometry.
 `extrude-projected-cylinder.json` retains the projected/trimmed sketch, original
 radius-16 tilted cylinder and 40 mm extrusion request from the founder's
 `2026-10-02T12-06-41-325Z-dafff561` pre-extrusion capture. Cached presentation and
-history are omitted. The automatic join passes basic BRep validation but loses
-large faces during meshing and returns an incorrect volume. The regression
-requires rejection without document mutation and verifies separate-body recovery,
-acceptance, Undo/Redo and Open. This is user-created Freac geometry.
+history are omitted. Without cubic Boolean contact resolution, the automatic join
+passes basic BRep validation but loses large faces during meshing and returns an
+incorrect volume. Regressions exercise Auto, Union, Subtract, Intersect and New
+against independent cylinder/silhouette volume calculations, signed mesh volume
+and closed/oriented mesh export, plus acceptance, Undo/Redo, Open, standalone
+Union and rigid editing. `extrude-incomplete-cylinder.json`
+retains the exact broken body and topology identities from the matching
+`2026-10-02T12-06-33-981Z-3b86b0d2` post-extrusion capture. It ensures incomplete
+historic geometry still rejects atomically on Open; it is not silently repaired
+from a lost operation recipe. Both captures are user-created Freac geometry.

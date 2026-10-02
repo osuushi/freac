@@ -1,6 +1,10 @@
 #include "kernel.h"
 #include "boundary-move.h"
 #include "sketch-curve.h"
+#include "geometry-policy.h"
+#include <BRepAdaptor_Curve.hxx>
+#include <ShapeFix_Wire.hxx>
+#include <ShapeExtend_WireData.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
@@ -22,7 +26,24 @@ TopoDS_Wire wire(const Tree& spans) {
         builder.Add(edge.Edge());
     }
     if (!builder.IsDone()) throw std::runtime_error("Profile boundary is not a valid wire");
-    return builder.Wire();
+    ShapeFix_Wire boundary;
+    boundary.Load(builder.Wire());
+    boundary.SetPrecision(geometry_policy::cubicBooleanToleranceMm);
+    boundary.SetMaxTolerance(geometry_policy::cubicBooleanToleranceMm);
+    boundary.ModifyTopologyMode() = true;
+    // Trimming a tangent cubic can leave a microscopic curve or adjoining line
+    // remnant. Collapse within the contact budget on this temporary profile wire;
+    // retaining them creates long sliver walls with unweldable mesh boundaries.
+    for (int i = boundary.NbEdges(); i > 0; --i) {
+        const int count = boundary.NbEdges();
+        bool cubicJunction = false;
+        for (int adjacent : {i == 1 ? count : i - 1, i, i == count ? 1 : i + 1})
+            if (BRepAdaptor_Curve(boundary.WireData()->Edge(adjacent)).GetType() == GeomAbs_BezierCurve)
+                cubicJunction = true;
+        if (cubicJunction)
+            boundary.FixSmall(i, false, geometry_policy::cubicBooleanToleranceMm);
+    }
+    return boundary.Wire();
 }
 
 }

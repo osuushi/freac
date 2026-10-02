@@ -11,6 +11,7 @@ constexpr double parameterCorrespondenceMm = 1e-7;
 constexpr double projectionBudgetMm = 0.001;
 constexpr double projectionEndpointMm = projectionBudgetMm / 2;
 constexpr double projectionFitMm = projectionBudgetMm / 2;
+constexpr double cubicBooleanToleranceMm = 0.0001;
 constexpr double projectionCollapsedLengthMm = 1e-7;
 constexpr double edgeOnDirectionDot = 1e-12;
 constexpr double fullCircleAngleRad = 1e-9;

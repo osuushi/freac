@@ -2,6 +2,11 @@
 #include "boolean-periodic.h"
 #include "geometry-policy.h"
 #include <BRepCheck_Analyzer.hxx>
+#include <BRepAdaptor_Curve.hxx>
+#include <BRep_Tool.hxx>
+#include <Geom_BezierCurve.hxx>
+#include <Geom_BSplineCurve.hxx>
+#include <TopoDS.hxx>
 #include <BRepAlgoAPI_Common.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepAlgoAPI_Fuse.hxx>
@@ -13,6 +18,21 @@
 #include <set>
 #include <stdexcept>
 
+namespace {
+bool hasCubicBoundary(const TopoDS_Shape& shape) {
+    for (TopExp_Explorer edges(shape, TopAbs_EDGE); edges.More(); edges.Next()) {
+        const auto edge = TopoDS::Edge(edges.Current());
+        if (BRep_Tool::Degenerated(edge)) continue;
+        const BRepAdaptor_Curve curve(edge);
+        if (curve.GetType() == GeomAbs_BezierCurve &&
+            curve.Bezier()->Degree() == 3 && !curve.Bezier()->IsRational()) return true;
+        if (curve.GetType() == GeomAbs_BSplineCurve &&
+            curve.BSpline()->Degree() == 3 && !curve.BSpline()->IsRational()) return true;
+    }
+    return false;
+}
+}
+
 TopoDS_Shape booleanShape(const TopoDS_Shape& a, const TopoDS_Shape& b, const std::string& mode,
                          std::vector<SourceEntity>& origins) {
     std::unique_ptr<BRepAlgoAPI_BooleanOperation> operation;
@@ -21,6 +41,11 @@ TopoDS_Shape booleanShape(const TopoDS_Shape& a, const TopoDS_Shape& b, const st
     else operation = std::make_unique<BRepAlgoAPI_Common>();
     TopTools_ListOfShape arguments, tools; arguments.Append(a); tools.Append(b);
     operation->SetArguments(arguments); operation->SetTools(tools);
+    // Cubic approximations can oscillate about an analytic support. Use the same
+    // bounded contact resolution for overlap detection and the resulting edit.
+    const double fuzzy = hasCubicBoundary(a) || hasCubicBoundary(b)
+        ? geometry_policy::cubicBooleanToleranceMm : 0;
+    operation->SetFuzzyValue(fuzzy);
     operation->SetRunParallel(OSD_ThreadPool::DefaultPool()->HasThreads());
     operation->SetNonDestructive(true); operation->Build();
     if (!operation->IsDone() || operation->HasErrors()) throw std::runtime_error("Boolean operation failed");
@@ -30,6 +55,7 @@ TopoDS_Shape booleanShape(const TopoDS_Shape& a, const TopoDS_Shape& b, const st
         operation = std::make_unique<BRepAlgoAPI_Cut>();
         arguments.Clear(); arguments.Append(prepared);
         operation->SetArguments(arguments); operation->SetTools(tools);
+        operation->SetFuzzyValue(fuzzy);
         operation->SetRunParallel(OSD_ThreadPool::DefaultPool()->HasThreads());
         operation->SetNonDestructive(true); operation->Build();
         if (!operation->IsDone() || operation->HasErrors()) throw std::runtime_error("Boolean operation failed");

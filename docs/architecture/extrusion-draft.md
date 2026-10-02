@@ -97,6 +97,12 @@ the loft. Their shared vertices and existing sewing tolerances are retained.
 The accepted source sketch is untouched. There is no blanket cubic-plus-draft
 exclusion.
 
+Cubic-profile Boolean contact resolution follows the
+[numerical geometry policy](numerical-geometry.md). The same resolution applies
+to Auto's overlap query and the final operation; an approximate projection must
+not report an empty intersection and accidentally select Union. Explicit Union
+remains available when the intended result adds the overlapping material.
+
 ## Outstanding regression checks
 
 The broader extrusion UI route has an unresolved circular-cut volume mismatch
