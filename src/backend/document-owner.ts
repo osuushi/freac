@@ -52,10 +52,9 @@ export class DocumentOwner {
     this.scripts.begin(name);
   }
   get view(): ModelView {
-    const fit = this.pendingOperation?.kind === "reconstruct-mesh" && this.candidate;
     return {
       data: this.store.data,
-      meshFit: fit ? this.solids.meshFit : undefined,
+      ...this.solids.previewQuality(this.candidate ? this.pendingOperation?.kind : undefined),
       decoratorSources: this.decorators.sources,
       historySelection: this.store.selection,
       planeCutAvailable: this.planeCutAvailable,

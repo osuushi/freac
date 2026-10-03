@@ -18,7 +18,6 @@ try {
         operation: {
           ids: [source.id],
           thickness: 1,
-          allowance: 0.8,
           keepOriginals: true,
         },
       })

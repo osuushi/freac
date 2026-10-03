@@ -87,7 +87,7 @@ struct Fitted {
 };
 // Calculation reuse for Erode; normalized input and ordinary exact geometry out.
 Input automaticInput(Mesh,double tolerance,int maxPatches);
-Fitted fitSurface(Input,bool deviations = false);
+Fitted fitSurface(Input,bool deviations = false,bool approximate = false);
 using Seams = std::map<Edge,std::vector<std::pair<int,int>>>;
 Seams smoothSeams(const Network&);
 std::map<Edge,std::array<V,9>> seamNormals(const Network&,const Seams&,const Search&);

@@ -1,24 +1,30 @@
 # Eroded bodies
 
-Erode takes whole bodies, a positive minimum thickness `t`, and a nonnegative
-extra thickness allowance `e` in millimeters. It creates independent bodies and
-optionally retains the originals. Thin regions may disappear, a body may split, and a
-verified empty result is legitimate. These are ordinary materialized BReps with
-stable new IDs, editable using the existing face, movement and Boolean tools.
-There is no saved distance field or erosion feature recipe.
+Erode creates independent, editable bodies inside selected whole bodies and optionally
+retains the originals. Thin regions may disappear and a body may split. Accepted
+results are ordinary materialized BReps with new stable IDs; no distance field,
+reconstruction recipe, or relationship to the source is saved.
+
+The founder's 2026-10-03 decision separates the methods: **Fast targets a thickness
+and reports approximation quality; Accurate guarantees minimum thickness and bounded
+extra thickness.** Fast no longer uses allowance as a construction bias or acceptance
+threshold.
 
 ## Interaction and ownership
 
-Select complete bodies and choose Erode from Tools. The local widget provides
-Minimum thickness, Extra thickness allowance, Method (Fast or Accurate), and Keep
-originals, plus an inward drag handle.
-Entering Erode starts a preview immediately. Each new operation starts with 1 mm
-minimum thickness, 50% extra allowance, Fast, and Keep originals enabled; values belong to
-that operation and are not remembered for another selection or invocation.
-The allowance is a percentage of minimum thickness and stays fixed while typing
-or dragging thickness: 4 mm at 50% allows 2 mm extra thickness. The renderer
-converts it to millimeters for the existing geometry API.
-Inward dragging clamps at a positive 0.001 mm.
+Select complete bodies and choose Erode from Tools. The local widget provides Method
+(Fast or Accurate), thickness, Keep originals, and an inward drag handle.
+Fast shows Target thickness, Mesh detail (Coarse, Standard, Fine), and CAD face budget
+(32–256 per source body). Accurate shows Minimum thickness and Extra thickness
+allowance, expressed as a percentage of minimum thickness. For Accurate, 4 mm at
+50% permits 2 mm extra thickness; the geometry API receives millimeters.
+
+Entering Erode starts a preview immediately with Fast, 1 mm target thickness,
+Standard detail, a 128-face budget, and Keep originals enabled. Accurate's allowance
+starts at 50%. Switching methods preserves their separate controls within the
+operation. A new invocation resets every setting. Inward dragging clamps at a
+positive 0.001 mm.
+
 Drag release retains the temporary preview. Enter, the check button, or completing
 by switching tools accepts; Escape or either cancel button interrupts native work,
 discards the candidate and returns to Select. The panel closes on acceptance or
@@ -26,7 +32,7 @@ cancellation. Changed numeric targets interrupt obsolete calculations and retain
 only the latest requested values. Invalid parameters clear the candidate
 and disable acceptance. Zero thickness is a no-op. Calculations use the shared
 single-edit lease, busy state and native cancellation path.
-While Erode is active, Undo/Redo restores completed thickness, allowance, method and Keep
+While Erode is active, Undo/Redo restores completed thickness, allowance, mesh detail, face budget, method and Keep
 originals tweaks through the same preview path. Acceptance remains one document
 Undo step; cancellation discards the temporary parameter history.
 
@@ -36,7 +42,7 @@ per-window entity visibility state, so
 results can be edited immediately. Originals remain in the entity list and can be
 shown or selected for subtraction. An empty result leaves retained originals selected
 and visible. Turning Keep originals off replaces the selected sources, including
-removing them for a verified empty result. Undo restores replaced originals.
+removing them for an empty result under the selected method. Undo restores replaced originals.
 An operation that changes the document is one Undo step; Undo restores the source view.
 Appearance and exact source geometry are not changed by ghosting.
 
@@ -44,26 +50,60 @@ A cavity-making workflow is Erode, subtract rib solids from the new body, then
 subtract its remaining pieces from the original. These pieces remain ordinary
 positive bodies until the final Boolean operation creates the cavity.
 
-## Geometric contract
+## Fast reconstruction and reporting
 
-For the original solid `S`, let `E_d(S)` denote its interior at least `d` from its
-boundary. The accepted result `C` must satisfy, within the shared numerical budgets:
+Fast extracts the signed-distance level set at the requested target thickness.
+It does not add allowance-dependent depth.
+Mesh detail sets 32, 44, or 56 cells along the source's longest bounding-box dimension;
+the widget reports the actual spacing in millimeters. Source tessellation uses
+spacing/32 deflection. Marching tetrahedra interpolate crossings, preserving
+separate closed components. Sampling can miss features smaller than this spacing,
+including very small surviving interiors; Fast's empty result is sampled, not certified.
+
+Six-plane box recovery and analytic fitting run first. Otherwise radial layouts
+feed the shared bicubic fitter. The CAD face budget bounds the whole output for each
+selected source, including all its components. The fitter refines within that budget
+and can retain its best valid fit despite residual deviation. Public mesh import
+retains its separate, strict fitting-tolerance contract.
+
+When radial fitting is unsuitable, direct planar contours of the same source field
+can preserve through-holes. Large planar normals and principal axes supply distinct
+candidate layouts. Thirty-two aligned sections use periodic cubic interpolation
+around each loop and cubic interpolation along the axis. Loop controls and side-face
+subdivision follow the CAD budget; holes remain inner wires in both planar caps.
+After direct fitting fails, a mesh opening of radius spacing/2 removes sub-grid tips
+before a simpler single-ring fit. This can split narrow connections; diagnostics
+still compare against the original, unfiltered target mesh. No construction
+silently changes the requested target to spend a thickness allowance.
+
+Every result must still be an oriented, closed, valid CAD solid with valid topology
+and no self-intersections. Fast does not run the minimum-distance or interior-coverage
+certificate. Its target is not a guaranteed minimum, and the fitted surface can
+under- or overshoot it. Construction or topology failures remain errors; deviation
+alone is reported rather than rejected.
+
+Temporary per-source diagnostics include mesh spacing, triangle/face counts, sampled
+thickness range and sampled fit deviation. Thickness samples measure signed distance
+to the source tessellation; fit deviation samples distances in both directions between
+the contour mesh and a tessellation of the fitted CAD. These are approximate samples,
+not certified extrema. The model owner exposes them only while that erosion candidate
+is current; accept, discard, failure and history navigation do not persist the report
+in accepted bodies or the saved document.
+
+## Accurate geometric contract
+
+For original solid `S`, let `E_d(S)` denote its interior at least `d` from its boundary.
+With minimum thickness `t` and extra allowance `e`, Accurate requires:
 
 `E_(t+e)(S) ⊆ C ⊆ E_t(S)`.
 
 Minimum thickness wins. The allowance limits extra material left behind; it is not
-permission to make walls too thin or discard a spacious chamber. Analytic surfaces
-and compact editable topology are preferred. Display triangulation is never an
-accepted result representation.
+permission to make walls too thin or discard a spacious chamber. Display triangulation
+is never an accepted representation. Both methods produce ordinary editable CAD,
+but their thickness promises differ. Fast describes its construction strategy and
+does not guarantee a shorter runtime for every input.
 
-Fast constructs a temporary signed-distance mesh directly, without first trying
-CAD offsets. Accurate uses the traditional CAD proposals described below. Both
-methods must pass the same original-source thickness and coverage certificate.
-Fast describes the construction strategy; it does not guarantee a shorter runtime
-for every input. Changing method interrupts obsolete work and recalculates.
-
-Accurate tries a conservative simplification and native inward
-CAD offsets. Simplification proposes one batch of shallow protruding faces above
+Accurate tries a conservative simplification and native inward CAD offsets. Simplification proposes one batch of shallow protruding faces above
 planar supports and heals them, spending at most half the allowance. It independently
 checks containment and interior coverage before using that proposal. Failed
 simplification falls back to the untouched source. Offset construction tries OCCT's
@@ -71,28 +111,6 @@ join modes on private copies and unifies coincident support surfaces. If a round
 collapses at the requested depth, construction also tries half the extra allowance;
 verification still uses the original requested bounds. Valid source pcurves are
 preserved rather than forcibly reparameterized.
-
-Fast samples a temporary signed distance field near `t+e/2`. Marching tetrahedra
-produce closed triangle components. Certified box and analytic recovery run first.
-Otherwise a verified radial map supplies a coarse quad layout for the shared
-bicubic fitter, using `e/8` fitting allowance. Source-surface tessellation supplies
-smooth normal guidance to avoid the contour grid's uneven triangle bias.
-
-When a component has no suitable radial map, or has holes, Fast also tries direct
-planar contours of the source distance field near `t+e/3`. It prefers large planar
-face normals, then principal axes. Thirty-two sections use 128 equally spaced
-samples per loop, cyclic cubic interpolation around each loop, and cubic
-interpolation along the axis. Continuous phase alignment prevents adjacent rings
-from twisting. Inner loops remain holes in both the side surfaces and planar caps.
-Redundant height knots are removed within a small fraction of the allowance.
-The side surfaces are divided into bounded patches for subsequent CAD operations.
-
-If that proposal fails, the earlier inward/outward mesh opening of `e/4` can remove
-narrow connections and split components. Its simpler 16-section, 32-control fit
-remains a fallback. Neither construction is a certificate: the assembled B-rep must
-pass `validateCavity` against the original source, including every required interior
-region. The accepted bodies contain no field, reconstruction recipe or relation to
-their originals.
 
 Additional Accurate construction proposals remove collapsed cylindrical branches and convex
 toroidal rounds, retaining globally supporting planar caps. Every proposal is
@@ -179,19 +197,20 @@ section fitting also supports through-holes whose ordered loops persist along a
 usable axis. Sections with separate outer regions, nested islands or changing loop
 counts are rejected on that axis. Enclosed voids and more general changing topology
 still rely on Accurate or another certified proposal.
-Each 3D field is limited to 300,000 grid samples and 12 seconds (including root
-refinement), and each contour to 100,000 vertices/200,000 triangles. Direct section
-sampling has a shared 500,000-evaluation / 20-second budget across axis attempts.
-The radial fitter has a 256-patch budget; direct section reconstruction has at most
-16 loops and 256 faces per piece. Small allowances, difficult parameterizations or
-offset intersections may still reject even when an eroded body exists. Fast rejects
-allowance below 0.0001 mm with guidance to use Accurate.
-A waisted freeform body at 1 mm thickness/0.8 mm allowance is a covered case. A
-coarse cubic spherical source needs sufficient allowance for analytic recovery;
-1/1.6 mm is covered; smaller allowances are not guaranteed for a cubic source approximation.
-The captured pierced, filleted body at 2 mm thickness/3.6 mm allowance produces two
-editable three-face interiors. At 2/1 mm, its section reconstruction still fails;
-this remains an unsupported case, not evidence of an empty interior.
+Each 3D field is limited to 300,000 samples and 12 seconds, and each contour to
+100,000 vertices/200,000 triangles. Direct section sampling shares a 500,000-evaluation /
+20-second budget across distinct axis proposals. Fitting honors the requested 32–256
+CAD-face budget per source body. Larger budgets are maxima, not requested face counts;
+analytic or already adequate fits can use fewer faces. Changing detail changes
+sampling, while changing the face budget changes conversion complexity.
+
+A waisted freeform body, an approximately spherical cubic source, the captured lobed
+fillet and a plate with two through-bores are covered at a 1 mm target. At a 2 mm
+target the older pierced-fillet capture still exceeds its reconstruction budgets;
+that failure is not an empty result. At an explicit 3.8 mm target, resolution-based
+filtering preserves both large chambers and two small pieces as four editable bodies.
+Its former 2 mm / 3.6 mm allowance behavior included that extra construction depth;
+Fast no longer adds it implicitly.
 
 Reconstructed cubic faces support ordinary face movement. Neighboring polynomial
 four-sided faces use algebraic boundary interpolation before general plate filling,
@@ -199,13 +218,13 @@ keeping their requested rims within the existing geometric tolerance. This does
 not guarantee tangent continuity after direct face movement. General face Offset
 on a freeform patch can still stop at zero when the native offset cannot construct
 a valid neighborhood; Move is the verified local-edit route for this checkpoint.
-Small allowances on complicated boundaries may exhaust the coverage work limit;
+On Accurate, small allowances on complicated boundaries may exhaust the coverage work limit;
 zero allowance is useful for certifiable cases such as convex polyhedra, but is not
 a promise of exact erosion for every body. Increasing the allowance can help
 verification and simplification but cannot guarantee construction. No dense faceted
 BRep fallback or repeated primitive subtraction is used.
 
-Existing cavities always count as source boundaries, even when very small. Erode
+On Accurate, existing cavities always count as source boundaries, even when very small. Erode
 expands them rather than filling or ignoring them. Thin protrusions can vanish,
 but their thicker roots may require curved transition geometry; the current
 construction rejects a zero-allowance round-branch case instead of silently
@@ -234,10 +253,12 @@ The valid 18 mm source also exceeded coverage limits with a 0.3 mm allowance;
 
 ## Scripting and checks
 
-`makeshift.erode({ids, thickness, allowance, keepOriginals, method})` uses the same calculation and script
+`makeshift.erode({ids, thickness, method, meshDetail, maxFaces, allowance, keepOriginals})` uses the same calculation and script
 atomicity as manual tools. Its result includes retained originals and any unaffected
 bodies, plus newly generated bodies. Empty results introduce no new bodies. `keepOriginals`
-defaults to true. `method` is `"fast"` (the default) or `"accurate"`.
+defaults to true. `method` is `"fast"` (the default) or `"accurate"`. Fast ignores legacy
+`allowance`; Accurate ignores the Fast conversion settings. Both APIs use the same
+defaults and limits as the local widget.
 
 Geometry/workflow regressions: `tests/body-erosion.test.ts` and the two captured
 models in `tests/body-erosion-capture.test.ts`. Independent coverage
@@ -269,16 +290,16 @@ pointer/keyboard controls in Chromium, WebKit and hidden Electron. Native
 ray classification with voids, and conservative trimmed/transformed Bézier bounds.
 
 `tests/erosion-methods.test.ts` covers default Fast, explicit Accurate, analytic split
-components, invalid methods and zero allowance. `tests/erosion-methods-capture.test.ts`
-checks the captured split result and its final cavity. The corresponding
+components, invalid methods, method-specific settings, and Accurate zero allowance. `tests/erosion-methods-capture.test.ts`
+checks the captured split result and its final cavity at an explicit target depth. The corresponding
 `erosion-methods-ui.mjs` and `erosion-methods-capture-ui.mjs` routes exercise method
 history/cancellation and the captured workflow in Chromium, WebKit and hidden
-Electron. `erosion-methods-export.mjs` checks independent STEP readback of both pieces.
+Electron. `erosion-methods-export.mjs` checks independent STEP readback of all four pieces and the final wall.
 Native `erosion-components` and `erosion-mesh-offset` checks cover component
 remapping, refined contour roots and inward/outward mesh offset signs.
 
 `tests/erosion-sections.test.ts` checks the captured lobed fillet at 1 mm thickness
-with 50% and 150% allowance, plus a plate with two through-bores and independent
+with 32- and 128-face budgets, plus a plate with two through-bores and independent
 material probes. It includes history, stable IDs, reopening, movement and final
 subtraction. `node tests/erosion-sections-ui.mjs` exercises default Fast through
 ordinary controls in Chromium, WebKit and hidden Electron.
@@ -286,3 +307,8 @@ ordinary controls in Chromium, WebKit and hidden Electron.
 mesh export for the new interiors and final walls. Native
 `erosion-section-classifier` compares section membership with independent OCCT
 classification, including transformed, holed and near-boundary cases.
+
+`tests/erosion-quality.test.ts` checks mesh-detail effects, ignored legacy Fast allowance,
+face-budget validation, transient diagnostics and scripting with the same Fast settings.
+The method UI route checks all controls, parameter history, method isolation, restart
+defaults, cancellation and saved-document history in Chromium, WebKit and hidden Electron.

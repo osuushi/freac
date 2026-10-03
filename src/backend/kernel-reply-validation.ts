@@ -1,4 +1,5 @@
 import { validateKernelBodies } from "./kernel-body-validation.js";
+import { validateErosionQuality } from "./kernel-erosion-validation.js";
 import { validateMeshFitReply } from "./kernel-mesh-fit-validation.js";
 import {
   validateKernelCurves,
@@ -16,6 +17,10 @@ export function readKernelReply<Input extends KernelRequest>(
 ): KernelReply<Input> {
   const reply = object(value);
   switch (input.kind) {
+    case "erode":
+      validateKernelBodies(reply, input);
+      validateErosionQuality(reply, input);
+      break;
     case "fit-mesh": {
       validateMeshFitReply(reply, input);
       break;

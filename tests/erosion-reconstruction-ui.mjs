@@ -30,7 +30,7 @@ await withUiRuntimes(
       .first()
       .click();
     await chooseTool(page, "erode", "erode");
-    await page.getByRole("textbox", { name: "Extra thickness allowance", exact: true }).fill("80");
+    await page.getByRole("combobox", { name: "Mesh detail", exact: true }).selectOption("standard");
     const state = await inspect(page);
     assert(state.preview, await page.locator(".status").textContent());
     assert.deepEqual(state.document, source);
@@ -127,7 +127,7 @@ async function cancelCalculation(page, original) {
   await page.getByRole("button", { name: "Tools", exact: true }).click();
   await page.getByRole("combobox", { name: "Find a tool" }).fill("erode");
   await page.locator('[data-command="erode"]').click();
-  await page.getByRole("textbox", { name: "Extra thickness allowance", exact: true }).fill("80");
+  await page.getByRole("combobox", { name: "Mesh detail", exact: true }).selectOption("standard");
   await page.waitForFunction(() => window.makeshiftInspect().busy);
   const cancel = page.getByRole("button", { name: "Cancel calculation", exact: true });
   await cancel.waitFor({ state: "visible" });

@@ -8,7 +8,7 @@
 #include <iostream>
 
 namespace mesh_fit {
-Fitted fitSurface(Input input,bool deviations) {
+Fitted fitSurface(Input input,bool deviations,bool approximate) {
     const bool automatic = input.layout.quads.empty();
     if (input.layout.quads.empty()) {
         if (const auto result = analytic::reconstruct(input)) {
@@ -27,6 +27,7 @@ Fitted fitSurface(Input input,bool deviations) {
     Search target(input.target,input.layout.creases.empty());
     auto network = initialize(input.layout,target);
     Statistics stats;
+    std::optional<Fitted> best;
     while (true) {
         if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "mesh-fit: " << network.patches.size() << " patches\n";
         const auto seed = network;
@@ -37,9 +38,23 @@ Fitted fitSurface(Input input,bool deviations) {
         }
         if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "mesh-fit deviation "
             << std::max(stats.forward,stats.reverse)*input.scale << ", seam " << stats.normalAngle << "\n";
-        if (stats.oriented && std::max(stats.forward,stats.reverse) <= input.tolerance && stats.normalAngle <= input.smoothAngle) break;
+
+        if (approximate && stats.oriented && (!best || std::max(stats.forward,stats.reverse) < std::max(best->stats.forward,best->stats.reverse))) {
+            try { best = Fitted{assemble(network,input),stats,int(network.patches.size()),int(network.controls.size()),{}, {}}; }
+            catch (const Standard_Failure&) {}
+            catch (const std::runtime_error&) {}
+        }
+        if (stats.oriented && std::max(stats.forward,stats.reverse) <= input.tolerance && stats.normalAngle <= input.smoothAngle) {
+            if (!approximate) break;
+            if (best) return *best;
+        }
         if (network.patches.size()*4 > size_t(input.maxPatches)) {
+            if (approximate) {
+                if (best) return *best;
+                throw std::runtime_error("Fast could not construct a valid surface within the CAD face budget. Try more faces, finer mesh detail or Accurate.");
+            }
             std::ostringstream message;
+
             message << "Mesh fit exceeds requested tolerance within patch budget: sampled deviation "
                 << std::max(stats.forward,stats.reverse)*input.scale << " mm; smooth seam angle "
                 << stats.normalAngle << " degrees" << (stats.oriented ? "" : "; surface faces away from the target")

@@ -90,6 +90,7 @@ export type ModelRequest =
   | { kind: "preview" | "edit"; sketch: Sketch; intent?: EditIntent }
   | { kind: "remove" | "clear"; sketchId: string; ids?: string[] };
 export interface ModelView {
+  erosionQuality?: import("../model/erosion-quality.js").ErosionQuality[];
   meshFit?: import("../model/mesh-fit.js").MeshFitStatistics;
   decoratorSources?: readonly import("../decorators/javascript-hooks.js").EnabledDefinition[];
   historySelection?: import("./history-selection.js").HistorySelection;

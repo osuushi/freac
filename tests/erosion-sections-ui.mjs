@@ -40,15 +40,18 @@ await withUiRuntimes(
         "fast",
       );
       assert.equal(
-        await page.getByRole("textbox", { name: "Minimum thickness", exact: true }).inputValue(),
+        await page.getByRole("textbox", { name: "Target thickness", exact: true }).inputValue(),
         "1",
       );
       assert.equal(
-        await page
-          .getByRole("textbox", { name: "Extra thickness allowance", exact: true })
-          .inputValue(),
-        "50",
+        await page.getByRole("combobox", { name: "Mesh detail", exact: true }).inputValue(),
+        "standard",
       );
+      assert.equal(
+        await page.getByRole("textbox", { name: "CAD face budget", exact: true }).inputValue(),
+        "128",
+      );
+      assert.match(await page.locator(".erosion-quality").textContent(), /Sampled thickness/);
       let state = await inspect(page);
       assert(state.preview, await page.locator(".erosion-status").textContent());
       assert.equal(state.preview.bodies.length, 2);

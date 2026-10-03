@@ -17,9 +17,9 @@ struct Budget {
 };
 Loops contour(const InteriorField&,const Frame&,double height,double depth,double spacing,Budget&);
 void order(Loops&,const Loops& previous,const mesh_fit::V& axis);
-Loop controls(const Loop&,const Loop& previous);
-TopoDS_Shape solid(const std::vector<Loops>& rows,const mesh_fit::V& axis,double allowance);
+Loop controls(const Loop&,const Loop& previous,int count = 128);
+TopoDS_Shape solid(const std::vector<Loops>& rows,const mesh_fit::V& axis,double spacing,int maxFaces = 256);
 }
 namespace erosion {
-std::optional<TopoDS_Shape> contourInterior(const TopoDS_Shape&,double thickness,double allowance);
+std::optional<TopoDS_Shape> contourInterior(const TopoDS_Shape&,const InteriorField&,const mesh_fit::Mesh&,double thickness,double spacing,int maxFaces);
 }

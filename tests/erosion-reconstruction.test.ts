@@ -13,7 +13,7 @@ test("freeform erosion reconstructs an editable cavity and preserves document hi
     const before = owner.view.data;
     const reply = await owner.call({
       kind: "erode",
-      operation: { ids: [source.id], thickness: 1, allowance: 0.8, keepOriginals: true },
+      operation: { ids: [source.id], thickness: 1, keepOriginals: true },
     });
     assert.equal(reply.error, undefined);
     assert.equal(owner.view.data, before);
@@ -21,7 +21,7 @@ test("freeform erosion reconstructs an editable cavity and preserves document hi
     assert(cavity);
     assert(cavity.faces.length <= 96);
     // Include the source construction's 0.15 mm fitting allowance in the
-    // independent ideal-shape volume envelope; Erode still verifies its actual B-rep.
+    // independent ideal-shape volume envelope; Fast targets the same 1 mm inward surface.
     assert(cavity.volume > waistInteriorVolume(1.95));
     assert(cavity.volume < waistInteriorVolume(0.85));
     assert(cavity.faces.every((face) => !source.faces.some((old) => old.id === face.id)));
@@ -85,14 +85,14 @@ test("erosion recovers an analytic spherical cavity from cubic source faces", as
     const before = owner.view.data;
     const reply = await owner.call({
       kind: "erode",
-      operation: { ids: [source.id], thickness: 1, allowance: 1.6, keepOriginals: false },
+      operation: { ids: [source.id], thickness: 1, keepOriginals: false },
     });
     assert.equal(reply.error, undefined);
     const result = reply.view.candidate?.bodies?.[0];
     assert(result);
     assert.equal(result.faces.length, 1);
     const face = result.faces[0];
-    assert(face.sphere && face.sphere.radius > 8 && face.sphere.radius < 8.5);
+    assert(face.sphere && Math.abs(face.sphere.radius - 9) < 0.2);
     assert(Math.abs(result.volume - (4 * Math.PI * face.sphere.radius ** 3) / 3) < 1e-5);
     await owner.call({ kind: "accept" });
     await owner.call({ kind: "undo" });

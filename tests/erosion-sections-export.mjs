@@ -19,7 +19,7 @@ for (const name of ["lobed", "bores"]) {
     const source = owner.view.data.bodies[0];
     const reply = await owner.call({
       kind: "erode",
-      operation: { ids: [source.id], thickness: 1, allowance: 0.5, method: "fast" },
+      operation: { ids: [source.id], thickness: 1, method: "fast" },
     });
     assert.equal(reply.error, undefined);
     await owner.call({ kind: "accept" });

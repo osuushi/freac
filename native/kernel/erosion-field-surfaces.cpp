@@ -21,7 +21,7 @@
 
 namespace erosion::sections {
 namespace {
-Handle(Geom_BSplineSurface) surface(const std::vector<Loops>& rows,size_t ring,double allowance) {
+Handle(Geom_BSplineSurface) surface(const std::vector<Loops>& rows,size_t ring,double spacing) {
     const int around = int(rows[0][ring].size()), along = int(rows.size());
     std::vector<Handle(Geom_BSplineCurve)> curves;
     for (int i = 0; i < around; ++i) {
@@ -45,8 +45,8 @@ Handle(Geom_BSplineSurface) surface(const std::vector<Loops>& rows,size_t ring,d
     curves[0]->Knots(vk); curves[0]->Multiplicities(vm);
     Handle(Geom_BSplineSurface) result = new Geom_BSplineSurface(poles,uk,vk,um,vm,3,3,true,false);
     // Remove redundant height knots on straight walls. This is only a proposal;
-    // the complete result still passes the original-source certificate.
-    for (int i = result->NbVKnots()-1; i > 1; --i) result->RemoveVKnot(i,0,allowance/100);
+    // final geometry is independently validated as a closed solid.
+    for (int i = result->NbVKnots()-1; i > 1; --i) result->RemoveVKnot(i,0,spacing/100);
     return result;
 }
 std::array<TopoDS_Wire,2> addSide(BRepBuilderAPI_Sewing& sewing,const Handle(Geom_BSplineSurface)& surface,int vertical) {
@@ -64,12 +64,13 @@ std::array<TopoDS_Wire,2> addSide(BRepBuilderAPI_Sewing& sewing,const Handle(Geo
     return {caps[0].Wire(),caps[1].Wire()};
 }
 }
-TopoDS_Shape solid(const std::vector<Loops>& rows,const mesh_fit::V& axis,double allowance) {
+TopoDS_Shape solid(const std::vector<Loops>& rows,const mesh_fit::V& axis,double spacing,int maxFaces) {
     BRepBuilderAPI_Sewing sewing(1e-7);
     std::vector<std::array<TopoDS_Wire,2>> rings;
-    const int vertical = std::min(4,254/(8*int(rows[0].size())));
+    const int vertical = std::min(4,(maxFaces-2)/(8*int(rows[0].size())));
+    if (vertical < 1) throw std::runtime_error("CAD face budget cannot preserve these section loops");
     for (size_t ring = 0; ring < rows[0].size(); ++ring)
-        rings.push_back(addSide(sewing,surface(rows,ring,allowance),vertical));
+        rings.push_back(addSide(sewing,surface(rows,ring,spacing),vertical));
     for (int end : {0,1}) {
         const gp_Pln plane{gp_Pnt(rows[end ? rows.size()-1 : 0][0][0]),gp_Dir(axis)};
         BRepBuilderAPI_MakeFace cap(plane,rings[0][end],true);

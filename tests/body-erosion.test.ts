@@ -204,7 +204,7 @@ test("script erosion creates ordinary copies atomically and invalid input preser
     await assert.rejects(() =>
       owner.scripts.step({
         kind: "erode",
-        input: { ids: [body.id], thickness: 1, allowance: -1 },
+        input: { ids: [body.id], thickness: 1, allowance: -1, method: "accurate" },
       }),
     );
     await owner.scripts.cancel();

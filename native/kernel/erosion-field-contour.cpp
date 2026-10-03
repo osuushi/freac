@@ -23,7 +23,7 @@ public:
         const auto found = edges.find(key);
         if (found != edges.end()) return found->second;
         // Keep the proposal away from grid-vertex degeneracy. This displacement
-        // is at most 0.1% of an edge; only the fitted B-rep is later certified.
+        // is at most 0.1% of an edge; the fitted B-rep is separately checked for valid solid geometry.
         double t = std::clamp(values[a]/(values[a]-values[b]),0.001,0.999);
         if(refineRoots) {
             double low=0,high=1,first=values[a],last=values[b];

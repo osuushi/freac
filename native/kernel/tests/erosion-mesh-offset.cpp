@@ -11,7 +11,7 @@ int main() {
         for(const auto& p:sphere.vertices)
             if(std::abs(length(p)-2)>.001) throw std::runtime_error("Refined roots missed the sphere surface");
         for(double distance:{-.3,.3}) {
-            const auto offset=erosion::offsetInteriorMesh(sphere,distance,.8);
+            const auto offset=erosion::offsetInteriorMesh(sphere,distance,.14);
             const auto pieces=erosion::interiorComponents(offset);
             if(pieces.size()!=1) throw std::runtime_error("Sphere offset changed component count");
             double volume6=0;

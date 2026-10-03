@@ -1,13 +1,22 @@
 #include "erosion-field.h"
-#include "erosion.h"
+#include "offset-geometry.h"
+#include <BRepAdaptor_Surface.hxx>
+#include <TopExp_Explorer.hxx>
+#include <TopoDS.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <cmath>
 
 namespace erosion {
-std::optional<TopoDS_Shape> boxInterior(const TopoDS_Shape& source,const mesh_fit::Mesh& mesh,
-                                      double thickness,double allowance) {
+std::optional<TopoDS_Shape> boxInterior(const TopoDS_Shape& source,const mesh_fit::Mesh& mesh) {
     using namespace mesh_fit;
     if(mesh.vertices.empty()) return {};
+    int planes = 0;
+    for (TopExp_Explorer f(source,TopAbs_FACE); f.More(); f.Next()) {
+        if (BRepAdaptor_Surface(TopoDS::Face(f.Current())).GetType() != GeomAbs_Plane) return {};
+        ++planes;
+    }
+    if (planes != 6) return {};
+
     struct Group { V normal; double area=0; };
     std::map<std::array<int,3>,Group> groups;
     std::vector<std::pair<V,double>> normals;
@@ -46,8 +55,8 @@ std::optional<TopoDS_Shape> boxInterior(const TopoDS_Shape& source,const mesh_fi
         const auto candidate=BRepPrimAPI_MakeBox(gp_Ax2(gp_Pnt(corner),gp_Dir(axes[2]),gp_Dir(axes[0])),
                                                 high[0]-low[0],high[1]-low[1],high[2]-low[2]).Shape();
         // The box comes from the contour's dominant planes, not a CAD offset.
-        // Its coarse-mesh corner differences are certified against the source itself.
-        validateCavity(source,candidate,thickness,allowance);
+        // Restrict this shortcut to six-plane sources; holes use section fitting.
+        offset_geometry::validSolid(candidate,"Fast erosion box");
         return candidate;
     } catch(const Standard_Failure&) {return {};}
     catch(const std::runtime_error&) {return {};}

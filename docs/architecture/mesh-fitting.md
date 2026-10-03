@@ -119,7 +119,9 @@ including steep angles on thin rounded rims. With declared creases, target norma
 estimation separates incident triangles more than 45 degrees apart; the final
 sampled seam and distance checks still determine acceptance. Internal Erode
 reconstruction may instead supply temporary smooth-source normal guidance. That
-route linearizes the normalized angular residual so shrinking a parameter tangent
+route can retain its best valid CAD fit at the selected face budget and report
+remaining deviation; this is separate from file import's strict tolerance contract.
+It linearizes the normalized angular residual so shrinking a parameter tangent
 cannot improve alignment; file import retains its existing normal estimation.
 
 Validation uses denser surface stations than the fit, every target vertex, and

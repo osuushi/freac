@@ -42,7 +42,7 @@ function validate(document: SketchDocument, operation: Operation): void {
         "Boolean requires ordered distinct existing bodies and an explicit mode/keepOriginals",
       );
   } else if (operation.kind === "erode") {
-    const { ids, thickness, allowance, keepOriginals, method } = operation.input;
+    const { ids, thickness, allowance = 0, keepOriginals, method } = operation.input;
     if (method !== undefined && method !== "fast" && method !== "accurate")
       throw new Error("Choose Fast or Accurate erosion");
     if (
@@ -51,8 +51,7 @@ function validate(document: SketchDocument, operation: Operation): void {
       ids.some((id) => !bodies.some((body) => body.id === id)) ||
       !Number.isFinite(thickness) ||
       thickness <= 1e-5 ||
-      !Number.isFinite(allowance) ||
-      allowance < 0 ||
+      (method === "accurate" && (!Number.isFinite(allowance) || allowance < 0)) ||
       (keepOriginals !== undefined && typeof keepOriginals !== "boolean")
     )
       throw new Error(

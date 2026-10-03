@@ -125,6 +125,10 @@ export interface BodyErosion {
   keepOriginals?: boolean;
   ids: string[];
   thickness: number;
-  /** Maximum extra erosion, shared by simplification and reconstruction, in mm. */
-  allowance: number;
+  /** Accurate only: maximum extra erosion in mm. Defaults to zero; ignored by Fast. */
+  allowance?: number;
+  /** Fast only: sampling resolution along the longest dimension. Defaults to Standard. */
+  meshDetail?: "coarse" | "standard" | "fine";
+  /** Fast only: maximum CAD faces per source body, 32–256. Defaults to 128. */
+  maxFaces?: number;
 }

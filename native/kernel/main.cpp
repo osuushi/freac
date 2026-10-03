@@ -65,13 +65,19 @@ double volume(const TopoDS_Shape& shape) {
         // to different volumes for the same solid after its faces are repartitioned.
         // A nearby exterior plane avoids near-zero integrals on trimmed faces,
         // without amplifying boundary tolerances along the body's longest axis.
-        int axis = 0;
-        for (int i = 1; i < 3; ++i) if (hi[i]-lo[i] < hi[axis]-lo[axis]) axis = i;
-        gp_Pnt origin(lo[0], lo[1], lo[2]);
-        origin.SetCoord(axis+1, lo[axis]-1);
-        gp_Dir normal(axis == 0, axis == 1, axis == 2);
-        error = BRepGProp::VolumePropertiesGK(shape, props,
-            gp_Pln(origin, normal), 1e-10, false, true);
+        std::array<int,3> axes{0,1,2};
+        std::stable_sort(axes.begin(),axes.end(),[&](int a,int b) { return hi[a]-lo[a] < hi[b]-lo[b]; });
+        for (const int axis : axes) {
+            gp_Pnt origin(lo[0],lo[1],lo[2]);
+            origin.SetCoord(axis+1,lo[axis]-1);
+            const gp_Dir normal(axis == 0,axis == 1,axis == 2);
+            error = BRepGProp::VolumePropertiesGK(shape,props,gp_Pln(origin,normal),1e-10,false,true);
+            if (std::isfinite(error) && error >= 0) break;
+            // A failed face aborts GK before all properties are accumulated. Try a
+            // different integral reference, never accept its partial mass or error.
+            if (std::getenv("MAKESHIFT_KERNEL_TIMING"))
+                std::cerr << "volume integration reference " << axis << " failed: " << error << std::endl;
+        }
     }
     if (!std::isfinite(error) || error < 0) throw std::runtime_error("Solid volume integration failed");
     const double value = std::abs(props.Mass());
@@ -159,7 +165,12 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
         reply << output.str(); return;
     }
     std::vector<std::string> participants;
-    const auto results = calculate(input, bodies, mode, participants);
+    Tree erosionQuality;
+    const bool erode = input.get<std::string>("kind") == "erode";
+    if (erode) mode = "new";
+    const auto results = erode ? erodeBodies(input,bodies,participants,&erosionQuality)
+        : calculate(input,bodies,mode,participants);
+
     timing.phase("calculate");
     std::ostringstream output; output << std::setprecision(17) << "{\"mode\":" << quoted(mode) << ",\"participants\":[";
     for (size_t i = 0; i < participants.size(); i++) { if (i) output << ','; output << quoted(participants[i]); }
@@ -168,7 +179,9 @@ void request(std::ostream& reply, const Tree& input, KernelTiming& timing) {
         ? input.get<double>("deflection", 0.05) : 0.05;
     for (size_t i = 0; i < results.size(); i++) { if (i) output << ','; present(output, results[i], deflection); }
     timing.phase("presentation");
-    reply << output.str() << "]}";
+    output << ']';
+    if (erode && input.get<std::string>("method","fast") == "fast") writeErosionQuality(output,erosionQuality);
+    reply << output.str() << '}';
     timing.phase("write");
 }
 }

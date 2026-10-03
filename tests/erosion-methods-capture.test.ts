@@ -8,7 +8,7 @@ const fixture = JSON.parse(readFileSync("tests/fixtures/erosion-pierced-fillet.j
   document: SketchDocument;
 };
 
-test("Fast reconstructs both pieces of the captured pierced fillet as editable CAD", async () => {
+test("Fast preserves the captured chambers and small pieces at an explicit target depth", async () => {
   const owner = new DocumentOwner();
   try {
     assert.equal((await owner.call({ kind: "open", document: fixture.document })).error, undefined);
@@ -17,12 +17,14 @@ test("Fast reconstructs both pieces of the captured pierced fillet as editable C
     assert(source);
     const reply = await owner.call({
       kind: "erode",
-      operation: { ids: [source.id], thickness: 2, allowance: 3.6, method: "fast" },
+      operation: { ids: [source.id], thickness: 3.8, method: "fast" },
     });
     assert.equal(reply.error, undefined);
     assert.equal(owner.view.data, before);
     const pieces = reply.view.candidate?.bodies?.filter((body) => body.id !== source.id);
-    assert(pieces && pieces.length === 2);
+    assert(pieces && pieces.length === 4);
+    assert.equal(pieces.filter((body) => body.volume > 700).length, 2);
+    assert(reply.view.erosionQuality?.[0].sampledFitDeviation);
     assert(pieces.some((body) => body.center[0] < 0));
     assert(pieces.some((body) => body.center[0] > 0));
     for (const body of pieces) {
@@ -61,6 +63,7 @@ test("Fast reconstructs both pieces of the captured pierced fillet as editable C
     assert(Math.abs(walls[0].volume - expected) < 1e-3);
     await owner.call({ kind: "accept" });
     assert.equal((await owner.call({ kind: "open", document: owner.view.data })).error, undefined);
+    assert(Math.abs((owner.view.data.bodies?.[0].volume ?? 0) - expected) < 1e-3);
   } finally {
     owner.close();
   }

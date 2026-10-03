@@ -23,4 +23,6 @@ export type KernelReply<Input extends KernelRequest> = Input extends {
     ? KernelResult & { fit: import("../model/mesh-fit.js").MeshFitStatistics }
     : Input extends { kind: "inspect" }
       ? KernelResult<"inspect">
-      : KernelResult;
+      : Input extends { kind: "erode" }
+        ? KernelResult & { erosionQuality?: import("../model/erosion-quality.js").ErosionQuality[] }
+        : KernelResult;

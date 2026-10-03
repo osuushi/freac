@@ -18,7 +18,8 @@
   border-radius: 6px;
   font: inherit;
 }
-.erosion-status {
+.erosion-status,
+.erosion-quality {
   display: block;
   padding: 5px 0;
   line-height: 1.4;

@@ -1,8 +1,6 @@
 #include "erosion-field-planar.h"
-#include "erosion.h"
 #include "offset-geometry.h"
 #include <BRepAdaptor_Surface.hxx>
-#include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepGProp.hxx>
 #include <BRep_Builder.hxx>
 #include <GProp_GProps.hxx>
@@ -12,6 +10,8 @@
 #include <gp_Pln.hxx>
 #include <math_Jacobi.hxx>
 #include <stdexcept>
+#include <cstdlib>
+#include <iostream>
 
 namespace erosion {
 namespace {
@@ -56,48 +56,42 @@ std::vector<V> directions(const TopoDS_Shape& source,const Mesh& mesh) {
     return result;
 }
 TopoDS_Shape along(const InteriorField& field,const Mesh& mesh,const V& axis,
-                   double thickness,double allowance,sections::Budget& budget) {
+                   double thickness,double spacing,int maxFaces,sections::Budget& budget) {
     const sections::Frame frame(mesh,axis);
-    const double depth = thickness+allowance/3, height = frame.high.Z()-frame.low.Z();
+    const double depth = thickness, height = frame.high.Z()-frame.low.Z();
     if (height < 1e-6) throw std::runtime_error("Collapsed erosion section range");
-    const double trim = std::min(0.02,allowance/(8*height));
-    const double spacing = std::sqrt(allowance*(thickness+allowance/2));
+    const double trim = std::min(0.02,spacing/(8*height));
     std::vector<sections::Loops> rows;
     for (int i = 0; i < 32; ++i) {
         const double h = frame.low.Z()+height*(trim+(1-2*trim)*i/31);
         auto loops = sections::contour(field,frame,h,depth,spacing,budget);
         sections::order(loops,rows.empty() ? sections::Loops{} : rows.back(),axis);
         for (size_t ring = 0; ring < loops.size(); ++ring)
-            loops[ring] = sections::controls(loops[ring],rows.empty() ? sections::Loop{} : rows.back()[ring]);
+            loops[ring] = sections::controls(loops[ring],rows.empty() ? sections::Loop{} : rows.back()[ring],std::clamp(4*((maxFaces-2)/int(loops.size())),32,128));
         rows.push_back(std::move(loops));
     }
-    return sections::solid(rows,axis,allowance);
+    return sections::solid(rows,axis,spacing,maxFaces);
 }
 }
-std::optional<TopoDS_Shape> contourInterior(const TopoDS_Shape& source,double thickness,double allowance) {
+std::optional<TopoDS_Shape> contourInterior(const TopoDS_Shape& source,const InteriorField& field,const Mesh& raw,double thickness,double spacing,int maxFaces) {
     try {
-        InteriorField field(source,allowance);
-        const auto raw = field.contour(thickness+allowance/3,allowance,true);
-        const auto sourceBoundary = boundary(source);
         TopoDS_Compound candidate; BRep_Builder builder; builder.MakeCompound(candidate);
         sections::Budget budget;
-        for (const auto& piece : interiorComponents(raw)) {
+        const auto pieces = interiorComponents(raw);
+        for (const auto& piece : pieces) {
             bool found = false;
             for (const auto& axis : directions(source,piece)) {
                 try {
-                    const auto proposal = along(field,piece,axis,thickness,allowance,budget);
+                    const auto proposal = along(field,piece,axis,thickness,spacing,maxFaces/int(pieces.size()),budget);
                     offset_geometry::validSolid(proposal,"Erosion reconstruction");
-                    BRepExtrema_DistShapeShape gap(sourceBoundary,boundary(proposal));
-                    if (!gap.IsDone() || gap.Value() < thickness-geometry_policy::boundaryDistanceMm) continue;
                     builder.Add(candidate,proposal);
                     found = true;
                     break;
-                } catch (const Standard_Failure&) {}
-                catch (const std::runtime_error&) {}
+                } catch (const Standard_Failure& e) { if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "section CAD: " << e.GetMessageString() << "\n"; }
+                catch (const std::runtime_error& e) { if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "section fit: " << e.what() << "\n"; }
             }
             if (!found) return {};
         }
-        validateCavity(source,candidate,thickness,allowance);
         return candidate;
     } catch (const Standard_Failure&) { return {}; }
     catch (const std::runtime_error&) { return {}; }

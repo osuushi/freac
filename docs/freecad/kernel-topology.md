@@ -1043,7 +1043,19 @@ Independent point-classification probes compare original material with the
 returned pieces, supplementing the scalar-volume and closed-solid checks.
 These numerical checks are not a general proof of arbitrary split correctness.
 
+The 2026-10-03 Fast erosion workflow exposed a related case: a nested cavity wall
+returned a tiny negative face error (about -2.4e-21) from the nearest exterior plane.
+Source observation: the pinned
+[`volumePropertiesGK` face loop](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepGProp/BRepGProp.cxx#L630-L648)
+aborts on any negative face error before accumulating the remaining faces. Taking
+its absolute value would therefore accept incomplete mass properties. Makeshift
+instead retries distinct exterior reference planes at the same 1e-10 requested
+accuracy and rejects if every reference fails. Runtime verification includes the
+captured wall's subtraction-volume identity and Save/Open; exact STEP readback is
+also part of that regression route. No upstream implementation was copied.
+
 ## Rounded offset join precision (2026-09-23)
+
 
 Source observation at pinned OCCT `a016080bf6738d6aeae020badee4e888ad1540a5`:
 [`BRepOffset_MakeOffset` edge-pipe construction](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepOffset/BRepOffset_MakeOffset.cxx#L1995)

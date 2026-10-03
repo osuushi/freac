@@ -28,16 +28,15 @@ await withUiRuntimes(
       await page.getByRole("combobox", { name: "Erosion method", exact: true }).inputValue(),
       "fast",
     );
-    await page.getByRole("textbox", { name: "Minimum thickness", exact: true }).fill("2");
-    await page.getByRole("textbox", { name: "Extra thickness allowance", exact: true }).fill("180");
+    await page.getByRole("textbox", { name: "Target thickness", exact: true }).fill("3.8");
     let state = await inspect(page);
     assert(state.preview, await page.locator(".erosion-status").textContent());
-    assert.equal(state.preview.bodies.length, 3);
+    assert.equal(state.preview.bodies.length, 5);
     assert.deepEqual(state.document, before);
     await page.screenshot({ path: `.cache/sketch-review/${runtime}-erosion-pierced-preview.png` });
     await page.getByRole("button", { name: "Accept erosion", exact: true }).click();
     const accepted = (await inspect(page)).document;
-    assert.equal(accepted.bodies.length, 3);
+    assert.equal(accepted.bodies.length, 5);
     assert(accepted.bodies.slice(1).every((body) => body.faces.length <= 8 && body.volume > 0));
     await chooseTool(page, "undo", "undo");
     assert.deepEqual((await inspect(page)).document, before);
@@ -59,13 +58,14 @@ await withUiRuntimes(
     const reopened = (await inspect(page)).document;
     const buttons = page.getByRole("button", { name: /^Select Body / });
     await buttons.nth(0).click();
-    await buttons.nth(1).click({ modifiers: ["Meta"] });
-    await buttons.nth(2).click({ modifiers: ["Meta"] });
+    for (let index = 1; index < reopened.bodies.length; index++)
+      await buttons.nth(index).click({ modifiers: ["Meta"] });
     await chooseTool(page, "subtract", "subtract");
     state = await inspect(page);
     assert.equal(state.preview?.bodies.length, 1);
     const expected =
-      reopened.bodies[0].volume - reopened.bodies[1].volume - reopened.bodies[2].volume;
+      reopened.bodies[0].volume -
+      reopened.bodies.slice(1).reduce((sum, body) => sum + body.volume, 0);
     assert(Math.abs(state.preview.bodies[0].volume - expected) < 1e-3);
     await page.keyboard.press("Enter");
     await inspect(page);

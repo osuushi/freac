@@ -44,8 +44,7 @@ await withUiRuntimes(async (page, name) => {
   await history();
   assert.equal(await page.getByRole("combobox", { name: "Erosion method" }).inputValue(), "fast");
   const fast = await inspect(page);
-  assert(fast.preview.bodies[1].volume > 17 ** 2 * 7);
-  assert(fast.preview.bodies[1].volume < 2592);
+  close(fast.preview.bodies[1].volume, 2592);
   await history(true);
   await values(1, 50, true, 2592);
   await history(true);

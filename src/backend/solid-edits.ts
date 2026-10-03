@@ -53,12 +53,19 @@ export function isSolidRequest(request: ModelRequest): request is SolidRequest {
 export class SolidEdits {
   readonly offsetEdit = new FaceOffsetEdit();
   private edgeLimit = new EdgeSizeLimit();
+  erosionQuality: import("../model/erosion-quality.js").ErosionQuality[] | undefined;
   meshFit: import("../model/mesh-fit.js").MeshFitStatistics | undefined;
   edgeSize: number | undefined;
   edgeSelection: BodyEdgeFinish["edges"] = [];
   booleanTargets: string[] = [];
   booleanMode: BooleanMode | undefined;
   constructor(private kernel: SolidCalculator) {}
+  previewQuality(kind: ModelRequest["kind"] | "script" | undefined) {
+    return {
+      meshFit: kind === "reconstruct-mesh" ? this.meshFit : undefined,
+      erosionQuality: kind === "erode" ? this.erosionQuality : undefined,
+    };
+  }
   async selectFinishEdges(
     document: SketchDocument,
     operation: Omit<BodyEdgeFinish, "size">,
@@ -154,30 +161,56 @@ export class SolidEdits {
     this.meshFit = result.fit;
     return { ...document, bodies: materialize(document.bodies ?? [], result) };
   }
+  private async erode(
+    document: SketchDocument,
+    operation: import("../model/body.js").BodyErosion,
+  ): Promise<SketchDocument> {
+    const bodies = document.bodies ?? [];
+    const {
+      thickness,
+      allowance = 0,
+      keepOriginals,
+      method,
+      meshDetail = "standard",
+      maxFaces = 128,
+    } = operation;
+    if (method !== undefined && method !== "fast" && method !== "accurate")
+      throw new Error("Choose Fast or Accurate erosion");
+    if (
+      !Number.isFinite(thickness) ||
+      thickness <= 1e-5 ||
+      (method === "accurate" && (!Number.isFinite(allowance) || allowance < 0)) ||
+      (keepOriginals !== undefined && typeof keepOriginals !== "boolean")
+    )
+      throw new Error(
+        "Erode needs positive finite thickness and nonnegative extra thickness allowance",
+      );
+    if (
+      method !== "accurate" &&
+      (!["coarse", "standard", "fine"].includes(meshDetail) ||
+        !Number.isInteger(maxFaces) ||
+        maxFaces < 32 ||
+        maxFaces > 256)
+    )
+      throw new Error(
+        "Fast needs Coarse, Standard or Fine mesh detail and a CAD face budget from 32 to 256",
+      );
+    const result = await this.kernel.calculate({ ...operation, kind: "erode", bodies });
+    this.erosionQuality = result.erosionQuality;
+
+    return { ...document, bodies: materialize(bodies, result) };
+  }
   async calculate(document: SketchDocument, request: SolidRequest): Promise<SketchDocument> {
     let candidate: SketchDocument;
     this.meshFit = undefined;
+    this.erosionQuality = undefined;
     const bodies = document.bodies ?? [];
     if (request.kind === "reconstruct-mesh") {
       candidate = await this.reconstruct(document, request.input);
     } else if (request.kind === "move-faces" || request.kind === "move-edges") {
       candidate = await this.move(document, request);
     } else if (request.kind === "erode") {
-      const { thickness, allowance, keepOriginals, method } = request.operation;
-      if (method !== undefined && method !== "fast" && method !== "accurate")
-        throw new Error("Choose Fast or Accurate erosion");
-      if (
-        !Number.isFinite(thickness) ||
-        thickness <= 1e-5 ||
-        !Number.isFinite(allowance) ||
-        allowance < 0 ||
-        (keepOriginals !== undefined && typeof keepOriginals !== "boolean")
-      )
-        throw new Error(
-          "Erode needs positive finite thickness and nonnegative extra thickness allowance",
-        );
-      const result = await this.kernel.calculate({ ...request.operation, kind: "erode", bodies });
-      candidate = { ...document, bodies: materialize(bodies, result) };
+      candidate = await this.erode(document, request.operation);
     } else if (request.kind === "shell") {
       if (!Number.isFinite(request.operation.thickness))
         throw new Error("Enter a finite shell thickness");

@@ -1,13 +1,11 @@
 #include "erosion-field.h"
 #include "erosion-field-planar.h"
-#include "erosion.h"
 #include "offset-geometry.h"
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakeSolid.hxx>
 #include <BRepBuilderAPI_MakeWire.hxx>
 #include <BRepBuilderAPI_Sewing.hxx>
-#include <BRepExtrema_DistShapeShape.hxx>
 #include <BRepLib.hxx>
 #include <BRep_Builder.hxx>
 #include <Geom_BSplineSurface.hxx>
@@ -21,6 +19,8 @@
 #include <gp_Pln.hxx>
 #include <math_Jacobi.hxx>
 #include <stdexcept>
+#include <cstdlib>
+#include <iostream>
 
 namespace erosion {
 namespace {
@@ -125,13 +125,13 @@ TopoDS_Shape sectionSolid(const std::vector<std::vector<V>>& rows, const V& axis
     if (!BRepLib::OrientClosedSolid(solid)) throw std::runtime_error("Cannot orient erosion section surface");
     return solid;
 }
-TopoDS_Shape along(const Mesh& mesh, const V& axis, double allowance) {
+TopoDS_Shape along(const Mesh& mesh, const V& axis, double spacing) {
     double low = 1e100, high = -1e100;
     for (const auto& point : mesh.vertices) {
         low = std::min(low,point.Dot(axis));
         high = std::max(high,point.Dot(axis));
     }
-    const double trim = std::min(0.02,allowance/(8*(high-low)));
+    const double trim = std::min(0.02,spacing/(8*(high-low)));
     std::vector<std::vector<V>> rows;
     for (int i = 0; i < 16; ++i) {
         const double fraction = trim+(1-2*trim)*i/15;
@@ -139,10 +139,10 @@ TopoDS_Shape along(const Mesh& mesh, const V& axis, double allowance) {
         rows.push_back(resample(loop,rows.empty() ? std::vector<V>{} : rows.back()));
     }
     // Nonnegative B-spline weights and ordered control-plane heights keep the
-    // fitted surface monotone along this axis. Exact source checks still apply.
+    // fitted surface monotone along this axis. Closed-solid checks still apply.
     return sectionSolid(rows,axis);
 }
-std::vector<TopoDS_Shape> sectionProposals(const Mesh& mesh, double allowance) {
+std::vector<TopoDS_Shape> sectionProposals(const Mesh& mesh, double spacing) {
     V center;
     for (const auto& point : mesh.vertices) center += point/double(mesh.vertices.size());
     math_Matrix covariance(1,3,1,3,0.0);
@@ -164,39 +164,38 @@ std::vector<TopoDS_Shape> sectionProposals(const Mesh& mesh, double allowance) {
         if (!seen) axes.push_back(axis);
     }
     for (const auto& axis : axes) {
-        try { result.push_back(along(mesh,axis,allowance)); }
-        catch (const Standard_Failure&) {}
-        catch (const std::runtime_error&) {}
+        try { result.push_back(along(mesh,axis,spacing)); }
+        catch (const Standard_Failure& e) { if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "section CAD: " << e.GetMessageString() << "\n"; }
+        catch (const std::runtime_error& e) { if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "section fit: " << e.what() << "\n"; }
     }
     return result;
 }
 }
-TopoDS_Shape sectionInterior(const TopoDS_Shape& source, const mesh_fit::Mesh& raw,
-                            double thickness, double allowance) {
-    if (const auto fitted = contourInterior(source,thickness,allowance)) return *fitted;
-    // The opening is a proposal: it may remove thin tips, but may not discard
-    // any interior required by t+e. The final source certificate enforces that.
-    const auto deep = offsetInteriorMesh(raw,-allowance/4,allowance);
-    const auto mesh = offsetInteriorMesh(deep,allowance/4,allowance);
+TopoDS_Shape sectionInterior(const mesh_fit::Mesh& raw,double spacing,int maxFaces) {
+    // Filter sub-grid tips only after direct fitting failed. The radius follows
+    // mesh detail, not thickness or a wall allowance; report against raw below.
+    const auto deep = offsetInteriorMesh(raw,-spacing/2,spacing);
+    const auto mesh = offsetInteriorMesh(deep,spacing/2,spacing);
+
     TopoDS_Compound candidate;
     BRep_Builder builder;
     builder.MakeCompound(candidate);
-    for (const auto& piece : interiorComponents(mesh)) {
+    const auto pieces = interiorComponents(mesh);
+    if (pieces.empty()) throw std::runtime_error("Mesh detail filtering removed the surviving interior. Try finer mesh detail or Accurate.");
+    if (pieces.size()*3 > size_t(maxFaces)) throw std::runtime_error("CAD face budget cannot preserve all interior components");
+    for (const auto& piece : pieces) {
         bool found = false;
-        for (const auto& proposal : sectionProposals(piece,allowance)) {
+        for (const auto& proposal : sectionProposals(piece,spacing)) {
             try {
                 offset_geometry::validSolid(proposal,"Erosion reconstruction");
-                BRepExtrema_DistShapeShape gap(boundary(source),boundary(proposal));
-                if (!gap.IsDone() || gap.Value() < thickness-geometry_policy::boundaryDistanceMm) continue;
                 builder.Add(candidate,proposal);
                 found = true;
                 break;
-            } catch (const Standard_Failure&) {}
-            catch (const std::runtime_error&) {}
+            } catch (const Standard_Failure& e) { if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "section CAD: " << e.GetMessageString() << "\n"; }
+            catch (const std::runtime_error& e) { if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "section fit: " << e.what() << "\n"; }
         }
-        if (!found) throw std::runtime_error("Fast could not fit the eroded interior. Try Accurate or a larger extra allowance.");
+        if (!found) throw std::runtime_error("Fast could not fit the eroded interior. Try finer mesh detail, a larger CAD face budget, or Accurate.");
     }
-    validateCavity(source,candidate,thickness,allowance);
     return candidate;
 }
 }

@@ -8,8 +8,8 @@ import {
 } from "./erosion-sections-fixtures.js";
 import { checkErosionMaterial } from "./erosion-special-probes.js";
 
-for (const allowance of [0.5, 1.5]) {
-  test(`Fast preserves a useful captured lobed interior at ${allowance} mm allowance`, async () => {
+for (const maxFaces of [32, 128]) {
+  test(`Fast preserves a useful captured lobed interior with a ${maxFaces}-face budget`, async () => {
     const owner = new DocumentOwner();
     try {
       assert.equal(
@@ -21,7 +21,7 @@ for (const allowance of [0.5, 1.5]) {
       assert(source);
       const reply = await owner.call({
         kind: "erode",
-        operation: { ids: [source.id], thickness: 1, allowance, method: "fast" },
+        operation: { ids: [source.id], thickness: 1, maxFaces, method: "fast" },
       });
       assert.equal(reply.error, undefined);
       assert.equal(owner.view.data, before);
@@ -29,7 +29,10 @@ for (const allowance of [0.5, 1.5]) {
       assert(bodies && bodies.length === 2);
       const cavity = bodies[1];
       assert(cavity.volume > source.volume * 0.68 && cavity.volume < source.volume * 0.82);
-      assert(cavity.faces.length <= 64);
+      assert(cavity.faces.length <= maxFaces);
+      const quality = reply.view.erosionQuality?.[0];
+      assert(quality && quality.samples > 0 && quality.sampledFitDeviation > 0);
+      assert.equal(quality.faces, cavity.faces.length);
       assert(cavity.faces.every((face) => !source.faces.some((old) => old.id === face.id)));
       assert.equal((await owner.call({ kind: "accept" })).error, undefined);
       const accepted = owner.view.data;
@@ -84,12 +87,12 @@ test("Fast preserves two through-bores, their expanded clearances, and required 
     const before = owner.view.data;
     const reply = await owner.call({
       kind: "erode",
-      operation: { ids: [source.id], thickness: 1, allowance: 0.5 },
+      operation: { ids: [source.id], thickness: 1 },
     });
     assert.equal(reply.error, undefined);
     const cavity = reply.view.candidate?.bodies?.find((body) => body.id !== source.id);
     assert(cavity);
-    assert(cavity.volume > boreInteriorVolume(1.5) && cavity.volume < boreInteriorVolume(1));
+    assert(cavity.volume > boreInteriorVolume(1.25) && cavity.volume < boreInteriorVolume(0.75));
     assert(cavity.faces.length <= 128);
     await owner.call({ kind: "accept" });
     const accepted = owner.view.data;

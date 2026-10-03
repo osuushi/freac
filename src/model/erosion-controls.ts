@@ -5,6 +5,7 @@ import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import type { Vector } from "../sketch/planes.js";
 import { AxialDrag } from "./axial-drag.js";
 import type { BodyErosion } from "./body.js";
+import { ErosionParameters } from "./erosion-parameters.js";
 import { erosionPreview, selectErosionResult } from "./erosion-preview.js";
 import { ErosionWidget, erosionAxis } from "./erosion-widget.js";
 
@@ -16,10 +17,7 @@ export class ErosionControls {
   private ids: string[] = [];
   private original: ModelingTarget[] = [];
   private axis: { center: Vector; normal: Vector } | null = null;
-  private thickness = 1;
-  private allowancePercent = 50;
-  private keepOriginals = true;
-  private method: "fast" | "accurate" = "fast";
+  private parameters = new ErosionParameters();
   private valid = false;
   private invalid = false;
   private count: number | null = null;
@@ -38,29 +36,27 @@ export class ErosionControls {
       () => void this.cancel(),
       () => {
         if (!this.begin()) return;
-        this.keepOriginals = !this.keepOriginals;
-        this.queue(this.thickness, this.allowancePercent);
+        this.parameters.keepOriginals = !this.parameters.keepOriginals;
+        this.queue(this.parameters.thickness, this.parameters.allowancePercent);
       },
       () => {
-        if (this.suggestedAllowance !== null) this.queue(this.thickness, this.suggestedAllowance);
+        if (this.suggestedAllowance !== null)
+          this.queue(this.parameters.thickness, this.suggestedAllowance);
       },
     );
     const options = { signal: this.abort.signal };
-    this.widget.method.addEventListener(
-      "change",
-      () => {
-        if (!this.begin()) return;
-        this.method = this.widget.method.value === "accurate" ? "accurate" : "fast";
-        this.queue(this.thickness, this.allowancePercent);
-      },
-      options,
+    this.parameters.bind(
+      this.widget,
+      () => this.begin(),
+      () => this.queue(this.parameters.thickness, this.parameters.allowancePercent),
+      this.abort.signal,
     );
     this.drag = new AxialDrag(editor, this.widget.handle, this.abort.signal, {
       begin: () => this.begin(),
       lease: () => this.lease,
       axis: () => this.axis,
-      value: () => (Number.isFinite(this.thickness) ? this.thickness : 0),
-      queue: (value) => this.queue(Math.max(0.001, value), this.allowancePercent),
+      value: () => (Number.isFinite(this.parameters.thickness) ? this.parameters.thickness : 0),
+      queue: (value) => this.queue(Math.max(0.001, value), this.parameters.allowancePercent),
       focus: () => this.focus(),
     });
     this.widget.handle.addEventListener(
@@ -70,20 +66,6 @@ export class ErosionControls {
       },
       options,
     );
-    for (const input of [this.widget.thickness, this.widget.allowance]) {
-      input.addEventListener("focus", () => this.begin(), options);
-      input.addEventListener(
-        "input",
-        () => {
-          const value = input.value.trim() ? Number(input.value) : NaN;
-          this.queue(
-            input === this.widget.thickness ? value : this.thickness,
-            input === this.widget.allowance ? value : this.allowancePercent,
-          );
-        },
-        options,
-      );
-    }
     onModelKeydown(
       (event) => {
         if (!this.lease || !["Enter", "Escape"].includes(event.key)) return;
@@ -115,61 +97,44 @@ export class ErosionControls {
     );
     if (!this.lease) return false;
     this.valid = this.invalid = false;
-    this.thickness = 1;
-    this.allowancePercent = 50;
-    this.keepOriginals = true;
-    this.method = "fast";
+    this.parameters.reset();
     this.count = null;
     this.suggestedAllowance = null;
     this.latest = this.pending = null;
     this.lease.trackHistory(
       this.widget.root,
-      () => ({
-        thickness: this.thickness,
-        allowance: this.allowancePercent,
-        keep: this.keepOriginals,
-        method: this.method,
-      }),
-      async ({ thickness, allowance, keep, method }) => {
-        this.keepOriginals = keep;
-        this.method = method;
-        this.widget.thickness.value = String(thickness);
-        this.widget.allowance.value = String(allowance);
-        this.queue(thickness, allowance);
+      () => this.parameters.snapshot(),
+      async (values) => {
+        Object.assign(this.parameters, values);
+        for (const [input, value] of [
+          [this.widget.thickness, values.thickness],
+          [this.widget.allowance, values.allowancePercent],
+          [this.widget.maxFaces, values.maxFaces],
+        ] as const)
+          input.value = String(value);
+        this.queue(values.thickness, values.allowancePercent);
         await this.running;
       },
     );
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
-    this.editor.notice = "Erode · Minimum thickness · Extra allowance simplifies the result";
-    this.queue(this.thickness, this.allowancePercent);
+    this.editor.notice = "Erode · Target thickness · Approximate mesh reconstruction";
+    this.queue(this.parameters.thickness, this.parameters.allowancePercent);
     this.editor.refresh();
     return true;
   }
   private queue(thickness: number, allowancePercent: number): void {
-    const allowance = allowancePercent < 0 ? NaN : (thickness * allowancePercent) / 100;
-    if (
-      this.lease?.phase !== "editing" ||
-      (thickness === this.latest?.thickness &&
-        allowancePercent === this.allowancePercent &&
-        this.method === this.latest?.method &&
-        this.keepOriginals === this.latest?.keepOriginals)
-    )
-      return;
-    this.thickness = thickness;
-    this.allowancePercent = allowancePercent;
+    if (this.lease?.phase !== "editing") return;
+    this.parameters.thickness = thickness;
+
+    this.parameters.allowancePercent = allowancePercent;
+    const operation = this.parameters.operation(this.ids);
+    if (JSON.stringify(operation) === JSON.stringify(this.latest)) return;
     this.valid = false;
     this.count = null;
     this.suggestedAllowance = null;
-    this.invalid =
-      !Number.isFinite(thickness) || !Number.isFinite(allowance) || thickness < 0 || allowance < 0;
-    this.latest = this.pending = {
-      ids: this.ids,
-      thickness,
-      allowance,
-      keepOriginals: this.keepOriginals,
-      method: this.method,
-    };
+    this.invalid = !Number.isFinite(thickness) || thickness < 0;
+    this.latest = this.pending = operation;
     if (this.running) this.editor.store.supersedePreview(true);
     else this.running = this.drain();
     this.editor.refresh();
@@ -178,8 +143,7 @@ export class ErosionControls {
     while (this.pending && this.lease?.phase === "editing") {
       const request = this.pending;
       this.pending = null;
-      const zero =
-        request.thickness === 0 && Number.isFinite(request.allowance) && request.allowance >= 0;
+      const zero = request.thickness === 0;
       const success = await this.editor.store.request(
         zero ? { kind: "discard" } : { kind: "erode", operation: request },
       );
@@ -213,7 +177,7 @@ export class ErosionControls {
     await this.running;
     const lease = this.lease;
     if (!lease || this.drag.active) return false;
-    if (!this.latest || (this.thickness === 0 && !this.invalid)) {
+    if (!this.latest || (this.parameters.thickness === 0 && !this.invalid)) {
       await this.cancel();
       return true;
     }
@@ -244,6 +208,8 @@ export class ErosionControls {
     this.widget.thickness.blur();
     this.widget.allowance.blur();
     this.widget.method.blur();
+    this.widget.meshDetail.blur();
+    this.widget.maxFaces.blur();
     this.lease = null;
     this.editor.modeling.setTool(null);
     this.editor.notice = "";
@@ -272,12 +238,7 @@ export class ErosionControls {
     this.widget.update(
       this.editor,
       this.axis,
-      {
-        thickness: this.thickness,
-        allowancePercent: this.allowancePercent,
-        keepOriginals: this.keepOriginals,
-        method: this.method,
-      },
+      this.parameters.snapshot(),
       !!this.lease,
       this.valid,
       !!this.lease && this.invalid,

@@ -395,11 +395,14 @@ support and collapse checks, with no thickness clamp. Unknown/duplicate targets
 reject before calculation. All calls share script atomicity, cancellation and Undo.
 These additions do not complete the broader command-catalog/control parity design.
 
-`erode({ids, thickness, allowance})` creates independent cavity copies while
-retaining the originals. Thickness is positive; allowance is nonnegative and bounds
-extra wall material. Cavities may split or disappear, but unverified kernel failures
-reject. Returned bodies include retained originals, unaffected bodies and new
-cavities. See [erosion](erosion.md) for construction and verification limits.
+`erode({ids, thickness, method, meshDetail, maxFaces, allowance, keepOriginals})`
+creates independent cavity copies and retains originals by default. Fast (the default)
+uses target thickness, mesh detail and a CAD face budget; its thickness is approximate.
+Accurate uses minimum thickness and nonnegative extra allowance, both in millimeters.
+Cavities may split or disappear, but construction failures reject. Returned bodies
+include retained originals, unaffected bodies and new cavities. See
+[erosion](erosion.md) for defaults, conversion quality and verification limits.
+
 
 ### Mathematical path sweep
 

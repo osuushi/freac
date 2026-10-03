@@ -2,7 +2,9 @@ import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { distanceField, positionAxialPanel, toolAction, updateAxialArrow } from "./axial-widget.js";
-import type { Body, BodyErosion } from "./body.js";
+import type { Body } from "./body.js";
+import type { ErosionParameters } from "./erosion-parameters.js";
+import { erosionQualityText } from "./erosion-quality.js";
 import { projectedAxis } from "./extrude-axis.js";
 import { offsetHandle } from "./face-offset-targets.js";
 import "./erosion-widget.css";
@@ -21,6 +23,11 @@ export class ErosionWidget {
   readonly handle = document.createElement("button");
   readonly thickness = document.createElement("input");
   readonly allowance = document.createElement("input");
+  readonly maxFaces = document.createElement("input");
+  readonly meshDetail = document.createElement("select");
+  private fields = new Map<HTMLInputElement, { label: HTMLElement; field: HTMLElement }>();
+  private detailLabel = document.createElement("small");
+  private quality = document.createElement("small");
   readonly method = document.createElement("select");
   private panel = document.createElement("div");
   private description = document.createElement("small");
@@ -38,7 +45,7 @@ export class ErosionWidget {
     this.root.className = "erosion-widget axial-widget";
     this.handle.className = "axial-arrow";
     this.handle.setAttribute("aria-label", "Erosion thickness handle");
-    this.handle.title = "Erode · drag inward or click to type minimum thickness";
+    this.handle.title = "Erode · drag inward or click to type thickness";
     this.accept = toolAction("Accept erosion", "m5 12 4 4L19 6", finish);
     this.cancel = toolAction("Cancel erosion", "m6 6 12 12M18 6 6 18", cancel);
     this.keep = toolAction("Keep originals", "M8 8h13v13H8ZM3 16V3h13", keep);
@@ -65,7 +72,33 @@ export class ErosionWidget {
       "Extra thickness as a percentage of minimum thickness",
       "%",
     );
+    this.detailLabel.textContent = "Mesh detail";
+    this.detailLabel.className = "erosion-field-label";
+    this.meshDetail.setAttribute("aria-label", "Mesh detail");
+    this.meshDetail.title =
+      "Sampling resolution along the longest body dimension; finer detail preserves smaller features";
+    for (const [value, label] of [
+      ["coarse", "Coarse · 32 cells"],
+      ["standard", "Standard · 44 cells"],
+      ["fine", "Fine · 56 cells"],
+    ]) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      this.meshDetail.append(option);
+    }
+    this.panel.append(this.detailLabel, this.meshDetail);
+    this.field(
+      this.maxFaces,
+      "CAD face budget",
+      "Maximum CAD faces per source body, from 32 to 256",
+      "faces",
+    );
+    this.quality.className = "erosion-quality";
+    this.quality.setAttribute("role", "status");
+    this.panel.append(this.quality);
     this.description.className = "erosion-status";
+
     this.description.setAttribute("role", "status");
     this.suggestion.className = "erosion-suggestion";
     this.suggestion.type = "button";
@@ -87,16 +120,12 @@ export class ErosionWidget {
     const field = distanceField(input);
     field.querySelector("span")?.replaceChildren(unit);
     this.panel.append(label, field);
+    this.fields.set(input, { label, field });
   }
   update(
     editor: SketchEditor,
     axis: { center: Vector; normal: Vector },
-    values: {
-      thickness: number;
-      allowancePercent: number;
-      keepOriginals: boolean;
-      method: BodyErosion["method"];
-    },
+    values: ReturnType<ErosionParameters["snapshot"]>,
     active: boolean,
     valid: boolean,
     invalid: boolean,
@@ -105,7 +134,31 @@ export class ErosionWidget {
   ): void {
     this.root.hidden = false;
     this.method.value = values.method ?? "fast";
+    const fast = values.method === "fast";
+    const thickness = this.fields.get(this.thickness);
+    const name = fast ? "Target thickness" : "Minimum thickness";
+    if (thickness) thickness.label.textContent = name;
+    this.thickness.setAttribute("aria-label", name);
+    this.thickness.title = fast
+      ? "Approximate inward distance in mm; not a guaranteed minimum"
+      : "Minimum wall thickness in mm";
+    for (const [input, visible] of [
+      [this.allowance, !fast],
+      [this.maxFaces, fast],
+    ] as const) {
+      const pair = this.fields.get(input);
+      if (pair) pair.label.hidden = pair.field.hidden = !visible;
+    }
+    this.meshDetail.hidden = this.detailLabel.hidden = !fast;
+    this.meshDetail.value = values.meshDetail;
+    const quality = editor.store.erosionQuality;
+    this.quality.hidden = !fast;
+    this.quality.textContent =
+      valid && quality?.length
+        ? erosionQualityText(quality)
+        : "Approximate target; thickness is not guaranteed";
     positionAxialPanel(this.root, this.panel, editor.world.project(axis.center));
+
     updateAxialArrow(
       this.handle,
       editor.world.camera,
@@ -117,6 +170,7 @@ export class ErosionWidget {
     for (const [input, value] of [
       [this.thickness, values.thickness],
       [this.allowance, values.allowancePercent],
+      [this.maxFaces, values.maxFaces],
     ] as const) {
       if (!numericFocus(input))
         input.value = Number.isFinite(value) ? String(Number(value.toPrecision(4))) : "";
@@ -129,7 +183,7 @@ export class ErosionWidget {
         : count === 0
           ? "Empty result"
           : `${count} result ${count === 1 ? "body" : "bodies"}`;
-    this.suggestion.hidden = suggestion === null;
+    this.suggestion.hidden = fast || suggestion === null;
     this.suggestion.disabled = editor.blocked;
     this.suggestion.textContent = suggestion === null ? "" : `Try ${suggestion}% allowance`;
     this.suggestion.title =

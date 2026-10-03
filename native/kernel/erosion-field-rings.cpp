@@ -46,8 +46,7 @@ void order(Loops& loops,const Loops& previous,const V& axis) {
         std::iter_swap(loops.begin()+i,best);
     }
 }
-Loop controls(const Loop& polygon,const Loop& prior) {
-    constexpr int count = 128;
+Loop controls(const Loop& polygon,const Loop& prior,int count) {
     std::vector<double> cumulative{0};
     for (size_t i = 0; i < polygon.size(); ++i)
         cumulative.push_back(cumulative.back()+length(polygon[(i+1)%polygon.size()]-polygon[i]));
