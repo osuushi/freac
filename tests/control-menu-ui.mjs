@@ -20,7 +20,7 @@ try {
       page.on("pageerror", (error) => errors.push(error.message));
       await page.goto(server.resolvedUrls.local[0]);
       await reset(page);
-      const control = page.locator(".control-selector > button");
+      const control = page.getByTitle("Controls", { exact: true });
       assert.equal(await control.innerText(), "Trackpad");
       const trackpad = page.getByRole("radio", { name: "Trackpad", exact: true });
       const mouse = page.getByRole("radio", { name: "Mouse", exact: true });
@@ -74,8 +74,21 @@ try {
       assert.equal(rotated.activePlane, null);
       assert.notDeepEqual(rotated.camera.position, panned.camera.position);
       assert.deepEqual(rotated.document, before.document);
+      await page.keyboard.down("Shift");
+      await page.keyboard.down("Alt");
+      await page.mouse.down({ button: "middle" });
+      await page.mouse.move(1010, 610, { steps: 4 });
+      await page.mouse.up({ button: "middle" });
+      await page.keyboard.up("Alt");
+      await page.keyboard.up("Shift");
+      const rolled = await inspect(page);
+      assert.notDeepEqual(rolled.camera.up, rotated.camera.up);
+      for (let i = 0; i < 3; i++)
+        assert.ok(Math.abs(rolled.camera.position[i] - rotated.camera.position[i]) < 1e-8);
+      assert.deepEqual(rolled.document, before.document);
       await control.click();
       await trackpad.check();
+
       assert.equal(await mouse.isChecked(), false);
       await page.keyboard.press("Escape");
       await page.reload();

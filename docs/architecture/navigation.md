@@ -72,28 +72,30 @@ leveling retains the view-axis roll behavior described below. Cube face
 clicks retain their existing view target. These are transient camera decisions,
 with no model edits or document Undo entries.
 
-### Smoothed Shoemake turntable with release leveling
+### Uniform turntable and explicit roll
 
-Command/Meta + primary drag uses a screen-centered control radius of half the
-smaller viewport dimension. A press stays pending until movement exceeds the
-selection drag threshold; a completed Command-click toggles selection without
-exiting the sketch. Escape or window blur cancels a pending press. A press inside
-70% of the radius uses a turntable: horizontal motion yaws around the signed
-world X/Y/Z axis selected by the release-leveling score, and vertical motion
-pitches around the starting camera-right axis. Its horizon stays level during
-small drags from an already level view. A press beyond 115% of the radius uses pure
-view-axis roll, with twice the angular travel of the pointer around the viewport
-center, retaining the outer-ring response of Shoemake's Arcball. Between 70% and
-115%, cubic smoothstep blends the turntable and roll angles. The press chooses the
-blend for the whole drag, so moving across the band does not change the grip
-mid-gesture. The pointer-down point, camera pose, upright axis and pivot stay fixed
-throughout the drag. The ring angle unwraps through a full circle without a jump;
-reversing the pointer path restores the starting pose. Every completed orbit drag
-levels on release, including pure center drags.
-The ring angle follows the geometry in [Shoemake, Arcball (1992), pp. 152–155](https://graphicsinterface.org/wp-content/uploads/gi1992-18.pdf);
-the implementation is independent and no upstream code is copied.
+Command/Meta + primary drag uses a control radius of half the smaller viewport
+dimension. A press stays pending until movement exceeds the selection drag
+threshold; a completed Command-click toggles selection without exiting the sketch.
+Escape or window blur cancels a pending press. All press locations use the same
+turntable: horizontal motion yaws around the signed world X/Y/Z axis selected by
+the release-leveling score, and vertical motion pitches around the starting
+camera-right axis. Its horizon stays level during small drags from an already
+level view. There is no outer ring or position-based change of rotation mode.
+The pointer-down point, camera pose, upright axis and acquired pivot stay fixed
+throughout an ordinary orbit segment. Reversing the pointer path restores its
+starting pose. Ordinary orbit levels on release.
 
-On pointer-up, score each world X/Y/Z axis by `rollRadians² - 0.25 × ln(projectedLength)`.
+Holding Option/Alt during an orbit drag switches to camera roll. Horizontal travel
+controls roll uniformly everywhere, with a rightward drag rotating the image
+clockwise (two radians per control radius). Roll turns around the view center,
+keeping the view target and direction fixed. Option may be pressed or released
+mid-drag: each change rebases at the last pointer position and current camera pose,
+without a jump. Returning to orbit reuses the original acquired geometry pivot.
+Ending with roll retains that roll; it does not trigger release leveling.
+Option modifies navigation only, leaving geometry tools' symmetric sizing intact.
+
+On ordinary-orbit pointer-up, score each world X/Y/Z axis by `rollRadians² - 0.25 × ln(projectedLength)`.
 Projection length is that of a unit axis on screen. This smoothly penalizes
 foreshortening, with infinite cost only at exactly end-on; no eligibility threshold.
 The weight makes a half-length projection cost roughly as much as 24° of roll.
@@ -104,8 +106,12 @@ and zoom stay fixed; only roll changes. New navigation interrupts the animation.
 Cancellation, Escape and focus loss end the drag without snapping. Releasing Command
 mid-drag retains capture. Capture blocks editing, trailing clicks and wheel/pinch.
 Camera changes never modify the document or Undo. Native trackpad rotation gestures
-remain deferred; tablet one-finger orbit uses the same press-based pivot through
-pointer events. Sketch entry retains its existing transition.
+remain deferred. Tablet one-finger orbit uses the same press-based pivot through
+pointer events. Two fingers simultaneously pan, pinch and twist: their midpoint
+anchors the view and their separation and angle control zoom and roll. Twist stays
+on release and preserves the sketch workspace. Contact-count changes rebase the
+gesture. Safari's duplicate gesture events are consumed by the tablet adapter, so
+zoom and roll are applied once. Sketch entry retains its existing transition.
 
 The temporary rotation circle, endpoint markers and diagnostic caption are hidden.
 
@@ -122,7 +128,7 @@ orbit and pinch remain available in either mode. There is no automatic device
 classification. A middle press without a drag never replays a selection click.
 
 Two-finger scrolling pans without leaving the sketch plane. Command-click-and-drag
-invokes turntable/ring rotation and exits sketch mode.
+invokes turntable rotation and exits sketch mode.
 Two-finger click-and-drag (secondary-button drag) pans.
 Pinching zooms about the pointer. Pan and zoom retain the current sketch plane;
 orbit exits sketch mode. Camera edits never alter document geometry or Undo.
@@ -150,7 +156,7 @@ establish physical trackpad or iPad touch behavior.
 ### Orientation cube
 
 The upper-right cube follows the current camera. Drag with the primary pointer to
-use the same turntable/ring rotation and release leveling as Command-drag; a face click
+use the same turntable rotation, Option-roll and release leveling as Command-drag; a face click
 aligns Front (−Y), Back (+Y), Left (−X), Right (+X), Top (+Z), or Bottom (−Z).
 The white/near-black cube has six inset labeled faces, twelve edge bevels and eight
 corner bevels. Labels are projected in each face plane, rotating and foreshortening

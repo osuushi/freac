@@ -2,22 +2,9 @@ import * as THREE from "three";
 export type OrbitPointer = { x: number; y: number };
 type OrbitView = { camera: THREE.OrthographicCamera; target: THREE.Vector3 };
 
-// A broad annulus gives a gradual change from level turntable motion to pure roll.
-const turntableInnerRadius = 0.7;
-const rollOuterRadius = 1.15;
 const rotationPerRadius = 2;
 
-function turntableWeight(point: OrbitPointer): number {
-  const radius = Math.hypot(point.x, point.y);
-  const t = THREE.MathUtils.clamp(
-    (radius - turntableInnerRadius) / (rollOuterRadius - turntableInnerRadius),
-    0,
-    1,
-  );
-  return 1 - t * t * (3 - 2 * t);
-}
-
-/** Press-based turntable with a smooth outer barrel-roll ring. */
+/** Press-based turntable; roll is an explicit modifier, never a screen region. */
 export class SmoothedTurntable {
   private start: {
     point: OrbitPointer;
@@ -26,17 +13,21 @@ export class SmoothedTurntable {
     targetOffset: THREE.Vector3;
     pivot: THREE.Vector3;
     upAxis: THREE.Vector3;
-    turntable: number;
+    roll: boolean;
+    orbitPivot: THREE.Vector3;
     last: OrbitPointer;
-    rollAngle: number;
   } | null = null;
   get active(): boolean {
     return this.start !== null;
   }
+  get rolling(): boolean {
+    return this.start?.roll ?? false;
+  }
   end(): void {
     this.start = null;
   }
-  begin(view: OrbitView, from: OrbitPointer, pivot = view.target): void {
+  begin(view: OrbitView, from: OrbitPointer, orbitPivot = view.target, roll = false): void {
+    const pivot = roll ? view.target : orbitPivot;
     view.camera.lookAt(view.target);
     view.camera.updateMatrixWorld();
     const orientation = view.camera.quaternion.clone();
@@ -47,29 +38,25 @@ export class SmoothedTurntable {
       targetOffset: view.target.clone().sub(pivot),
       pivot: pivot.clone(),
       upAxis: levelAxis(orientation).axis,
-      turntable: turntableWeight(from),
+      roll,
+      orbitPivot: orbitPivot.clone(),
       last: { ...from },
-      rollAngle: 0,
     };
   }
-  drag(view: OrbitView, to: OrbitPointer): void {
+  drag(view: OrbitView, to: OrbitPointer, roll = false): void {
     if (!this.start) return;
-    const { point, orientation, offset, targetOffset, pivot, upAxis, turntable } = this.start;
-    const { last } = this.start;
-    this.start.rollAngle += Math.atan2(
-      last.x * to.y - last.y * to.x,
-      last.x * to.x + last.y * to.y,
-    );
+    if (roll !== this.start.roll) this.begin(view, this.start.last, this.start.orbitPivot, roll);
+    const { point, orientation, offset, targetOffset, pivot, upAxis } = this.start;
     this.start.last = { ...to };
-    const yaw = -rotationPerRadius * (to.x - point.x) * turntable;
-    const pitch = rotationPerRadius * (to.y - point.y) * turntable;
-    const roll = -2 * this.start.rollAngle * (1 - turntable);
+    const yaw = roll ? 0 : -rotationPerRadius * (to.x - point.x);
+    const pitch = roll ? 0 : rotationPerRadius * (to.y - point.y);
+    const rollAngle = roll ? rotationPerRadius * (to.x - point.x) : 0;
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(orientation);
     const viewAxis = new THREE.Vector3(0, 0, 1).applyQuaternion(orientation);
     const rotation = new THREE.Quaternion()
       .setFromAxisAngle(upAxis, yaw)
       .multiply(new THREE.Quaternion().setFromAxisAngle(right, pitch))
-      .multiply(new THREE.Quaternion().setFromAxisAngle(viewAxis, roll));
+      .multiply(new THREE.Quaternion().setFromAxisAngle(viewAxis, rollAngle));
     view.target.copy(targetOffset).applyQuaternion(rotation).add(pivot);
     view.camera.position.copy(offset).applyQuaternion(rotation).add(pivot);
     view.camera.up.set(0, 1, 0).applyQuaternion(orientation).applyQuaternion(rotation).normalize();

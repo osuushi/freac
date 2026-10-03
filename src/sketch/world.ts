@@ -71,11 +71,11 @@ export class World {
   get currentOrbitPivot(): THREE.Vector3 {
     return this.rotationPivot.clone();
   }
-  beginOrbit(pointer: OrbitPointer, press: Point): void {
+  beginOrbit(pointer: OrbitPointer, press: Point, roll = false): void {
     this.cancelCameraMotion();
     this.rotationPivot.copy(this.orbitPivot(press));
     if (this.active) this.exit();
-    this.orbit.begin(this, pointer, this.rotationPivot);
+    this.orbit.begin(this, pointer, this.rotationPivot, roll);
   }
   get cameraTransitioning(): boolean {
     return this.cameraAnimation !== null;

@@ -94,21 +94,27 @@ class CubeInput {
       )
         return;
       press.dragging = true;
-      this.world.beginOrbit(coordinates(start, press.bounds), {
-        x: start.clientX,
-        y: start.clientY,
-      });
+      this.world.beginOrbit(
+        coordinates(start, press.bounds),
+        {
+          x: start.clientX,
+          y: start.clientY,
+        },
+        event.altKey,
+      );
       this.view.cube.classList.add("dragging");
     }
-    this.world.orbit.drag(this.world, coordinates(event, press.bounds));
+    this.world.orbit.drag(this.world, coordinates(event, press.bounds), event.altKey);
     this.world.requestDraw();
   };
   private release = (event: PointerEvent): void => {
     const press = this.press;
     if (!press || press.event.pointerId !== event.pointerId) return;
+    const roll = this.world.orbit.rolling;
     this.stop();
-    if (press.dragging) this.world.levelHorizon();
-    else {
+    if (press.dragging) {
+      if (!roll) this.world.levelHorizon();
+    } else {
       const entry = this.view.entries.find(({ group }) =>
         group.contains(press.event.target as Node),
       );

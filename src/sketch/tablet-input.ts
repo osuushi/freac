@@ -1,5 +1,5 @@
 import type {} from "../ipad/protocol.js";
-import { panCamera, zoomCamera } from "./camera-motion.js";
+import { panCamera, rollCamera, zoomCamera } from "./camera-motion.js";
 import type { Point } from "./planes.js";
 import type { World } from "./world.js";
 
@@ -140,16 +140,15 @@ class TabletInput {
         next.center.y - this.previous.center.y,
         bounds.height,
       );
-      if (this.previous.distance > 1 && next.distance > 1)
-        zoomCamera(
-          this.world,
-          this.previous.distance / next.distance,
-          {
-            x: next.center.x - bounds.left - bounds.width / 2,
-            y: next.center.y - bounds.top - bounds.height / 2,
-          },
-          bounds.height,
-        );
+      if (this.previous.distance > 1 && next.distance > 1) {
+        const offset = {
+          x: next.center.x - bounds.left - bounds.width / 2,
+          y: next.center.y - bounds.top - bounds.height / 2,
+        };
+        zoomCamera(this.world, this.previous.distance / next.distance, offset, bounds.height);
+        const angle = next.angle - this.previous.angle;
+        rollCamera(this.world, Math.atan2(Math.sin(angle), Math.cos(angle)), offset, bounds.height);
+      }
     }
     this.previous = next;
   }
@@ -190,5 +189,6 @@ function pair(points: Point[]) {
   return {
     center: { x: (points[0].x + points[1].x) / 2, y: (points[0].y + points[1].y) / 2 },
     distance: Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y),
+    angle: Math.atan2(points[1].y - points[0].y, points[1].x - points[0].x),
   };
 }

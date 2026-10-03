@@ -69,15 +69,19 @@ class OrbitDrag {
       this.suppressClick = true;
       this.world.cancelCameraMotion();
       this.drag = { id: start.pointerId, bounds: this.world.canvas.getBoundingClientRect() };
-      this.world.beginOrbit(sphereCoordinates(start, this.drag.bounds), {
-        x: start.clientX,
-        y: start.clientY,
-      });
+      this.world.beginOrbit(
+        sphereCoordinates(start, this.drag.bounds),
+        {
+          x: start.clientX,
+          y: start.clientY,
+        },
+        event.altKey,
+      );
       this.world.canvas.setPointerCapture(start.pointerId);
     }
     if (!this.drag || event.pointerId !== this.drag.id) return;
     consume(event);
-    this.world.orbit.drag(this.world, sphereCoordinates(event, this.drag.bounds));
+    this.world.orbit.drag(this.world, sphereCoordinates(event, this.drag.bounds), event.altKey);
     this.world.requestDraw();
   };
   stop = (): void => {
@@ -121,8 +125,9 @@ class OrbitDrag {
     }
     if (!this.drag || event.pointerId !== this.drag.id) return;
     consume(event);
+    const roll = this.world.orbit.rolling;
     this.stop();
-    if (event.type === "pointerup") this.world.levelHorizon();
+    if (event.type === "pointerup" && !roll) this.world.levelHorizon();
   };
   click = (event: Event): void => {
     if (this.suppressClick && this.onViewport(event.target)) consume(event);

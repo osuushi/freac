@@ -73,6 +73,7 @@ export async function orientationCubeRoute(page, name) {
   await page.mouse.move(center.x + 24, center.y + 18, { steps: 6 });
   await page.mouse.up();
   await inspect(page);
+  await cubeRoll(page, center);
   await page.screenshot({ path: `.cache/sketch-review/${name}-orientation-cube.png` });
   console.log(
     `${name}: cube face alignment, drag, Escape, keyboard and unchanged geometry/history passed`,
@@ -98,4 +99,21 @@ async function assertFaceLabel(target) {
   assert.ok(Math.abs(c * upY - d * upX) < 1e-4, "Text height foreshortens with its face");
   assert.ok(Math.abs(x - face.points.reduce((sum, p) => sum + p[0], 0) / 4) < 1e-4);
   assert.ok(Math.abs(y - face.points.reduce((sum, p) => sum + p[1], 0) / 4) < 1e-4);
+}
+
+async function cubeRoll(page, center) {
+  const before = await inspect(page);
+  await page.mouse.move(center.x, center.y);
+  await page.keyboard.down("Alt");
+  await page.mouse.down();
+  await page.mouse.move(center.x + 20, center.y, { steps: 4 });
+  const during = await inspect(page);
+  await page.mouse.up();
+  await page.keyboard.up("Alt");
+  const after = await inspect(page);
+  assert.notDeepEqual(after.camera.up, before.camera.up);
+  assert.deepEqual(after.camera.up, during.camera.up, "Cube Option roll stays on release");
+  for (let i = 0; i < 3; i++)
+    assert.ok(Math.abs(after.camera.position[i] - before.camera.position[i]) < 1e-8);
+  assert.deepEqual(after.document, before.document);
 }
