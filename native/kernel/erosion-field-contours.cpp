@@ -70,7 +70,7 @@ TopoDS_Shape along(const InteriorField& field,const Mesh& mesh,const V& axis,
             loops[ring] = sections::controls(loops[ring],rows.empty() ? sections::Loop{} : rows.back()[ring],std::clamp(4*((maxFaces-2)/int(loops.size())),32,128));
         rows.push_back(std::move(loops));
     }
-    return sections::solid(rows,axis,spacing,maxFaces);
+    return sections::solid(rows,{axis,axis},spacing,maxFaces);
 }
 }
 std::optional<TopoDS_Shape> contourInterior(const TopoDS_Shape& source,const InteriorField& field,const Mesh& raw,double thickness,double spacing,int maxFaces) {

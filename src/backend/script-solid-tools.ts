@@ -44,7 +44,7 @@ function validate(document: SketchDocument, operation: Operation): void {
   } else if (operation.kind === "erode") {
     const { ids, thickness, allowance = 0, keepOriginals, method } = operation.input;
     if (method !== undefined && method !== "fast" && method !== "accurate")
-      throw new Error("Choose Fast or Accurate erosion");
+      throw new Error("Choose Remesh or Analytic erosion");
     if (
       !uniqueStrings(ids) ||
       !ids.length ||

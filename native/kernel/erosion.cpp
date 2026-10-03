@@ -86,7 +86,7 @@ std::vector<Result> erodeBodies(const Tree& input, const std::vector<Operand>& b
     const auto method = input.get<std::string>("method", "fast");
     const double allowance = method == "accurate" ? input.get<double>("allowance",0) : 0;
     if (method != "fast" && method != "accurate")
-        throw std::runtime_error("Choose Fast or Accurate erosion");
+        throw std::runtime_error("Choose Remesh or Analytic erosion");
     if (!std::isfinite(thickness) || thickness <= 1e-5 ||
         (method == "accurate" && (!std::isfinite(allowance) || allowance < 0)))
         throw std::runtime_error("Erode needs positive finite thickness and nonnegative extra thickness allowance");
@@ -96,7 +96,7 @@ std::vector<Result> erodeBodies(const Tree& input, const std::vector<Operand>& b
         throw std::runtime_error("Choose Coarse, Standard or Fine mesh detail");
     if (!std::isfinite(faceBudget) || faceBudget < 32 || faceBudget > 256 || std::floor(faceBudget) != faceBudget)
         throw std::runtime_error("CAD face budget must be an integer from 32 to 256");
-    const erosion::FastSettings settings{detail == "coarse" ? 32 : detail == "fine" ? 56 : 44,int(faceBudget)};
+    const erosion::FastSettings settings{detail == "coarse" ? 0 : detail == "fine" ? 2 : 1,int(faceBudget)};
     const auto ids = input.get_child("ids");
 
     if (ids.empty() || ids.size() > 1000) throw std::runtime_error("Select complete bodies to erode");

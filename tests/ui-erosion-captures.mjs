@@ -27,7 +27,7 @@ export async function erosionCapturesRoute(page, runtime) {
       .getByRole("textbox", { name: "Extra thickness allowance", exact: true })
       .fill(String((fixture.operation.allowance / fixture.operation.thickness) * 100));
     await page
-      .getByRole("textbox", { name: "Minimum thickness", exact: true })
+      .getByRole("textbox", { name: "Erode by", exact: true })
       .fill(String(fixture.operation.thickness));
     const preview = await inspect(page);
     assert.ok(preview.preview, `${name}: ${await page.locator(".erosion-widget").textContent()}`);

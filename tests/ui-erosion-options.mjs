@@ -8,13 +8,13 @@ export async function erosionOptionsRoute(page, name) {
   await plate(page);
   await chooseTool(page, "select owning bodies", "selection-bodies");
   await accurateErosion(page);
-  const input = page.getByRole("textbox", { name: "Minimum thickness", exact: true });
+  const input = page.getByRole("textbox", { name: "Erode by", exact: true });
   const allowance = page.getByRole("textbox", { name: "Extra thickness allowance", exact: true });
   assert.equal(await input.inputValue(), "1");
   assert.equal(await allowance.inputValue(), "50");
   assert.equal(await allowance.locator("..").locator("span").textContent(), "%");
   const original = (await inspect(page)).document;
-  const handle = page.getByRole("button", { name: "Erosion thickness handle" });
+  const handle = page.getByRole("button", { name: "Erosion distance handle" });
   assert.equal((await inspect(page)).preview.bodies.length, 2);
   await input.fill("2");
   await inspect(page);

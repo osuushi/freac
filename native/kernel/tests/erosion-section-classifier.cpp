@@ -4,6 +4,8 @@
 #include <BRepBuilderAPI_MakeVertex.hxx>
 #include <BRepExtrema_DistShapeShape.hxx>
 #include <BRep_Builder.hxx>
+#include <BRepGProp.hxx>
+#include <GProp_GProps.hxx>
 #include <TopoDS_Compound.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepCheck_Analyzer.hxx>
@@ -31,7 +33,30 @@ TopoDS_Shape tube() {
         }
         rows.push_back(std::move(rings));
     }
-    return erosion::sections::solid(rows,{0,0,1},0.5);
+    return erosion::sections::solid(rows,{{{0,0,1},{0,0,1}}},0.5);
+}
+void periodicRing() {
+    std::vector<erosion::sections::Loops> rows;
+    for (int v = 0; v < 48; ++v) {
+        const double angle = 2*M_PI*v/48;
+        erosion::sections::Loop ring;
+        for (int u = 0; u < 32; ++u) {
+            const double theta = 2*M_PI*u/32, radius = 6+2*std::cos(theta);
+            ring.push_back({radius*std::cos(angle),radius*std::sin(angle),2*std::sin(theta)});
+        }
+        rows.push_back({std::move(ring)});
+    }
+    const auto shape = erosion::sections::solid(rows,{},0.25,128,true);
+    if (!BRepCheck_Analyzer(shape,true,false,true).IsValid()) throw std::runtime_error("Invalid periodic section solid");
+    GProp_GProps properties; BRepGProp::VolumeProperties(shape,properties);
+    if (std::abs(properties.Mass()/(2*M_PI*M_PI*6*4)-1) > 0.02)
+        throw std::runtime_error("Periodic volume differs from independent torus volume");
+    BRepClass3d_SolidClassifier exact(shape);
+    for (const auto& [point,inside] : std::array<std::pair<gp_Pnt,bool>,4>{{
+        {{0,0,0},false}, {{6,0,0},true}, {{0,-6,0},true}, {{6,0,3},false}}}) {
+        exact.Perform(point,1e-7);
+        if ((exact.State() == TopAbs_IN) != inside) throw std::runtime_error("Periodic solid did not preserve its hole");
+    }
 }
 void verify(const TopoDS_Shape& original,const gp_Trsf& transform) {
     const auto shape = BRepBuilderAPI_Transform(original,transform,true).Shape();
@@ -89,6 +114,7 @@ void verify(const TopoDS_Shape& original,const gp_Trsf& transform) {
 }
 int main() {
     try {
+        periodicRing();
         const auto shape = tube();
         verify(shape,gp_Trsf{});
         gp_Trsf transform;

@@ -49,9 +49,18 @@ InteriorField::InteriorField(const TopoDS_Shape& source,double deflection) :
     impl(std::make_unique<Impl>(source,deflection)) {}
 InteriorField::~InteriorField() = default;
 double InteriorField::value(const mesh_fit::V& point,double depth) const {
-    const double distance = std::sqrt(impl->search.closest(point).distance2);
-    if (distance <= depth) return distance-depth;
-    if (const auto inside = impl->search.contains(point)) return (*inside ? distance : -distance)-depth;
+    const auto hit = impl->search.closest(point);
+    const double distance = std::sqrt(hit.distance2);
+    // A strict interior projection onto the globally nearest oriented triangle
+    // determines the sign. Edge/vertex hits use ray parity and then CAD fallback.
+    if (*std::min_element(hit.weights.begin(),hit.weights.end()) > 1e-8) {
+        const auto& t = impl->mesh.triangles[hit.triangle];
+        const auto normal = (impl->mesh.vertices[t[1]]-impl->mesh.vertices[t[0]])
+            .Crossed(impl->mesh.vertices[t[2]]-impl->mesh.vertices[t[0]]);
+        return ((point-hit.point).Dot(normal) > 0 ? -distance : distance)-depth;
+    }
+    const auto inside = impl->search.contains(point);
+    if (inside) return (*inside ? distance : -distance)-depth;
     impl->classifier.Perform(gp_Pnt(point),1e-7);
     if (impl->classifier.State() == TopAbs_IN) return distance-depth;
     if (impl->classifier.State() == TopAbs_OUT || impl->classifier.State() == TopAbs_ON) return -distance-depth;
@@ -63,10 +72,13 @@ mesh_fit::Mesh InteriorField::contour(double depth,double spacing,bool refine) c
     double x,y,z,X,Y,Z; bounds.Get(x,y,z,X,Y,Z);
     const mesh_fit::V margin(spacing*0.371,spacing*0.371,spacing*0.371);
     auto result = contourField(mesh_fit::V(x,y,z)-margin,mesh_fit::V(X,Y,Z)+margin,spacing,
-        [&](const mesh_fit::V& point) { return value(point,depth); },refine);
+        [&](const mesh_fit::V& point) { return value(point,depth); },refine,true);
     timing.phase("contour");
-    for (const auto& point : result.vertices) result.normals.push_back(impl->search.closest(point).normal);
     return result;
+}
+void InteriorField::sourceNormals(mesh_fit::Mesh& mesh) const {
+    mesh.normals.clear();
+    for (const auto& point : mesh.vertices) mesh.normals.push_back(impl->search.closest(point).normal);
 }
 void InteriorField::measure(FastResult& result,const mesh_fit::Mesh& target) const {
     if (target.vertices.empty() || result.faces == 0) return;

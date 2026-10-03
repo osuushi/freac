@@ -5,7 +5,7 @@ import type { BodyErosion } from "../src/model/body.js";
 import { planes } from "../src/sketch/planes.js";
 import { box, combine, cylinder, sphere } from "./erosion-special-primitives.js";
 
-test("Fast is the default, recovers planar boxes, and Accurate supports zero allowance", async () => {
+test("Remesh is the default, recovers planar boxes, and Analytic supports zero allowance", async () => {
   const owner = new DocumentOwner();
   try {
     const source = await box(owner, [0, 0, 0], [20, 20, 10]);
@@ -31,7 +31,7 @@ test("Fast is the default, recovers planar boxes, and Accurate supports zero all
       kind: "erode",
       operation: { ...operation, method: "unknown" as BodyErosion["method"] },
     });
-    assert.match(invalid.error ?? "", /Fast or Accurate/);
+    assert.match(invalid.error ?? "", /Remesh or Analytic/);
     assert.equal(invalid.view.candidate, null);
     assert.equal(owner.view.data, before);
     await owner.call({ kind: "redo" });
@@ -51,7 +51,7 @@ test("Fast is the default, recovers planar boxes, and Accurate supports zero all
   }
 });
 
-test("Fast reports empty sampled interiors and can replace a collapsed body with one Undo", async () => {
+test("Remesh reports empty sampled interiors and can replace a collapsed body with one Undo", async () => {
   const owner = new DocumentOwner();
   try {
     const source = await box(owner, [0, 0, 0], [2, 2, 2]);
@@ -72,7 +72,7 @@ test("Fast reports empty sampled interiors and can replace a collapsed body with
   }
 });
 
-test("Fast keeps both analytic interiors when a modeled connector disappears", async () => {
+test("Remesh keeps both analytic interiors when a modeled connector disappears", async () => {
   const owner = new DocumentOwner();
   try {
     const left = await sphere(owner, 6, [-8, 0, 0]);

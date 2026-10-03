@@ -175,7 +175,7 @@ export class SolidEdits {
       maxFaces = 128,
     } = operation;
     if (method !== undefined && method !== "fast" && method !== "accurate")
-      throw new Error("Choose Fast or Accurate erosion");
+      throw new Error("Choose Remesh or Analytic erosion");
     if (
       !Number.isFinite(thickness) ||
       thickness <= 1e-5 ||
@@ -193,7 +193,7 @@ export class SolidEdits {
         maxFaces > 256)
     )
       throw new Error(
-        "Fast needs Coarse, Standard or Fine mesh detail and a CAD face budget from 32 to 256",
+        "Remesh needs Coarse, Standard or Fine mesh detail and a CAD face budget from 32 to 256",
       );
     const result = await this.kernel.calculate({ ...operation, kind: "erode", bodies });
     this.erosionQuality = result.erosionQuality;

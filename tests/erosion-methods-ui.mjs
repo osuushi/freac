@@ -15,8 +15,17 @@ await withUiRuntimes(
     const detail = page.getByRole("combobox", { name: "Mesh detail", exact: true });
     const budget = page.getByRole("textbox", { name: "CAD face budget", exact: true });
     const allowance = page.getByRole("textbox", { name: "Extra thickness allowance", exact: true });
+    assert.deepEqual(await method.locator("option").allTextContents(), [
+      "Remesh (usually faster, more flexible)",
+      "Analytic (more accurate, often slower)",
+    ]);
+    assert.deepEqual(await detail.locator("option").allTextContents(), [
+      "Coarse",
+      "Standard",
+      "Fine",
+    ]);
     assert.equal(await method.inputValue(), "fast");
-    assert(await page.getByRole("textbox", { name: "Target thickness", exact: true }).isVisible());
+    assert(await page.getByRole("textbox", { name: "Erode by", exact: true }).isVisible());
     assert.equal(await allowance.count(), 0);
     const fast = (await inspect(page)).preview.bodies.at(-1);
     close(fast.volume, 2592);
@@ -39,7 +48,7 @@ await withUiRuntimes(
     assert(await page.getByRole("button", { name: "Accept erosion", exact: true }).isDisabled());
     await method.selectOption("accurate");
     close((await inspect(page)).preview.bodies.at(-1).volume, 2592);
-    assert(await page.getByRole("textbox", { name: "Minimum thickness", exact: true }).isVisible());
+    assert(await page.getByRole("textbox", { name: "Erode by", exact: true }).isVisible());
     assert.equal(await detail.count(), 0);
     await allowance.fill("0");
     close((await inspect(page)).preview.bodies.at(-1).volume, 2592);
@@ -70,7 +79,7 @@ await withUiRuntimes(
     await bodyArchiveRoute(page, `${name}-erosion-methods`);
     await cancelRestart(page, method, detail, budget);
     console.log(
-      `${name}: Fast controls/report, parameter history, Accurate isolation, archive and cancellation passed`,
+      `${name}: Remesh controls/report, parameter history, Analytic isolation, archive and cancellation passed`,
     );
   },
   { timeout: 30000 },

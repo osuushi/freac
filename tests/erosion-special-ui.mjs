@@ -50,7 +50,7 @@ await withUiRuntimes(
         .click();
       await accurateErosion(page);
       await page
-        .getByRole("textbox", { name: "Minimum thickness", exact: true })
+        .getByRole("textbox", { name: "Erode by", exact: true })
         .fill(String(entry.thickness));
       await page
         .getByRole("textbox", { name: "Extra thickness allowance", exact: true })

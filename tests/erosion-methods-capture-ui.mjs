@@ -28,7 +28,7 @@ await withUiRuntimes(
       await page.getByRole("combobox", { name: "Erosion method", exact: true }).inputValue(),
       "fast",
     );
-    await page.getByRole("textbox", { name: "Target thickness", exact: true }).fill("3.8");
+    await page.getByRole("textbox", { name: "Erode by", exact: true }).fill("3.8");
     let state = await inspect(page);
     assert(state.preview, await page.locator(".erosion-status").textContent());
     assert.equal(state.preview.bodies.length, 5);
@@ -71,7 +71,7 @@ await withUiRuntimes(
     await inspect(page);
     await bodyArchiveRoute(page, `${runtime}-erosion-pierced-wall`);
     console.log(
-      `${runtime}: captured Fast split, acceptance/history, body edit, Save/Open and subtraction passed`,
+      `${runtime}: captured Remesh split, acceptance/history, body edit, Save/Open and subtraction passed`,
     );
   },
   { timeout: 60000 },

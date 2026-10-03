@@ -22,6 +22,12 @@ test("Fast mesh detail changes sampling, ignores old allowance, and validates it
     assert(
       reports[0].triangles < reports[1].triangles && reports[1].triangles < reports[2].triangles,
     );
+    const shallow = await owner.call({
+      kind: "erode",
+      operation: { ...settings, thickness: 0.25 },
+    });
+    assert.equal(shallow.error, undefined);
+    assert((shallow.view.erosionQuality?.[0].spacing ?? Infinity) < reports[1].spacing);
     for (const allowance of [0, 100]) {
       const reply = await owner.call({ kind: "erode", operation: { ...settings, allowance } });
       assert.equal(reply.error, undefined);

@@ -21,7 +21,21 @@
 
 namespace erosion::sections {
 namespace {
-Handle(Geom_BSplineSurface) surface(const std::vector<Loops>& rows,size_t ring,double spacing) {
+Handle(Geom_BSplineSurface) periodicSurface(const std::vector<Loops>& rows,size_t ring) {
+    const int around = int(rows[0][ring].size()), along = int(rows.size());
+    TColgp_Array2OfPnt poles(1,around,1,along);
+    for (int u = 0; u < around; ++u) for (int v = 0; v < along; ++v)
+        poles(u+1,v+1) = gp_Pnt(rows[v][ring][u]);
+    TColStd_Array1OfReal uk(1,around+1), vk(1,along+1);
+    TColStd_Array1OfInteger um(1,around+1), vm(1,along+1);
+    for (int u = 1; u <= around+1; ++u) { uk(u) = double(u-1)/around; um(u) = 1; }
+    for (int v = 1; v <= along+1; ++v) { vk(v) = double(v-1)/along; vm(v) = 1; }
+    // Convex longitudinal weights avoid interpolation overshoot at thin necks.
+    // This remains an approximation, measured against the unfiltered mesh.
+    return new Geom_BSplineSurface(poles,uk,vk,um,vm,3,3,true,true);
+}
+Handle(Geom_BSplineSurface) surface(const std::vector<Loops>& rows,size_t ring,double spacing,bool periodic) {
+    if (periodic) return periodicSurface(rows,ring);
     const int around = int(rows[0][ring].size()), along = int(rows.size());
     std::vector<Handle(Geom_BSplineCurve)> curves;
     for (int i = 0; i < around; ++i) {
@@ -64,15 +78,15 @@ std::array<TopoDS_Wire,2> addSide(BRepBuilderAPI_Sewing& sewing,const Handle(Geo
     return {caps[0].Wire(),caps[1].Wire()};
 }
 }
-TopoDS_Shape solid(const std::vector<Loops>& rows,const mesh_fit::V& axis,double spacing,int maxFaces) {
+TopoDS_Shape solid(const std::vector<Loops>& rows,const std::array<mesh_fit::V,2>& capNormals,double spacing,int maxFaces,bool periodic) {
     BRepBuilderAPI_Sewing sewing(1e-7);
     std::vector<std::array<TopoDS_Wire,2>> rings;
     const int vertical = std::min(4,(maxFaces-2)/(8*int(rows[0].size())));
     if (vertical < 1) throw std::runtime_error("CAD face budget cannot preserve these section loops");
     for (size_t ring = 0; ring < rows[0].size(); ++ring)
-        rings.push_back(addSide(sewing,surface(rows,ring,spacing),vertical));
-    for (int end : {0,1}) {
-        const gp_Pln plane{gp_Pnt(rows[end ? rows.size()-1 : 0][0][0]),gp_Dir(axis)};
+        rings.push_back(addSide(sewing,surface(rows,ring,spacing,periodic),vertical));
+    for (int end = 0; !periodic && end < 2; ++end) {
+        const gp_Pln plane{gp_Pnt(rows[end ? rows.size()-1 : 0][0][0]),gp_Dir(capNormals[end])};
         BRepBuilderAPI_MakeFace cap(plane,rings[0][end],true);
         for (size_t ring = 1; ring < rings.size(); ++ring)
             cap.Add(TopoDS::Wire(rings[ring][end].Reversed()));

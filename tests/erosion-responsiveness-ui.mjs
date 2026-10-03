@@ -7,7 +7,7 @@ import { withUiRuntimes } from "./ui-runtime.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 const fixture = JSON.parse(await readFile("tests/fixtures/erosion-towers.json", "utf8"));
-const thickness = (page) => page.getByRole("textbox", { name: /^(Target|Minimum) thickness$/ });
+const thickness = (page) => page.getByRole("textbox", { name: /^Erode by$/ });
 const allowance = (page) =>
   page.getByRole("textbox", { name: "Extra thickness allowance", exact: true });
 

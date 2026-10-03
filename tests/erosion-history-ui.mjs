@@ -10,7 +10,7 @@ await withUiRuntimes(async (page, name) => {
   await chooseTool(page, "select owning bodies", "selection-bodies");
   await accurateErosion(page);
   const original = (await inspect(page)).document;
-  const thickness = page.getByRole("textbox", { name: "Minimum thickness", exact: true });
+  const thickness = page.getByRole("textbox", { name: "Erode by", exact: true });
   const allowance = page.getByRole("textbox", { name: "Extra thickness allowance", exact: true });
   const keep = page.getByRole("button", { name: "Keep originals", exact: true });
   async function values(t, a, k, volume) {

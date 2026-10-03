@@ -118,7 +118,7 @@ export class ErosionControls {
     );
     this.editor.modeling.hover = null;
     this.editor.bodiesVisible = true;
-    this.editor.notice = "Erode · Target thickness · Approximate mesh reconstruction";
+    this.editor.notice = "Erode · Erode by · Approximate mesh reconstruction";
     this.queue(this.parameters.thickness, this.parameters.allowancePercent);
     this.editor.refresh();
     return true;

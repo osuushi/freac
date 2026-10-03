@@ -9,9 +9,9 @@ using namespace mesh_fit;
 void require(bool condition,const char* message) {
     if (!condition) throw std::runtime_error(message);
 }
-void sphereContour(const V& center,const V& low) {
+void sphereContour(const V& center,const V& low,bool adaptive = false) {
     const auto mesh = erosion::contourField(low,{4,4,4},0.25,
-        [&](const V& p) { return 3-length(p-center); });
+        [&](const V& p) { return 3-length(p-center); },false,adaptive);
     require(!mesh.triangles.empty(),"Sphere contour must exist");
     std::map<Edge,std::pair<int,int>> uses;
     double volume = 0;
@@ -32,6 +32,22 @@ void sphereContour(const V& center,const V& low) {
         require(std::abs(length(p-center)-3) < 0.01,"Contour lies near independent sphere distance");
     require(std::abs(volume/(36*std::acos(-1.0))-1) < 0.01,"Contour volume matches independent sphere");
 }
+void sparseComponents() {
+    int queries = 0;
+    const V a(-12,7,8), b(13,-6,-11);
+    const auto mesh = erosion::contourField({-32,-32,-32},{32,32,32},0.5,[&](const V& p) {
+        ++queries;
+        return std::max(2-length(p-a),1.25-length(p-b));
+    },false,true);
+    require(queries < 20000,"Sparse sampling must skip distant volume");
+    bool first = false, second = false;
+    for (const auto& p : mesh.vertices) {
+        first |= length(p-a) < 2.1; second |= length(p-b) < 1.35;
+        require(std::min(std::abs(length(p-a)-2),std::abs(length(p-b)-1.25)) < 0.1,
+            "Sparse samples retain only the two independent surfaces");
+    }
+    require(first && second,"Both off-center disconnected interiors must survive pruning");
+}
 void emptyAndBudget() {
     const auto empty = erosion::contourField({-1,-1,-1},{1,1,1},0.25,[](const V&) { return -1; });
     require(empty.vertices.empty() && empty.triangles.empty(),"Empty level set has no surface");
@@ -51,6 +67,9 @@ int main() {
     try {
         sphereContour({0.137,-0.213,0.079},{-4.371,-4.171,-4.271});
         sphereContour({0,0,0},{-4,-4,-4});
+        sphereContour({0.137,-0.213,0.079},{-4.371,-4.171,-4.271},true);
+        sphereContour({0,0,0},{-4,-4,-4},true);
+        sparseComponents();
         emptyAndBudget();
         std::cout << "PASS interior contour winding, closed edges, independent distance/volume, empty result and budget\n";
     } catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }

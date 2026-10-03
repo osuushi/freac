@@ -1176,6 +1176,14 @@ reparameterizes a bounded portion through its pole representation.
 accepts contiguous polynomial boundary curves and a Coons filling style. These
 observations informed use of public APIs; no upstream implementation was copied.
 
+The same pinned source's
+[`GeomFill_BSplineCurves::Init`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/GeomFill/GeomFill_BSplineCurves.cxx#L294)
+arranges four contiguous spline boundaries, raises opposite degrees and aligns
+knot distributions before constructing a Coons surface. Makeshift uses this public
+API for nonrational multi-span boundaries; it does not copy the implementation or
+relax the existing boundary, correspondence or solid-validity checks. General
+rational-boundary interpolation is outside this path.
+
 Makeshift inference: nonrational subpatch control hulls enclose every surface point,
 so their boxes can accelerate conservative distance and crossing bounds. An actual
 point classified on a trimmed face supplies an independent upper bound. Runtime
@@ -1186,6 +1194,8 @@ possible. Bounds neither certify mesh fitting nor enlarge Erode's allowance.
 Runtime observation: general plate filling did not meet a moved reconstructed
 cubic face's neighboring rims within the existing boundary budget. Four-boundary
 polynomial interpolation permits a nonzero local face move and subsequent cavity
-subtraction. Boundary correspondence, solid validity and persistence checks remain
-required; this construction alone promises neither tangent continuity nor a valid
-result for every edit.
+subtraction. The captured periodic Remesh interior also passes nonzero face movement,
+Save/Open and final cavity subtraction after extending the exact construction to
+multi-span B-spline rims. Boundary correspondence, solid validity and persistence
+checks remain required; this construction alone promises neither tangent continuity
+nor a valid result for every edit.

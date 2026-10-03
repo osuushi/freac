@@ -50,7 +50,7 @@ is a later operation on current geometry, through ordinary Undo.
 | Mesh reconstruction | [STL/OBJ import, analytic recovery, bicubic fitting and accuracy limits](architecture/mesh-fitting.md) |
 | Loft | [Ordered sections, correspondence and acceptance](architecture/loft.md) |
 | Shell | [Shell interaction and validation](architecture/shell.md) |
-| Erode | [Fast erosion quality and Accurate thickness bounds](architecture/erosion.md) |
+| Erode | [Remesh erosion quality and Analytic thickness bounds](architecture/erosion.md) |
 | Selection measurements | [Distances, gaps and relationships](architecture/measurements.md) |
 | Draft and cleanup | [Extrusion draft](architecture/extrusion-draft.md), [solid cleanup](architecture/solid-cleanup.md) |
 | Decorators | [Export-time mesh modifiers, threads and JavaScript extensions](architecture/decorators.md), [knurling](architecture/knurling.md) |

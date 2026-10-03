@@ -21,9 +21,9 @@ Topology calls are topology and replaceFace; see the topology section below.
 Available modeling calls are createSketch, extrude, revolve, loft, moveFaces, offsetFaces, transformBodies,
 constructionPlane, deleteConstructionPlane, splitBody, imprint, scale, sweep, booleanBodies, finishEdges, shell and erode.
 erode takes ids, thickness in mm, optional keepOriginals (default true), and method: "fast" (default) or "accurate".
-Fast uses target thickness, meshDetail ("coarse", "standard", "fine"; default "standard") and maxFaces (32–256; default 128).
-Fast reconstructs an approximate inward level set as editable CAD; thickness is not a guaranteed minimum.
-Accurate uses minimum thickness plus allowance (maximum extra thickness in mm; default zero), and verifies both bounds.
+Remesh uses target thickness, meshDetail ("coarse", "standard", "fine"; default "standard") and maxFaces (32–256; default 128).
+Remesh reconstructs an approximate inward level set as editable CAD; thickness is not a guaranteed minimum.
+Analytic uses minimum thickness plus allowance (maximum extra thickness in mm; default zero), and verifies both bounds.
 Decorator calls are decorators, inspectDecorator, editDecorator, editDecoratorDefinition and enableDecorator.
 Loft takes 2–256 ordered sources, ruled:false for Smooth or true for Ruled, and mode/targets.
 Optional alignment is one integer seam step per source after automatic correspondence.

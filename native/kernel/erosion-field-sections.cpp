@@ -25,51 +25,6 @@
 namespace erosion {
 namespace {
 using namespace mesh_fit;
-std::vector<V> section(const Mesh& mesh, const V& axis, double height) {
-    std::map<Edge,int> indices;
-    std::vector<V> points;
-    std::vector<std::vector<int>> neighbors;
-    for (const auto& triangle : mesh.triangles) {
-        std::vector<int> ends;
-        for (int i = 0; i < 3; ++i) {
-            const int a = triangle[i], b = triangle[(i+1)%3];
-            const double first = mesh.vertices[a].Dot(axis)-height;
-            const double last = mesh.vertices[b].Dot(axis)-height;
-            if ((first > 0) == (last > 0)) continue;
-            const auto key = edge(a,b);
-            if (!indices.contains(key)) {
-                indices[key] = int(points.size());
-                neighbors.emplace_back();
-                points.push_back(mesh.vertices[a]+(mesh.vertices[b]-mesh.vertices[a])*(first/(first-last)));
-            }
-            ends.push_back(indices.at(key));
-        }
-        if (ends.empty()) continue;
-        if (ends.size() != 2) throw std::runtime_error("Ambiguous erosion cross-section");
-        neighbors[ends[0]].push_back(ends[1]);
-        neighbors[ends[1]].push_back(ends[0]);
-    }
-    if (points.size() < 3) throw std::runtime_error("Empty erosion cross-section");
-    std::vector<V> result;
-    int previous = -1, current = 0;
-    do {
-        if (neighbors[current].size() != 2 || result.size() >= points.size())
-            throw std::runtime_error("Open erosion cross-section");
-        result.push_back(points[current]);
-        const auto& adjacent = neighbors[current];
-        const int next = adjacent[0] == previous ? adjacent[1] : adjacent[0];
-        previous = current;
-        current = next;
-    } while (current != 0);
-    if (result.size() != points.size())
-        throw std::runtime_error("Erosion cross-section has multiple loops");
-    V normal;
-    const auto origin = result.front();
-    for (size_t i = 0; i < result.size(); ++i)
-        normal += (result[i]-origin).Crossed(result[(i+1)%result.size()]-origin);
-    if (normal.Dot(axis) < 0) std::reverse(result.begin(),result.end());
-    return result;
-}
 std::vector<V> resample(const std::vector<V>& polygon, const std::vector<V>& prior) {
     constexpr int count = 32;
     std::vector<double> cumulative{0};
@@ -135,7 +90,9 @@ TopoDS_Shape along(const Mesh& mesh, const V& axis, double spacing) {
     std::vector<std::vector<V>> rows;
     for (int i = 0; i < 16; ++i) {
         const double fraction = trim+(1-2*trim)*i/15;
-        const auto loop = section(mesh,axis,low+(high-low)*fraction);
+        const auto loops = sections::meshContours(mesh,axis,low+(high-low)*fraction);
+        if (loops.size() != 1) throw std::runtime_error("Erosion cross-section has multiple loops");
+        const auto& loop = loops.front();
         rows.push_back(resample(loop,rows.empty() ? std::vector<V>{} : rows.back()));
     }
     // Nonnegative B-spline weights and ordered control-plane heights keep the
@@ -181,7 +138,7 @@ TopoDS_Shape sectionInterior(const mesh_fit::Mesh& raw,double spacing,int maxFac
     BRep_Builder builder;
     builder.MakeCompound(candidate);
     const auto pieces = interiorComponents(mesh);
-    if (pieces.empty()) throw std::runtime_error("Mesh detail filtering removed the surviving interior. Try finer mesh detail or Accurate.");
+    if (pieces.empty()) throw std::runtime_error("Mesh detail filtering removed the surviving interior. Try finer mesh detail or Analytic.");
     if (pieces.size()*3 > size_t(maxFaces)) throw std::runtime_error("CAD face budget cannot preserve all interior components");
     for (const auto& piece : pieces) {
         bool found = false;
@@ -194,7 +151,7 @@ TopoDS_Shape sectionInterior(const mesh_fit::Mesh& raw,double spacing,int maxFac
             } catch (const Standard_Failure& e) { if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "section CAD: " << e.GetMessageString() << "\n"; }
             catch (const std::runtime_error& e) { if (std::getenv("MAKESHIFT_KERNEL_TIMING")) std::cerr << "section fit: " << e.what() << "\n"; }
         }
-        if (!found) throw std::runtime_error("Fast could not fit the eroded interior. Try finer mesh detail, a larger CAD face budget, or Accurate.");
+        if (!found) throw std::runtime_error("Remesh could not fit the eroded interior. Try finer mesh detail, a larger CAD face budget, or Analytic.");
     }
     return candidate;
 }

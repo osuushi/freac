@@ -51,7 +51,7 @@ Fitted fitSurface(Input input,bool deviations,bool approximate) {
         if (network.patches.size()*4 > size_t(input.maxPatches)) {
             if (approximate) {
                 if (best) return *best;
-                throw std::runtime_error("Fast could not construct a valid surface within the CAD face budget. Try more faces, finer mesh detail or Accurate.");
+                throw std::runtime_error("Remesh could not construct a valid surface within the CAD face budget. Try more faces, finer mesh detail or Analytic.");
             }
             std::ostringstream message;
 

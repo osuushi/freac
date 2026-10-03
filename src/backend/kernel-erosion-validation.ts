@@ -5,7 +5,7 @@ export function validateErosionQuality(
   input: Extract<KernelRequest, { kind: "erode" }>,
 ): void {
   if (input.method === "accurate") {
-    requireKernel(reply.erosionQuality === undefined, "Accurate erosion diagnostics");
+    requireKernel(reply.erosionQuality === undefined, "Analytic erosion diagnostics");
     return;
   }
   const quality = array(reply.erosionQuality);

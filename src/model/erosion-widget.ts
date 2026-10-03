@@ -44,8 +44,8 @@ export class ErosionWidget {
   ) {
     this.root.className = "erosion-widget axial-widget";
     this.handle.className = "axial-arrow";
-    this.handle.setAttribute("aria-label", "Erosion thickness handle");
-    this.handle.title = "Erode · drag inward or click to type thickness";
+    this.handle.setAttribute("aria-label", "Erosion distance handle");
+    this.handle.title = "Erode · drag inward or click to type erosion distance";
     this.accept = toolAction("Accept erosion", "m5 12 4 4L19 6", finish);
     this.cancel = toolAction("Cancel erosion", "m6 6 12 12M18 6 6 18", cancel);
     this.keep = toolAction("Keep originals", "M8 8h13v13H8ZM3 16V3h13", keep);
@@ -54,10 +54,10 @@ export class ErosionWidget {
     actions.append(this.keep, this.accept, this.cancel);
     this.panel.className = "axial-panel";
     this.method.setAttribute("aria-label", "Erosion method");
-    this.method.title = "Fast reconstructs an eroded mesh; Accurate uses CAD offsets";
+    this.method.title = "Remesh reconstructs an eroded mesh; Analytic uses CAD offsets";
     for (const [value, label] of [
-      ["fast", "Fast"],
-      ["accurate", "Accurate"],
+      ["fast", "Remesh (usually faster, more flexible)"],
+      ["accurate", "Analytic (more accurate, often slower)"],
     ]) {
       const option = document.createElement("option");
       option.value = value;
@@ -65,7 +65,7 @@ export class ErosionWidget {
       this.method.append(option);
     }
     this.panel.append(this.method);
-    this.field(this.thickness, "Minimum thickness", "Minimum wall thickness in mm");
+    this.field(this.thickness, "Erode by", "Minimum wall thickness in mm");
     this.field(
       this.allowance,
       "Extra thickness allowance",
@@ -76,11 +76,11 @@ export class ErosionWidget {
     this.detailLabel.className = "erosion-field-label";
     this.meshDetail.setAttribute("aria-label", "Mesh detail");
     this.meshDetail.title =
-      "Sampling resolution along the longest body dimension; finer detail preserves smaller features";
+      "Spacing adapts to body dimensions, surface area and Erode by; finer detail uses a larger sampling budget";
     for (const [value, label] of [
-      ["coarse", "Coarse · 32 cells"],
-      ["standard", "Standard · 44 cells"],
-      ["fine", "Fine · 56 cells"],
+      ["coarse", "Coarse"],
+      ["standard", "Standard"],
+      ["fine", "Fine"],
     ]) {
       const option = document.createElement("option");
       option.value = value;
@@ -136,7 +136,7 @@ export class ErosionWidget {
     this.method.value = values.method ?? "fast";
     const fast = values.method === "fast";
     const thickness = this.fields.get(this.thickness);
-    const name = fast ? "Target thickness" : "Minimum thickness";
+    const name = "Erode by";
     if (thickness) thickness.label.textContent = name;
     this.thickness.setAttribute("aria-label", name);
     this.thickness.title = fast

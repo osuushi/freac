@@ -11,6 +11,7 @@ public:
     InteriorField(const TopoDS_Shape&, double deflection);
     ~InteriorField();
     double value(const mesh_fit::V&, double depth) const;
+    void sourceNormals(mesh_fit::Mesh&) const;
     void measure(FastResult&,const mesh_fit::Mesh&) const;
     mesh_fit::Mesh contour(double depth, double spacing, bool refine = false) const;
 };

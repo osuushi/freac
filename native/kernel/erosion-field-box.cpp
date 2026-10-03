@@ -56,7 +56,7 @@ std::optional<TopoDS_Shape> boxInterior(const TopoDS_Shape& source,const mesh_fi
                                                 high[0]-low[0],high[1]-low[1],high[2]-low[2]).Shape();
         // The box comes from the contour's dominant planes, not a CAD offset.
         // Restrict this shortcut to six-plane sources; holes use section fitting.
-        offset_geometry::validSolid(candidate,"Fast erosion box");
+        offset_geometry::validSolid(candidate,"Remesh erosion box");
         return candidate;
     } catch(const Standard_Failure&) {return {};}
     catch(const std::runtime_error&) {return {};}

@@ -396,9 +396,9 @@ reject before calculation. All calls share script atomicity, cancellation and Un
 These additions do not complete the broader command-catalog/control parity design.
 
 `erode({ids, thickness, method, meshDetail, maxFaces, allowance, keepOriginals})`
-creates independent cavity copies and retains originals by default. Fast (the default)
+creates independent cavity copies and retains originals by default. Remesh (the default)
 uses target thickness, mesh detail and a CAD face budget; its thickness is approximate.
-Accurate uses minimum thickness and nonnegative extra allowance, both in millimeters.
+Analytic uses minimum thickness and nonnegative extra allowance, both in millimeters.
 Cavities may split or disappear, but construction failures reject. Returned bodies
 include retained originals, unaffected bodies and new cavities. See
 [erosion](erosion.md) for defaults, conversion quality and verification limits.

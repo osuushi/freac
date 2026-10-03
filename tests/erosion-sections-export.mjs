@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { DocumentOwner } from "../.cache/sketch-tests/src/backend/document-owner.js";
+import { readArchive } from "../.cache/sketch-tests/src/model/document-archive.js";
 import { exportMesh } from "../.cache/sketch-tests/src/model/export-mesh.js";
 import { stepItems } from "../.cache/sketch-tests/src/model/step-export.js";
 import {
@@ -11,15 +13,22 @@ import {
 import { readStep } from "./step-readback.mjs";
 
 await mkdir(".cache/erosion-sections", { recursive: true });
-for (const name of ["lobed", "bores"]) {
+const curved = readArchive(readFileSync("tests/fixtures/erosion-curved-interior.json", "utf8"));
+for (const name of ["curved", "lobed", "bores"]) {
   const owner = new DocumentOwner();
   try {
     if (name === "lobed") await owner.call({ kind: "open", document: lobedErosionSource });
+    else if (name === "curved") await owner.call({ kind: "open", document: curved });
     else await erosionBores(owner);
     const source = owner.view.data.bodies[0];
     const reply = await owner.call({
       kind: "erode",
-      operation: { ids: [source.id], thickness: 1, method: "fast" },
+      operation: {
+        ids: [source.id],
+        thickness: name === "curved" ? 2 : 1,
+        method: "fast",
+        meshDetail: name === "curved" ? "fine" : "standard",
+      },
     });
     assert.equal(reply.error, undefined);
     await owner.call({ kind: "accept" });

@@ -20,7 +20,7 @@ async function cavity(page) {
   await accurateErosion(page);
 }
 async function thickness(page, value) {
-  await page.getByRole("textbox", { name: "Minimum thickness", exact: true }).fill(String(value));
+  await page.getByRole("textbox", { name: "Erode by", exact: true }).fill(String(value));
   return inspect(page);
 }
 async function shift(page, value, clearSelection = true) {
@@ -52,7 +52,7 @@ async function validationRoute(page) {
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, original);
   await accurateErosion(page);
-  const handle = page.getByRole("button", { name: "Erosion thickness handle" });
+  const handle = page.getByRole("button", { name: "Erosion distance handle" });
   const box = await handle.boundingBox();
   const direction = await handle.evaluate((b) => ({
     x: Number(b.dataset.directionX),
@@ -76,7 +76,7 @@ async function validationRoute(page) {
   assert.deepEqual((await inspect(page)).document, original);
   await accurateErosion(page);
   await thickness(page, 1);
-  await page.getByRole("textbox", { name: "Minimum thickness", exact: true }).press("Tab");
+  await page.getByRole("textbox", { name: "Erode by", exact: true }).press("Tab");
   await chooseTool(page, "transform", "transform");
   state = await inspect(page);
   assert.equal(state.document.bodies.length, 2);
