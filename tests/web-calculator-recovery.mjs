@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { at, drag, inspect, settled } from "./ui-helpers.mjs";
+import { at, close, drag, inspect, settled } from "./ui-helpers.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 export async function calculatorRecovery(browser, url) {
@@ -39,7 +39,27 @@ export async function calculatorRecovery(browser, url) {
     await page.keyboard.press("r");
     await drag(page, [-15, -10], [15, 10]);
     assert.equal((await inspect(page)).document.sketches[0].curves.length, 4);
+    await kernelRecovery(page, context);
   } finally {
     await context.close();
   }
+}
+
+async function kernelRecovery(page, context) {
+  await context.route("**/makeshift-kernel-*.wasm", (route) => route.abort());
+  const point = await at(page, 5, 3);
+  await chooseTool(page, "return to modeling", "modeling");
+  await page.mouse.click(point.x, point.y);
+  if (!(await page.getByRole("textbox", { name: "Extrusion distance" }).isVisible()))
+    await page.getByRole("button", { name: "Drag extrusion", exact: true }).click();
+  const distance = page.getByRole("textbox", { name: "Extrusion distance" });
+  await distance.fill("5");
+  await page.keyboard.press("Enter");
+  assert.equal((await inspect(page)).document.bodies?.length ?? 0, 0);
+  await context.unroute("**/makeshift-kernel-*.wasm");
+  await distance.fill("6");
+  await page.keyboard.press("Enter");
+  close((await inspect(page)).preview.bodies[0].volume, 3600);
+  await page.keyboard.press("Enter");
+  close((await inspect(page)).document.bodies[0].volume, 3600);
 }

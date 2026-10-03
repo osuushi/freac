@@ -5,23 +5,28 @@ import type { Plugin } from "vite";
 
 /** Stable content URLs let unchanged calculators survive application releases in HTTP caches. */
 export function wasmAssets(): Plugin {
-  const assets: Record<string, { js: string; wasm: string }> = {};
+  const assets: Record<string, { js: string; wasm: string; side?: string }> = {};
   return {
     name: "makeshift-wasm-assets",
     buildStart() {
-      for (const kind of ["solver", "kernel"]) {
-        const entry = { js: "", wasm: "" };
-        for (const extension of ["js", "wasm"] as const) {
-          const source = readFileSync(
-            resolve(`.build/web-${kind}/bin/makeshift-${kind}.${extension}`),
-          );
-          const hash = createHash("sha256").update(source).digest("hex").slice(0, 16);
-          const name = `makeshift-${kind}-${hash}.${extension}`;
-          this.emitFile({ type: "asset", fileName: `assets/${name}`, source });
-          entry[extension] = `./${name}`;
-        }
-        assets[kind] = entry;
-      }
+      const emit = (kind: string, name: string, extension: "js" | "wasm") => {
+        const source = readFileSync(
+          resolve(`.build/web-${kind}/bin/makeshift-${name}.${extension}`),
+        );
+        const hash = createHash("sha256").update(source).digest("hex").slice(0, 16);
+        const filename = `makeshift-${name}-${hash}.${extension}`;
+        this.emitFile({ type: "asset", fileName: `assets/${filename}`, source });
+        return `./${filename}`;
+      };
+      assets.solver = {
+        js: emit("solver", "solver", "js"),
+        wasm: emit("solver", "solver", "wasm"),
+      };
+      assets.kernel = {
+        js: emit("kernel", "occt", "js"),
+        wasm: emit("kernel", "occt", "wasm"),
+        side: emit("kernel", "kernel", "wasm"),
+      };
     },
     resolveId(id) {
       if (id === "virtual:wasm-assets") return "\0virtual:wasm-assets";

@@ -5,8 +5,12 @@
 
 int makeshift_cli_main();
 
+#ifndef MAKESHIFT_WEB_ENTRY
+#define MAKESHIFT_WEB_ENTRY calculate
+#endif
+
 // Reuse the calculator protocol, not a second implementation of its operations.
-extern "C" EMSCRIPTEN_KEEPALIVE const char* calculate(const char* request) {
+extern "C" EMSCRIPTEN_KEEPALIVE const char* MAKESHIFT_WEB_ENTRY(const char* request) {
     static std::string result;
     std::istringstream input(std::string(request) + "\n");
     std::ostringstream output;

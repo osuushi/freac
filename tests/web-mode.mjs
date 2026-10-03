@@ -61,11 +61,14 @@ try {
       console.log(`${name}: editor ready`);
       assert.equal(await page.getByRole("button", { name: "Open agent terminal" }).count(), 0);
       assert.equal(
-        requests.some((url) => /makeshift-(kernel|solver)-.*\.wasm/.test(url)),
+        requests.some((url) => /makeshift-(occt|kernel|solver)-.*\.wasm/.test(url)),
         false,
       );
       try {
         await route(page, name);
+        for (const asset of ["occt", "kernel"]) {
+          assert.ok(requests.some((url) => new RegExp(`makeshift-${asset}-.*\\.wasm`).test(url)));
+        }
         await browserFileFailures(page);
         const download = page.waitForEvent("download");
         await chooseTool(page, "export step", "export-step");

@@ -17,6 +17,9 @@ calculation without replacing the document owner or losing accepted work.
 One pending calculation per calculator and the existing owner edit gate still apply.
 
 The WASM wrapper reuses the native calculator's JSON protocol and operation code.
+OCCT and the C++ runtime form an Emscripten main module; Makeshift geometry
+implementation is a separately linked side module in the same worker and memory.
+A fixed protocol trampoline connects them. The solver remains a standalone module.
 C++ exceptions remain enabled. Inputs use heap memory rather than the small WASM
 stack. The web kernel uses one thread and requires neither SharedArrayBuffer nor
 cross-origin isolation headers. Manifold and QuickJS use the existing browser WASM
@@ -28,9 +31,14 @@ paths for decorated mesh export and custom decorators.
 GitHub Pages project subpath. The solver loads when a constrained edit needs it;
 OCCT loads when an operation needs exact solid geometry. Mesh/JavaScript decorator
 runtimes retain their own worker paths. WASM and generated glue have content hashes,
-independent of editor code. Unchanged calculators therefore keep the same URLs
-across frontend releases. Browser HTTP caching follows the host's cache headers;
-there is no service worker or offline-install guarantee.
+independent of editor code. OCCT/runtime and Makeshift geometry also have separate
+content hashes: implementation changes that preserve the imported OCCT/runtime
+interface leave the large download unchanged. The main module retains the symbols
+required by the side module rather than exporting all of OCCT. Adding/removing API
+usage, upgrading OCCT/Emscripten or changing compiler options may change its bytes.
+All modules in a release use the same pinned compiler and exception ABI.
+Unchanged modules therefore keep the same URLs across releases. Browser HTTP caching
+follows the host's cache headers; there is no service worker or offline-install guarantee.
 
 All build/test/release logic and release assets belong to the main Makeshift repo.
 A separate Pages repository contains generated output on `gh-pages`, written with

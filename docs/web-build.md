@@ -20,9 +20,14 @@ A release
 source archive already supplies the pinned OCCT, PlaneGCS, Eigen and Boost inputs
 under `.cache`; normal source checkout builds download and verify them. The first
 OCCT compilation is substantial. `.cache/web` and `.build/web-{solver,kernel}` are
-separate from desktop SDKs. Recipe changes invalidate the web SDK cache, and a
-manifest verifies installed files before linking. Change/replace the relevant source
-and rebuild to replace LGPL components; no signing key or agent runtime is required.
+separate from desktop SDKs. The kernel build produces `makeshift-occt.js/.wasm`
+(OCCT and runtime) plus `makeshift-kernel.wasm` (Makeshift implementation), linked
+at worker initialization. `MAIN_MODULE=2` limits exports to the interface the side
+module uses. A native implementation change can update only the small side-module
+URL; a change to that imported interface can update both. Recipe changes invalidate
+the web SDK cache, and a manifest verifies installed files before linking.
+Change/replace the relevant source and rebuild to replace LGPL components;
+no signing key or agent runtime is required.
 
 `npm run test:web` serves the built files under `/makeshift/` using a plain static
 HTTP server and drives headless Chromium/WebKit through drawing, movement, constraints,
