@@ -117,11 +117,8 @@ async function twoFingerSimilarity(page, touch) {
   });
   assert.deepEqual((await inspect(page)).camera, during.camera);
   await touch.end();
-  assert.deepEqual(
-    (await inspect(page)).camera.up,
-    during.camera.up,
-    "Twist does not level on release",
-  );
+  const snapped = await inspect(page);
+  assert.notDeepEqual(snapped.camera.up, during.camera.up, "Twist levels on release");
   assert.deepEqual((await inspect(page)).document, before.document);
   // A stationary remaining contact neither snaps nor starts another orbit.
   await touch.send("touchStart", [
@@ -129,10 +126,10 @@ async function twoFingerSimilarity(page, touch) {
     [2, 530, 515],
   ]);
   await touch.send("touchEnd", [[1, 530, 215]]);
-  assert.deepEqual((await inspect(page)).camera.up, during.camera.up);
+  assert.deepEqual((await inspect(page)).camera.up, snapped.camera.up);
   await touch.end();
   console.log(
-    "chromium: combined pan/pinch/twist follows both fingers, retains roll and ignores duplicate Safari gestures",
+    "chromium: combined pan/pinch/twist follows both fingers, snaps roll and ignores duplicate Safari gestures",
   );
 }
 

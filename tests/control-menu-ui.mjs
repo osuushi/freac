@@ -78,11 +78,13 @@ try {
       await page.keyboard.down("Alt");
       await page.mouse.down({ button: "middle" });
       await page.mouse.move(1010, 610, { steps: 4 });
+      const rolling = await inspect(page);
       await page.mouse.up({ button: "middle" });
       await page.keyboard.up("Alt");
       await page.keyboard.up("Shift");
       const rolled = await inspect(page);
-      assert.notDeepEqual(rolled.camera.up, rotated.camera.up);
+      assert.notDeepEqual(rolling.camera.up, rotated.camera.up);
+      assert.notDeepEqual(rolled.camera.up, rolling.camera.up, "Mouse roll snaps on release");
       for (let i = 0; i < 3; i++)
         assert.ok(Math.abs(rolled.camera.position[i] - rotated.camera.position[i]) < 1e-8);
       assert.deepEqual(rolled.document, before.document);

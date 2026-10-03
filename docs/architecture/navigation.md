@@ -92,10 +92,12 @@ clockwise (two radians per control radius). Roll turns around the view center,
 keeping the view target and direction fixed. Option may be pressed or released
 mid-drag: each change rebases at the last pointer position and current camera pose,
 without a jump. Returning to orbit reuses the original acquired geometry pivot.
-Ending with roll retains that roll; it does not trigger release leveling.
+Ending with roll runs the same release leveling as ordinary orbit, restoring a
+canonical world axis to screen vertical. Vertical orbit alignment is an invariant
+between completed navigation gestures.
 Option modifies navigation only, leaving geometry tools' symmetric sizing intact.
 
-On ordinary-orbit pointer-up, score each world X/Y/Z axis by `rollRadians² - 0.25 × ln(projectedLength)`.
+On orbit/roll completion, score each world X/Y/Z axis by `rollRadians² - 0.25 × ln(projectedLength)`.
 Projection length is that of a unit axis on screen. This smoothly penalizes
 foreshortening, with infinite cost only at exactly end-on; no eligibility threshold.
 The weight makes a half-length projection cost roughly as much as 24° of roll.
@@ -105,12 +107,19 @@ Animate over 280 ms with cubic ease-out, or immediately with reduced motion. Vie
 and zoom stay fixed; only roll changes. New navigation interrupts the animation.
 Cancellation, Escape and focus loss end the drag without snapping. Releasing Command
 mid-drag retains capture. Capture blocks editing, trailing clicks and wheel/pinch.
-Camera changes never modify the document or Undo. Native trackpad rotation gestures
-remain deferred. Tablet one-finger orbit uses the same press-based pivot through
+Camera changes never modify the document or Undo. On macOS, Electron’s native
+[rotate-gesture event](https://www.electronjs.org/docs/latest/api/browser-window/#event-rotate-gesture-macos)
+drives incremental roll about the cursor alongside existing pinch zoom. Its terminal
+zero event triggers release leveling. The narrow host/preload subscription stays
+out of shared geometry, ignores desktop input during tablet handoff, and the
+renderer rejects events outside the viewport or during editing/orbit. Blur clears
+the gesture. This native event is macOS-only; Windows/Linux retain Option-roll.
+
+Tablet one-finger orbit uses the same press-based pivot through
 pointer events. Two fingers simultaneously pan, pinch and twist: their midpoint
-anchors the view and their separation and angle control zoom and roll. Twist stays
-on release and preserves the sketch workspace. Contact-count changes rebase the
-gesture. Safari's duplicate gesture events are consumed by the tablet adapter, so
+anchors the view and their separation and angle control zoom and roll. Twist levels
+when the two-finger gesture ends and preserves the sketch workspace.
+Contact-count changes rebase the gesture. Safari's duplicate gesture events are consumed by the tablet adapter, so
 zoom and roll are applied once. Sketch entry retains its existing transition.
 
 The temporary rotation circle, endpoint markers and diagnostic caption are hidden.

@@ -13,6 +13,7 @@ class TabletInput {
   private origin: Point | null = null;
   private pen: number | null = null;
   private rotating = false;
+  private twisting = false;
   private suppressClickUntil = 0;
   constructor(
     private world: World,
@@ -68,6 +69,7 @@ class TabletInput {
   private endOrbit(): void {
     if (this.rotating) this.world.orbit.end();
     this.rotating = false;
+    this.twisting = false;
   }
   private rebase(): void {
     this.endOrbit();
@@ -147,6 +149,7 @@ class TabletInput {
         };
         zoomCamera(this.world, this.previous.distance / next.distance, offset, bounds.height);
         const angle = next.angle - this.previous.angle;
+        if (Math.abs(angle) > 1e-10) this.twisting = true;
         rollCamera(this.world, Math.atan2(Math.sin(angle), Math.cos(angle)), offset, bounds.height);
       }
     }
@@ -161,7 +164,9 @@ class TabletInput {
     this.world.longPress?.(event);
     consume(event);
     this.suppressClickUntil = performance.now() + 1000;
-    const level = this.rotating && !this.touches.size && event.type === "pointerup";
+    const level =
+      event.type === "pointerup" &&
+      ((this.rotating && !this.touches.size) || (this.twisting && this.touches.size < 2));
     if (this.world.canvas.hasPointerCapture(event.pointerId))
       this.world.canvas.releasePointerCapture(event.pointerId);
     this.rebase();

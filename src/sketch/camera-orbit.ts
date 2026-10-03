@@ -20,9 +20,6 @@ export class SmoothedTurntable {
   get active(): boolean {
     return this.start !== null;
   }
-  get rolling(): boolean {
-    return this.start?.roll ?? false;
-  }
   end(): void {
     this.start = null;
   }

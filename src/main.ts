@@ -83,6 +83,11 @@ async function createWindow(): Promise<void> {
   });
   documentWindow = window;
   rememberWindowSize(window);
+  window.on("rotate-gesture", (_event, rotation) => {
+    if (!documents.remote?.active() && Number.isFinite(rotation))
+      window.webContents.send("navigation-rotate", -rotation);
+  });
+
   window.webContents.on("did-start-loading", () => meshCalculator.close());
   window.webContents.on("render-process-gone", () => meshCalculator.close());
   window.on("closed", () => {

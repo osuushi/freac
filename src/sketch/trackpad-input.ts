@@ -1,10 +1,12 @@
 import { panCamera, zoomCamera } from "./camera-motion.js";
 import { controlMode } from "./control-preference.js";
+import { installTrackpadRotation } from "./trackpad-rotation.js";
 import type { World } from "./world.js";
 
 // Chromium/Electron report trackpad pinch as ctrl+wheel. WebKit also exposes
 // gesture scale events; while those are active they exclusively own pinch zoom.
 export function installTrackpad(world: World, signal: AbortSignal): void {
+  installTrackpadRotation(world, signal);
   const canvas = world.canvas;
   const options = { signal, passive: false, capture: true };
   let scale: number | null = null;

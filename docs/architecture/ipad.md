@@ -14,7 +14,8 @@ sketch gestures wait for the transition to finish. During a held sketch gesture,
 each completed solve is displayed even when a newer pointer target is waiting;
 release drains the newest target before accepting one Undo step.
 Two-finger twist rotates the view about the finger midpoint alongside pan and zoom,
-retaining roll on release. Safari exposes combined scale/rotation through
+leveling to a canonical vertical world axis on release. Safari exposes combined
+scale/rotation through
 [GestureEvent](https://developer.apple.com/documentation/webkitjs/gestureevent);
 Makeshift calculates both directly from its existing pointer contacts and consumes
 duplicate Safari gesture events. Automated Chromium touch checks exercise this

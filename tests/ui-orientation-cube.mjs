@@ -111,8 +111,8 @@ async function cubeRoll(page, center) {
   await page.mouse.up();
   await page.keyboard.up("Alt");
   const after = await inspect(page);
-  assert.notDeepEqual(after.camera.up, before.camera.up);
-  assert.deepEqual(after.camera.up, during.camera.up, "Cube Option roll stays on release");
+  assert.notDeepEqual(during.camera.up, before.camera.up);
+  assert.notDeepEqual(after.camera.up, during.camera.up, "Cube Option roll snaps on release");
   for (let i = 0; i < 3; i++)
     assert.ok(Math.abs(after.camera.position[i] - before.camera.position[i]) < 1e-8);
   assert.deepEqual(after.document, before.document);

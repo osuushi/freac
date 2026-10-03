@@ -120,7 +120,7 @@ async function explicitRoll(page, bounds) {
   await page.keyboard.up("Alt");
   await page.keyboard.up("Meta");
   const after = await inspect(page);
-  assert.deepEqual(after.camera.up, rolled.camera.up, "Explicit roll is retained on release");
+  assert.notDeepEqual(after.camera.up, rolled.camera.up, "Explicit roll snaps on release");
   assert.deepEqual(after.document, before.document);
 
   await page.mouse.move(x, y);
