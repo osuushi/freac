@@ -9,7 +9,7 @@ export class QuarterTurn {
   update(radians: number): number {
     if (this.fired || !Number.isFinite(radians)) return 0;
     this.angle += radians;
-    if (Math.abs(this.angle) < Math.PI / 12) return 0;
+    if (Math.abs(this.angle) < Math.PI / 18) return 0;
     this.fired = true;
     return (Math.sign(this.angle) * Math.PI) / 2;
   }

@@ -44,7 +44,7 @@ try {
   await page.mouse.move(anchor.x, anchor.y);
   assert.deepEqual((await rotate(-8)).camera.up, before.camera.up, "Small twist does not turn");
   await recordRoll(page);
-  const starting = await rotate(-8, false);
+  const starting = await rotate(-3, false);
   assert.equal(starting.camera.moving, true, "Threshold starts animation");
   await rotate(-45, false); // Continued packets must not cancel or restart the animation.
   await rotate(0, false); // An early end must let the animation finish.
