@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { launchElectron } from "./native-documents.mjs";
 import { at, drag, inspect } from "./ui-helpers.mjs";
-import { assertSmoothRoll, recordRoll } from "./ui-roll-animation.mjs";
+import { assertRollAnchor, assertSmoothRoll, recordRoll } from "./ui-roll-animation.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 // Real BrowserWindow → IPC → preload → renderer boundary; native packets are
@@ -13,6 +13,9 @@ const app = await launchElectron({
 try {
   const page = await app.firstWindow();
   await page.setViewportSize({ width: 1280, height: 850 });
+  await app.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows()[0].webContents.setZoomFactor(1.25),
+  );
   await inspect(page);
   assert.equal(
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),
@@ -26,28 +29,57 @@ try {
     history = await page.evaluate(() => window.makeshiftHistory());
   await page.evaluate(() => {
     window.rotationEvents = 0;
+    window.addEventListener(
+      "pointermove",
+      (event) => {
+        window.rotationPointer = { x: event.clientX, y: event.clientY };
+      },
+      { capture: true },
+    );
     window.makeshiftNavigation.onRotate(() =>
       requestAnimationFrame(() => {
         window.rotationEvents++;
       }),
     );
   });
-  const rotate = async (degrees, settle = true) => {
+  const rotate = async (degrees, settle = true, nativePointer) => {
     const count = await page.evaluate(() => window.rotationEvents);
-    await app.evaluate(({ BrowserWindow }, degrees) => {
-      BrowserWindow.getAllWindows()[0].emit("rotate-gesture", {}, degrees);
-    }, degrees);
+    const pointer = nativePointer ?? (await page.evaluate(() => window.rotationPointer));
+    await app.evaluate(
+      ({ BrowserWindow, screen }, { degrees, pointer }) => {
+        const window = BrowserWindow.getAllWindows()[0];
+        const bounds = window.getContentBounds();
+        const zoom = window.webContents.getZoomFactor();
+        const original = screen.getCursorScreenPoint;
+        screen.getCursorScreenPoint = () => ({
+          x: bounds.x + pointer.x * zoom,
+          y: bounds.y + pointer.y * zoom,
+        });
+        try {
+          window.emit("rotate-gesture", {}, degrees);
+        } finally {
+          screen.getCursorScreenPoint = original;
+        }
+      },
+      { degrees, pointer },
+    );
     await page.waitForFunction((count) => window.rotationEvents > count, count);
     return settle ? inspect(page) : page.evaluate(() => window.makeshiftInspect());
   };
   const anchor = { x: 950, y: 600 };
-  await page.mouse.move(anchor.x, anchor.y);
-  assert.deepEqual((await rotate(-8)).camera.up, before.camera.up, "Small twist does not turn");
+  // Deliberately leave DOM hover elsewhere; native cursor is authoritative.
+  await page.getByTitle("Controls", { exact: true }).hover();
+  assert.deepEqual(
+    (await rotate(-8, true, anchor)).camera.up,
+    before.camera.up,
+    "Small twist does not turn",
+  );
   await recordRoll(page);
-  const starting = await rotate(-3, false);
+  const starting = await rotate(-3, false, anchor);
   assert.equal(starting.camera.moving, true, "Threshold starts animation");
-  await rotate(-45, false); // Continued packets must not cancel or restart the animation.
-  await rotate(0, false); // An early end must let the animation finish.
+  await rotate(-45, false, anchor); // Continued packets must not cancel or restart the animation.
+  await rotate(0, false, anchor); // An early end must let the animation finish.
+  await page.mouse.move(anchor.x, anchor.y);
   await page.keyboard.down("Control");
   await page.mouse.wheel(0, -25);
   await page.keyboard.up("Control");
@@ -57,6 +89,7 @@ try {
   );
   const turned = await inspect(page);
   await assertSmoothRoll(page, before, Math.PI / 2);
+  await assertRollAnchor(page, before, anchor);
   const scale = before.camera.height / turned.camera.height;
   const x = (before.projection.origin.x - anchor.x) * scale,
     y = (before.projection.origin.y - anchor.y) * scale;

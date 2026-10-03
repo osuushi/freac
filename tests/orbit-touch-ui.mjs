@@ -4,7 +4,7 @@ import { launchElectron } from "./native-documents.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { assertPivot, makePivotBox, pressOnPlane } from "./ui-orbit-pivot.mjs";
-import { assertSmoothRoll, recordRoll } from "./ui-roll-animation.mjs";
+import { assertRollAnchor, assertSmoothRoll, recordRoll } from "./ui-roll-animation.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function touchDriver(page, name) {
@@ -105,8 +105,8 @@ async function twoFingerSimilarity(page, touch) {
     before.camera.height,
   );
   await touch.send("touchMove", [
-    [1, 530, 215],
-    [2, 530, 515],
+    [1, 560, 240],
+    [2, 560, 540],
   ]);
   await touch.end();
   assert.equal(
@@ -117,10 +117,14 @@ async function twoFingerSimilarity(page, touch) {
   const during = await inspect(page),
     moved = await project(page, xyz);
   await assertSmoothRoll(page, before, Math.PI / 2);
+  await assertRollAnchor(page, before, { x: 520, y: 350 }, [
+    { x: 530, y: 365 },
+    { x: 560, y: 390 },
+  ]);
   assert.equal(during.camera.orbitActive, false);
   assert.ok(Math.abs(during.camera.height - before.camera.height / 1.5) < 1e-7);
-  assert.ok(Math.abs(moved.x - (530 - (initial.y - 350) * 1.5)) < 1e-5);
-  assert.ok(Math.abs(moved.y - (365 + (initial.x - 520) * 1.5)) < 1e-5);
+  assert.ok(Math.abs(moved.x - (560 - (initial.y - 350) * 1.5)) < 1e-5);
+  assert.ok(Math.abs(moved.y - (390 + (initial.x - 520) * 1.5)) < 1e-5);
   // Safari duplicates these contacts as GestureEvents; that stream must not apply again.
   await page.locator("canvas").evaluate((canvas) => {
     for (const type of ["gesturestart", "gesturechange", "gestureend"]) {

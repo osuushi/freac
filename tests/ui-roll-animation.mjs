@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
+import * as THREE from "three";
 
 export async function recordRoll(page) {
-  await page.evaluate(() => {
+  const bounds = await page.getByLabel("Modeling viewport", { exact: true }).boundingBox();
+  await page.evaluate((bounds) => {
+    window.rollBounds = bounds;
     window.rollSamples = [];
     window.rollRecording = true;
     const started = performance.now();
@@ -11,7 +14,7 @@ export async function recordRoll(page) {
       else window.rollRecording = false;
     };
     sample();
-  });
+  }, bounds);
 }
 export async function assertSmoothRoll(page, before, expected) {
   await page.waitForFunction(() => !window.rollRecording);
@@ -37,5 +40,42 @@ export async function assertSmoothRoll(page, before, expected) {
   );
   for (let i = 1; i < angles.length; i++) {
     assert.ok(angles[i] >= angles[i - 1] - 1e-6, "No overshoot or backward correction");
+  }
+}
+
+/** The world point under the gesture follows only its cursor/midpoint, on every frame. */
+export async function assertRollAnchor(page, before, anchor, positions = [anchor]) {
+  const { samples, bounds } = await page.evaluate(() => ({
+    samples: window.rollSamples,
+    bounds: window.rollBounds,
+  }));
+  const makeCamera = (state) => {
+    const h = state.height / 2,
+      w = (h * bounds.width) / bounds.height;
+    const camera = new THREE.OrthographicCamera(-w, w, h, -h, 0.1, 10000);
+    camera.position.fromArray(state.position);
+    camera.up.fromArray(state.up);
+    camera.lookAt(new THREE.Vector3(...state.target));
+    camera.updateMatrixWorld();
+    return camera;
+  };
+  const camera = makeCamera(before.camera);
+  const pivot = new THREE.Vector3(...before.camera.target)
+    .addScaledVector(
+      new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0),
+      ((anchor.x - bounds.x - bounds.width / 2) * before.camera.height) / bounds.height,
+    )
+    .addScaledVector(
+      new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1),
+      (-(anchor.y - bounds.y - bounds.height / 2) * before.camera.height) / bounds.height,
+    );
+  for (const sample of samples) {
+    const projected = pivot.clone().project(makeCamera(sample));
+    const x = bounds.x + ((projected.x + 1) * bounds.width) / 2;
+    const y = bounds.y + ((1 - projected.y) * bounds.height) / 2;
+    assert.ok(
+      positions.some((p) => Math.hypot(p.x - x, p.y - y) < 1e-5),
+      `Gesture anchor drifted to ${x}, ${y}`,
+    );
   }
 }

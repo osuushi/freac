@@ -13,23 +13,21 @@ export function installTrackpadRotation(
   if (!host) return;
   const turn = new QuarterTurn();
   let lastRotation = -Infinity;
-  let pointer: { x: number; y: number } | null = null;
-  window.addEventListener(
-    "pointermove",
-    (event) => {
-      pointer = { x: event.clientX, y: event.clientY };
-    },
-    { signal, capture: true },
-  );
+  let enabled = true;
+  const enable = () => {
+    enabled = true;
+  };
+  window.addEventListener("pointermove", enable, { signal, capture: true });
+  window.addEventListener("focus", enable, { signal });
   const clear = () => {
-    pointer = null;
+    enabled = false;
     turn.reset();
     lastRotation = -Infinity;
     snap.cancel();
   };
   window.addEventListener("blur", clear, { signal });
   document.documentElement.addEventListener("pointerleave", clear, { signal });
-  const remove = host.onRotate((degrees) => {
+  const remove = host.onRotate((degrees, pointer) => {
     if (degrees === 0) {
       if (Number.isFinite(lastRotation)) snap.postpone();
       turn.reset();
@@ -37,7 +35,9 @@ export function installTrackpadRotation(
       return;
     }
     if (
-      !pointer ||
+      !enabled ||
+      !Number.isFinite(pointer?.x) ||
+      !Number.isFinite(pointer?.y) ||
       !Number.isFinite(degrees) ||
       !degrees ||
       !world.canNavigate() ||

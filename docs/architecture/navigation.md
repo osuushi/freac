@@ -111,8 +111,12 @@ Cancellation, Escape and focus loss end the drag without snapping. Releasing Com
 mid-drag retains capture. Capture blocks editing, trailing clicks and wheel/pinch.
 Camera changes never modify the document or Undo. On macOS, Electron’s native
 [rotate-gesture event](https://www.electronjs.org/docs/latest/api/browser-window/#event-rotate-gesture-macos)
-recognizes a two-finger twist as one 90° view turn about the cursor. Accumulated
-travel must reach 10° in either direction; smaller motion does not turn the view.
+recognizes a two-finger twist as one 90° view turn about the cursor. The host sends
+the current native cursor position with each packet, converted from screen DIP
+through the window's content origin and zoom into viewport CSS pixels. Capture
+that cursor at recognition; the animation keeps its world point fixed on screen.
+Accumulated travel must reach 10° in either direction; smaller motion does not
+turn the view.
 Once triggered, further rotation packets cannot produce another turn until the
 gesture ends. A terminal zero or 200 ms idle rearms recognition. Native twist never
 waits for a terminal packet to snap. The quarter-turn and canonical-axis correction
@@ -129,7 +133,9 @@ The native event is macOS-only; Windows/Linux retain Option-roll.
 
 Tablet one-finger orbit uses the same press-based pivot through pointer events.
 Two fingers continuously pan and pinch; twisting 10° triggers one 90° turn about
-their midpoint. Further twist in that contact gesture cannot repeat the turn.
+their midpoint. The animation follows the current midpoint as the pair pans,
+keeping the world point under the fingers fixed relative to that midpoint through
+rotation and pinch. Further twist in that contact gesture cannot repeat the turn.
 The pair is sampled once per frame so separate pointer updates during a pan do
 not spuriously cross the twist threshold. Contact-count changes rebase recognition;
 the turn animates directly to the leveled destination while preserving the sketch
