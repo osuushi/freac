@@ -78,15 +78,21 @@ Otherwise a verified radial map supplies a coarse quad layout for the shared
 bicubic fitter, using `e/8` fitting allowance. Source-surface tessellation supplies
 smooth normal guidance to avoid the contour grid's uneven triangle bias.
 
-When a component has no suitable radial map, a mesh inward offset of `e/4` followed
-by an outward offset of `e/4` removes narrow connections. This can split the result.
-Each resulting component is sampled on 16 ordered section planes, with 32 controls
-around each ring. A periodic cubic B-spline side and two planar caps form a compact
-solid. Ordered control-plane heights prevent the surface from folding along its
-axis. Multiple loops on a section are unsupported. These are construction proposals,
-not certificates: the complete assembled B-rep must pass `validateCavity` against
-the original source, including every required interior region. The accepted bodies
-contain no field, mesh reconstruction recipe or relation to their originals.
+When a component has no suitable radial map, or has holes, Fast also tries direct
+planar contours of the source distance field near `t+e/3`. It prefers large planar
+face normals, then principal axes. Thirty-two sections use 128 equally spaced
+samples per loop, cyclic cubic interpolation around each loop, and cubic
+interpolation along the axis. Continuous phase alignment prevents adjacent rings
+from twisting. Inner loops remain holes in both the side surfaces and planar caps.
+Redundant height knots are removed within a small fraction of the allowance.
+The side surfaces are divided into bounded patches for subsequent CAD operations.
+
+If that proposal fails, the earlier inward/outward mesh opening of `e/4` can remove
+narrow connections and split components. Its simpler 16-section, 32-control fit
+remains a fallback. Neither construction is a certificate: the assembled B-rep must
+pass `validateCavity` against the original source, including every required interior
+region. The accepted bodies contain no field, reconstruction recipe or relation to
+their originals.
 
 Additional Accurate construction proposals remove collapsed cylindrical branches and convex
 toroidal rounds, retaining globally supporting planar caps. Every proposal is
@@ -102,11 +108,15 @@ adaptive cells with conservative distance bounds, not an unchecked sample grid.
 Convex planar half-spaces and exact planar polygon triangles accelerate those
 bounds; curved supports, indexed points on exact boundary curves and trimmed faces,
 and exact kernel distances handle other regions. These points provide upper bounds
-only. Nonrational Bézier faces additionally use boxes enclosing subdivided control
+only. Nonrational Bézier and B-spline faces additionally use boxes enclosing subdivided control
 hulls for conservative lower bounds and boundary-crossing exclusion. These boxes
 are based on the actual surfaces, independent of display tessellation. Certified
 interior/exterior distance balls and boundary-free spans reuse classifications
-across neighboring cells. Unresolved cells, the finite work limit, or kernel errors
+across neighboring cells. Recognized section solids use exact cubic cross-section
+ray intersections. Uncertain roots, seams, nonmonotone heights and exterior answers
+without sufficient boundary separation fall back to OCCT classification. Trimmed
+surface witnesses provide upper bounds, with exact distance fallback for section
+coverage. Unresolved cells, the finite work limit, or kernel errors
 reject the proposal. An offset failure
 alone never proves the interior empty; emptiness has its own coverage check.
 Calculation coordinates follow a source surface frame so rigid placement does not
@@ -114,9 +124,9 @@ needlessly multiply Cartesian cells. Full concentric spherical shells additional
 have an exact radial-interval coverage certificate. These change verification cost,
 not accepted geometry or distance budgets.
 
-Cells with the largest unresolved clearance are checked first. A coverage-limit
-failure stops repeated construction attempts rather than spending the same limit
-again on similar proposals. On the Accurate path, when a minimum-thickness-valid candidate supplies a
+Cells with the largest unresolved clearance are checked first. On the Accurate
+path, a coverage-limit failure stops repeated construction attempts rather than
+spending the same limit again on similar proposals. On that path, when a minimum-thickness-valid candidate supplies a
 finite bound on its remaining uncovered regions, the failure includes a rounded,
 conservative allowance suggestion with 32% headroom before rounding upward.
 The UI rounds this upward to a multiple of 10%. The local **Try …% allowance** button
@@ -164,13 +174,18 @@ at exact collapse is not retained as a solid.
 
 ## Current limits
 
-Fast supports up to 16 closed genus-zero components; holes and enclosed voids
-continue to rely on Accurate. Each field is limited to 300,000 grid samples and 12 seconds
-(including root refinement), and each contour to 100,000 vertices/200,000 triangles.
-The radial fitter has a 256-patch budget; section reconstruction uses three faces
-per piece. Small allowances, difficult parameterizations or offset intersections
-may still reject even when an eroded body exists. Fast rejects allowance below
-0.0001 mm with guidance to use Accurate.
+Fast supports up to 16 closed components. Radial fitting requires genus zero;
+section fitting also supports through-holes whose ordered loops persist along a
+usable axis. Sections with separate outer regions, nested islands or changing loop
+counts are rejected on that axis. Enclosed voids and more general changing topology
+still rely on Accurate or another certified proposal.
+Each 3D field is limited to 300,000 grid samples and 12 seconds (including root
+refinement), and each contour to 100,000 vertices/200,000 triangles. Direct section
+sampling has a shared 500,000-evaluation / 20-second budget across axis attempts.
+The radial fitter has a 256-patch budget; direct section reconstruction has at most
+16 loops and 256 faces per piece. Small allowances, difficult parameterizations or
+offset intersections may still reject even when an eroded body exists. Fast rejects
+allowance below 0.0001 mm with guidance to use Accurate.
 A waisted freeform body at 1 mm thickness/0.8 mm allowance is a covered case. A
 coarse cubic spherical source needs sufficient allowance for analytic recovery;
 1/1.6 mm is covered; smaller allowances are not guaranteed for a cubic source approximation.
@@ -200,8 +215,10 @@ the requested bounds. Increasing allowance can therefore change topology.
 Older filleted bodies may carry curve/surface disagreement beyond the 1e-6 mm
 source budget and still reject. New fillets use tighter fitting; Erode does not
 silently relax precision for old files. General freeform repair remains separate.
-Coverage has a 100,000-cell / 8-second limit per check. A coverage-limit failure
-ends the proposal search with guidance where available. Preparation and other
+Coverage has a 100,000-cell limit per check. Its time limit is 30 seconds for
+recognized section solids and 8 seconds otherwise; the geometric tolerances and
+required coverage are the same. A coverage-limit failure rejects that proposal;
+Accurate ends its proposal search with guidance where available. Preparation and other
 kernel work can add time; cancellation interrupts the native worker rather than
 waiting for those calculations to finish.
 These are bounded construction and verification limits, not proof that the desired
@@ -259,3 +276,13 @@ history/cancellation and the captured workflow in Chromium, WebKit and hidden
 Electron. `erosion-methods-export.mjs` checks independent STEP readback of both pieces.
 Native `erosion-components` and `erosion-mesh-offset` checks cover component
 remapping, refined contour roots and inward/outward mesh offset signs.
+
+`tests/erosion-sections.test.ts` checks the captured lobed fillet at 1 mm thickness
+with 50% and 150% allowance, plus a plate with two through-bores and independent
+material probes. It includes history, stable IDs, reopening, movement and final
+subtraction. `node tests/erosion-sections-ui.mjs` exercises default Fast through
+ordinary controls in Chromium, WebKit and hidden Electron.
+`node tests/erosion-sections-export.mjs` checks exact STEP readback and oriented
+mesh export for the new interiors and final walls. Native
+`erosion-section-classifier` compares section membership with independent OCCT
+classification, including transformed, holed and near-boundary cases.

@@ -2,6 +2,7 @@
 #include "geometry-policy.h"
 #include "erosion-boundary-points.h"
 #include "erosion-bezier-bounds.h"
+#include "erosion-surface-witness.h"
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBndLib.hxx>
@@ -23,6 +24,7 @@
 #include <cmath>
 #include <limits>
 #include <stdexcept>
+#include <tuple>
 #include <vector>
 
 namespace {
@@ -51,12 +53,13 @@ struct Support {
     TopoDS_Face face;
     BRepAdaptor_Surface surface;
     erosion::BezierBounds bezier;
+    erosion::SurfaceWitness witness;
     std::unique_ptr<BRepClass_FaceExplorer> explorer;
     bool polygon;
     bool fullSphere = false;
     double lo[3], hi[3];
     std::vector<std::pair<double, double>> fullBands;
-    Support(const TopoDS_Face& face, bool polygon) : face(face), surface(face), bezier(surface),
+    Support(const TopoDS_Face& face, bool polygon) : face(face), surface(face), bezier(surface), witness(surface),
         explorer(std::make_unique<BRepClass_FaceExplorer>(face)), polygon(polygon) {
         explorer->SetUseBndBox(true);
         explorer->SetMaxTolerance(geometry_policy::parameterCorrespondenceMm);
@@ -138,6 +141,7 @@ struct Support {
             case GeomAbs_Cylinder: ElSLib::Parameters(surface.Cylinder(), p, u, v); break;
             case GeomAbs_Sphere: ElSLib::Parameters(surface.Sphere(), p, u, v); break;
             case GeomAbs_Torus: ElSLib::Parameters(surface.Torus(), p, u, v); break;
+            case GeomAbs_BSplineSurface: std::tie(u,v) = witness.closest(p); break;
             default: return std::numeric_limits<double>::infinity();
         }
         if (surface.IsUPeriodic()) u += std::ceil((surface.FirstUParameter()-u)/surface.UPeriod())*surface.UPeriod();
@@ -237,11 +241,11 @@ struct erosion::BoundaryDistance::Impl {
     std::vector<Support> supports;
     explicit Impl(const TopoDS_Shape& shape) : exact(planarPolygon(shape)), points(shape) {
         const auto copy = BRepBuilderAPI_Copy(shape, true, false).Shape();
-        BRepMesh_IncrementalMesh mesh(copy, 0.01, false, 0.1, false);
         for (TopExp_Explorer f(copy, TopAbs_FACE); f.More(); f.Next()) {
             const bool polygon = planarPolygon(f.Current());
             supports.emplace_back(TopoDS::Face(f.Current()), polygon);
             if (!polygon) continue;
+            BRepMesh_IncrementalMesh mesh(f.Current(), 0.01, false, 0.1, false);
             TopLoc_Location location;
             const auto triangulation = BRep_Tool::Triangulation(TopoDS::Face(f.Current()), location);
             if (triangulation.IsNull()) throw std::runtime_error("Erosion could not partition a planar face");
@@ -269,6 +273,7 @@ double erosion::BoundaryDistance::upper(const gp_Pnt& point, double limit) const
     double distance = impl->points.upper(point);
     for (const auto& support : impl->supports) {
         if (distance <= limit) break;
+        if (support.lower(point,distance) >= distance) continue;
         distance = std::min(distance, support.upper(point));
     }
     return distance;

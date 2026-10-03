@@ -1,4 +1,5 @@
 #include "erosion-field.h"
+#include "erosion-field-planar.h"
 #include "erosion.h"
 #include "offset-geometry.h"
 #include <BRepBuilderAPI_MakeEdge.hxx>
@@ -172,6 +173,7 @@ std::vector<TopoDS_Shape> sectionProposals(const Mesh& mesh, double allowance) {
 }
 TopoDS_Shape sectionInterior(const TopoDS_Shape& source, const mesh_fit::Mesh& raw,
                             double thickness, double allowance) {
+    if (const auto fitted = contourInterior(source,thickness,allowance)) return *fitted;
     // The opening is a proposal: it may remove thin tips, but may not discard
     // any interior required by t+e. The final source certificate enforces that.
     const auto deep = offsetInteriorMesh(raw,-allowance/4,allowance);
