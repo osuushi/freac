@@ -43,7 +43,12 @@ struct Hit {
 };
 class Search {
     struct Node { V lo, hi; int start, end, left = -1, right = -1; };
+    struct Facet {
+        V ab, ac, lo, hi;
+        double aa, bb, cc, denominator;
+    };
     const Mesh& mesh;
+    std::vector<Facet> facets;
     std::vector<V> normals;
     std::vector<int> order;
     std::vector<Node> nodes;

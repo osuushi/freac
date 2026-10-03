@@ -47,6 +47,40 @@ void nearestChecks(const Search& s) {
         require(length(hit.point-expected) < 1e-12,"Nearest face, edge and corner witnesses");
     }
 }
+void obliqueNearestChecks() {
+    Mesh mesh;
+    mesh.vertices = {{3,-2,1},{5,1,2},{2,1,4}};
+    mesh.triangles = {{0,1,2}};
+    // Distant triangles force BVH traversal instead of a single leaf.
+    for (int i = 0; i < 12; ++i) {
+        const int base = int(mesh.vertices.size());
+        for (int j = 0; j < 3; ++j) mesh.vertices.push_back(mesh.vertices[j]+V(100+i*10,0,0));
+        mesh.triangles.push_back({base,base+1,base+2});
+    }
+    Search search(mesh);
+    const auto& a = mesh.vertices[0];
+    const auto ab = mesh.vertices[1]-a, ac = mesh.vertices[2]-a;
+    const auto normal = unit(ab.Crossed(ac));
+    const auto interior = a+ab*0.3+ac*0.5;
+    const auto hit = search.closest(interior+normal*2);
+    require(length(hit.point-interior) < 1e-12 && std::abs(hit.distance2-4) < 1e-12,
+            "Oblique nearest face retains exact distance and barycentric projection");
+    require(length(hit.normal-normal) < 1e-12,"The winning triangle supplies its normal");
+    for (int i = 0; i < 3; ++i) {
+        const auto first = mesh.vertices[i], second = mesh.vertices[(i+1)%3];
+        const auto middle = (first+second)/2, direction = unit(second-first);
+        const auto opposite = mesh.vertices[(i+2)%3]-middle;
+        const auto outward = unit(opposite-direction*opposite.Dot(direction))*-1;
+        require(length(search.closest(middle+outward*0.7+normal*0.4).point-middle) < 1e-12,
+                "Oblique edge witnesses survive triangle box rejection");
+    }
+    require(length(search.closest(a-unit(ab+ac)+normal*0.8).point-a) < 1e-12,
+            "Oblique vertex witness survives triangle box rejection");
+    Mesh line; line.vertices = {{0,0,0},{1,0,0},{2,0,0}}; line.triangles = {{0,1,2}};
+    Search degenerate(line);
+    require(length(degenerate.closest({0.5,1,0}).point-V(0.5,0,0)) < 1e-12,
+            "Degenerate triangles still use finite segment distances");
+}
 Mesh octahedralMesh() {
     Mesh octahedron;
     octahedron.vertices = {{1,0,0},{0,1,0},{-1,0,0},{0,-1,0},{0,0,1},{0,0,-1}};
@@ -104,7 +138,7 @@ void solverChecks() {
 }
 int main() {
     try {
-        basisChecks(); solverChecks(); normalChecks(); areaChecks(); analyticDistanceChecks();
+        basisChecks(); solverChecks(); normalChecks(); areaChecks(); analyticDistanceChecks(); obliqueNearestChecks();
         auto c = cube(); const auto m = triangles(c); Search s(m); nearestChecks(s);
         require(s.contains({0.13,-0.17,0.21}) == true,"Interior ray parity");
         require(s.contains({2.1,0.17,0.21}) == false,"Exterior ray parity");

@@ -4,10 +4,9 @@
 
 namespace mesh_fit {
 namespace {
-Hit triangleHit(const V& p, const V& a, const V& b, const V& c) {
-    const auto ab = b-a, ac = c-a, ap = p-a;
-    const double aa = ab.Dot(ab), bb = ac.Dot(ac), cc = ab.Dot(ac);
-    const double denominator = aa*bb-cc*cc;
+Hit triangleHit(const V& p, const V& a, const V& b, const V& c,
+                const V& ab, const V& ac, double aa, double bb, double cc, double denominator) {
+    const auto ap = p-a;
     Hit hit;
     if (denominator > 1e-30) {
         const double u = (ap.Dot(ab)*bb-ap.Dot(ac)*cc)/denominator;
@@ -43,6 +42,20 @@ double boxDistance(const V& p, const V& lo, const V& hi) {
 }
 Search::Search(const Mesh& value, bool smoothNormals) : mesh(value), normals(value.triangles.size()*3), order(value.triangles.size()) {
     std::iota(order.begin(), order.end(), 0);
+    facets.reserve(mesh.triangles.size());
+    for (const auto& t : mesh.triangles) {
+        const auto& a = mesh.vertices[t[0]];
+        const auto& b = mesh.vertices[t[1]];
+        const auto& c = mesh.vertices[t[2]];
+        const auto ab = b-a, ac = c-a;
+        V lo, hi;
+        for (int axis = 1; axis <= 3; ++axis) {
+            lo.SetCoord(axis,std::min({a.Coord(axis),b.Coord(axis),c.Coord(axis)}));
+            hi.SetCoord(axis,std::max({a.Coord(axis),b.Coord(axis),c.Coord(axis)}));
+        }
+        const double aa = ab.Dot(ab), bb = ac.Dot(ac), cc = ab.Dot(ac);
+        facets.push_back({ab,ac,lo,hi,aa,bb,cc,aa*bb-cc*cc});
+    }
     if (!mesh.normals.empty()) {
         for (size_t t = 0; t < mesh.triangles.size(); ++t) for (int j = 0; j < 3; ++j)
             normals[t*3+j] = unit(mesh.normals.at(mesh.triangles[t][j]));
@@ -97,13 +110,25 @@ void Search::visit(int id, const V& p, Hit& hit) const {
         return;
     }
     for (int i = n.start; i < n.end; ++i) {
-        const auto& f = mesh.triangles[order[i]];
-        auto candidate = triangleHit(p,mesh.vertices[f[0]],mesh.vertices[f[1]],mesh.vertices[f[2]]);
+        const int triangle = order[i];
+        const auto& f = mesh.triangles[triangle];
+        const auto& data = facets[triangle];
+        // A triangle's box is a lower distance bound, just like the BVH nodes.
+        if (boxDistance(p,data.lo,data.hi) > hit.distance2) continue;
+        auto candidate = triangleHit(p,mesh.vertices[f[0]],mesh.vertices[f[1]],mesh.vertices[f[2]],
+                                     data.ab,data.ac,data.aa,data.bb,data.cc,data.denominator);
         if (candidate.distance2 >= hit.distance2) continue;
-        candidate.triangle = order[i]; candidate.normal = V(0,0,0);
-        for (int j = 0; j < 3; ++j) candidate.normal += normals[order[i]*3+j]*candidate.weights[j];
-        candidate.normal = unit(candidate.normal); hit = candidate;
+        candidate.triangle = triangle;
+        hit = candidate;
     }
 }
-Hit Search::closest(const V& p) const { Hit hit; visit(0,p,hit); return hit; }
+Hit Search::closest(const V& p) const {
+    Hit hit; visit(0,p,hit);
+    hit.normal = V(0,0,0);
+    if (hit.triangle >= 0) {
+        for (int j = 0; j < 3; ++j) hit.normal += normals[hit.triangle*3+j]*hit.weights[j];
+        hit.normal = unit(hit.normal);
+    }
+    return hit;
+}
 }
