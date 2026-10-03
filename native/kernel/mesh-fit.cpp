@@ -1,4 +1,5 @@
 #include "mesh-fit.h"
+#include "mesh-fit-analytic.h"
 #include <algorithm>
 #include <cstdlib>
 #include <iomanip>
@@ -8,7 +9,18 @@
 
 namespace mesh_fit {
 void reconstruct(std::ostream& out, const Tree& tree) {
-    const auto input = read(tree);
+    auto input = read(tree);
+    if (input.layout.quads.empty()) {
+        if (const auto result = analytic::reconstruct(input)) {
+            analytic::present(out,*result,input);
+            return;
+        }
+        input.layout = automaticLayout(input.target,input.maxPatches);
+        std::vector<std::vector<int>> faces;
+        for (const auto& f : input.layout.quads) faces.emplace_back(f.begin(),f.end());
+        if (topology(input.layout.vertices,faces,"Automatic quad layout") != 2)
+            throw std::runtime_error("Automatic quad layout changed mesh topology");
+    }
     // With no declared creases, a coarse triangle's steep normal change is curvature,
     // not a request for a sharp feature (especially around thin, rounded rims).
     Search target(input.target,input.layout.creases.empty());

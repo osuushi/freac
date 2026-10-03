@@ -5,6 +5,7 @@ import { onModelKeydown } from "../sketch/model-keys.js";
 import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import type { Vector } from "../sketch/planes.js";
 import { idleReason, toolCatalog } from "../tools/catalog.js";
+import type { MeshFitStatistics } from "./mesh-fit.js";
 import { type ImportedMesh, meshImportLimit } from "./mesh-import.js";
 import { MeshImportView } from "./mesh-import-view.js";
 import { MeshImportWidget } from "./mesh-import-widget.js";
@@ -41,7 +42,7 @@ export class MeshImportControls {
       label: "Import mesh",
       category: "Document & Edit",
       aliases: ["STL", "OBJ", "reconstruct", "mesh to solid"],
-      description: "Fit an editable solid to a closed smooth STL or OBJ without holes",
+      description: "Fit an editable solid to a closed STL or OBJ without holes",
       reason: () => idleReason(editor) ?? (editor.world.active ? "Return to Modeling first" : null),
       run: () => this.file.click(),
     });
@@ -167,7 +168,7 @@ export class MeshImportControls {
       this.widget.status.textContent = "Enter a positive accuracy in millimeters";
       return;
     }
-    this.widget.status.textContent = "Generating layout and fitting surfaces…";
+    this.widget.status.textContent = "Matching and fitting surfaces…";
     const ok = await this.editor.store.request({
       kind: "reconstruct-mesh",
       input: {
@@ -184,7 +185,7 @@ export class MeshImportControls {
     const fit = this.editor.store.meshFit;
     this.widget.status.textContent =
       ok && fit
-        ? `${fit.patches} patches · Max sampled error ${Math.max(fit.sampledMeshToSurface, fit.sampledSurfaceToMesh).toPrecision(3)} mm · Seam ${fit.sampledSeamAngle.toFixed(2)}°`
+        ? `${surfaceSummary(fit)} · Max sampled error ${Math.max(fit.sampledMeshToSurface, fit.sampledSurfaceToMesh).toPrecision(3)} mm · Seam ${fit.sampledSeamAngle.toFixed(2)}°`
         : this.editor.message || "Could not fit this mesh";
     if (ok) this.widget.view.value = "fit";
     this.show();
@@ -260,4 +261,13 @@ export class MeshImportControls {
     this.view.dispose();
     this.widget.dispose();
   }
+}
+
+function surfaceSummary(fit: MeshFitStatistics): string {
+  if (!fit.analyticFaces) return `${fit.patches} bicubic patches`;
+  const regions = Object.entries(fit.analyticFaces)
+    .filter(([, count]) => count)
+    .map(([kind, count]) => `${count} ${count === 1 ? kind.slice(0, -1) : kind}`)
+    .join(", ");
+  return `${fit.patches} analytic ${fit.patches === 1 ? "face" : "faces"} (${regions})`;
 }

@@ -117,9 +117,8 @@ Input read(const Tree& input) {
     const int targetTopology = check(r.target.vertices, r.target.triangles, "Target mesh");
     if (automatic) {
         if (targetTopology != 2) throw std::runtime_error("Automatic layout currently needs one closed mesh without holes");
-        r.layout = automaticLayout(r.target,r.maxPatches);
     }
-    if (targetTopology != check(r.layout.vertices, r.layout.quads, "Quad layout"))
+    if (!automatic && targetTopology != check(r.layout.vertices, r.layout.quads, "Quad layout"))
         throw std::runtime_error("Target mesh and quad layout must have the same topology (genus)");
     if (const auto cs = input.get_child_optional("layout.creases")) {
         if (!cs->empty()) for (const auto& c : faces<2>(*cs, r.layout.vertices.size(), 1024)) {

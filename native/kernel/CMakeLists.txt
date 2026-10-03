@@ -35,7 +35,7 @@ option(FREAC_KERNEL_TESTS "Build focused native kernel checks" OFF)
 option(MAKESHIFT_KERNEL_TESTS "Build focused native kernel checks" OFF)
 if(MAKESHIFT_KERNEL_TESTS OR FREAC_KERNEL_TESTS)
   enable_testing()
-  add_executable(mesh-fit-math-test tests/mesh-fit-math.cpp mesh-fit-search.cpp mesh-fit-patches.cpp mesh-fit-surface-search.cpp mesh-fit-solve.cpp mesh-fit-area.cpp)
+  add_executable(mesh-fit-math-test tests/mesh-fit-math.cpp mesh-fit-search.cpp mesh-fit-patches.cpp mesh-fit-surface-search.cpp mesh-fit-solve.cpp mesh-fit-area.cpp mesh-fit-analytic-assess.cpp)
   target_include_directories(mesh-fit-math-test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_include_directories(mesh-fit-math-test SYSTEM PRIVATE ${OpenCASCADE_INCLUDE_DIR} ${BOOST_INCLUDE_DIR})
   target_link_libraries(mesh-fit-math-test PRIVATE TKMath TKernel)
@@ -76,6 +76,7 @@ target_sources(makeshift-kernel PRIVATE sketch-offset-sections.cpp)
 target_sources(makeshift-kernel PRIVATE offset-repair.cpp)
 
 target_sources(makeshift-kernel PRIVATE replace-face.cpp topology-inspection.cpp)
+target_sources(makeshift-kernel PRIVATE mesh-fit-analytic.cpp mesh-fit-analytic-candidates.cpp mesh-fit-analytic-assess.cpp)
 target_sources(makeshift-kernel PRIVATE mesh-fit.cpp mesh-fit-input.cpp mesh-fit-search.cpp
   mesh-fit-patches.cpp mesh-fit-surface-search.cpp mesh-fit-solve.cpp mesh-fit-optimize.cpp
   mesh-fit-assess.cpp mesh-fit-assemble.cpp mesh-fit-seams.cpp mesh-fit-sphere.cpp mesh-fit-layout.cpp mesh-fit-area.cpp)

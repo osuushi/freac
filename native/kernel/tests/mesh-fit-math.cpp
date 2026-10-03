@@ -1,4 +1,5 @@
 #include "mesh-fit.h"
+#include "mesh-fit-analytic.h"
 #include "mesh-fit-solve.h"
 #include <cmath>
 #include <iostream>
@@ -17,6 +18,18 @@ Mesh triangles(const Layout& c) {
     Mesh m; m.vertices = c.vertices;
     for (const auto& q : c.quads) { m.triangles.push_back({q[0],q[1],q[2]}); m.triangles.push_back({q[0],q[2],q[3]}); }
     return m;
+}
+void analyticDistanceChecks() {
+    using namespace analytic;
+    const Candidate sphere{Kind::Sphere,{0,0,0},{0,0,1},2};
+    require(std::abs(length(closest(sphere,{0,0,0}))-2) < 1e-12,"Sphere center is radius away from its boundary");
+    const Candidate capsule{Kind::Capsule,{0,0,0},{0,0,1},2,-3,3};
+    require(std::abs(length(closest(capsule,{0,0,0}))-2) < 1e-12,"Capsule axis is not on its surface");
+    require(length(closest(capsule,{0,0,8})-V(0,0,5)) < 1e-12,"Capsule nearest pole");
+    const Candidate cylinder{Kind::Cylinder,{0,0,0},{0,0,1},2,-3,3};
+    require(length(closest(cylinder,{4,0,5})-V(2,0,3)) < 1e-12,"Cylinder nearest rim");
+    require(length(closest(cylinder,{0,0,2})-V(0,0,3)) < 1e-12,"Cylinder nearest cap from inside");
+    require(std::abs(length(closest(cylinder,{0,0,0}))-2) < 1e-12,"Cylinder nearest wall from its axis");
 }
 void basisChecks() {
     for (int k = 0; k <= 100; ++k) {
@@ -91,7 +104,7 @@ void solverChecks() {
 }
 int main() {
     try {
-        basisChecks(); solverChecks(); normalChecks(); areaChecks();
+        basisChecks(); solverChecks(); normalChecks(); areaChecks(); analyticDistanceChecks();
         auto c = cube(); const auto m = triangles(c); Search s(m); nearestChecks(s);
         for (const auto& q : c.quads) for (int i = 0; i < 4; ++i) c.creases.insert(edge(q[i],q[(i+1)%4]));
         const auto n = initialize(c,s); refinementChecks(n);

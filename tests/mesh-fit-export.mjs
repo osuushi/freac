@@ -6,19 +6,24 @@ import { exportMesh } from "../.cache/sketch-tests/src/model/export-mesh.js";
 import { stepItems } from "../.cache/sketch-tests/src/model/step-export.js";
 import { sphereFit, torusFit } from "../.cache/sketch-tests/tests/mesh-fit-fixtures.js";
 import { smoothShape } from "../.cache/sketch-tests/tests/mesh-fit-shapes.js";
-import { independentMesh } from "../.cache/sketch-tests/tests/mesh-import-fixtures.js";
+import {
+  independentMesh,
+  primitiveMesh,
+} from "../.cache/sketch-tests/tests/mesh-import-fixtures.js";
 import { readStep } from "./step-readback.mjs";
 
 await mkdir(".cache/mesh-fit-ui", { recursive: true });
 for (const [name, input] of [
   ["sphere", sphereFit()],
   ["automatic", { mesh: independentMesh("uv"), tolerance: 0.2, maxPatches: 24 }],
+  ["automatic-cylinder", { mesh: primitiveMesh("cylinder"), tolerance: 0.07, maxPatches: 24 }],
+  ["automatic-capsule", { mesh: primitiveMesh("capsule"), tolerance: 0.07, maxPatches: 24 }],
   ["torus", torusFit()],
   ["bend", smoothShape(([x, y, z]) => [6 * x + 12 * z * z, 6 * y, 20 * z], 4)],
 ]) {
   const owner = new DocumentOwner();
   try {
-    if (name === "automatic") {
+    if (!("layout" in input)) {
       assert.equal((await owner.call({ kind: "reconstruct-mesh", input })).error, undefined);
       assert.equal((await owner.call({ kind: "accept" })).error, undefined);
     } else {
@@ -32,7 +37,14 @@ for (const [name, input] of [
     assert(mesh.triangles.length > body.faces.length);
     const exported = await owner.call({ kind: "export-step", items: stepItems([body]) });
     assert.equal(exported.error, undefined);
-    assert.match(exported.step, /B_SPLINE_SURFACE/);
+    if ("layout" in input) assert.match(exported.step, /B_SPLINE_SURFACE/);
+    else {
+      assert.doesNotMatch(exported.step, /B_SPLINE_SURFACE/);
+      assert.match(
+        exported.step,
+        name === "automatic" ? /SPHERICAL_SURFACE/ : /CYLINDRICAL_SURFACE/,
+      );
+    }
     assert.doesNotMatch(exported.step, /TESSELLATED_SOLID/);
     const path = resolve(`.cache/mesh-fit-ui/${name}.step`);
     await writeFile(path, exported.step);

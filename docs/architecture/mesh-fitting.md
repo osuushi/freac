@@ -11,24 +11,26 @@ data, not another application document or a persistent feature history.
 
 Tools → **Import mesh** opens an STL/OBJ file picker in Modeling. The temporary
 source preview offers source units (mm, cm, inches or meters), accuracy in mm,
-patch budget, and **Fit preview**. Source mesh, fitted solid and deviation views
+face budget, and **Fit preview**. Source mesh, fitted solid and deviation views
 share the normal navigable viewport. Accept adds one ordinary solid in one Undo;
 Cancel/Escape discards the import. Enter fits or accepts the current valid preview.
 Parameter changes invalidate the preview; local Undo restores parameters and refits.
 Other geometry edits remain disabled while the import owns the interaction.
 
-The manual `reconstruct-mesh` request uses the same native fitter with an automatic
-layout. A conformalized mean-curvature flow produces an oriented spherical map,
+The manual `reconstruct-mesh` request first tries complete analytic reconstructions
+(see below), then uses the same bicubic fitter with an automatic layout.
+A conformalized mean-curvature flow produces an oriented spherical map,
 then an area-balancing optimization gives narrow extremities more sampling space.
 An inverse-mapped cube grid supplies 24, 54, 96, 150 or 216 initial quad patches.
 The map must have positive oriented triangles covering the sphere once. Failure to
 map or meet the unchanged fit checks produces an error, never a partial accepted body.
 The area balancing is a Makeshift heuristic, not a claim of equal-area certification.
 
-This route supports one closed, consistently oriented, smooth mesh **without holes**
-(genus zero). Concavity and bends are allowed; difficult shapes, sharp features,
+This route supports one closed, consistently oriented mesh **without holes**
+(genus zero): recognized analytic primitives or smooth freeform bodies. Concavity
+and bends are allowed; difficult shapes, unrecognized sharp features,
 noise and poor tessellations can still fail. More patches do not guarantee success.
-There is no automatic feature recognition or mesh repair. STL repeated coordinates
+There is no general feature segmentation or mesh repair. STL repeated coordinates
 are welded exactly; globally inward winding is reversed. OBJ polygon faces are
 triangulated; nonplanar polygons do not retain a unique surface interpretation.
 Open, disconnected, mixed-winding and degenerate meshes reject during validation.
@@ -40,6 +42,32 @@ interpolated across the displayed triangles. Their scale runs from blue (zero) t
 amber (the requested accuracy). This is distinct from the denser bidirectional
 acceptance sampling and is not a continuous error certificate. The source mesh,
 layout and per-vertex errors remain temporary; only the accepted B-rep is saved.
+
+## Analytic recovery
+
+Automatic import prefers one exact sphere face, a cylinder with two planar caps,
+or a capsule with one cylindrical side and two spherical caps when the complete
+candidate meets the original mesh allowance. The preview reports recovered face
+types. Unsupported/distorted candidates continue through the bicubic route; there
+is no partial analytic/freeform stitching in this checkpoint. Cones, arbitrary
+regional segmentation and trimmed analytic-to-freeform joins remain unsupported.
+Explicitly supplied quad layouts retain their original fitting contract.
+
+Candidate parameters come from area-weighted least-squares fits to mesh vertices;
+position and face-normal covariance provide possible cylinder axes. These are
+recognition heuristics, not guarantees on noisy or unevenly tessellated scans.
+Verification measures closest distances from every source vertex, triangle center
+and edge midpoint to the complete analytic surface, plus dense analytic-to-triangle
+samples and outward normal agreement. The allowance applies to the faceted source,
+so exact sphere vertices alone cannot hide chord error between them. Sampling does
+not certify a global Hausdorff bound.
+
+Capsule equators share the exact axis, centers and radius and are tangent by
+construction. Cylinder rims are intentional sharp circular boundaries. Kernel
+sewing and solid validity checks are unchanged. Recovered supports are ordinary
+planes, cylinders and spheres in saved B-reps and STEP exports; source meshes and
+recognition parameters are not retained. Equal-radius spherical caps on a coaxial
+cylinder use ordinary radius/offset editing rather than fillet resizing.
 
 ## Input and result
 
@@ -64,7 +92,8 @@ shells cannot be nested in either route. Input limits are 100000 vertices per me
 diagonal. Coordinates have magnitude at most 1000000000 mm.
 
 The result includes the ordinary full candidate body inventory and a `fit` object:
-patch/control-point counts, `sampledSurfaceToMesh`, `sampledMeshToSurface`,
+face/patch and control-point counts, optional `analyticFaces` counts for planes,
+cylinders and spheres (zero Bézier control points), `sampledSurfaceToMesh`, `sampledMeshToSurface`,
 `sampledRms`, `sampledSeamAngle`, and distance sample count. Measurements are not
 stored as accepted model identities or a certificate attached to the solid.
 
@@ -110,11 +139,14 @@ guarantee that every later fillet, shell or offset is feasible.
 
 ## Review route
 
-For manual review, choose Import mesh with a closed smooth STL or OBJ, set source
+For manual review, choose Import mesh with a sphere, capped cylinder, capsule or
+closed smooth freeform STL/OBJ, set source
 units and accuracy, fit, compare the three preview views, then accept. Reselect and
 move the body, Undo/Redo, and save/reopen. After build and compiled unit tests,
 `node tests/mesh-import-ui.mjs` checks this route in Chromium, WebKit and hidden
 Electron, including binary STL unit conversion and parameter history.
+`node tests/mesh-analytic-ui.mjs` checks analytic import, face editing, Undo/Redo
+and save/reopen in the same three runtimes.
 
 
 The [self-contained example](../examples/mesh-fitting.ts) reconstructs a sphere from
@@ -133,8 +165,8 @@ The export check uses the compiled test modules produced by `npm test`.
 
 The first implementation uses uniform patch refinement to preserve a conforming
 edge network. Local refinement, arbitrary open sheet
-insertion, exact tangent continuity at all parameters, and general analytic
-primitive recognition are outside this operation's current contract.
+insertion and exact tangent continuity at all parameters for bicubic seams are
+outside this operation's current contract.
 
 Layout placement and parameter conditioning still matter: additional patches or
 iterations do not guarantee a feasible fit for an arbitrary layout. The acceptance

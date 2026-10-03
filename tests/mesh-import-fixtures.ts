@@ -1,4 +1,10 @@
-import { type BufferGeometry, IcosahedronGeometry, SphereGeometry } from "three";
+import {
+  type BufferGeometry,
+  CapsuleGeometry,
+  CylinderGeometry,
+  IcosahedronGeometry,
+  SphereGeometry,
+} from "three";
 import type { ImportedMesh } from "../src/model/mesh-import.js";
 import type { Vector } from "../src/sketch/planes.js";
 
@@ -9,6 +15,22 @@ export function independentMesh(
 ): ImportedMesh {
   const geometry: BufferGeometry =
     kind === "uv" ? new SphereGeometry(1, 48, 24) : new IcosahedronGeometry(1, 11);
+  return geometryMesh(geometry, map);
+}
+export function primitiveMesh(
+  kind: "cylinder" | "capsule",
+  radius = 6,
+  height = 20,
+  map: (p: Vector) => Vector = (p) => p,
+): ImportedMesh {
+  return geometryMesh(
+    kind === "cylinder"
+      ? new CylinderGeometry(radius, radius, height, 64, 8)
+      : new CapsuleGeometry(radius, height, 16, 64),
+    map,
+  );
+}
+function geometryMesh(geometry: BufferGeometry, map: (p: Vector) => Vector): ImportedMesh {
   const source = geometry.index ? geometry.toNonIndexed() : geometry;
   const positions = source.getAttribute("position"),
     vertices: Vector[] = [],

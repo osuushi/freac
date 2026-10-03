@@ -36,7 +36,7 @@ export class MeshImportWidget {
     this.root.append(this.title);
     this.field("Source units", this.units);
     this.field("Accuracy (mm)", this.tolerance);
-    this.field("Patch budget", this.patches);
+    this.field("Face budget", this.patches);
     this.field("Preview", this.view);
     this.status.setAttribute("role", "status");
     this.status.textContent = "Reading mesh…";

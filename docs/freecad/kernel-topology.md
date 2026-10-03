@@ -1130,3 +1130,24 @@ and undersample them. Makeshift adds its own spherical triangle area-distortion
 objective with orientation-preserving backtracking. Runtime tests on independently
 tessellated bent and waisted meshes support this bounded sampling strategy; neither
 the paper nor those tests guarantee mapping or reconstruction of arbitrary meshes.
+
+
+## Analytic mesh recovery (2026-10-02)
+
+Source observation at configured OCCT commit
+`a016080bf6738d6aeae020badee4e888ad1540a5`:
+[`BRepPrimAPI_MakeSphere`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepPrimAPI/BRepPrimAPI_MakeSphere.hxx)
+accepts a center and radius;
+[`BRepPrimAPI_MakeCylinder`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepPrimAPI/BRepPrimAPI_MakeCylinder.hxx)
+accepts a placed axis, radius and height and constructs a cylindrical side with
+planar caps. These are inspected public declarations, not copied implementations.
+
+Makeshift inference: fitting analytic parameters directly to the original mesh
+avoids compounding a previous bicubic approximation's error. A complete candidate
+still needs bidirectional checks against the faceted mesh and the ordinary strict
+solid checks; vertex agreement alone misses triangle chord error. Constructing
+compatible capsule supports together also avoids independently fitted mismatched
+equators. Runtime tests recover independently tessellated spheres, cylinders and
+capsules, including rotated/scaled inputs, and retain or reject distorted geometry
+instead of forcing it onto an analytic support. General regional segmentation and
+analytic/freeform joins are not established by those tests.

@@ -47,7 +47,7 @@ is a later operation on current geometry, through ordinary Undo.
 | Native units and geometry budgets | [Numerical geometry](architecture/numerical-geometry.md) |
 | Bodies, modeling selection, tool switching | [Materialized solids](architecture/solids.md), [modeling tools](architecture/modeling-tools.md), [solid-loop design](sketch-solid-loop.md) |
 | Topology inspection and surface replacement | [Composable topology editing](architecture/topology-editing.md) |
-| Mesh reconstruction | [STL/OBJ import, automatic layouts, bicubic fitting and accuracy limits](architecture/mesh-fitting.md) |
+| Mesh reconstruction | [STL/OBJ import, analytic recovery, bicubic fitting and accuracy limits](architecture/mesh-fitting.md) |
 | Loft | [Ordered sections, correspondence and acceptance](architecture/loft.md) |
 | Shell | [Shell interaction and validation](architecture/shell.md) |
 | Erode | [Eroded bodies, allowance and coverage](architecture/erosion.md) |

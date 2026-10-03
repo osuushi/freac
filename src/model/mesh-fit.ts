@@ -20,6 +20,8 @@ export interface MeshFitInput {
 export type MeshReconstructionInput = Omit<MeshFitInput, "layout">;
 
 export interface MeshFitStatistics {
+  /** Present when recovered analytic regions replace the quad network. */
+  analyticFaces?: { planes: number; cylinders: number; spheres: number };
   /** Source-vertex distances to the fitted surface, for the import deviation overlay. */
   vertexErrors?: number[];
   patches: number;

@@ -33,7 +33,7 @@ await withUiRuntimes(
     if (name === "webkit")
       await page.getByLabel("Source units", { exact: true }).selectOption("10");
     await page.getByLabel("Accuracy (mm)", { exact: true }).fill("0.2");
-    await page.getByLabel("Patch budget", { exact: true }).selectOption("24");
+    await page.getByLabel("Face budget", { exact: true }).selectOption("24");
     await page.getByRole("button", { name: "Fit mesh preview", exact: true }).click();
     await page
       .getByRole("button", { name: "Accept mesh", exact: true })
@@ -123,11 +123,11 @@ async function reselectAndMove(page, accepted) {
 }
 
 async function parameterHistory(page) {
-  await page.getByLabel("Patch budget", { exact: true }).selectOption("54");
+  await page.getByLabel("Face budget", { exact: true }).selectOption("54");
   assert(await page.getByRole("button", { name: "Accept mesh", exact: true }).isDisabled());
   await chooseTool(page, "undo", "undo");
   await settled(page);
-  assert.equal(await page.getByLabel("Patch budget", { exact: true }).inputValue(), "24");
+  assert.equal(await page.getByLabel("Face budget", { exact: true }).inputValue(), "24");
   assert(await page.getByRole("button", { name: "Accept mesh", exact: true }).isEnabled());
 }
 
