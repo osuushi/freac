@@ -5,8 +5,9 @@ import { orbitPivotRoute, surfacePivotRoute } from "./ui-orbit-pivot.mjs";
 import { orientationCubeRoute } from "./ui-orientation-cube.mjs";
 import { bevelViewsRoute } from "./ui-orientation-cube-bevels.mjs";
 import { planeTargetsRoute } from "./ui-plane-targets.mjs";
-
+import { rollCenterRoute } from "./ui-roll-center.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
+import { trackpadSnapRoute } from "./ui-trackpad-snap.mjs";
 
 await withUiRuntimes(
   async (page, name) => {
@@ -16,6 +17,8 @@ await withUiRuntimes(
     await bevelViewsRoute(page, name);
     await cameraRoute(page, name);
     await trackballRoute(page, name);
+    await trackpadSnapRoute(page, name);
+    await rollCenterRoute(page, name);
     await planeTargetsRoute(page, name);
     await redrawRoute(page, name);
   },

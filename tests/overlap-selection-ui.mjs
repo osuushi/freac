@@ -8,6 +8,7 @@ import { overlapCancellation } from "./ui-overlap-cancel.mjs";
 import { overlapEdges } from "./ui-overlap-edges.mjs";
 import { overlapFraming } from "./ui-overlap-framing.mjs";
 import { hold, releaseChoice } from "./ui-overlap-gesture.mjs";
+import { overlapRegions } from "./ui-overlap-regions.mjs";
 import { planeSketchPreview } from "./ui-overlap-sketches.mjs";
 import { overlapTouch } from "./ui-overlap-touch.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
@@ -161,6 +162,7 @@ await withUiRuntimes(
     }
     await planeSketchPreview(page, name);
     await overlapFraming(page, name);
+    await overlapRegions(page, name);
   },
   { viewport: { width: 1280, height: 900 } },
 );

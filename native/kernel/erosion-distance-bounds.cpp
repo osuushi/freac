@@ -273,6 +273,8 @@ double erosion::BoundaryDistance::upper(const gp_Pnt& point, double limit) const
     double distance = impl->points.upper(point);
     for (const auto& support : impl->supports) {
         if (distance <= limit) break;
+        // A support farther away than an existing boundary witness cannot
+        // improve that upper bound, so its trimmed-face classification is moot.
         if (support.lower(point,distance) >= distance) continue;
         distance = std::min(distance, support.upper(point));
     }

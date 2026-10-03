@@ -76,7 +76,7 @@ const app = document.querySelector<HTMLElement>("#app");
 if (!app) throw new Error("Missing app root");
 app.innerHTML = `<div id="world"></div><div id="overlay"></div>
   <header><div class="brand"><img src="./makeshift.png" alt=""/><strong>Makeshift</strong></div><span class="mode-label">Modeling</span></header>
-  <div class="status" role="status"></div><div class="navigation-hint">Two-finger scroll · pan &nbsp; ⌘-drag · orbit &nbsp; Pinch · zoom &nbsp; Hold · choose overlap</div>`;
+  <footer class="workspace-footer"><div class="status" role="status"></div><div class="navigation-hint">Two-finger scroll · pan &nbsp; ⌘-drag · orbit &nbsp; Pinch · zoom &nbsp; Hold · choose overlap</div></footer>`;
 const host = app.querySelector<HTMLElement>("#world"),
   overlay = app.querySelector<HTMLElement>("#overlay"),
   status = app.querySelector<HTMLElement>(".status");

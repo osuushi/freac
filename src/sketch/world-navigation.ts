@@ -3,12 +3,14 @@ import { installOrbitDrag } from "./orbit-input.js";
 import { installOrientationCube } from "./orientation-cube.js";
 import { installTabletInput } from "./tablet-input.js";
 import { installTrackpad } from "./trackpad-input.js";
+import { TrackpadSnap } from "./trackpad-snap.js";
 import type { World } from "./world.js";
 
 export function installNavigation(world: World): () => void {
   const canvas = world.canvas;
   const abort = new AbortController();
   const options = { signal: abort.signal };
+  const snap = new TrackpadSnap(world, abort.signal);
   const removeCube = installOrientationCube(world);
   installTabletInput(world, abort.signal);
   let drag: { id: number; x: number; y: number } | null = null;
@@ -52,7 +54,7 @@ export function installNavigation(world: World): () => void {
   for (const surface of [canvas, world.overlay])
     surface.addEventListener("contextmenu", (event) => event.preventDefault(), options);
   installOrbitDrag(world, abort.signal);
-  installTrackpad(world, abort.signal);
+  installTrackpad(world, abort.signal, snap);
   return () => {
     stop();
     removeCube();

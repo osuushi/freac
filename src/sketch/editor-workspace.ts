@@ -6,6 +6,7 @@ import { modelingSketch } from "./model-selection.js";
 import { orbitPivot } from "./orbit-pivot.js";
 import { type PlaneId, planes } from "./planes.js";
 import { profileFraming } from "./profile-framing.js";
+import { rollSelectionPivot } from "./roll-pivot.js";
 import type { World } from "./world.js";
 
 /** All deliberate sketch entry uses the same idle boundary; history restores context separately. */
@@ -77,6 +78,7 @@ export function installWorkspaceSync(editor: SketchEditor): void {
   const world = editor.world;
   installCameraDepth(editor);
   world.orbitPivot = (press) => orbitPivot(editor, press);
+  world.rollPivot = () => rollSelectionPivot(editor);
   world.canNavigate = () => !editor.isDragging;
   world.canEnterSketch = () => editor.workspaceEntry.reason() === null;
   world.sketchEntry = (id) => {

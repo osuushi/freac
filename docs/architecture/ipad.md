@@ -1,7 +1,7 @@
 # iPad document interface
 
 Founder contract, 2026-09-21: keyboard-folio and Apple Pencil first. One finger
-rotates, two pan/pinch; Pencil uses the existing geometry pointer routes. Backtick
+rotates, two pan/pinch/twist; Pencil uses the existing geometry pointer routes. Backtick
 and tilde alias Escape in CAD, including numeric fields, while terminal and text
 editing retain their characters. Ordinary UI buttons remain finger-accessible.
 Sketch and modeling selection allow 16 CSS pixels of Pencil tip movement before
@@ -13,6 +13,15 @@ from a point in drawing tools. Primary taps do not interrupt plane alignment, an
 sketch gestures wait for the transition to finish. During a held sketch gesture,
 each completed solve is displayed even when a newer pointer target is waiting;
 release drains the newest target before accepting one Undo step.
+Two-finger twist triggers one 90° view turn about the finger midpoint after 10° of
+angular travel, alongside continuous pan and zoom. The turn latches until the
+contact gesture ends. It animates directly to the canonical-axis destination in
+280 ms, with no separate release correction. Safari exposes combined
+scale/rotation through
+[GestureEvent](https://developer.apple.com/documentation/webkitjs/gestureevent);
+Makeshift calculates both directly from its existing pointer contacts and consumes
+duplicate Safari gesture events. Automated Chromium touch checks exercise this
+path; physical iPad twist usability remains unverified.
 Physical Pencil/palm rejection and Safari lifecycle behavior require device review.
 
 ## One document and one active surface

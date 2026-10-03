@@ -102,6 +102,24 @@ export class ModelSelection {
     this.hover = null;
     this.alternatives = [];
   }
+  chooseProfiles(sketch: string, profiles: Profile[], add: boolean, toggle: boolean): void {
+    const targets: ModelingTarget[] = profiles.map((profile) => ({
+      kind: "profile",
+      sketch,
+      profile,
+    }));
+    if (targets.some((target) => !this.allows(target))) return;
+    this.chosenTool = null;
+    const keys = new Set(targets.map(modelingKey));
+    const selected = new Set(this.targets.map(modelingKey));
+    const allSelected = targets.every((target) => selected.has(modelingKey(target)));
+    this.targets =
+      toggle && allSelected
+        ? this.targets.filter((target) => !keys.has(modelingKey(target)))
+        : add || toggle
+          ? [...this.targets, ...targets.filter((target) => !selected.has(modelingKey(target)))]
+          : targets;
+  }
   choose(target: ModelingTarget | null, add: boolean, toggle: boolean): void {
     if (target && !this.allows(target)) return;
     this.chosenTool = null;

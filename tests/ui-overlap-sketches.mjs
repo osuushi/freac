@@ -17,6 +17,11 @@ export async function planeSketchPreview(page, name) {
   await hold(page, await project(page, [0, 0, 0]));
   const count = async (label) => ((await paths(label).getAttribute("d"))?.match(/M/g) ?? []).length;
   assert.equal(await panel.getByRole("button", { name: "Sketch", exact: true }).count(), 0);
+  assert.equal(await panel.getByRole("button", { name: "Region", exact: true }).count(), 1);
+  assert.equal(
+    await panel.getByRole("button", { name: "Connected regions", exact: true }).count(),
+    0,
+  );
   assert.equal(await count("Plane · XY"), 2, "Plane border and visible circle are drawn");
   assert.equal(await count("Plane · XZ"), 1, "Other plane does not inherit the sketch");
   await page.screenshot({ path: `.cache/sketch-review/${name}-plane-sketch-preview.png` });

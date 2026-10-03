@@ -210,7 +210,8 @@ void erosion::checkCoverage(const TopoDS_Shape& source, const TopoDS_Shape& cand
         bool operator<(const Region& other) const { return upper < other.upper; }
     };
     std::priority_queue<Region> pending;
-    pending.push({root, original.upper(root,sectioned ? depth+tolerance/4 : -1,sectioned),
+    const double coveredDepth = depth + tolerance/4;
+    pending.push({root, original.upper(root,coveredDepth,sectioned),
                   sectioned ? std::optional(result.contains(root.center())) : std::nullopt});
     const auto start = std::chrono::steady_clock::now();
     size_t visits = 0;
@@ -222,7 +223,7 @@ void erosion::checkCoverage(const TopoDS_Shape& source, const TopoDS_Shape& cand
         }
         const auto region = pending.top(); pending.pop();
         const auto& cell = region.cell;
-        if (region.upper <= depth + tolerance/4) continue;
+        if (region.upper <= coveredDepth) continue;
         // Section children were checked before queuing. For other geometry,
         // retain source-first traversal and lazy point classification.
         if (!sectioned && result.contains(cell)) continue;
@@ -245,8 +246,8 @@ void erosion::checkCoverage(const TopoDS_Shape& source, const TopoDS_Shape& cand
                 inside = result.childInside(child.center(),cell.center(),*region.inside);
                 if (result.contains(child,inside)) continue;
             }
-            const double upper = original.upper(child,sectioned ? depth+tolerance/4 : -1,sectioned);
-            if (upper > depth+tolerance/4) pending.push({child,upper,inside});
+            const double upper = original.upper(child,coveredDepth,sectioned);
+            if (upper > coveredDepth) pending.push({child,upper,inside});
         }
     }
 }

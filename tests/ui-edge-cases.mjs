@@ -34,6 +34,9 @@ async function controlsAndRejection(page) {
   await page.getByRole("status").filter({ hasText: "non-zero" }).waitFor();
   await page.getByRole("textbox", { name: "Width", exact: true }).fill("25");
   assert.equal(JSON.stringify((await inspect(page)).document), accepted);
+  // Focused fields own text Undo; discard the draft before document history.
+  // Defocusing to invoke a document shortcut would instead commit on blur.
+  await page.keyboard.press("Escape");
   let undos = 0;
   while ((await inspect(page)).document.sketches[0].curves.length > 4 && undos < 4) {
     await chooseTool(page, "undo", "undo");
@@ -42,7 +45,7 @@ async function controlsAndRejection(page) {
   assert.equal(
     (await inspect(page)).document.sketches[0].curves.length,
     4,
-    "Undo discards a field draft instead of committing it",
+    "Document Undo after Escape does not commit the discarded field draft",
   );
   close((await corners(page))[1].x, 20);
   for (let i = 0; i < undos; i++) await chooseTool(page, "redo", "redo");

@@ -23,8 +23,8 @@ export function installControlMenu(app: HTMLElement, tablet?: () => Promise<void
     if (hint)
       hint.textContent =
         controlMode() === "mouse"
-          ? "Wheel · zoom   Middle-drag · pan   Shift-middle-drag · orbit   Hold · choose overlap"
-          : "Two-finger scroll · pan   ⌘-drag · orbit   Pinch · zoom   Hold · choose overlap";
+          ? "Wheel · zoom   Middle-drag · pan   Shift-middle-drag · orbit (+Option · roll)   Hold · choose overlap"
+          : "Two-finger scroll · pan   ⌘-drag · orbit (+Option · roll)   Pinch · zoom   Hold · choose overlap";
   };
   updateHint();
   for (const value of ["trackpad", "mouse"] as const) {

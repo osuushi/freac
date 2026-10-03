@@ -72,6 +72,9 @@ founder feedback update these contracts before further tools depend on them.
   conservative bounds for ray rejection; render triangle indexes remain temporary.
   A disk grows from its center to a fixed circular outline over the hold delay; it indicates elapsed hold time, not
   processing. The delay is currently fixed; a future preferences window can expose it.
+  The chooser grows across the available window with complete thumbnail rows and no
+  scrollbar. When the window is full, remaining depth-sorted choices are omitted;
+  hiding entities narrows the choices.
   Each choice shows the actual target geometry in the current camera orientation,
   with subdued body context. Thumbnails share full-scene framing while the target
   spans at least half the usable width or height; smaller targets get a centered
@@ -82,6 +85,14 @@ founder feedback update these contracts before further tools depend on them.
   or enclosed region overlaps the press. Coplanar sketches stay represented by the
   plane thumbnail without a duplicate sketch choice. Sketch choices highlight their
   curves and select the whole sketch on release. They share camera-distance sorting.
+  Every visible sketch also contributes its exact filled region under the ray,
+  including sketches represented by a canonical or saved plane. A second Connected
+  regions choice appears when the hit region has a larger transitive closure across
+  shared analytic boundary spans within that sketch. Hole boundaries count; isolated
+  point contacts do not. The closure selects ordinary constituent profiles together,
+  preserving profile actions and keeping curve selection separate. Shift adds the set;
+  Command/Ctrl removes it if all members are selected, otherwise completes the set.
+  Both choices show filled thumbnails and hover previews with holes preserved.
   Text identifies the type;
   canonical planes additionally name XY/XZ/YZ. Hover/focus highlights that exact
   viewport entity, including occluded targets. Keep the pointer held, drag over a

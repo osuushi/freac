@@ -8,6 +8,7 @@ import {
   planeCameraPose,
 } from "./camera-motion.js";
 import { levelOrientation, type OrbitPointer, SmoothedTurntable } from "./camera-orbit.js";
+import { CameraRoll } from "./camera-roll.js";
 import { minimumPlaneBounds, type PlaneBounds } from "./plane-bounds.js";
 import {
   type PlaneFrame,
@@ -65,20 +66,23 @@ export class World {
   private pendingDraw: number | null = null;
   private readonly foreground = new SketchForeground();
   private readonly sketchClip = new THREE.Plane();
+  readonly rollAnimation = new CameraRoll(this);
   readonly orbit = new SmoothedTurntable();
   orbitPivot: (press: Point) => THREE.Vector3 = () => this.target.clone();
+  rollPivot: () => THREE.Vector3 | null = () => null;
   private rotationPivot = new THREE.Vector3();
   get currentOrbitPivot(): THREE.Vector3 {
     return this.rotationPivot.clone();
   }
-  beginOrbit(pointer: OrbitPointer, press: Point): void {
+  beginOrbit(pointer: OrbitPointer, press: Point, roll = false): void {
     this.cancelCameraMotion();
     this.rotationPivot.copy(this.orbitPivot(press));
+    const rollPivot = this.rollPivot();
     if (this.active) this.exit();
-    this.orbit.begin(this, pointer, this.rotationPivot);
+    this.orbit.begin(this, pointer, this.rotationPivot, roll, rollPivot);
   }
   get cameraTransitioning(): boolean {
-    return this.cameraAnimation !== null;
+    return this.cameraAnimation !== null || this.rollAnimation.active;
   }
   get cameraMoving(): boolean {
     return this.cameraTransitioning || this.pendingDraw !== null;
@@ -212,6 +216,7 @@ export class World {
     this.draw();
   }
   levelHorizon(): void {
+    if (this.rollAnimation.active) return;
     this.animateOrientation(levelOrientation(this));
   }
   private cameraStep(
@@ -234,7 +239,8 @@ export class World {
         : null;
     this.draw();
   }
-  cancelCameraMotion(): void {
+  cancelCameraMotion(preserveRoll = false): void {
+    if (!preserveRoll) this.rollAnimation.cancel();
     if (this.cameraAnimation === null) return;
     cancelAnimationFrame(this.cameraAnimation);
     this.cameraAnimation = null;

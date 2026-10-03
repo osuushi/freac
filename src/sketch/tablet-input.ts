@@ -1,6 +1,7 @@
 import type {} from "../ipad/protocol.js";
 import { panCamera, zoomCamera } from "./camera-motion.js";
 import type { Point } from "./planes.js";
+import { QuarterTurn } from "./quarter-turn.js";
 import type { World } from "./world.js";
 
 /** Touch navigates before geometry listeners. Pen/mouse retain ordinary tool routes. */
@@ -13,6 +14,8 @@ class TabletInput {
   private origin: Point | null = null;
   private pen: number | null = null;
   private rotating = false;
+  private readonly twist = new QuarterTurn();
+  private pairFrame: number | null = null;
   private suppressClickUntil = 0;
   constructor(
     private world: World,
@@ -68,6 +71,9 @@ class TabletInput {
   private endOrbit(): void {
     if (this.rotating) this.world.orbit.end();
     this.rotating = false;
+    this.twist.reset();
+    if (this.pairFrame !== null) cancelAnimationFrame(this.pairFrame);
+    this.pairFrame = null;
   }
   private rebase(): void {
     this.endOrbit();
@@ -102,6 +108,7 @@ class TabletInput {
     this.world.longPress?.(event);
     consume(event);
     this.suppressClickUntil = performance.now() + 1000;
+    this.flushPair();
     this.touches.set(event.pointerId, point(event));
     this.world.canvas.setPointerCapture(event.pointerId);
     if (this.pen === null && this.world.canNavigate()) this.world.cancelCameraMotion();
@@ -127,7 +134,19 @@ class TabletInput {
         this.rotating = true;
       }
       if (this.rotating) this.world.orbit.drag(this.world, this.sphere(points[0]));
-    } else if (points.length === 2) this.panZoom(points);
+    } else if (points.length === 2 && this.pairFrame === null)
+      this.pairFrame = requestAnimationFrame(this.flushPair);
+    this.world.requestDraw();
+  };
+  // Both contacts arrive as separate pointer events. Sample together per frame so
+  // a translation cannot look like a threshold-crossing twist between the events.
+  private flushPair = (): void => {
+    if (this.pairFrame === null) return;
+    cancelAnimationFrame(this.pairFrame);
+    this.pairFrame = null;
+    const points = [...this.touches.values()];
+    if (points.length !== 2 || this.pen !== null || !this.world.canNavigate()) return;
+    this.panZoom(points);
     this.world.requestDraw();
   };
   private panZoom(points: Point[]): void {
@@ -140,16 +159,17 @@ class TabletInput {
         next.center.y - this.previous.center.y,
         bounds.height,
       );
-      if (this.previous.distance > 1 && next.distance > 1)
-        zoomCamera(
-          this.world,
-          this.previous.distance / next.distance,
-          {
-            x: next.center.x - bounds.left - bounds.width / 2,
-            y: next.center.y - bounds.top - bounds.height / 2,
-          },
-          bounds.height,
-        );
+      if (this.previous.distance > 1 && next.distance > 1) {
+        const offset = {
+          x: next.center.x - bounds.left - bounds.width / 2,
+          y: next.center.y - bounds.top - bounds.height / 2,
+        };
+        zoomCamera(this.world, this.previous.distance / next.distance, offset, bounds.height);
+        const angle = next.angle - this.previous.angle;
+        const turn = this.twist.update(Math.atan2(Math.sin(angle), Math.cos(angle)));
+        this.world.rollAnimation.updateAnchor(offset);
+        if (turn) this.world.rollAnimation.start(turn, offset, bounds.height);
+      }
     }
     this.previous = next;
   }
@@ -158,11 +178,14 @@ class TabletInput {
       this.pen = null;
       return;
     }
-    if (!this.touches.delete(event.pointerId)) return;
+    if (!this.touches.has(event.pointerId)) return;
+    this.flushPair();
+    if (event.type !== "pointerup") this.world.rollAnimation.cancel();
+    this.touches.delete(event.pointerId);
     this.world.longPress?.(event);
     consume(event);
     this.suppressClickUntil = performance.now() + 1000;
-    const level = this.rotating && !this.touches.size && event.type === "pointerup";
+    const level = event.type === "pointerup" && this.rotating && !this.touches.size;
     if (this.world.canvas.hasPointerCapture(event.pointerId))
       this.world.canvas.releasePointerCapture(event.pointerId);
     this.rebase();
@@ -190,5 +213,6 @@ function pair(points: Point[]) {
   return {
     center: { x: (points[0].x + points[1].x) / 2, y: (points[0].y + points[1].y) / 2 },
     distance: Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y),
+    angle: Math.atan2(points[1].y - points[0].y, points[1].x - points[0].x),
   };
 }

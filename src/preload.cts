@@ -90,3 +90,15 @@ contextBridge.exposeInMainWorld("makeshiftDocument", {
     return () => ipcRenderer.removeListener("document-status", listener);
   },
 });
+
+contextBridge.exposeInMainWorld("makeshiftNavigation", {
+  onRotate: (callback: (degrees: number, pointer: { x: number; y: number }) => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      degrees: number,
+      pointer: { x: number; y: number },
+    ) => callback(degrees, pointer);
+    ipcRenderer.on("navigation-rotate", listener);
+    return () => ipcRenderer.removeListener("navigation-rotate", listener);
+  },
+});

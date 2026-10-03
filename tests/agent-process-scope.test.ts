@@ -70,8 +70,12 @@ test("natural root exit retains cleanup ownership and cannot affect another PTY"
     const before = await readFile(join(root, "writer.log"), "utf8");
     const otherBefore = await readFile(join(root, "other.log"), "utf8");
     await delay(150);
+    // The unrelated PTY must make progress, but a hosted runner need not
+    // schedule its shell within one fixed 150 ms observation interval.
+    await waitFor(
+      async () => (await readFile(join(root, "other.log"), "utf8")).length > otherBefore.length,
+    );
     assert.equal(await readFile(join(root, "writer.log"), "utf8"), before);
-    assert.ok((await readFile(join(root, "other.log"), "utf8")).length > otherBefore.length);
     assert.equal(second.status.running, true, "separate PTY keeps its own process group");
     assert.throws(
       () => process.kill(child, 0),

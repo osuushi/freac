@@ -442,7 +442,10 @@ five seconds, including during native calculations. Limits are 15 minutes per sc
 100 modeling calls, 1000 curves per sketch and 256 KiB source/request payloads.
 Each native calculation has a five-minute watchdog. Agent replies outlive the
 corresponding operation budget by 15 seconds. Authenticated poll/cancel messages
-can pass during a pending calculation. Status reads metadata independently;
+can pass during a pending calculation. If session cleanup makes a heartbeat fail
+before an in-flight operation error arrives, the runner reports the operation error.
+A successful operation does not suppress an observed connection failure.
+Status reads metadata independently;
 inspection and modeling commands acquire one asynchronous lock because inspections
 share one measurement worker. Overlapping requests wait rather than returning busy.
 At most 16 commands may wait/run; status and script poll/cancel bypass the lock.
