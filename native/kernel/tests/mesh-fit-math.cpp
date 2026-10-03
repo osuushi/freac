@@ -106,6 +106,17 @@ int main() {
     try {
         basisChecks(); solverChecks(); normalChecks(); areaChecks(); analyticDistanceChecks();
         auto c = cube(); const auto m = triangles(c); Search s(m); nearestChecks(s);
+        require(s.contains({0.13,-0.17,0.21}) == true,"Interior ray parity");
+        require(s.contains({2.1,0.17,0.21}) == false,"Exterior ray parity");
+        require(s.contains({-2.1,0.17,0.21}) == false,"Through-solid ray parity");
+        require(!s.contains(V(1,1,1)-V(1,0.47213595499958,0.317837245195782)*2).has_value(),
+                "A ray through a shared vertex must request exact classification");
+        auto hollow = m;
+        for (const auto& v : m.vertices) hollow.vertices.push_back(v*0.2);
+        for (const auto& t : m.triangles) hollow.triangles.push_back({t[2]+8,t[1]+8,t[0]+8});
+        Search shell(hollow);
+        require(shell.contains({0.013,-0.017,0.021}) == false,"Ray parity must preserve enclosed voids");
+        require(shell.contains({0.5,-0.17,0.21}) == true,"Ray parity must retain material around a void");
         for (const auto& q : c.quads) for (int i = 0; i < 4; ++i) c.creases.insert(edge(q[i],q[(i+1)%4]));
         const auto n = initialize(c,s); refinementChecks(n);
         SurfaceSearch smooth(n,8);

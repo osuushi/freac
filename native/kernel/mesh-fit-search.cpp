@@ -43,6 +43,12 @@ double boxDistance(const V& p, const V& lo, const V& hi) {
 }
 Search::Search(const Mesh& value, bool smoothNormals) : mesh(value), normals(value.triangles.size()*3), order(value.triangles.size()) {
     std::iota(order.begin(), order.end(), 0);
+    if (!mesh.normals.empty()) {
+        for (size_t t = 0; t < mesh.triangles.size(); ++t) for (int j = 0; j < 3; ++j)
+            normals[t*3+j] = unit(mesh.normals.at(mesh.triangles[t][j]));
+        build(0,int(order.size()));
+        return;
+    }
     std::vector<V> faceNormals;
     std::vector<std::vector<int>> incident(mesh.vertices.size());
     for (size_t t = 0; t < mesh.triangles.size(); ++t) {

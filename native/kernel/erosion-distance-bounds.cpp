@@ -1,6 +1,7 @@
 #include "erosion-distance-bounds.h"
 #include "geometry-policy.h"
 #include "erosion-boundary-points.h"
+#include "erosion-bezier-bounds.h"
 #include <BRepAdaptor_Curve.hxx>
 #include <BRepAdaptor_Surface.hxx>
 #include <BRepBndLib.hxx>
@@ -49,12 +50,13 @@ struct Triangle {
 struct Support {
     TopoDS_Face face;
     BRepAdaptor_Surface surface;
+    erosion::BezierBounds bezier;
     std::unique_ptr<BRepClass_FaceExplorer> explorer;
     bool polygon;
     bool fullSphere = false;
     double lo[3], hi[3];
     std::vector<std::pair<double, double>> fullBands;
-    Support(const TopoDS_Face& face, bool polygon) : face(face), surface(face),
+    Support(const TopoDS_Face& face, bool polygon) : face(face), surface(face), bezier(surface),
         explorer(std::make_unique<BRepClass_FaceExplorer>(face)), polygon(polygon) {
         explorer->SetUseBndBox(true);
         explorer->SetMaxTolerance(geometry_policy::parameterCorrespondenceMm);
@@ -95,13 +97,14 @@ struct Support {
             }
         }
     }
-    double lower(const gp_Pnt& p) const {
+    double lower(const gp_Pnt& p, double limit) const {
         double squared = 0;
         for (int i = 0; i < 3; ++i) {
             const double delta = std::max({lo[i]-p.Coord(i+1), p.Coord(i+1)-hi[i], 0.0});
             squared += delta*delta;
         }
-        double distance = 0;
+        if (squared >= limit*limit) return std::sqrt(squared);
+        double distance = bezier.lower(p);
         switch (surface.GetType()) {
             case GeomAbs_Plane: distance = surface.Plane().Distance(p); break;
             case GeomAbs_Cylinder: {
@@ -215,7 +218,7 @@ struct Support {
                 return p.Distance(sphere.Location()) < sphere.Radius()-tolerance;
             })) return false;
         }
-        return true;
+        return bezier.crosses(points);
     }
 };
 bool planarPolygon(const TopoDS_Shape& shape) {
@@ -259,7 +262,7 @@ double erosion::BoundaryDistance::lower(const gp_Pnt& point) const {
     double distance = std::numeric_limits<double>::infinity();
     for (const auto& triangle : impl->triangles) distance = std::min(distance, triangle.distance(point));
     for (const auto& support : impl->supports)
-        if (!support.polygon) distance = std::min(distance, support.lower(point));
+        if (!support.polygon) distance = std::min(distance, support.lower(point,distance));
     return distance;
 }
 double erosion::BoundaryDistance::upper(const gp_Pnt& point, double limit) const {

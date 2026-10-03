@@ -13,7 +13,6 @@
 #include <gp_Cylinder.hxx>
 #include <gp_Sphere.hxx>
 #include <cmath>
-#include <iomanip>
 #include <stdexcept>
 
 namespace mesh_fit::analytic {
@@ -54,22 +53,5 @@ std::optional<Result> reconstruct(const Input& input) {
         catch (const std::runtime_error&) { /* A recognized support alone does not prove a solid. */ }
     }
     return {};
-}
-void present(std::ostream& out,const Result& result,const Input& input) {
-    const auto& stats = result.stats;
-    out << std::setprecision(17) << "{\"mode\":\"new\",\"participants\":[],\"results\":[";
-    ::present(out,{result.shape,{},{}});
-    out << "],\"fit\":{\"patches\":" << result.planes+result.cylinders+result.spheres
-        << ",\"controlPoints\":0,\"analyticFaces\":{\"planes\":" << result.planes
-        << ",\"cylinders\":" << result.cylinders << ",\"spheres\":" << result.spheres << '}'
-        << ",\"sampledSurfaceToMesh\":" << stats.forward*input.scale
-        << ",\"sampledMeshToSurface\":" << stats.reverse*input.scale
-        << ",\"sampledRms\":" << stats.rms*input.scale << ",\"sampledSeamAngle\":0"
-        << ",\"samples\":" << stats.samples << ",\"vertexErrors\":[";
-    for (size_t i = 0; i < result.vertexErrors.size(); ++i) {
-        if (i) out << ',';
-        out << result.vertexErrors[i];
-    }
-    out << "]}}";
 }
 }

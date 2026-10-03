@@ -33,7 +33,7 @@ void conditionFrame(std::vector<Row>& rows, const Patch& patch, double u, double
     rows.push_back(std::move(row));
 }
 void tangentPlane(std::vector<Row>& rows, const Patch& patch, double u, double v, const V& normal,
-                  const Evaluation& reference) {
+                  const Evaluation& reference, bool guided) {
     const auto bu = basis(u), bv = basis(v), du = derivative(u), dv = derivative(v);
     // Preserve the two independent parameter directions while aligning the plane.
     // A weaker frame penalty lets noisy target normals collapse both into one line.
@@ -45,12 +45,16 @@ void tangentPlane(std::vector<Row>& rows, const Patch& patch, double u, double v
         const auto tangent = unit(prior-normal*prior.Dot(normal));
         // Match angular influence for long and short parameter directions.
         const double normalWeight = 10*std::sqrt(length(reference.du)*length(reference.dv))/std::max(1e-20,length(prior));
+        // Guided distance contours use n·(t/|t|): shrinking a tangent must not
+        // reduce its angular residual. Preserve the ordinary mesh fit otherwise.
+        const auto normalGradient = guided ? normal-unit(prior)*normal.Dot(unit(prior)) : normal;
+        row.value = guided ? -normal.Dot(prior)*normalWeight : 0;
         for (int axis = 0; axis < 3; ++axis) spacing[axis].value = tangent.Coord(axis+1)*length(prior)*frameWeight;
         for (int i = 0; i < 4; ++i) for (int j = 0; j < 4; ++j) {
             const double w = direction == 0 ? du[i]*bv[j] : bu[i]*dv[j];
             if (w == 0) continue;
             for (int axis = 0; axis < 3; ++axis) {
-                row.terms.push_back({patch.controls[i*4+j]*3+axis,w*normal.Coord(axis+1)*normalWeight});
+                row.terms.push_back({patch.controls[i*4+j]*3+axis,w*normalGradient.Coord(axis+1)*normalWeight});
                 spacing[axis].terms.push_back({patch.controls[i*4+j]*3+axis,w*frameWeight});
             }
         }
@@ -132,7 +136,7 @@ void fit(Network& n, const Network& seed, const Mesh& mesh, const Search& target
                     const auto normal = normals.at(e)[p.corners[side] == e.first ? k : 8-k];
                     // Regularize each step, not the final shape against its coarse seed.
                     const auto current = evaluate(n,int(f),u,v);
-                    tangentPlane(rows,p,u,v,normal,current);
+                    tangentPlane(rows,p,u,v,normal,current,!mesh.normals.empty());
                     conditionFrame(rows,p,u,v,normal,current,evaluate(seed,int(f),u,v));
                 }
             }

@@ -2,8 +2,8 @@
 #include <cmath>
 
 namespace mesh_fit {
-Layout automaticLayout(const Mesh& target,int budget) {
-    const auto sphere = sphereMap(target);
+namespace {
+Layout mappedLayout(const Mesh& target,const Mesh& sphere,int budget) {
     Search search(sphere,true);
     const int resolution = std::max(1,int(std::sqrt(budget/6.0)));
     Layout layout;
@@ -34,4 +34,35 @@ Layout automaticLayout(const Mesh& target,int budget) {
     }
     return layout;
 }
+}
+Layout automaticLayout(const Mesh& target,int budget) {
+    return mappedLayout(target,sphereMap(target),budget);
+}
+std::optional<Layout> radialLayout(const Mesh& target,int budget) {
+    Mesh sphere = target;
+    V low = target.vertices[0], high = low;
+    for (const auto& p : target.vertices) for (int axis = 1; axis <= 3; ++axis) {
+        low.SetCoord(axis,std::min(low.Coord(axis),p.Coord(axis)));
+        high.SetCoord(axis,std::max(high.Coord(axis),p.Coord(axis)));
+    }
+    const auto center = (low+high)/2, extent = high-low;
+    for (auto& p : sphere.vertices) {
+        p -= center;
+        for (int axis = 1; axis <= 3; ++axis) {
+            if (extent.Coord(axis) < 1e-12) return {};
+            p.SetCoord(axis,p.Coord(axis)/extent.Coord(axis));
+        }
+        p = unit(p);
+    }
+    double area = 0;
+    for (const auto& f : sphere.triangles) {
+        const auto a = sphere.vertices[f[0]], b = sphere.vertices[f[1]], c = sphere.vertices[f[2]];
+        const double determinant = a.Dot(b.Crossed(c));
+        if (determinant < 1e-12) return {};
+        area += 2*std::atan2(determinant,1+a.Dot(b)+b.Dot(c)+c.Dot(a));
+    }
+    if (std::abs(area-4*std::acos(-1.0)) > 1e-5) return {};
+    return mappedLayout(target,sphere,budget);
+}
+
 }

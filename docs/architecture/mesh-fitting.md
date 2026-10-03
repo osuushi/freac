@@ -117,7 +117,10 @@ this allows curved sharp boundaries such as cylinder rims.
 Without declared creases, target vertex normals average all incident triangles,
 including steep angles on thin rounded rims. With declared creases, target normal
 estimation separates incident triangles more than 45 degrees apart; the final
-sampled seam and distance checks still determine acceptance.
+sampled seam and distance checks still determine acceptance. Internal Erode
+reconstruction may instead supply temporary smooth-source normal guidance. That
+route linearizes the normalized angular residual so shrinking a parameter tangent
+cannot improve alignment; file import retains its existing normal estimation.
 
 Validation uses denser surface stations than the fit, every target vertex, and
 each target triangle's centroid and edge midpoints. Smooth-seam angles are checked

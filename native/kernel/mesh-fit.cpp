@@ -8,12 +8,13 @@
 #include <iostream>
 
 namespace mesh_fit {
-void reconstruct(std::ostream& out, const Tree& tree) {
-    auto input = read(tree);
+Fitted fitSurface(Input input,bool deviations) {
+    const bool automatic = input.layout.quads.empty();
     if (input.layout.quads.empty()) {
         if (const auto result = analytic::reconstruct(input)) {
-            analytic::present(out,*result,input);
-            return;
+            return {result->shape,result->stats,result->planes+result->cylinders+result->spheres,0,
+                    std::array<int,3>{result->planes,result->cylinders,result->spheres},
+                    deviations ? result->vertexErrors : std::vector<double>{}};
         }
         input.layout = automaticLayout(input.target,input.maxPatches);
         std::vector<std::vector<int>> faces;
@@ -42,30 +43,45 @@ void reconstruct(std::ostream& out, const Tree& tree) {
             message << "Mesh fit exceeds requested tolerance within patch budget: sampled deviation "
                 << std::max(stats.forward,stats.reverse)*input.scale << " mm; smooth seam angle "
                 << stats.normalAngle << " degrees" << (stats.oriented ? "" : "; surface faces away from the target")
-                << (tree.get_child_optional("layout")
+                << (!automatic
                     ? ". Increase the budget/tolerance or revise the quad layout."
                     : ". Try a different accuracy or patch budget; some meshes cannot be reconstructed.");
             throw std::runtime_error(message.str());
         }
         network = refine(network);
     }
-    const auto shape = assemble(network,input);
+    Fitted result{assemble(network,input),stats,int(network.patches.size()),int(network.controls.size()),{}, {}};
+    if (deviations) {
+        SurfaceSearch surface(network,12);
+        for (const auto& point : input.target.vertices)
+            result.vertexErrors.push_back(length(point-surface.closest(point).value.point)*input.scale);
+    }
+    return result;
+}
+void reconstruct(std::ostream& out,const Tree& tree) {
+    const auto input = read(tree);
+    const bool automatic = !tree.get_child_optional("layout");
+    const auto result = fitSurface(input,automatic);
+    const auto& stats = result.stats;
     out << std::setprecision(17) << "{\"mode\":\"new\",\"participants\":[],\"results\":[";
-    present(out,{shape,{},{}});
-    out << "],\"fit\":{\"patches\":" << network.patches.size()
-        << ",\"controlPoints\":" << network.controls.size()
-        << ",\"sampledSurfaceToMesh\":" << stats.forward*input.scale
+    present(out,{result.shape,{},{}});
+    out << "],\"fit\":{\"patches\":" << result.patches
+        << ",\"controlPoints\":" << result.controlPoints;
+    if (result.analyticFaces) {
+        const auto& faces = *result.analyticFaces;
+        out << ",\"analyticFaces\":{\"planes\":" << faces[0] << ",\"cylinders\":" << faces[1]
+            << ",\"spheres\":" << faces[2] << '}';
+    }
+    out << ",\"sampledSurfaceToMesh\":" << stats.forward*input.scale
         << ",\"sampledMeshToSurface\":" << stats.reverse*input.scale
         << ",\"sampledRms\":" << stats.rms*input.scale
         << ",\"sampledSeamAngle\":" << stats.normalAngle
         << ",\"samples\":" << stats.samples;
-    if (!tree.get_child_optional("layout")) {
-        SurfaceSearch surface(network,12);
+    if (automatic) {
         out << ",\"vertexErrors\":[";
-        for (size_t i = 0; i < input.target.vertices.size(); ++i) {
-            const auto& p = input.target.vertices[i];
+        for (size_t i = 0; i < result.vertexErrors.size(); ++i) {
             if (i) out << ',';
-            out << length(p-surface.closest(p).value.point)*input.scale;
+            out << result.vertexErrors[i];
         }
         out << ']';
     }

@@ -1,4 +1,5 @@
 #include "erosion.h"
+#include "erosion-field.h"
 #include "shell-validation.h"
 #include "offset-geometry.h"
 #include "offset-repair.h"
@@ -16,6 +17,18 @@
 namespace {
 TopoDS_Shape empty() {
     TopoDS_Compound shape; BRep_Builder().MakeCompound(shape); return shape;
+}
+
+void coverageFailure(const erosion::CoverageFailure& e,double thickness,double allowance,double& suggestion) {
+    if (std::isfinite(e.requiredDepth) && e.requiredDepth > thickness + allowance) {
+        const double needed = std::max(e.requiredDepth-thickness, allowance*1.25);
+        const double step = std::pow(10, std::floor(std::log10(needed))-1);
+        // Add 20% to the previous 10% headroom to reduce retry cycles.
+        suggestion = std::min(suggestion, std::ceil(needed*1.32/step)*step);
+    }
+    // A verified minimum-thickness candidate already exists. Repeating
+    // the same expensive coverage failure does not improve feedback.
+    if (e.exhausted) throw erosion::AllowanceFailure(e.what(), suggestion);
 }
 
 TopoDS_Shape cavity(const Operand& original, double thickness, double allowance) {
@@ -50,19 +63,21 @@ TopoDS_Shape cavity(const Operand& original, double thickness, double allowance)
                 return result;
             } catch (const erosion::CoverageFailure& e) {
                 failure = e.what();
-                if (std::isfinite(e.requiredDepth) && e.requiredDepth > thickness + allowance) {
-                    const double needed = std::max(e.requiredDepth-thickness, allowance*1.25);
-                    const double step = std::pow(10, std::floor(std::log10(needed))-1);
-                    // Add 20% to the previous 10% headroom to reduce retry cycles.
-                    suggestion = std::min(suggestion, std::ceil(needed*1.32/step)*step);
-                }
-                // A verified minimum-thickness candidate already exists. Repeating
-                // the same expensive coverage failure does not improve feedback.
-                if (e.exhausted) throw erosion::AllowanceFailure(failure, suggestion);
+                coverageFailure(e,thickness,allowance,suggestion);
             } catch (const Standard_Failure& e) {
                 failure = e.GetMessageString() ? e.GetMessageString() : "Erosion construction failed";
             } catch (const std::runtime_error& e) { failure = e.what(); }
         }
+    }
+    if (allowance >= 1e-4) {
+        try {
+            return erosion::reconstructInterior(original.shape,thickness,allowance);
+        } catch (const erosion::CoverageFailure& e) {
+            failure = e.what();
+            coverageFailure(e,thickness,allowance,suggestion);
+        } catch (const Standard_Failure& e) {
+            failure = e.GetMessageString() ? e.GetMessageString() : "Erosion reconstruction failed";
+        } catch (const std::runtime_error& e) { failure = e.what(); }
     }
     // The allowance may legitimately eliminate a marginal body, but an
     // unverified offset failure must never erase a spacious interior.

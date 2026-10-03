@@ -1151,3 +1151,29 @@ equators. Runtime tests recover independently tessellated spheres, cylinders and
 capsules, including rotated/scaled inputs, and retain or reject distorted geometry
 instead of forcing it onto an analytic support. General regional segmentation and
 analytic/freeform joins are not established by those tests.
+
+## Bézier bounds and boundary reconnection (2026-10-02)
+
+Source observations at configured OCCT commit
+`a016080bf6738d6aeae020badee4e888ad1540a5`:
+[`BRepAdaptor_Surface::Bezier`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepAdaptor/BRepAdaptor_Surface.cxx#L290)
+returns a transformed copy of the surface.
+[`Geom_BezierSurface::Segment`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/Geom/Geom_BezierSurface.cxx#L917)
+reparameterizes a bounded portion through its pole representation.
+[`GeomFill_BezierCurves`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/GeomFill/GeomFill_BezierCurves.hxx)
+accepts contiguous polynomial boundary curves and a Coons filling style. These
+observations informed use of public APIs; no upstream implementation was copied.
+
+Makeshift inference: nonrational subpatch control hulls enclose every surface point,
+so their boxes can accelerate conservative distance and crossing bounds. An actual
+point classified on a trimmed face supplies an independent upper bound. Runtime
+native tests compare these bounds to exact extrema on trimmed faces under both
+located and copied transformations, and ensure actual surface crossings remain
+possible. Bounds neither certify mesh fitting nor enlarge Erode's allowance.
+
+Runtime observation: general plate filling did not meet a moved reconstructed
+cubic face's neighboring rims within the existing boundary budget. Four-boundary
+polynomial interpolation permits a nonzero local face move and subsequent cavity
+subtraction. Boundary correspondence, solid validity and persistence checks remain
+required; this construction alone promises neither tangent continuity nor a valid
+result for every edit.

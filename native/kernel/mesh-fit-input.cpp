@@ -86,23 +86,13 @@ int topology(const std::vector<V>& points, const std::vector<std::vector<int>>& 
     if (!(volume6 > 1e-15)) fail("requires outward orientation and positive volume");
     return int(points.size()) - int(edges.size()) + int(fs.size());
 }
-Input read(const Tree& input) {
-    Input r;
-    r.target.vertices = vertices(input.get_child("mesh.vertices"));
-    r.target.triangles = faces<3>(input.get_child("mesh.triangles"), r.target.vertices.size(), 200000);
-    const bool automatic = !input.get_child_optional("layout");
-    if (!automatic) {
-        r.layout.vertices = vertices(input.get_child("layout.vertices"));
-        r.layout.quads = faces<4>(input.get_child("layout.quads"), r.layout.vertices.size(), 256);
-    }
-    r.tolerance = input.get<double>("tolerance");
-    r.smoothAngle = input.get<double>("smoothAngle", 5);
-    const double budget = input.get<double>("maxPatches", 256);
+namespace {
+void prepare(Input& r,bool automatic) {
+    const double budget = r.maxPatches;
     if (!std::isfinite(r.tolerance) || r.tolerance < 1e-6 ||
         !std::isfinite(r.smoothAngle) || r.smoothAngle < 0.1 || r.smoothAngle > 30 ||
         !std::isfinite(budget) || budget != std::floor(budget) || budget < (automatic ? size_t(6) : r.layout.quads.size()) || budget > 256)
         throw std::runtime_error("Invalid fit tolerance, smooth angle (0.1–30 degrees), or patch budget (up to 256)");
-    r.maxPatches = int(budget);
     V lo = r.target.vertices[0], hi = lo;
     for (const auto& p : r.target.vertices) for (int i = 1; i <= 3; ++i) {
         lo.SetCoord(i, std::min(lo.Coord(i), p.Coord(i)));
@@ -120,6 +110,24 @@ Input read(const Tree& input) {
     }
     if (!automatic && targetTopology != check(r.layout.vertices, r.layout.quads, "Quad layout"))
         throw std::runtime_error("Target mesh and quad layout must have the same topology (genus)");
+}
+}
+Input read(const Tree& input) {
+    Input r;
+    r.target.vertices = vertices(input.get_child("mesh.vertices"));
+    r.target.triangles = faces<3>(input.get_child("mesh.triangles"), r.target.vertices.size(), 200000);
+    const bool automatic = !input.get_child_optional("layout");
+    if (!automatic) {
+        r.layout.vertices = vertices(input.get_child("layout.vertices"));
+        r.layout.quads = faces<4>(input.get_child("layout.quads"), r.layout.vertices.size(), 256);
+    }
+    r.tolerance = input.get<double>("tolerance");
+    r.smoothAngle = input.get<double>("smoothAngle", 5);
+    const double budget = input.get<double>("maxPatches", 256);
+    if (!std::isfinite(budget) || budget < 0 || budget > 256 || budget != std::floor(budget))
+        throw std::runtime_error("Invalid fit patch budget");
+    r.maxPatches = int(budget);
+    prepare(r,automatic);
     if (const auto cs = input.get_child_optional("layout.creases")) {
         if (!cs->empty()) for (const auto& c : faces<2>(*cs, r.layout.vertices.size(), 1024)) {
             const auto e = edge(c[0], c[1]);
@@ -132,4 +140,25 @@ Input read(const Tree& input) {
     }
     return r;
 }
+Input automaticInput(Mesh mesh,double tolerance,int maxPatches) {
+    if (mesh.vertices.size() < 4 || mesh.vertices.size() > 100000 ||
+        mesh.triangles.empty() || mesh.triangles.size() > 200000)
+        throw std::runtime_error("Reconstructed distance mesh exceeds fitting limits");
+    for (const auto& p : mesh.vertices) for (int axis = 1; axis <= 3; ++axis)
+        if (!std::isfinite(p.Coord(axis)) || std::abs(p.Coord(axis)) > 1e9)
+            throw std::runtime_error("Invalid distance mesh coordinates");
+    for (const auto& face : mesh.triangles) for (int index : face)
+        if (index < 0 || size_t(index) >= mesh.vertices.size())
+            throw std::runtime_error("Invalid distance mesh index");
+    if (!mesh.normals.empty()) {
+        if (mesh.normals.size() != mesh.vertices.size()) throw std::runtime_error("Invalid mesh normal count");
+        for (const auto& normal : mesh.normals)
+            if (!std::isfinite(length(normal)) || length(normal) < 1e-12)
+                throw std::runtime_error("Invalid mesh normal guidance");
+    }
+    Input input{std::move(mesh),{},{},0,tolerance,5,maxPatches};
+    prepare(input,true);
+    return input;
+}
+
 }

@@ -65,6 +65,18 @@ collapses at the requested depth, construction also tries half the extra allowan
 verification still uses the original requested bounds. Valid source pcurves are
 preserved rather than forcibly reparameterized.
 
+If CAD offset construction fails and allowance is positive, a bounded reconstruction
+proposal samples a temporary signed distance field near `t+e/2`. Marching tetrahedra
+produce a closed triangle surface, which enters the shared analytic/bicubic fitter
+with a fitting allowance of `e/8` and at most 96 faces. Analytic recognition runs
+first; otherwise a verified radial map supplies a coarse quad layout for star-shaped
+interiors, with the general sphere-map route available when that map is unsuitable.
+Source-surface tessellation supplies smooth normal guidance to avoid the contour
+grid's uneven triangle bias. Neither the grid, normals nor the fitting samples are
+an erosion certificate: the assembled B-rep must pass the unchanged `validateCavity`
+checks against the original source before becoming a preview. The accepted body
+contains no field, mesh reconstruction recipe or relation to its original.
+
 Additional construction proposals remove collapsed cylindrical branches and convex
 toroidal rounds, retaining globally supporting planar caps. Every proposal is
 verified against the untouched source. Separate closed inner shells are existing
@@ -77,8 +89,11 @@ no self-intersections or orphan faces, containment in the original, whole-bounda
 minimum separation, and coverage of all required interior regions. Coverage uses
 adaptive cells with conservative distance bounds, not an unchecked sample grid.
 Convex planar half-spaces and exact planar polygon triangles accelerate those
-bounds; curved supports, indexed points on exact boundary curves, and exact kernel
-distances handle other regions. Curve points provide upper bounds only. Certified
+bounds; curved supports, indexed points on exact boundary curves and trimmed faces,
+and exact kernel distances handle other regions. These points provide upper bounds
+only. Nonrational Bézier faces additionally use boxes enclosing subdivided control
+hulls for conservative lower bounds and boundary-crossing exclusion. These boxes
+are based on the actual surfaces, independent of display tessellation. Certified
 interior/exterior distance balls and boundary-free spans reuse classifications
 across neighboring cells. Unresolved cells, the finite work limit, or kernel errors
 reject the proposal. An offset failure
@@ -138,8 +153,22 @@ at exact collapse is not retained as a solid.
 
 ## Current limits
 
-There is no general distance-guided surface reconstruction fallback yet. Freeform
-shapes and difficult offset intersections may reject even when an eroded body exists.
+The reconstruction fallback currently supports a single closed genus-zero interior;
+multiple components, holes and enclosed voids continue to rely on the existing CAD
+routes. Its field is limited to 300,000 samples and 12 seconds, the contour to
+100,000 vertices/200,000 triangles, and fitting to 96 faces. Small allowances,
+difficult parameterizations or offset intersections may still reject even when
+an eroded body exists. Allowance below 0.0001 mm skips field reconstruction.
+A waisted freeform body at 1 mm thickness/0.8 mm allowance is a covered case. A
+coarse cubic spherical source needs sufficient allowance for analytic recovery;
+1/1.6 mm is covered; smaller allowances are not guaranteed for a cubic source approximation.
+
+Reconstructed cubic faces support ordinary face movement. Neighboring polynomial
+four-sided faces use algebraic boundary interpolation before general plate filling,
+keeping their requested rims within the existing geometric tolerance. This does
+not guarantee tangent continuity after direct face movement. General face Offset
+on a freeform patch can still stop at zero when the native offset cannot construct
+a valid neighborhood; Move is the verified local-edit route for this checkpoint.
 Small allowances on complicated boundaries may exhaust the coverage work limit;
 zero allowance is useful for certifiable cases such as convex polyhedra, but is not
 a promise of exact erosion for every body. Increasing the allowance can help
@@ -196,3 +225,13 @@ all three cancellation routes and the allowance suggestion through acceptance,
 history and Save/Open. `tests/document-failure.test.ts` checks feedback validation.
 `node tests/erosion-history-ui.mjs` checks temporary parameter Undo/Redo, branching
 after Undo and grouped document acceptance in all three runtimes.
+
+Reconstruction acceptance: `tests/erosion-reconstruction.test.ts` checks a waisted
+freeform source, independent volume bounds, a nonzero face edit, stable IDs, history,
+reopening and final cavity subtraction; it also checks analytic sphere recovery.
+`node tests/erosion-reconstruction-export.mjs` checks exact STEP readback and
+closed oriented mesh export of the reconstructed interior and resulting wall.
+`node tests/erosion-reconstruction-ui.mjs` runs the freeform route through real
+pointer/keyboard controls in Chromium, WebKit and hidden Electron. Native
+`erosion-field`, `mesh-fit-math` and `erosion-coverage` checks cover contour topology,
+ray classification with voids, and conservative trimmed/transformed Bézier bounds.

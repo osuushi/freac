@@ -21,5 +21,4 @@ V closest(const Candidate&,const V&);
 std::optional<Result> assess(const Candidate&,const Input&,const Search&);
 TopoDS_Shape assemble(const Candidate&,const Input&);
 std::optional<Result> reconstruct(const Input&);
-void present(std::ostream&,const Result&,const Input&);
 }
