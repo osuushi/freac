@@ -110,10 +110,15 @@ mid-drag retains capture. Capture blocks editing, trailing clicks and wheel/pinc
 Camera changes never modify the document or Undo. On macOS, Electron’s native
 [rotate-gesture event](https://www.electronjs.org/docs/latest/api/browser-window/#event-rotate-gesture-macos)
 drives incremental roll about the cursor alongside existing pinch zoom. Its terminal
-zero event triggers release leveling. The narrow host/preload subscription stays
+zero event releases the gesture for delayed leveling. The narrow host/preload subscription stays
 out of shared geometry, ignores desktop input during tablet handoff, and the
 renderer rejects events outside the viewport or during editing/orbit. Blur clears
-the gesture. This native event is macOS-only; Windows/Linux retain Option-roll.
+the gesture. Pinch and native twist share a 200 ms idle delay before leveling;
+every accepted zoom packet restarts it, so continued pinch cannot strand an
+interrupted snap. Explicit native/WebKit gesture lifetimes hold leveling until
+their end event, even if input briefly pauses. Pointer-down, Escape, blur and
+disposal cancel pending leveling; the callback also checks editing/orbit guards.
+This native event is macOS-only; Windows/Linux retain Option-roll.
 
 Tablet one-finger orbit uses the same press-based pivot through
 pointer events. Two fingers simultaneously pan, pinch and twist: their midpoint

@@ -1,9 +1,14 @@
 import { rollCamera } from "./camera-motion.js";
 import type {} from "./navigation-host.js";
+import type { TrackpadSnap } from "./trackpad-snap.js";
 import type { World } from "./world.js";
 
 /** Native trackpad rotation shares the pointer anchor used by pinch zoom. */
-export function installTrackpadRotation(world: World, signal: AbortSignal): void {
+export function installTrackpadRotation(
+  world: World,
+  signal: AbortSignal,
+  snap: TrackpadSnap,
+): void {
   const host = window.makeshiftNavigation;
   if (!host) return;
   let rotating = false;
@@ -18,12 +23,13 @@ export function installTrackpadRotation(world: World, signal: AbortSignal): void
   const clear = () => {
     pointer = null;
     rotating = false;
+    snap.cancel();
   };
   window.addEventListener("blur", clear, { signal });
   document.documentElement.addEventListener("pointerleave", clear, { signal });
   const remove = host.onRotate((degrees) => {
     if (degrees === 0) {
-      if (rotating && world.canNavigate() && !world.orbit.active) world.levelHorizon();
+      if (rotating) snap.release();
       rotating = false;
       return;
     }
@@ -44,6 +50,7 @@ export function installTrackpadRotation(world: World, signal: AbortSignal): void
       return;
     const bounds = world.canvas.getBoundingClientRect();
     rotating = true;
+    snap.hold();
     world.cancelCameraMotion();
     rollCamera(
       world,
@@ -55,6 +62,7 @@ export function installTrackpadRotation(world: World, signal: AbortSignal): void
       bounds.height,
     );
     world.requestDraw();
+    snap.request();
   });
   signal.addEventListener("abort", remove, { once: true });
 }

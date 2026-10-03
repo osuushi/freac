@@ -75,7 +75,22 @@ try {
   assert.deepEqual(reversed.document, before.document);
   assert.deepEqual(await page.evaluate(() => window.makeshiftHistory()), history);
   await rotate(-30);
-  const snapped = await rotate(0);
+  await rotate(0);
+  // Native twist ends before the accompanying pinch packets finish. Each packet
+  // must defer leveling, and zoom completion must restart an interrupted snap.
+  for (let i = 0; i < 3; i++) {
+    await page.keyboard.down("Control");
+    await page.mouse.wheel(0, -8);
+    await page.keyboard.up("Control");
+    await page.waitForTimeout(60);
+    assert.notDeepEqual((await inspect(page)).camera.up, before.camera.up);
+  }
+  await page.waitForFunction((up) => {
+    const c = window.makeshiftInspect().camera;
+    return !c.moving && c.up.every((v, i) => Math.abs(v - up[i]) < 1e-8);
+  }, before.camera.up);
+  const snapped = await inspect(page);
+
   before.camera.up.forEach((v, i) => {
     assert.ok(Math.abs(v - snapped.camera.up[i]) < 1e-8);
   });

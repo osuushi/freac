@@ -1,12 +1,13 @@
 import { panCamera, zoomCamera } from "./camera-motion.js";
 import { controlMode } from "./control-preference.js";
 import { installTrackpadRotation } from "./trackpad-rotation.js";
+import type { TrackpadSnap } from "./trackpad-snap.js";
 import type { World } from "./world.js";
 
 // Chromium/Electron report trackpad pinch as ctrl+wheel. WebKit also exposes
 // gesture scale events; while those are active they exclusively own pinch zoom.
-export function installTrackpad(world: World, signal: AbortSignal): void {
-  installTrackpadRotation(world, signal);
+export function installTrackpad(world: World, signal: AbortSignal, snap: TrackpadSnap): void {
+  installTrackpadRotation(world, signal, snap);
   const canvas = world.canvas;
   const options = { signal, passive: false, capture: true };
   let scale: number | null = null;
@@ -30,8 +31,9 @@ export function installTrackpad(world: World, signal: AbortSignal): void {
       bounds.height,
     );
     world.requestDraw();
+    snap.request();
   };
-  installWheel(world, canvas, [canvas, world.overlay], () => scale !== null, zoom, options);
+  installWheel(world, canvas, [canvas, world.overlay], () => scale !== null, zoom, snap, options);
   installGestures(
     world,
     [canvas, world.overlay],
@@ -40,6 +42,7 @@ export function installTrackpad(world: World, signal: AbortSignal): void {
       scale = value;
     },
     zoom,
+    snap,
     options,
   );
 }
@@ -50,6 +53,7 @@ function installGestures(
   getScale: () => number | null,
   setScale: (value: number | null) => void,
   zoom: (factor: number, x: number, y: number) => void,
+  snap: TrackpadSnap,
   options: AddEventListenerOptions,
 ): void {
   for (const surface of surfaces)
@@ -60,6 +64,7 @@ function installGestures(
         if (world.canNavigate() && !world.orbit.active) {
           world.cancelCameraMotion();
           setScale(1);
+          snap.hold();
         }
       },
       options,
@@ -81,6 +86,7 @@ function installGestures(
   const stop = (event: Event) => {
     if (event.cancelable) event.preventDefault();
     setScale(null);
+    snap.release();
   };
   for (const surface of surfaces) surface.addEventListener("gestureend", stop, options);
   window.addEventListener("blur", stop, { signal: options.signal });
@@ -92,6 +98,7 @@ function installWheel(
   surfaces: readonly HTMLElement[],
   pinching: () => boolean,
   zoom: (factor: number, x: number, y: number) => void,
+  snap: TrackpadSnap,
   options: AddEventListenerOptions,
 ): void {
   for (const surface of surfaces)
@@ -107,6 +114,7 @@ function installWheel(
           zoom(Math.exp(event.deltaY * unit * speed), event.clientX, event.clientY);
         } else {
           if (!event.deltaX && !event.deltaY) return;
+          snap.postpone();
           panCamera(world, -event.deltaX * unit, -event.deltaY * unit, canvas.clientHeight);
           world.requestDraw();
         }
