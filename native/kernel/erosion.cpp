@@ -69,16 +69,6 @@ TopoDS_Shape cavity(const Operand& original, double thickness, double allowance)
             } catch (const std::runtime_error& e) { failure = e.what(); }
         }
     }
-    if (allowance >= 1e-4) {
-        try {
-            return erosion::reconstructInterior(original.shape,thickness,allowance);
-        } catch (const erosion::CoverageFailure& e) {
-            failure = e.what();
-            coverageFailure(e,thickness,allowance,suggestion);
-        } catch (const Standard_Failure& e) {
-            failure = e.GetMessageString() ? e.GetMessageString() : "Erosion reconstruction failed";
-        } catch (const std::runtime_error& e) { failure = e.what(); }
-    }
     // The allowance may legitimately eliminate a marginal body, but an
     // unverified offset failure must never erase a spacious interior.
     try {
@@ -94,6 +84,9 @@ std::vector<Result> erodeBodies(const Tree& input, const std::vector<Operand>& b
                                std::vector<std::string>& participants) {
     const double thickness = input.get<double>("thickness");
     const double allowance = input.get<double>("allowance");
+    const auto method = input.get<std::string>("method", "fast");
+    if (method != "fast" && method != "accurate")
+        throw std::runtime_error("Choose Fast or Accurate erosion");
     if (!std::isfinite(thickness) || thickness <= 1e-5 ||
         !std::isfinite(allowance) || allowance < 0)
         throw std::runtime_error("Erode needs positive finite thickness and nonnegative extra thickness allowance");
@@ -107,7 +100,9 @@ std::vector<Result> erodeBodies(const Tree& input, const std::vector<Operand>& b
         if (source == bodies.end() || !seen.insert(id).second)
             throw std::runtime_error("Select existing erosion bodies only once");
         const auto original = offset_geometry::encoding(source->shape);
-        const auto shape = cavity(*source, thickness, allowance);
+        const auto shape = method == "fast"
+            ? erosion::reconstructInterior(source->shape, thickness, allowance)
+            : cavity(*source, thickness, allowance);
         if (offset_geometry::encoding(source->shape) != original)
             throw std::runtime_error("Erosion altered its source body");
         for (TopExp_Explorer s(shape, TopAbs_SOLID); s.More(); s.Next())

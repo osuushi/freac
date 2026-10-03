@@ -19,7 +19,10 @@ TypeScript compiler checks a source snapshot before execution; no separate Node 
 TypeScript install is needed. The global makeshift object has the API printed by makeshift types.
 Topology calls are topology and replaceFace; see the topology section below.
 Available modeling calls are createSketch, extrude, revolve, loft, moveFaces, offsetFaces, transformBodies,
-constructionPlane, deleteConstructionPlane, splitBody, imprint, scale, sweep, booleanBodies, finishEdges and shell.
+constructionPlane, deleteConstructionPlane, splitBody, imprint, scale, sweep, booleanBodies, finishEdges, shell and erode.
+erode takes ids, minimum thickness, extra allowance (both in mm), optional keepOriginals (default true),
+and method: "fast" (default, mesh erosion/refitting) or "accurate" (CAD offsets).
+Both methods verify the requested thickness and allowance before producing editable solids.
 Decorator calls are decorators, inspectDecorator, editDecorator, editDecoratorDefinition and enableDecorator.
 Loft takes 2–256 ordered sources, ruled:false for Smooth or true for Ruled, and mode/targets.
 Optional alignment is one integer seam step per source after automatic correspondence.

@@ -19,7 +19,10 @@ for (const name of captures) {
         undefined,
       );
       const original = owner.view.data;
-      const result = await owner.call({ kind: "erode", operation: fixture.operation });
+      const result = await owner.call({
+        kind: "erode",
+        operation: { ...fixture.operation, method: "accurate" },
+      });
       assert.equal(result.error, undefined);
       assert.equal(result.view.data, original);
       const previous = new Set(original.bodies?.map((body) => body.id));

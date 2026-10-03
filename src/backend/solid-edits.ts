@@ -163,7 +163,9 @@ export class SolidEdits {
     } else if (request.kind === "move-faces" || request.kind === "move-edges") {
       candidate = await this.move(document, request);
     } else if (request.kind === "erode") {
-      const { thickness, allowance, keepOriginals } = request.operation;
+      const { thickness, allowance, keepOriginals, method } = request.operation;
+      if (method !== undefined && method !== "fast" && method !== "accurate")
+        throw new Error("Choose Fast or Accurate erosion");
       if (
         !Number.isFinite(thickness) ||
         thickness <= 1e-5 ||

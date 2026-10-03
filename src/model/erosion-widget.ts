@@ -2,14 +2,26 @@ import type { SketchEditor } from "../sketch/editor.js";
 import type { Vector } from "../sketch/planes.js";
 import { numericFocus } from "../tools/menu-focus.js";
 import { distanceField, positionAxialPanel, toolAction, updateAxialArrow } from "./axial-widget.js";
+import type { Body, BodyErosion } from "./body.js";
 import { projectedAxis } from "./extrude-axis.js";
+import { offsetHandle } from "./face-offset-targets.js";
 import "./erosion-widget.css";
+
+export function erosionAxis(editor: SketchEditor, body: Body): { center: Vector; normal: Vector } {
+  const face = body.faces[0];
+  const handle =
+    face && (face.plane || face.cylinder || face.offsetHandle) ? offsetHandle(editor, face) : null;
+  return handle
+    ? { center: handle.center, normal: [-handle.normal[0], -handle.normal[1], -handle.normal[2]] }
+    : { center: body.center, normal: [0, 0, -1] };
+}
 
 export class ErosionWidget {
   readonly root = document.createElement("div");
   readonly handle = document.createElement("button");
   readonly thickness = document.createElement("input");
   readonly allowance = document.createElement("input");
+  readonly method = document.createElement("select");
   private panel = document.createElement("div");
   private description = document.createElement("small");
   private accept: HTMLButtonElement;
@@ -34,6 +46,18 @@ export class ErosionWidget {
     actions.className = "axial-actions";
     actions.append(this.keep, this.accept, this.cancel);
     this.panel.className = "axial-panel";
+    this.method.setAttribute("aria-label", "Erosion method");
+    this.method.title = "Fast reconstructs an eroded mesh; Accurate uses CAD offsets";
+    for (const [value, label] of [
+      ["fast", "Fast"],
+      ["accurate", "Accurate"],
+    ]) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      this.method.append(option);
+    }
+    this.panel.append(this.method);
     this.field(this.thickness, "Minimum thickness", "Minimum wall thickness in mm");
     this.field(
       this.allowance,
@@ -67,7 +91,12 @@ export class ErosionWidget {
   update(
     editor: SketchEditor,
     axis: { center: Vector; normal: Vector },
-    values: { thickness: number; allowancePercent: number; keepOriginals: boolean },
+    values: {
+      thickness: number;
+      allowancePercent: number;
+      keepOriginals: boolean;
+      method: BodyErosion["method"];
+    },
     active: boolean,
     valid: boolean,
     invalid: boolean,
@@ -75,6 +104,7 @@ export class ErosionWidget {
     suggestion: number | null,
   ): void {
     this.root.hidden = false;
+    this.method.value = values.method ?? "fast";
     positionAxialPanel(this.root, this.panel, editor.world.project(axis.center));
     updateAxialArrow(
       this.handle,

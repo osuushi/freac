@@ -63,6 +63,9 @@ async function cancellation(page, original) {
 
 async function suggestedAllowance(page, name, original) {
   await enter(page);
+  await page
+    .getByRole("combobox", { name: "Erosion method", exact: true })
+    .selectOption("accurate");
   await thickness(page).fill("4");
   assert.equal(await allowance(page).inputValue(), "50", "Thickness edits retain the percentage");
   await allowance(page).fill("2.5"); // 0.1 mm extra at 4 mm minimum.

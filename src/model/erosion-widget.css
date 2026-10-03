@@ -8,6 +8,16 @@
   display: block;
   padding-top: 5px;
 }
+.erosion-widget select {
+  width: 100%;
+  min-height: 30px;
+  margin-bottom: 3px;
+  color: inherit;
+  background: transparent;
+  border: 1px solid #bdccdc;
+  border-radius: 6px;
+  font: inherit;
+}
 .erosion-status {
   display: block;
   padding: 5px 0;

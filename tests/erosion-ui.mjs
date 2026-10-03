@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { erosionCapturesRoute } from "./ui-erosion-captures.mjs";
+import { accurateErosion } from "./ui-erosion-method.mjs";
 import { erosionOptionsRoute } from "./ui-erosion-options.mjs";
 import { at, close, drag, inspect } from "./ui-helpers.mjs";
 import { withUiRuntimes } from "./ui-runtime.mjs";
@@ -16,7 +17,7 @@ async function select(page, numbers) {
 async function cavity(page) {
   await plate(page);
   await chooseTool(page, "select owning bodies", "selection-bodies");
-  await chooseTool(page, "erode", "erode");
+  await accurateErosion(page);
 }
 async function thickness(page, value) {
   await page.getByRole("textbox", { name: "Minimum thickness", exact: true }).fill(String(value));
@@ -50,7 +51,7 @@ async function validationRoute(page) {
   close((await inspect(page)).preview.bodies[1].volume, 2592);
   await page.keyboard.press("Escape");
   assert.deepEqual((await inspect(page)).document, original);
-  await chooseTool(page, "erode", "erode");
+  await accurateErosion(page);
   const handle = page.getByRole("button", { name: "Erosion thickness handle" });
   const box = await handle.boundingBox();
   const direction = await handle.evaluate((b) => ({
@@ -67,13 +68,13 @@ async function validationRoute(page) {
   assert.ok(state.preview?.bodies[1].volume > 0);
   assert.deepEqual(state.document, original);
   await page.keyboard.press("Escape");
-  await chooseTool(page, "erode", "erode");
+  await accurateErosion(page);
   state = await thickness(page, 6);
   assert.equal(state.preview.bodies.length, 1);
   assert.match(await page.locator(".erosion-widget").textContent(), /Empty result/);
   await page.keyboard.press("Enter");
   assert.deepEqual((await inspect(page)).document, original);
-  await chooseTool(page, "erode", "erode");
+  await accurateErosion(page);
   await thickness(page, 1);
   await page.getByRole("textbox", { name: "Minimum thickness", exact: true }).press("Tab");
   await chooseTool(page, "transform", "transform");

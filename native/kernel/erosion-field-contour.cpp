@@ -11,16 +11,35 @@ class Contour {
     const std::vector<V>& points;
     const std::vector<double>& values;
     std::map<Edge,int> edges;
+    const std::function<double(const V&)>& field;
+    bool refineRoots;
+    std::chrono::steady_clock::time_point started;
 public:
     Mesh mesh;
-    Contour(const std::vector<V>& p,const std::vector<double>& v): points(p), values(v) {}
+    Contour(const std::vector<V>& p,const std::vector<double>& v, const std::function<double(const V&)>& f, bool refine, std::chrono::steady_clock::time_point start):
+        points(p), values(v), field(f), refineRoots(refine), started(start) {}
     int crossing(int a,int b) {
         const auto key = edge(a,b);
         const auto found = edges.find(key);
         if (found != edges.end()) return found->second;
         // Keep the proposal away from grid-vertex degeneracy. This displacement
         // is at most 0.1% of an edge; only the fitted B-rep is later certified.
-        const double t = std::clamp(values[a]/(values[a]-values[b]),0.001,0.999);
+        double t = std::clamp(values[a]/(values[a]-values[b]),0.001,0.999);
+        if(refineRoots) {
+            double low=0,high=1,first=values[a],last=values[b];
+            for(int iteration=0;iteration<10;++iteration) {
+                const double value=field(points[a]+(points[b]-points[a])*t);
+                if(!std::isfinite(value)) throw std::runtime_error("Invalid erosion distance sample");
+                if(std::abs(value)<1e-8) break;
+                if((value>0)==(first>0)) {low=t;first=value;} else {high=t;last=value;}
+                t=std::clamp(low+(high-low)*first/(first-last),low+(high-low)*0.1,high-(high-low)*0.1);
+            }
+            t=std::clamp(t,0.001,0.999);
+        }
+
+        if(refineRoots && mesh.vertices.size()%256==0 &&
+           std::chrono::steady_clock::now()-started>std::chrono::seconds(12))
+            throw std::runtime_error("Erode distance field exceeded its calculation budget");
         const int index = int(mesh.vertices.size());
         mesh.vertices.push_back(points[a]+(points[b]-points[a])*t);
         edges.emplace(key,index);
@@ -54,7 +73,7 @@ public:
 };
 }
 mesh_fit::Mesh contourField(const V& low,const V& high,double spacing,
-                           const std::function<double(const V&)>& field) {
+                           const std::function<double(const V&)>& field, bool refineRoots) {
     if (!std::isfinite(spacing) || spacing <= 0)
         throw std::runtime_error("Invalid erosion distance-field spacing");
     std::array<int,3> count;
@@ -80,7 +99,7 @@ mesh_fit::Mesh contourField(const V& low,const V& high,double spacing,
             throw std::runtime_error("Erode distance field exceeded its calculation budget");
     }
     auto index = [&](int x,int y,int z) { return (z*count[1]+y)*count[0]+x; };
-    Contour contour(points,values);
+    Contour contour(points,values,field,refineRoots,start);
     constexpr int tetrahedra[6][4] = {{0,1,3,7},{0,3,2,7},{0,2,6,7},{0,6,4,7},{0,4,5,7},{0,5,1,7}};
     for (int z = 0; z+1 < count[2]; ++z) for (int y = 0; y+1 < count[1]; ++y) for (int x = 0; x+1 < count[0]; ++x) {
         std::array<int,8> corners;

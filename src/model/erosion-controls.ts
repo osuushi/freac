@@ -5,9 +5,8 @@ import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import type { Vector } from "../sketch/planes.js";
 import { AxialDrag } from "./axial-drag.js";
 import type { BodyErosion } from "./body.js";
-import { erosionPreview } from "./erosion-preview.js";
-import { ErosionWidget } from "./erosion-widget.js";
-import { offsetHandle } from "./face-offset-targets.js";
+import { erosionPreview, selectErosionResult } from "./erosion-preview.js";
+import { ErosionWidget, erosionAxis } from "./erosion-widget.js";
 
 /** Erode owns a temporary preview; the document changes only on acceptance. */
 export class ErosionControls {
@@ -20,6 +19,7 @@ export class ErosionControls {
   private thickness = 1;
   private allowancePercent = 50;
   private keepOriginals = true;
+  private method: "fast" | "accurate" = "fast";
   private valid = false;
   private invalid = false;
   private count: number | null = null;
@@ -46,6 +46,15 @@ export class ErosionControls {
       },
     );
     const options = { signal: this.abort.signal };
+    this.widget.method.addEventListener(
+      "change",
+      () => {
+        if (!this.begin()) return;
+        this.method = this.widget.method.value === "accurate" ? "accurate" : "fast";
+        this.queue(this.thickness, this.allowancePercent);
+      },
+      options,
+    );
     this.drag = new AxialDrag(editor, this.widget.handle, this.abort.signal, {
       begin: () => this.begin(),
       lease: () => this.lease,
@@ -109,6 +118,7 @@ export class ErosionControls {
     this.thickness = 1;
     this.allowancePercent = 50;
     this.keepOriginals = true;
+    this.method = "fast";
     this.count = null;
     this.suggestedAllowance = null;
     this.latest = this.pending = null;
@@ -118,9 +128,11 @@ export class ErosionControls {
         thickness: this.thickness,
         allowance: this.allowancePercent,
         keep: this.keepOriginals,
+        method: this.method,
       }),
-      async ({ thickness, allowance, keep }) => {
+      async ({ thickness, allowance, keep, method }) => {
         this.keepOriginals = keep;
+        this.method = method;
         this.widget.thickness.value = String(thickness);
         this.widget.allowance.value = String(allowance);
         this.queue(thickness, allowance);
@@ -140,6 +152,7 @@ export class ErosionControls {
       this.lease?.phase !== "editing" ||
       (thickness === this.latest?.thickness &&
         allowancePercent === this.allowancePercent &&
+        this.method === this.latest?.method &&
         this.keepOriginals === this.latest?.keepOriginals)
     )
       return;
@@ -155,6 +168,7 @@ export class ErosionControls {
       thickness,
       allowance,
       keepOriginals: this.keepOriginals,
+      method: this.method,
     };
     if (this.running) this.editor.store.supersedePreview(true);
     else this.running = this.drain();
@@ -210,18 +224,7 @@ export class ErosionControls {
       this.editor.refresh();
       return false;
     }
-    const copies = this.editor.store.data.bodies?.filter((body) => !accepted.has(body.id)) ?? [];
-    if (copies.length && this.keepOriginals) {
-      for (const id of this.ids) this.editor.visibility.hide(id);
-      for (const body of copies) this.editor.visibility.show(body.id);
-    }
-    this.editor.modeling.targets = copies.length
-      ? copies.map((body) => ({ kind: "body", body: body.id }))
-      : this.original.filter(
-          (target) =>
-            "body" in target &&
-            this.editor.store.data.bodies?.some((body) => body.id === target.body),
-        );
+    selectErosionResult(this.editor, this.latest, this.original, accepted);
     this.end(lease);
     return true;
   }
@@ -240,6 +243,7 @@ export class ErosionControls {
   private end(lease: InteractionLease): void {
     this.widget.thickness.blur();
     this.widget.allowance.blur();
+    this.widget.method.blur();
     this.lease = null;
     this.editor.modeling.setTool(null);
     this.editor.notice = "";
@@ -258,18 +262,7 @@ export class ErosionControls {
         this.widget.root.hidden = true;
         return;
       }
-      const body = resolved.inputs[0];
-      const face = body.faces[0];
-      const handle =
-        face && (face.plane || face.cylinder || face.offsetHandle)
-          ? offsetHandle(this.editor, face)
-          : null;
-      this.axis = handle
-        ? {
-            center: handle.center,
-            normal: [-handle.normal[0], -handle.normal[1], -handle.normal[2]],
-          }
-        : { center: body.center, normal: [0, 0, -1] };
+      this.axis = erosionAxis(this.editor, resolved.inputs[0]);
       this.begin();
     }
     if (!this.axis) {
@@ -283,6 +276,7 @@ export class ErosionControls {
         thickness: this.thickness,
         allowancePercent: this.allowancePercent,
         keepOriginals: this.keepOriginals,
+        method: this.method,
       },
       !!this.lease,
       this.valid,

@@ -119,6 +119,8 @@ export interface BodyShell {
 
 /** Whole-body erosion; resulting bodies have independent geometry identities. */
 export interface BodyErosion {
+  /** Fast uses mesh erosion and reconstruction; Accurate uses CAD offsets. Defaults to Fast. */
+  method?: "fast" | "accurate";
   /** Retain inputs alongside new eroded bodies. Defaults to true. */
   keepOriginals?: boolean;
   ids: string[];
