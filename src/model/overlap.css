@@ -1,9 +1,8 @@
 .selection-overlap {
   position: fixed;
   z-index: 120;
-  width: min(480px, calc(100vw - 16px));
-  max-height: min(440px, calc(100vh - 16px));
-  overflow: auto;
+  box-sizing: border-box;
+  overflow: clip;
   padding: 10px;
   background: #fff;
   border: 1px solid #b9c7d6;

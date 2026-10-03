@@ -72,6 +72,9 @@ founder feedback update these contracts before further tools depend on them.
   conservative bounds for ray rejection; render triangle indexes remain temporary.
   A disk grows from its center to a fixed circular outline over the hold delay; it indicates elapsed hold time, not
   processing. The delay is currently fixed; a future preferences window can expose it.
+  The chooser grows across the available window with complete thumbnail rows and no
+  scrollbar. When the window is full, remaining depth-sorted choices are omitted;
+  hiding entities narrows the choices.
   Each choice shows the actual target geometry in the current camera orientation,
   with subdued body context. Thumbnails share full-scene framing while the target
   spans at least half the usable width or height; smaller targets get a centered
