@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { orient } from "./ui-blend-edit.mjs";
 import { bodyArchiveRoute } from "./ui-body-archive.mjs";
 import { plate } from "./ui-body-fillet.mjs";
 import { worldClick } from "./ui-face-offset.mjs";
@@ -26,6 +27,8 @@ export async function mixedSelectionRoute(page, name, electron) {
   );
   assert.equal((await inspect(page)).modelingTool, null);
   await chooseTool(page, "transform", "transform");
+  // End-on translation handles are hidden; orbit to expose the selected Z axis.
+  await orient(page, [0.5, 0.5, 1]);
   await button(page, "Move faces Z").click();
   await page.getByRole("textbox", { name: "Face translation Z", exact: true }).fill("2");
   let state = await inspect(page);
