@@ -120,7 +120,14 @@ export class OverlapChooser {
         if (plane) this.selectPlane(plane);
       }
     } else {
-      e.modeling.choose(target, event.shiftKey, event.metaKey || event.ctrlKey);
+      if (target.kind === "profiles")
+        e.modeling.chooseProfiles(
+          target.sketch,
+          target.profiles,
+          event.shiftKey,
+          event.metaKey || event.ctrlKey,
+        );
+      else e.modeling.choose(target, event.shiftKey, event.metaKey || event.ctrlKey);
       e.modeling.alternatives = [];
       e.refresh();
     }

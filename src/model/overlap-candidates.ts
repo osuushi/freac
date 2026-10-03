@@ -2,12 +2,14 @@ import * as THREE from "three";
 import type { SketchEditor } from "../sketch/editor.js";
 import type { ModelingTarget } from "../sketch/model-selection-state.js";
 import { type PlaneFrame, type PlaneId, type Point, planes } from "../sketch/planes.js";
+import type { Profile } from "../sketch/profiles.js";
 import { BodyPickProbe } from "./body-picking.js";
 import { edgeRayHits } from "./edge-selection.js";
 import { overlapSketchCandidates } from "./overlap-sketches.js";
 
 export type OverlapTarget =
-  | Extract<ModelingTarget, { kind: "body" | "face" | "edge" | "sketch" }>
+  | Extract<ModelingTarget, { kind: "body" | "face" | "edge" | "sketch" | "profile" }>
+  | { kind: "profiles"; sketch: string; profiles: Profile[] }
   | { kind: "plane"; frame: PlaneFrame; world?: PlaneId; saved?: string };
 export interface OverlapCandidate {
   target: OverlapTarget;
@@ -17,8 +19,7 @@ export interface OverlapCandidate {
 }
 export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapCandidate[] {
   const probe = new BodyPickProbe(editor, screen);
-  const ray = probe.ray,
-    camera = editor.world.camera.position;
+  const ray = probe.ray;
   const bodies = probe.bodies;
   const result: OverlapCandidate[] = [];
   for (const hit of probe.faces())
@@ -55,6 +56,34 @@ export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapC
       .filter((p) => editor.visibility.visible(p.id))
       .map((p) => ({ kind: "plane" as const, frame: p.frame, saved: p.id })),
   ];
+  result.push(...planeCandidates(editor, refs, ray));
+  result.push(
+    ...overlapSketchCandidates(
+      editor,
+      screen,
+      refs.map((r) => r.frame),
+    ),
+  );
+  const rank = (c: OverlapCandidate) =>
+    c.target.kind === "edge" ? 0 : c.target.kind === "face" ? 1 : c.target.kind === "body" ? 2 : 3;
+  return result
+    .filter(
+      (c) =>
+        !editor.modeling.memberBody ||
+        (c.target.kind !== "plane" &&
+          c.target.kind !== "profiles" &&
+          editor.modeling.allows(c.target)),
+    )
+    .sort((a, b) => a.depth - b.depth || rank(a) - rank(b) || a.key.localeCompare(b.key));
+}
+
+function planeCandidates(
+  editor: SketchEditor,
+  refs: Extract<OverlapTarget, { kind: "plane" }>[],
+  ray: THREE.Ray,
+): OverlapCandidate[] {
+  const result: OverlapCandidate[] = [];
+  const camera = editor.world.camera.position;
   for (const target of refs) {
     const { frame } = target,
       u = new THREE.Vector3(...frame.u),
@@ -75,20 +104,5 @@ export function overlapCandidates(editor: SketchEditor, screen: Point): OverlapC
       label: target.world ? `Plane · ${target.world}` : "Plane",
     });
   }
-  result.push(
-    ...overlapSketchCandidates(
-      editor,
-      screen,
-      refs.map((r) => r.frame),
-    ),
-  );
-  const rank = (c: OverlapCandidate) =>
-    c.target.kind === "edge" ? 0 : c.target.kind === "face" ? 1 : c.target.kind === "body" ? 2 : 3;
-  return result
-    .filter(
-      (c) =>
-        !editor.modeling.memberBody ||
-        (c.target.kind !== "plane" && editor.modeling.allows(c.target)),
-    )
-    .sort((a, b) => a.depth - b.depth || rank(a) - rank(b) || a.key.localeCompare(b.key));
+  return result;
 }
