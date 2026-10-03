@@ -63,6 +63,8 @@ jobs:
       - name: Ordinary controls and hidden desktop host
         run: |
           npx playwright install chromium webkit
+          node tests/command-readiness-ui.mjs
+          node tests/face-offset-readiness-ui.mjs
           npm run test:current-tools
           node tests/ui-runtime-cleanup.mjs
           npm run test:electron
