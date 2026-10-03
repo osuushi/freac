@@ -185,7 +185,7 @@ const overlaps = new OverlapInput(editor, (plane) => constructionPlanes.select(p
 const planeCuts = new PlaneCutControls(editor, overlay, constructionPlanes.picker);
 const disposeHost =
   import.meta.env.MODE === "web"
-    ? (await import("../web/chrome.js")).installWebChrome(editor)
+    ? (await import("../web/chrome.js")).installWebChrome(editor, app)
     : (await import("./host-controls.js")).installHostControls(editor, app);
 const disposePlaneEntry = planeEntryTools(editor);
 const toolMenu = new ToolMenu(editor, app);

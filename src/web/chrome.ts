@@ -1,7 +1,9 @@
+import { installControlMenu } from "../sketch/control-menu.js";
 import type { SketchEditor } from "../sketch/editor.js";
 import { toolCatalog } from "../tools/catalog.js";
 
-export function installWebChrome(editor: SketchEditor): () => void {
+export function installWebChrome(editor: SketchEditor, app: HTMLElement): () => void {
+  installControlMenu(app);
   return toolCatalog(editor).register({
     id: "licenses",
     label: "Third-party licenses",
