@@ -50,6 +50,7 @@ void validate(const TopoDS_Shape& shape) {
     if (shape.IsNull() || !BRepCheck_Analyzer(shape).IsValid()) throw std::runtime_error("Kernel produced invalid geometry");
 }
 double volume(const TopoDS_Shape& shape) {
+    KernelTiming timing("volume");
     if (shape.IsNull()) return 0;
     GProp_GProps props;
     bool planar = true;
@@ -59,6 +60,7 @@ double volume(const TopoDS_Shape& shape) {
     if (planar) error = BRepGProp::VolumeProperties(shape, props, 1e-10);
     else {
         Bnd_Box bounds; BRepBndLib::AddOptimal(shape, bounds, false, false);
+        timing.phase("bounds");
         if (bounds.IsVoid()) return 0;
         double lo[3], hi[3]; bounds.Get(lo[0], lo[1], lo[2], hi[0], hi[1], hi[2]);
         // Integrate across spline spans. Ordinary adaptive quadrature can converge
@@ -81,6 +83,7 @@ double volume(const TopoDS_Shape& shape) {
     }
     if (!std::isfinite(error) || error < 0) throw std::runtime_error("Solid volume integration failed");
     const double value = std::abs(props.Mass());
+    timing.phase("integrate");
     if (!std::isfinite(value)) throw std::runtime_error("Non-finite solid volume");
     return value;
 }
@@ -191,7 +194,11 @@ int main() {
     const int processors = std::max(1, OSD_Parallel::NbLogicalProcessors());
     const int threads = configuredThreads ? std::clamp(std::atoi(configuredThreads), 1, processors)
         : processors;
+#ifdef __EMSCRIPTEN__
+    OSD_ThreadPool::DefaultPool(1);
+#else
     OSD_ThreadPool::DefaultPool(threads);
+#endif
     std::cout << std::setprecision(17);
     std::string line;
     while (std::getline(std::cin, line)) {

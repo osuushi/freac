@@ -912,6 +912,41 @@ numerical projection; it is not fitted approximation or weaker validation.
 Makeshift implementation uses the library API; no upstream code was copied.
 Runtime checks and measured timings belong in test results and the local brief.
 
+## Circular twist representation (2026-10-03)
+
+Source observation at configured OCCT commit
+`a016080bf6738d6aeae020badee4e888ad1540a5`:
+[`BRepOffsetAPI_ThruSections::EdgeToBSpline`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepOffsetAPI/BRepOffsetAPI_ThruSections.cxx#L1064-L1134)
+tries a `GeomConvert_ApproxCurve` fit for conics with degree limit 14 before
+falling back to rational conversion. Its
+[`TotalSurf`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepOffsetAPI/BRepOffsetAPI_ThruSections.cxx#L1253-L1286)
+constructs the loft from these prepared section splines. Existing public
+[`BRepBuilderAPI_NurbsConvert::Perform`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepBuilderAPI/BRepBuilderAPI_NurbsConvert.cxx#L47-L54)
+uses [`BRepTools_NurbsConvertModification::NewCurve`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepTools/BRepTools_NurbsConvertModification.cxx#L420-L478)
+to supply rational geometry before that conic-only branch. No upstream code was
+copied; these APIs belong to the already linked OCCT component.
+
+Makeshift inference: full circular sections can move their centers around an
+off-center twist axis while keeping their own seam orientation fixed. Their own
+spin does not change the section geometry. Supply exact rational circles to the
+smooth loft, retaining independent analytic mid-station samples and unchanged
+solid/interference checks. Centered circles/concentric circular boundaries use
+ordinary extrusion/draft. Rational quadratic rim recognition supplies a
+circle descriptor after per-knot-span radial/planar checks at 1e-8 mm; it changes
+neither accepted BRep curves nor their tolerances.
+
+Runtime observation on a fresh 10 mm-radius, 20 mm-deep circle twisted 90° around
+an axis displaced 5 mm: loft/accuracy/solid checks took roughly 40 ms, but two
+span-based volume calls accounted for almost all of a 35-second round trip.
+Fixed seams alone still took about 32 seconds. Rational sections reduced the
+round trip to about 2.9 seconds; profiling separates roughly 1 ms bounds queries
+from roughly 1.43-second integration calls. The result retains one periodic wall
+and two caps, with fewer display triangles. This establishes a representation
+bottleneck for the repro, not that volume integration is generally fast or that
+all circular sweeps are instantaneous. Native checks cover signed/multiple turns,
+draft, independent mid-height mesh sections, history, archive regeneration and
+subsequent cap extrusion.
+
 ## Sweep validation performance (2026-09-21)
 
 Source observation at the same pinned OCCT commit: [`BRepExtrema_ExtPF::Initialize/Perform`](https://github.com/Open-Cascade-SAS/OCCT/blob/a016080bf6738d6aeae020badee4e888ad1540a5/src/BRepExtrema/BRepExtrema_ExtPF.cxx#L41-L108)

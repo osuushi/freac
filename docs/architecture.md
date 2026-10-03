@@ -32,6 +32,7 @@ is a later operation on current geometry, through ordinary Undo.
 | Area | Detail |
 | --- | --- |
 | Agent shell (proposal) | [Harness, portable workspace, CLI and scripting](architecture/agent-shell.md) |
+| Standalone web build | [Local WASM, browser files and independent Pages releases](architecture/web.md) |
 | iPad document handoff | [LAN transport, single editor, input and files](architecture/ipad.md) |
 | Ownership, model, code entry points | [Document model](architecture/model.md), [implementation map](architecture/implementation.md) |
 | Async edits, cancellation, history, files | [Edit lifecycle](architecture/edit-lifecycle.md), [persistence](architecture/persistence.md) |
