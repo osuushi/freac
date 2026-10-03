@@ -94,8 +94,8 @@ async function twoFingerSimilarity(page, touch) {
     [2, 660, 365],
   ]);
   await touch.send("touchMove", [
-    [1, 530, 215],
-    [2, 530, 515],
+    [1, 410, 275],
+    [2, 650, 455],
   ]);
   await page.waitForFunction(
     (height) => Math.abs(window.makeshiftInspect().camera.height - height / 1.5) < 1e-7,
@@ -107,6 +107,16 @@ async function twoFingerSimilarity(page, touch) {
   assert.ok(Math.abs(during.camera.height - before.camera.height / 1.5) < 1e-7);
   assert.ok(Math.abs(moved.x - (530 - (initial.y - 350) * 1.5)) < 1e-5);
   assert.ok(Math.abs(moved.y - (365 + (initial.x - 520) * 1.5)) < 1e-5);
+  await touch.send("touchMove", [
+    [1, 530, 215],
+    [2, 530, 515],
+  ]);
+  await page.waitForTimeout(50);
+  assert.deepEqual(
+    (await inspect(page)).camera.up,
+    during.camera.up,
+    "Further twist cannot fire twice",
+  );
   // Safari duplicates these contacts as GestureEvents; that stream must not apply again.
   await page.locator("canvas").evaluate((canvas) => {
     for (const type of ["gesturestart", "gesturechange", "gestureend"]) {
@@ -129,7 +139,7 @@ async function twoFingerSimilarity(page, touch) {
   assert.deepEqual((await inspect(page)).camera.up, snapped.camera.up);
   await touch.end();
   console.log(
-    "chromium: combined pan/pinch/twist follows both fingers, snaps roll and ignores duplicate Safari gestures",
+    "chromium: combined pan/pinch and one quarter-turn twist, release snap and duplicate Safari suppression",
   );
 }
 

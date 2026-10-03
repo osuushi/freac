@@ -106,11 +106,11 @@ async function explicitRoll(page, bounds) {
   const x = bounds.x + bounds.width / 2,
     y = bounds.y + bounds.height / 2;
   const before = await inspect(page);
-  await page.mouse.move(x, y);
+  await page.mouse.move(x + 100, y);
   await page.keyboard.down("Meta");
   await page.keyboard.down("Alt");
   await page.mouse.down();
-  await page.mouse.move(x + 70, y, { steps: 4 });
+  await page.mouse.move(x + 100, y + 60, { steps: 4 });
   const rolled = await inspect(page);
   assert.notDeepEqual(rolled.camera.up, before.camera.up, "Option drag rolls even at center");
   for (const key of ["position", "target"])
@@ -129,13 +129,13 @@ async function explicitRoll(page, bounds) {
   await page.mouse.move(x + 20, y);
   const orbit = await inspect(page);
   await page.keyboard.down("Alt");
-  await page.mouse.move(x + 60, y);
+  await page.mouse.move(x + 60, y + 40);
   const switched = await inspect(page);
   for (let i = 0; i < 3; i++)
     assert.ok(Math.abs(switched.camera.position[i] - orbit.camera.position[i]) < 1e-8);
   assert.notDeepEqual(switched.camera.up, orbit.camera.up);
   await page.keyboard.up("Alt");
-  await page.mouse.move(x + 90, y);
+  await page.mouse.move(x + 90, y + 40);
   assert.notDeepEqual((await inspect(page)).camera.position, switched.camera.position);
   await page.mouse.up();
   await page.keyboard.up("Meta");

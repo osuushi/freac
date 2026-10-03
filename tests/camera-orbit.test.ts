@@ -59,17 +59,17 @@ test("two center drags turn the view through 180 degrees", () => {
   assert.ok(Math.abs(state.camera.position.x - state.target.x) < 1e-10);
   assert.ok(Math.abs(state.camera.position.z - state.target.z + 120) < 1e-10);
 });
-test("explicit roll uses horizontal travel and preserves viewing direction and target", () => {
+test("explicit roll follows pointer angle one-to-one and preserves view direction", () => {
   const state = view(),
     orbit = new SmoothedTurntable();
   const position = state.camera.position.clone(),
     target = state.target.clone();
-  orbit.begin(state, { x: 0, y: 0 }, new THREE.Vector3(20, 10, 0), true);
-  orbit.drag(state, { x: Math.PI / 4, y: 0.3 }, true);
+  orbit.begin(state, { x: 1, y: 0 }, new THREE.Vector3(20, 10, 0), true);
+  orbit.drag(state, { x: 0, y: -1 }, true);
   assert.ok(state.camera.position.distanceTo(position) < 1e-10);
   assert.ok(state.target.distanceTo(target) < 1e-10);
   assert.ok(state.camera.up.distanceTo(new THREE.Vector3(-1, 0, 0)) < 1e-10);
-  orbit.drag(state, { x: 0, y: 0 }, true);
+  orbit.drag(state, { x: 1, y: 0 }, true);
   assert.ok(state.camera.up.distanceTo(new THREE.Vector3(0, 1, 0)) < 1e-10);
 });
 test("release orientation is an exact signed canonical horizon, preserving view direction", () => {
@@ -184,4 +184,50 @@ test("off-center pivot stays at its screen position without a starting jump", ()
   orbit.drag(state, start);
   assert.ok(state.camera.position.distanceTo(originalPosition) < 1e-10);
   assert.ok(state.target.distanceTo(originalTarget) < 1e-10);
+});
+
+test("selected roll pivot stays fixed in a wide viewport and uses its projected angle", () => {
+  const state = view(),
+    orbit = new SmoothedTurntable();
+  state.camera.left = -80;
+  state.camera.right = 80;
+  state.camera.updateProjectionMatrix();
+  state.camera.updateMatrixWorld();
+  const pivot = new THREE.Vector3(23, -7, 5);
+  const projected = pivot.clone().project(state.camera);
+  const center = { x: projected.x * 2, y: projected.y };
+  orbit.begin(state, { x: center.x + 1, y: center.y }, state.target, true, pivot);
+  orbit.drag(state, { x: center.x, y: center.y - 1 }, true);
+  state.camera.lookAt(state.target);
+  state.camera.updateMatrixWorld();
+  assert.ok(state.camera.up.distanceTo(new THREE.Vector3(-1, 0, 0)) < 1e-10);
+  assert.ok(pivot.clone().project(state.camera).distanceTo(projected) < 1e-10);
+});
+test("angular roll crosses the opposite bearing, completes a circle, and reverses", () => {
+  const state = view(),
+    orbit = new SmoothedTurntable();
+  const point = (angle: number) => ({ x: Math.cos(angle), y: -Math.sin(angle) });
+  orbit.begin(state, point(0), state.target, true);
+  const path = [Math.PI / 2, Math.PI - 0.001, Math.PI + 0.001, (3 * Math.PI) / 2, 2 * Math.PI];
+  for (const angle of [...path, ...path.slice().reverse(), 0]) {
+    orbit.drag(state, point(angle), true);
+    assert.ok(
+      state.camera.up.distanceTo(new THREE.Vector3(-Math.sin(angle), Math.cos(angle), 0)) < 1e-9,
+    );
+  }
+});
+test("radial travel and crossing the roll center cannot flip the camera", () => {
+  const state = view(),
+    orbit = new SmoothedTurntable();
+  orbit.begin(state, { x: -1, y: 0 }, state.target, true);
+  for (const point of [
+    { x: -0.5, y: 0 },
+    { x: 0, y: 0 },
+    { x: 1, y: 0 },
+  ]) {
+    orbit.drag(state, point, true);
+    assert.ok(state.camera.up.distanceTo(new THREE.Vector3(0, 1, 0)) < 1e-10);
+  }
+  orbit.drag(state, { x: 0, y: -1 }, true);
+  assert.ok(state.camera.up.distanceTo(new THREE.Vector3(-1, 0, 0)) < 1e-10);
 });

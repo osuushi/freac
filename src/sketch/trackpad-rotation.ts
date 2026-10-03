@@ -1,6 +1,7 @@
 import { rollCamera } from "./camera-motion.js";
 import type {} from "./navigation-host.js";
-import type { TrackpadSnap } from "./trackpad-snap.js";
+import { QuarterTurn } from "./quarter-turn.js";
+import { type TrackpadSnap, trackpadIdleMs } from "./trackpad-snap.js";
 import type { World } from "./world.js";
 
 /** Native trackpad rotation shares the pointer anchor used by pinch zoom. */
@@ -11,7 +12,8 @@ export function installTrackpadRotation(
 ): void {
   const host = window.makeshiftNavigation;
   if (!host) return;
-  let rotating = false;
+  const turn = new QuarterTurn();
+  let lastRotation = -Infinity;
   let pointer: { x: number; y: number } | null = null;
   window.addEventListener(
     "pointermove",
@@ -22,15 +24,17 @@ export function installTrackpadRotation(
   );
   const clear = () => {
     pointer = null;
-    rotating = false;
+    turn.reset();
+    lastRotation = -Infinity;
     snap.cancel();
   };
   window.addEventListener("blur", clear, { signal });
   document.documentElement.addEventListener("pointerleave", clear, { signal });
   const remove = host.onRotate((degrees) => {
     if (degrees === 0) {
-      if (rotating) snap.release();
-      rotating = false;
+      if (Number.isFinite(lastRotation)) snap.postpone();
+      turn.reset();
+      lastRotation = -Infinity;
       return;
     }
     if (
@@ -49,18 +53,21 @@ export function installTrackpadRotation(
     )
       return;
     const bounds = world.canvas.getBoundingClientRect();
-    rotating = true;
-    snap.hold();
+    const now = performance.now();
+    if (now - lastRotation >= trackpadIdleMs) turn.reset();
+    lastRotation = now;
+    const radians = turn.update((degrees * Math.PI) / 180);
     world.cancelCameraMotion();
-    rollCamera(
-      world,
-      (degrees * Math.PI) / 180,
-      {
-        x: pointer.x - bounds.left - bounds.width / 2,
-        y: pointer.y - bounds.top - bounds.height / 2,
-      },
-      bounds.height,
-    );
+    if (radians)
+      rollCamera(
+        world,
+        radians,
+        {
+          x: pointer.x - bounds.left - bounds.width / 2,
+          y: pointer.y - bounds.top - bounds.height / 2,
+        },
+        bounds.height,
+      );
     world.requestDraw();
     snap.request();
   });

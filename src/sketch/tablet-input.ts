@@ -1,6 +1,7 @@
 import type {} from "../ipad/protocol.js";
 import { panCamera, rollCamera, zoomCamera } from "./camera-motion.js";
 import type { Point } from "./planes.js";
+import { QuarterTurn } from "./quarter-turn.js";
 import type { World } from "./world.js";
 
 /** Touch navigates before geometry listeners. Pen/mouse retain ordinary tool routes. */
@@ -14,6 +15,8 @@ class TabletInput {
   private pen: number | null = null;
   private rotating = false;
   private twisting = false;
+  private readonly twist = new QuarterTurn();
+  private pairFrame: number | null = null;
   private suppressClickUntil = 0;
   constructor(
     private world: World,
@@ -70,6 +73,9 @@ class TabletInput {
     if (this.rotating) this.world.orbit.end();
     this.rotating = false;
     this.twisting = false;
+    this.twist.reset();
+    if (this.pairFrame !== null) cancelAnimationFrame(this.pairFrame);
+    this.pairFrame = null;
   }
   private rebase(): void {
     this.endOrbit();
@@ -104,6 +110,7 @@ class TabletInput {
     this.world.longPress?.(event);
     consume(event);
     this.suppressClickUntil = performance.now() + 1000;
+    this.flushPair();
     this.touches.set(event.pointerId, point(event));
     this.world.canvas.setPointerCapture(event.pointerId);
     if (this.pen === null && this.world.canNavigate()) this.world.cancelCameraMotion();
@@ -129,7 +136,19 @@ class TabletInput {
         this.rotating = true;
       }
       if (this.rotating) this.world.orbit.drag(this.world, this.sphere(points[0]));
-    } else if (points.length === 2) this.panZoom(points);
+    } else if (points.length === 2 && this.pairFrame === null)
+      this.pairFrame = requestAnimationFrame(this.flushPair);
+    this.world.requestDraw();
+  };
+  // Both contacts arrive as separate pointer events. Sample together per frame so
+  // a translation cannot look like a threshold-crossing twist between the events.
+  private flushPair = (): void => {
+    if (this.pairFrame === null) return;
+    cancelAnimationFrame(this.pairFrame);
+    this.pairFrame = null;
+    const points = [...this.touches.values()];
+    if (points.length !== 2 || this.pen !== null || !this.world.canNavigate()) return;
+    this.panZoom(points);
     this.world.requestDraw();
   };
   private panZoom(points: Point[]): void {
@@ -149,8 +168,11 @@ class TabletInput {
         };
         zoomCamera(this.world, this.previous.distance / next.distance, offset, bounds.height);
         const angle = next.angle - this.previous.angle;
-        if (Math.abs(angle) > 1e-10) this.twisting = true;
-        rollCamera(this.world, Math.atan2(Math.sin(angle), Math.cos(angle)), offset, bounds.height);
+        const turn = this.twist.update(Math.atan2(Math.sin(angle), Math.cos(angle)));
+        if (turn) {
+          this.twisting = true;
+          rollCamera(this.world, turn, offset, bounds.height);
+        }
       }
     }
     this.previous = next;
@@ -160,7 +182,9 @@ class TabletInput {
       this.pen = null;
       return;
     }
-    if (!this.touches.delete(event.pointerId)) return;
+    if (!this.touches.has(event.pointerId)) return;
+    this.flushPair();
+    this.touches.delete(event.pointerId);
     this.world.longPress?.(event);
     consume(event);
     this.suppressClickUntil = performance.now() + 1000;

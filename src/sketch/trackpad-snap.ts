@@ -1,5 +1,7 @@
 import type { World } from "./world.js";
 
+export const trackpadIdleMs = 200;
+
 /** Pinch and native twist settle together, after their last input has gone quiet. */
 export class TrackpadSnap {
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -48,6 +50,6 @@ export class TrackpadSnap {
       this.timer = null;
       this.pending = false;
       if (this.world.canNavigate() && !this.world.orbit.active) this.world.levelHorizon();
-    }, 200);
+    }, trackpadIdleMs);
   }
 }

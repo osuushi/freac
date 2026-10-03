@@ -67,6 +67,7 @@ export class World {
   private readonly sketchClip = new THREE.Plane();
   readonly orbit = new SmoothedTurntable();
   orbitPivot: (press: Point) => THREE.Vector3 = () => this.target.clone();
+  rollPivot: () => THREE.Vector3 | null = () => null;
   private rotationPivot = new THREE.Vector3();
   get currentOrbitPivot(): THREE.Vector3 {
     return this.rotationPivot.clone();
@@ -74,8 +75,9 @@ export class World {
   beginOrbit(pointer: OrbitPointer, press: Point, roll = false): void {
     this.cancelCameraMotion();
     this.rotationPivot.copy(this.orbitPivot(press));
+    const rollPivot = this.rollPivot();
     if (this.active) this.exit();
-    this.orbit.begin(this, pointer, this.rotationPivot, roll);
+    this.orbit.begin(this, pointer, this.rotationPivot, roll, rollPivot);
   }
   get cameraTransitioning(): boolean {
     return this.cameraAnimation !== null;
