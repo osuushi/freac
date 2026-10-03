@@ -238,7 +238,8 @@ void erosion::checkCoverage(const TopoDS_Shape& source, const TopoDS_Shape& cand
         bool operator<(const Region& other) const { return upper < other.upper; }
     };
     std::priority_queue<Region> pending;
-    pending.push({root, original.upper(root)});
+    const double coveredDepth = depth + tolerance/4;
+    pending.push({root, original.upper(root, coveredDepth)});
     const auto start = std::chrono::steady_clock::now();
     size_t visits = 0;
     while (!pending.empty()) {
@@ -248,7 +249,7 @@ void erosion::checkCoverage(const TopoDS_Shape& source, const TopoDS_Shape& cand
         }
         const auto region = pending.top(); pending.pop();
         const auto& cell = region.cell;
-        if (region.upper <= depth + tolerance/4) continue;
+        if (region.upper <= coveredDepth) continue;
         if (result.contains(cell)) continue;
         if (original.deeper(cell.center(), depth + tolerance) && !result.contains(cell.center()))
             throw CoverageFailure("Erosion needs more allowance to preserve the required interior",
@@ -259,7 +260,9 @@ void erosion::checkCoverage(const TopoDS_Shape& source, const TopoDS_Shape& cand
         const auto [left, right] = subdivide(cell);
         // Largest unresolved clearance first: the queue's maximum is also a
         // conservative depth that covers every region not yet certified.
-        pending.push({left, original.upper(left)});
-        pending.push({right, original.upper(right)});
+        // Once a conservative upper bound certifies a cell, tighter distances
+        // cannot change its outcome. Avoid classifying its remaining supports.
+        pending.push({left, original.upper(left, coveredDepth)});
+        pending.push({right, original.upper(right, coveredDepth)});
     }
 }

@@ -33,6 +33,11 @@ void distanceBounds() {
         if (!distance.IsDone() || bounds.lower(point) > distance.Value()+1e-6 ||
             bounds.upper(point) < distance.Value()-1e-6)
             throw std::runtime_error("Trimmed curved distance bounds are not conservative");
+        for (const double limit : {0.1, 1.0, 10.0}) {
+            const double upper = bounds.upper(point, limit);
+            if (!std::isfinite(upper) || upper < distance.Value()-1e-6)
+                throw std::runtime_error("Early distance certification underestimated the boundary");
+        }
         std::array<gp_Pnt, 8> corners;
         for (int i = 0; i < 8; ++i) corners[i] = gp_Pnt(
             point.X()+(i&1 ? 0.1 : -0.1), point.Y()+(i&2 ? 0.1 : -0.1), point.Z()+(i&4 ? 0.1 : -0.1));

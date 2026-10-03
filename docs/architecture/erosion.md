@@ -88,9 +88,13 @@ needlessly multiply Cartesian cells. Full concentric spherical shells additional
 have an exact radial-interval coverage certificate. These change verification cost,
 not accepted geometry or distance budgets.
 
-Cells with the largest unresolved clearance are checked first. A coverage-limit
-failure stops repeated construction attempts rather than spending the same limit
-again on similar proposals. When a minimum-thickness-valid candidate supplies a
+Cells with the largest unresolved clearance are checked first. Coverage
+stops refining a cell's conservative distance bound as soon as that bound
+certifies the requested depth, avoiding unnecessary boundary classifications.
+Trimmed supports whose lower bound cannot improve an existing boundary witness
+also skip classification. A coverage-limit failure stops repeated construction
+attempts rather than spending the same limit again on similar proposals.
+When a minimum-thickness-valid candidate supplies a
 finite bound on its remaining uncovered regions, the failure includes a rounded,
 conservative allowance suggestion with 32% headroom before rounding upward.
 The UI rounds this upward to a multiple of 10%. The local **Try …% allowance** button
