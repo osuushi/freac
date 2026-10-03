@@ -125,7 +125,11 @@ int main() {
     const int processors = std::max(1, OSD_Parallel::NbLogicalProcessors());
     const int threads = configuredThreads ? std::clamp(std::atoi(configuredThreads), 1, processors)
         : processors;
+#ifdef __EMSCRIPTEN__
+    OSD_ThreadPool::DefaultPool(1);
+#else
     OSD_ThreadPool::DefaultPool(threads);
+#endif
     std::cout << std::setprecision(17);
     std::string line;
     while (std::getline(std::cin, line)) {

@@ -131,3 +131,12 @@ button:focus-visible {
   font-size: 11px;
   pointer-events: none;
 }
+
+@media (max-width: 1100px) {
+  .navigation-hint {
+    display: none;
+  }
+  .status {
+    right: 26px;
+  }
+}
