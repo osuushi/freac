@@ -35,6 +35,8 @@ extrusion, history, archive round trips, STEP export, calculator failure/cancell
 and portrait pen/touch emulation. Physical iPad/Pencil behavior remains a device check. Install them with
 `npx playwright install chromium webkit` (Linux may need `--with-deps`).
 `npm run size:web` reports raw, gzip and Brotli sizes, not guaranteed network sizes.
+`WEB_MODE=1 node tests/control-menu-ui.mjs` verifies the built web app's Mouse/Trackpad
+menu, saved preference and camera gestures in both browsers; releases also run this route.
 
 ## Independent Pages repository
 

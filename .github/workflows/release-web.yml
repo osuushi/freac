@@ -64,6 +64,7 @@ jobs:
           npm run typecheck
           npm run check
           npm run test:web
+          WEB_MODE=1 node tests/control-menu-ui.mjs
       - name: Prepare binary, source and license artifacts
         id: release
         run: |
