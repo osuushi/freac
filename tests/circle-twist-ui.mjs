@@ -38,6 +38,24 @@ async function guard(page, disabled) {
   }
 }
 
+async function deleteAndClear(page, accepted) {
+  await page.getByRole("button", { name: "Select Body 1", exact: true }).click();
+  await page.keyboard.press("Delete");
+  let state = await inspect(page);
+  assert.deepEqual(state.document.bodies, []);
+  assert.deepEqual(state.document.sketches, accepted.sketches);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, accepted);
+  await page.getByRole("button", { name: "Select Sketch 1", exact: true }).click();
+  await chooseTool(page, "edit sketch", "edit-sketch");
+  await chooseTool(page, "clear sketch", "clear-sketch");
+  state = await inspect(page);
+  assert.equal(state.document.sketches[0].curves.length, 0);
+  assert.deepEqual(state.document.bodies, accepted.bodies);
+  await chooseTool(page, "undo", "undo");
+  assert.deepEqual((await inspect(page)).document, accepted);
+}
+
 await withUiRuntimes(
   async (page, name) => {
     await reset(page);
@@ -98,8 +116,9 @@ await withUiRuntimes(
     await inspect(page);
     await page.getByRole("button", { name: "Cancel extrusion", exact: true }).click();
     assert.deepEqual((await inspect(page)).document, accepted);
+    await deleteAndClear(page, accepted);
     console.log(
-      `${name}: circle twist guard/tooltip, axis cancel/reposition/recenter, real preview, acceptance/history and cap re-edit passed`,
+      `${name}: circle twist guard/tooltip, axis cancel/reposition/recenter, real preview, acceptance/history, cap re-edit and Delete/Clear passed`,
     );
   },
   { timeout: 30000 },
