@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { chromium, webkit } from "playwright";
 import { launchElectron } from "./native-documents.mjs";
+import { project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { assertPivot, makePivotBox, pressOnPlane } from "./ui-orbit-pivot.mjs";
+import { assertRollAnchor, assertSmoothRoll, recordRoll } from "./ui-roll-animation.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function touchDriver(page, name) {
@@ -71,23 +73,7 @@ async function route(page, name) {
       await touch.end();
       assert.deepEqual((await inspect(page)).document, before.document);
     }
-    if (touch.send) {
-      const before = await inspect(page);
-      await touch.send("touchStart", [[1, 420, 350]]);
-      await touch.send("touchStart", [
-        [1, 420, 350],
-        [2, 620, 350],
-      ]);
-      await touch.send("touchMove", [
-        [1, 400, 365],
-        [2, 660, 365],
-      ]);
-      assert.equal((await inspect(page)).camera.orbitActive, false);
-      await touch.end();
-      const after = await inspect(page);
-      assert.notEqual(after.camera.height, before.camera.height);
-      assert.deepEqual(after.document, before.document);
-    }
+    if (touch.send) await twoFingerSimilarity(page, touch);
     console.log(
       `${name}: touch press ray and empty-space nearest pivot work without hover and stay frozen; no geometry edits`,
     );
@@ -95,6 +81,79 @@ async function route(page, name) {
     await touch.dispose();
   }
 }
+async function twoFingerSimilarity(page, touch) {
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
+  const before = await inspect(page);
+  const xyz = [5, 4, 12],
+    initial = await project(page, xyz);
+  await touch.send("touchStart", [[1, 420, 350]]);
+  await touch.send("touchStart", [
+    [1, 420, 350],
+    [2, 620, 350],
+  ]);
+  await touch.send("touchMove", [
+    [1, 400, 365],
+    [2, 660, 365],
+  ]);
+  await recordRoll(page);
+  await touch.send("touchMove", [
+    [1, 410, 275],
+    [2, 650, 455],
+  ]);
+  await page.waitForFunction(
+    (height) => Math.abs(window.makeshiftInspect().camera.height - height / 1.5) < 1e-7,
+    before.camera.height,
+  );
+  await touch.send("touchMove", [
+    [1, 560, 240],
+    [2, 560, 540],
+  ]);
+  await touch.end();
+  assert.equal(
+    await page.evaluate(() => window.makeshiftInspect().camera.moving),
+    true,
+    "Early release lets the turn animation finish",
+  );
+  const during = await inspect(page),
+    moved = await project(page, xyz);
+  await assertSmoothRoll(page, before, Math.PI / 2);
+  await assertRollAnchor(page, before, { x: 520, y: 350 }, [
+    { x: 530, y: 365 },
+    { x: 560, y: 390 },
+  ]);
+  assert.equal(during.camera.orbitActive, false);
+  assert.ok(Math.abs(during.camera.height - before.camera.height / 1.5) < 1e-7);
+  assert.ok(Math.abs(moved.x - (560 - (initial.y - 350) * 1.5)) < 1e-5);
+  assert.ok(Math.abs(moved.y - (390 + (initial.x - 520) * 1.5)) < 1e-5);
+  // Safari duplicates these contacts as GestureEvents; that stream must not apply again.
+  await page.locator("canvas").evaluate((canvas) => {
+    for (const type of ["gesturestart", "gesturechange", "gestureend"]) {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.assign(event, { scale: 1.5, rotation: 90 });
+      canvas.dispatchEvent(event);
+    }
+  });
+  assert.deepEqual((await inspect(page)).camera, during.camera);
+  const snapped = await inspect(page);
+  assert.deepEqual(
+    snapped.camera.up,
+    during.camera.up,
+    "Release does not start another correction",
+  );
+  assert.deepEqual((await inspect(page)).document, before.document);
+  // A stationary remaining contact neither snaps nor starts another orbit.
+  await touch.send("touchStart", [
+    [1, 530, 215],
+    [2, 530, 515],
+  ]);
+  await touch.send("touchEnd", [[1, 530, 215]]);
+  assert.deepEqual((await inspect(page)).camera.up, snapped.camera.up);
+  await touch.end();
+  console.log(
+    "chromium: combined pan/pinch, smooth quarter-turn with early release, and duplicate Safari suppression",
+  );
+}
+
 const app = await launchElectron({
   args: ["."],
   env: { ...process.env, MAKESHIFT_TEST_HIDDEN: "1", MAKESHIFT_DEV_URL: "" },
@@ -106,7 +165,8 @@ try {
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()),
     false,
   );
-  await desktop.getByRole("button", { name: "iPad", exact: true }).click();
+  await desktop.getByRole("button", { name: "Trackpad", exact: true }).click();
+  await desktop.getByRole("button", { name: "Tablet", exact: true }).click();
   const url = await desktop.locator(".ipad-addresses a").first().getAttribute("href");
   for (const [name, engine] of Object.entries({ chromium, webkit })) {
     const browser = await engine.launch({ headless: true });

@@ -62,9 +62,9 @@ export async function trackballRoute(page, name) {
   assert.notDeepEqual(panned.camera.target, cancelled.camera.target);
   assert.equal(await diagnostic.isVisible(), false);
   assert.deepEqual(panned.document, before.document);
-  await releaseLeveling(page, bounds);
+  await explicitRoll(page, bounds);
   console.log(
-    `${name}: smoothed turntable stays level in the center, rolls at the rim, isolates editing and ends on release/Escape`,
+    `${name}: uniform turntable orbits at the rim; Option rolls explicitly, isolates editing and ends on release/Escape`,
   );
 }
 
@@ -102,33 +102,51 @@ async function centerTurntable(page) {
   assert.deepEqual(ended.document, before.document);
 }
 
-async function releaseLeveling(page, bounds) {
+async function explicitRoll(page, bounds) {
   const x = bounds.x + bounds.width / 2,
     y = bounds.y + bounds.height / 2;
-  const r = Math.min(bounds.width, bounds.height) / 2;
-  await page.mouse.move(x + r * 1.1, y);
+  const before = await inspect(page);
+  await page.mouse.move(x + 100, y);
+  await page.keyboard.down("Meta");
+  await page.keyboard.down("Alt");
+  await page.mouse.down();
+  await page.mouse.move(x + 100, y + 60, { steps: 4 });
+  const rolled = await inspect(page);
+  assert.notDeepEqual(rolled.camera.up, before.camera.up, "Option drag rolls even at center");
+  for (const key of ["position", "target"])
+    for (let i = 0; i < 3; i++)
+      assert.ok(Math.abs(rolled.camera[key][i] - before.camera[key][i]) < 1e-8);
+  await page.mouse.up();
+  await page.keyboard.up("Alt");
+  await page.keyboard.up("Meta");
+  const after = await inspect(page);
+  assert.notDeepEqual(after.camera.up, rolled.camera.up, "Explicit roll snaps on release");
+  assert.deepEqual(after.document, before.document);
+
+  await page.mouse.move(x, y);
   await page.keyboard.down("Meta");
   await page.mouse.down();
-  await page.mouse.move(x + r * 1.1, y - r * 0.3, { steps: 4 });
-  const before = await inspect(page);
+  await page.mouse.move(x + 20, y);
+  const orbit = await inspect(page);
+  await page.keyboard.down("Alt");
+  await page.mouse.move(x + 60, y + 40);
+  const switched = await inspect(page);
+  for (let i = 0; i < 3; i++)
+    assert.ok(Math.abs(switched.camera.position[i] - orbit.camera.position[i]) < 1e-8);
+  assert.notDeepEqual(switched.camera.up, orbit.camera.up);
+  await page.keyboard.up("Alt");
+  await page.mouse.move(x + 90, y + 40);
+  assert.notDeepEqual((await inspect(page)).camera.position, switched.camera.position);
   await page.mouse.up();
   await page.keyboard.up("Meta");
-  const immediate = await page.evaluate(() => window.makeshiftInspect().camera);
-  assert.equal(immediate.moving, true, "Mouse-up starts leveling animation");
-  const after = await inspect(page);
-  assert.notDeepEqual(after.camera.up, before.camera.up, "Release corrects roll");
-  for (let i = 0; i < 3; i++)
-    assert.ok(Math.abs(after.camera.position[i] - before.camera.position[i]) < 1e-8);
-  assert.deepEqual(after.camera.target, before.camera.target);
-  assert.equal(after.camera.height, before.camera.height);
-  const direction = after.camera.position.map((v, i) => v - after.camera.target[i]);
-  const distance = Math.hypot(...direction);
-  const n = direction.map((v) => v / distance),
-    u = after.camera.up;
+  const level = await inspect(page);
+  assert.deepEqual(level.document, before.document);
+  const direction = level.camera.position.map((v, i) => v - level.camera.target[i]);
+  const n = direction.map((v) => v / Math.hypot(...direction)),
+    u = level.camera.up;
   const right = [u[1] * n[2] - u[2] * n[1], u[2] * n[0] - u[0] * n[2], u[0] * n[1] - u[1] * n[0]];
   assert.ok(
     right.some((v, i) => Math.abs(n[i]) < 1 - 1e-8 && Math.abs(v) < 1e-8),
-    "Final canonical horizon is exact",
+    "Ordinary orbit still levels on release",
   );
-  assert.deepEqual(after.document, before.document);
 }

@@ -106,3 +106,28 @@ export function zoomCamera(
   view.target.add(delta);
   view.camera.position.add(delta);
 }
+
+/** Clockwise screen rotation, keeping the world point under the gesture center fixed. */
+export function rollCamera(
+  view: View,
+  radians: number,
+  pointerOffset: Point,
+  viewportHeight: number,
+): void {
+  view.camera.lookAt(view.target);
+  view.camera.updateMatrixWorld();
+  const scale = view.height / Math.max(1, viewportHeight);
+  const right = new THREE.Vector3().setFromMatrixColumn(view.camera.matrixWorld, 0);
+  const up = new THREE.Vector3().setFromMatrixColumn(view.camera.matrixWorld, 1);
+  const pivot = view.target
+    .clone()
+    .addScaledVector(right, pointerOffset.x * scale)
+    .addScaledVector(up, -pointerOffset.y * scale);
+  const axis = view.camera.position.clone().sub(view.target).normalize();
+  const rotation = new THREE.Quaternion().setFromAxisAngle(axis, radians);
+  view.target.sub(pivot).applyQuaternion(rotation).add(pivot);
+  view.camera.position.sub(pivot).applyQuaternion(rotation).add(pivot);
+  view.camera.up.applyQuaternion(rotation);
+  view.camera.lookAt(view.target);
+  view.camera.updateMatrixWorld();
+}

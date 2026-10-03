@@ -94,21 +94,30 @@ class CubeInput {
       )
         return;
       press.dragging = true;
-      this.world.beginOrbit(coordinates(start, press.bounds), {
-        x: start.clientX,
-        y: start.clientY,
-      });
+      this.world.beginOrbit(
+        coordinates(start, press.bounds, this.world.canvas.getBoundingClientRect()),
+        {
+          x: start.clientX,
+          y: start.clientY,
+        },
+        event.altKey,
+      );
       this.view.cube.classList.add("dragging");
     }
-    this.world.orbit.drag(this.world, coordinates(event, press.bounds));
+    this.world.orbit.drag(
+      this.world,
+      coordinates(event, press.bounds, this.world.canvas.getBoundingClientRect()),
+      event.altKey,
+    );
     this.world.requestDraw();
   };
   private release = (event: PointerEvent): void => {
     const press = this.press;
     if (!press || press.event.pointerId !== event.pointerId) return;
     this.stop();
-    if (press.dragging) this.world.levelHorizon();
-    else {
+    if (press.dragging) {
+      this.world.levelHorizon();
+    } else {
       const entry = this.view.entries.find(({ group }) =>
         group.contains(press.event.target as Node),
       );
@@ -132,8 +141,13 @@ class CubeInput {
   }
 }
 
-function coordinates(event: PointerEvent, bounds: DOMRect) {
+function coordinates(event: PointerEvent, bounds: DOMRect, viewport: DOMRect) {
+  const radius = Math.max(1, Math.min(viewport.width, viewport.height) / 2);
   return {
+    viewport: {
+      x: (event.clientX - viewport.left - viewport.width / 2) / radius,
+      y: -(event.clientY - viewport.top - viewport.height / 2) / radius,
+    },
     x: (event.clientX - bounds.left - bounds.width / 2) / (bounds.width / 2),
     y: -(event.clientY - bounds.top - bounds.height / 2) / (bounds.height / 2),
   };

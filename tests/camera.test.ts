@@ -6,6 +6,7 @@ import {
   applyCameraPose,
   panCamera,
   planeCameraPose,
+  rollCamera,
   zoomCamera,
 } from "../src/sketch/camera-motion.js";
 import { planes } from "../src/sketch/planes.js";
@@ -79,4 +80,28 @@ test("pan translates camera and target equally; pointer-centered zoom respects l
   assert.equal(view.height, 10000);
   zoomCamera(view, 1e-10, { x: 0, y: 0 }, 800);
   assert.equal(view.height, 0.5);
+});
+
+test("two-finger similarity motion maps both world points to the new finger positions", () => {
+  const camera = new THREE.OrthographicCamera(-50, 50, 40, -40);
+  camera.position.set(0, 0, 120);
+  const view = { camera, target: new THREE.Vector3(), height: 80 };
+  camera.lookAt(view.target);
+  camera.updateMatrixWorld();
+  // Screen starts: (100, 40), (300, 40), relative to viewport center.
+  const points = [new THREE.Vector3(10, -4, 0), new THREE.Vector3(30, -4, 0)];
+  // Translate midpoint by (20, 30), scale by 1.5, rotate clockwise by 90°.
+  panCamera(view, 20, 30, 800);
+  zoomCamera(view, 1 / 1.5, { x: 220, y: 70 }, 800);
+  rollCamera(view, Math.PI / 2, { x: 220, y: 70 }, 800);
+  camera.left = (-view.height * 1.25) / 2;
+  camera.right = -camera.left;
+  camera.top = view.height / 2;
+  camera.bottom = -camera.top;
+  camera.updateProjectionMatrix();
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i].project(camera);
+    assert.ok(Math.abs(p.x * 500 - 220) < 1e-8);
+    assert.ok(Math.abs(-p.y * 400 - (i === 0 ? -80 : 220)) < 1e-8);
+  }
 });

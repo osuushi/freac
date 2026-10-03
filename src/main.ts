@@ -1,6 +1,6 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, screen } from "electron";
 import { DocumentOwner } from "./backend/document-owner.js";
 import { MeshCalculator } from "./backend/mesh-calculator.js";
 import { NativeSolver } from "./backend/native-solver.js";
@@ -83,6 +83,17 @@ async function createWindow(): Promise<void> {
   });
   documentWindow = window;
   rememberWindowSize(window);
+  window.on("rotate-gesture", (_event, rotation) => {
+    if (documents.remote?.active() || !Number.isFinite(rotation)) return;
+    const cursor = screen.getCursorScreenPoint();
+    const content = window.getContentBounds();
+    const zoom = window.webContents.getZoomFactor();
+    window.webContents.send("navigation-rotate", -rotation, {
+      x: (cursor.x - content.x) / zoom,
+      y: (cursor.y - content.y) / zoom,
+    });
+  });
+
   window.webContents.on("did-start-loading", () => meshCalculator.close());
   window.webContents.on("render-process-gone", () => meshCalculator.close());
   window.on("closed", () => {
