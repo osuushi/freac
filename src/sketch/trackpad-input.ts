@@ -62,7 +62,7 @@ function installGestures(
       (event) => {
         event.preventDefault();
         if (world.canNavigate() && !world.orbit.active) {
-          world.cancelCameraMotion();
+          world.cancelCameraMotion(true);
           setScale(1);
           snap.hold();
         }
@@ -107,7 +107,7 @@ function installWheel(
       (event) => {
         event.preventDefault();
         if (!world.canNavigate() || world.orbit.active || pinching()) return;
-        world.cancelCameraMotion();
+        world.cancelCameraMotion(true);
         const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientHeight : 1;
         if (event.ctrlKey || controlMode() === "mouse") {
           const speed = event.ctrlKey ? 0.01 : 0.002;

@@ -27,6 +27,7 @@ export class TrackpadSnap {
     this.timer = null;
   }
   cancel = (): void => {
+    this.world.rollAnimation.cancel();
     this.clearTimer();
     this.held = false;
     this.pending = false;

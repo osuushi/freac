@@ -115,8 +115,11 @@ recognizes a two-finger twist as one 90° view turn about the cursor. Accumulate
 travel must reach 15° in either direction; smaller motion does not turn the view.
 Once triggered, further rotation packets cannot produce another turn until the
 gesture ends. A terminal zero or 200 ms idle rearms recognition. Native twist never
-waits for a terminal packet to snap: every accepted packet requests delayed leveling.
-Pinch remains continuous and shares the 200 ms idle delay; later zoom packets
+waits for a terminal packet to snap. The quarter-turn and canonical-axis correction
+are resolved together before movement, then animated directly to that destination
+over 280 ms with monotonic ease-out (immediate with reduced motion). Later twist
+packets and release do not restart or correct the animation. Pan and pinch compose
+with its incremental roll. Pinch retains its 200 ms idle leveling delay; later zoom packets
 restart it, so continued pinch cannot strand an interrupted snap. WebKit's explicit
 pinch lifetime holds leveling until its end event. Pointer-down, Escape, blur and
 disposal cancel pending leveling; the callback also checks editing/orbit guards.
@@ -129,7 +132,8 @@ Two fingers continuously pan and pinch; twisting 15° triggers one 90° turn abo
 their midpoint. Further twist in that contact gesture cannot repeat the turn.
 The pair is sampled once per frame so separate pointer updates during a pan do
 not spuriously cross the twist threshold. Contact-count changes rebase recognition;
-release levels the turned view while preserving the sketch workspace. Safari's
+the turn animates directly to the leveled destination while preserving the sketch
+workspace. Release does not start another correction. Safari's
 duplicate gesture events are consumed by the tablet adapter, applying navigation
 once. Physical trackpad/iPad gesture feel remains a device-review requirement.
 

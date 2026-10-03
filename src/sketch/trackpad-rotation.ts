@@ -1,4 +1,3 @@
-import { rollCamera } from "./camera-motion.js";
 import type {} from "./navigation-host.js";
 import { QuarterTurn } from "./quarter-turn.js";
 import { type TrackpadSnap, trackpadIdleMs } from "./trackpad-snap.js";
@@ -57,10 +56,8 @@ export function installTrackpadRotation(
     if (now - lastRotation >= trackpadIdleMs) turn.reset();
     lastRotation = now;
     const radians = turn.update((degrees * Math.PI) / 180);
-    world.cancelCameraMotion();
     if (radians)
-      rollCamera(
-        world,
+      world.rollAnimation.start(
         radians,
         {
           x: pointer.x - bounds.left - bounds.width / 2,
@@ -69,7 +66,6 @@ export function installTrackpadRotation(
         bounds.height,
       );
     world.requestDraw();
-    snap.request();
   });
   signal.addEventListener("abort", remove, { once: true });
 }

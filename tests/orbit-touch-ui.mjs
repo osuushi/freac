@@ -4,6 +4,7 @@ import { launchElectron } from "./native-documents.mjs";
 import { project } from "./ui-blend-edit.mjs";
 import { inspect } from "./ui-helpers.mjs";
 import { assertPivot, makePivotBox, pressOnPlane } from "./ui-orbit-pivot.mjs";
+import { assertSmoothRoll, recordRoll } from "./ui-roll-animation.mjs";
 import { chooseTool } from "./ui-tools.mjs";
 
 async function touchDriver(page, name) {
@@ -81,6 +82,7 @@ async function route(page, name) {
   }
 }
 async function twoFingerSimilarity(page, touch) {
+  await chooseTool(page, "Sketch on XY", "sketch-xy");
   const before = await inspect(page);
   const xyz = [5, 4, 12],
     initial = await project(page, xyz);
@@ -93,6 +95,7 @@ async function twoFingerSimilarity(page, touch) {
     [1, 400, 365],
     [2, 660, 365],
   ]);
+  await recordRoll(page);
   await touch.send("touchMove", [
     [1, 410, 275],
     [2, 650, 455],
@@ -101,22 +104,23 @@ async function twoFingerSimilarity(page, touch) {
     (height) => Math.abs(window.makeshiftInspect().camera.height - height / 1.5) < 1e-7,
     before.camera.height,
   );
-  const during = await inspect(page),
-    moved = await project(page, xyz);
-  assert.equal(during.camera.orbitActive, false);
-  assert.ok(Math.abs(during.camera.height - before.camera.height / 1.5) < 1e-7);
-  assert.ok(Math.abs(moved.x - (530 - (initial.y - 350) * 1.5)) < 1e-5);
-  assert.ok(Math.abs(moved.y - (365 + (initial.x - 520) * 1.5)) < 1e-5);
   await touch.send("touchMove", [
     [1, 530, 215],
     [2, 530, 515],
   ]);
-  await page.waitForTimeout(50);
-  assert.deepEqual(
-    (await inspect(page)).camera.up,
-    during.camera.up,
-    "Further twist cannot fire twice",
+  await touch.end();
+  assert.equal(
+    await page.evaluate(() => window.makeshiftInspect().camera.moving),
+    true,
+    "Early release lets the turn animation finish",
   );
+  const during = await inspect(page),
+    moved = await project(page, xyz);
+  await assertSmoothRoll(page, before, Math.PI / 2);
+  assert.equal(during.camera.orbitActive, false);
+  assert.ok(Math.abs(during.camera.height - before.camera.height / 1.5) < 1e-7);
+  assert.ok(Math.abs(moved.x - (530 - (initial.y - 350) * 1.5)) < 1e-5);
+  assert.ok(Math.abs(moved.y - (365 + (initial.x - 520) * 1.5)) < 1e-5);
   // Safari duplicates these contacts as GestureEvents; that stream must not apply again.
   await page.locator("canvas").evaluate((canvas) => {
     for (const type of ["gesturestart", "gesturechange", "gestureend"]) {
@@ -126,9 +130,12 @@ async function twoFingerSimilarity(page, touch) {
     }
   });
   assert.deepEqual((await inspect(page)).camera, during.camera);
-  await touch.end();
   const snapped = await inspect(page);
-  assert.notDeepEqual(snapped.camera.up, during.camera.up, "Twist levels on release");
+  assert.deepEqual(
+    snapped.camera.up,
+    during.camera.up,
+    "Release does not start another correction",
+  );
   assert.deepEqual((await inspect(page)).document, before.document);
   // A stationary remaining contact neither snaps nor starts another orbit.
   await touch.send("touchStart", [
@@ -139,7 +146,7 @@ async function twoFingerSimilarity(page, touch) {
   assert.deepEqual((await inspect(page)).camera.up, snapped.camera.up);
   await touch.end();
   console.log(
-    "chromium: combined pan/pinch and one quarter-turn twist, release snap and duplicate Safari suppression",
+    "chromium: combined pan/pinch, smooth quarter-turn with early release, and duplicate Safari suppression",
   );
 }
 

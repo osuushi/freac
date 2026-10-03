@@ -1,5 +1,5 @@
 import type {} from "../ipad/protocol.js";
-import { panCamera, rollCamera, zoomCamera } from "./camera-motion.js";
+import { panCamera, zoomCamera } from "./camera-motion.js";
 import type { Point } from "./planes.js";
 import { QuarterTurn } from "./quarter-turn.js";
 import type { World } from "./world.js";
@@ -14,7 +14,6 @@ class TabletInput {
   private origin: Point | null = null;
   private pen: number | null = null;
   private rotating = false;
-  private twisting = false;
   private readonly twist = new QuarterTurn();
   private pairFrame: number | null = null;
   private suppressClickUntil = 0;
@@ -72,7 +71,6 @@ class TabletInput {
   private endOrbit(): void {
     if (this.rotating) this.world.orbit.end();
     this.rotating = false;
-    this.twisting = false;
     this.twist.reset();
     if (this.pairFrame !== null) cancelAnimationFrame(this.pairFrame);
     this.pairFrame = null;
@@ -169,10 +167,8 @@ class TabletInput {
         zoomCamera(this.world, this.previous.distance / next.distance, offset, bounds.height);
         const angle = next.angle - this.previous.angle;
         const turn = this.twist.update(Math.atan2(Math.sin(angle), Math.cos(angle)));
-        if (turn) {
-          this.twisting = true;
-          rollCamera(this.world, turn, offset, bounds.height);
-        }
+        this.world.rollAnimation.updateAnchor(offset);
+        if (turn) this.world.rollAnimation.start(turn, offset, bounds.height);
       }
     }
     this.previous = next;
@@ -184,13 +180,12 @@ class TabletInput {
     }
     if (!this.touches.has(event.pointerId)) return;
     this.flushPair();
+    if (event.type !== "pointerup") this.world.rollAnimation.cancel();
     this.touches.delete(event.pointerId);
     this.world.longPress?.(event);
     consume(event);
     this.suppressClickUntil = performance.now() + 1000;
-    const level =
-      event.type === "pointerup" &&
-      ((this.rotating && !this.touches.size) || (this.twisting && this.touches.size < 2));
+    const level = event.type === "pointerup" && this.rotating && !this.touches.size;
     if (this.world.canvas.hasPointerCapture(event.pointerId))
       this.world.canvas.releasePointerCapture(event.pointerId);
     this.rebase();

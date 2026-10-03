@@ -15,7 +15,8 @@ each completed solve is displayed even when a newer pointer target is waiting;
 release drains the newest target before accepting one Undo step.
 Two-finger twist triggers one 90° view turn about the finger midpoint after 15° of
 angular travel, alongside continuous pan and zoom. The turn latches until the
-contact gesture ends, then levels to a canonical vertical world axis on release. Safari exposes combined
+contact gesture ends. It animates directly to the canonical-axis destination in
+280 ms, with no separate release correction. Safari exposes combined
 scale/rotation through
 [GestureEvent](https://developer.apple.com/documentation/webkitjs/gestureevent);
 Makeshift calculates both directly from its existing pointer contacts and consumes
